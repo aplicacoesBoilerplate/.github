@@ -6,7 +6,7 @@ Ver `proposal.md` e a delta spec. A organização já usa workflows `workflow_ca
 
 ## Goals / Non-Goals
 
-**Goals:** contrato mínimo reutilizável, exemplo de consumidor e demonstração testável de restauração/atualização de sessão, sem segredos reais nos testes.
+**Goals:** contrato mínimo reutilizável que prepara autenticação, roteia template/modelo, aciona a LLM e devolve decisão/resultado; exemplo de consumidor e demonstração testável de restauração/atualização de sessão, sem segredos reais nos testes.
 
 **Non-Goals:** autenticação autônoma inicial, renovação garantida após revogação ou exigência de login humano, execução de conteúdo de forks/PRs não confiáveis, secret compartilhada entre repositórios, API faturada separadamente e solução de produção já homologada.
 
@@ -18,11 +18,15 @@ O consumidor fornece `CODEX_AUTH_JSON` e `CODEX_AUTH_WRITE_PAT` como secrets de 
 
 ### 2. Workflow central com entrada validada
 
-O workflow `workflow_call` aceita identificador de template versionado, modelo, esforço de raciocínio e parâmetros mínimos do prompt. Um catálogo pequeno de templates versionados no repositório central evita aceitar caminho arbitrário ou comandos fornecidos pelo consumidor. O workflow valida os valores antes de restaurar a sessão. Codex CLI roda em modo não interativo, com sandbox restrito e sem permissão para modificar o checkout; resposta limitada é exposta como output textual e estado. A implementação deverá usar uma versão fixa e documentada do CLI e validar os valores de modelo/effort contra a versão escolhida. Alternativa rejeitada: prompt shell livre, que aumenta superfícies de injeção e dificulta a auditoria.
+O workflow `workflow_call` aceita tipo de tarefa (`issue-triage` ou `pr-review` no primeiro conjunto de consumidores), contexto e parâmetros mínimos. Uma tabela central mapeia tipo/complexidade/etapa para templates versionados, modelo e esforço padrão; overrides permitidos são validados. Um catálogo pequeno evita aceitar caminho arbitrário ou comandos fornecidos pelo consumidor. O workflow valida os valores antes de restaurar a sessão. Codex CLI roda em modo não interativo e read-only. O job retorna um envelope pequeno (estado, decisão, resumo e referência de artefato) via `workflow_call.outputs`; um patch proposto maior é transferido como artefato de workflow, sem credenciais. A implementação deverá fixar a versão do CLI e validar modelos/esforços contra ela. Alternativa rejeitada: prompt shell livre, que aumenta superfícies de injeção e dificulta a auditoria.
 
 ### 3. Proteção de execução e serialização
 
 O caller de exemplo só dispara em evento de mantenedor/branch confiável, nunca em `pull_request_target` com checkout de PR nem em fork. O workflow central também revalida a natureza privada do consumidor e o evento permitido antes de acessar secrets. `concurrency` agrupa todas as chamadas do mesmo repositório que usam a secret, com `queue: max` e `cancel-in-progress: false`; o exemplo mostra o grupo necessário quando houver mais de um caller. A fila do GitHub tem limite de 100 chamadas pendentes; excesso é cancelado visivelmente, sem ser confundido com sucesso. Alternativa de paralelismo livre foi rejeitada por risco de sobrescrever uma sessão recém-renovada. Repositórios distintos não compartilham a secret.
+
+### 3a. Diretrizes compartilhadas e específicas
+
+O arquivo `C:\Users\gerso\.agents\AGENTS.md` é a fonte atual das regras globais. Na implementação, uma cópia **integral**, revisada e versionada desse conteúdo fica no repositório central; o workflow instala essa cópia como `CODEX_HOME/AGENTS.md` efêmero antes de iniciar o Codex. O runner não acessa a máquina pessoal: alterações posteriores da fonte exigem PR de sincronização. O Codex é executado a partir do checkout da revisão-base confiável do consumidor, onde descobre o `AGENTS.md` do projeto; no code review, o diff do PR é fornecido como dado separado, sem substituir as instruções da base. A ordem de descoberta combina instruções globais e do projeto. O arquivo atual tem cerca de 25 KB; configurar e verificar um limite que acomode também as regras do consumidor, falhando se não couber, sem truncamento silencioso. Referências do arquivo a skills locais não tornam essas skills automaticamente disponíveis no runner; documentar essa limitação e só declarar suporte a uma skill quando ela também for distribuída e verificada. Conflitos com limites de segurança são resolvidos por validação externa ao prompt: sandbox, ausência de credenciais na fase de patch, allowlist e permissões GitHub. Alternativa de embutir regras resumidas num prompt único foi rejeitada por perder conteúdo, versionamento e escopo por repositório.
 
 ### 4. Persistência criptografada, com resultado fail-closed
 
@@ -30,12 +34,15 @@ O job restaura a sessão em `CODEX_HOME` temporário com permissões restritas, 
 
 ### 5. Superfície pública e documentação
 
-A implementação entrega workflow central, scripts pequenos de validação/persistência, catálogo inicial com um template inofensivo, workflow consumidor de exemplo e duas documentações. O exemplo não recebe credenciais reais no repositório central público; indica onde o proprietário do consumidor privado cria as secrets. Um consumidor pode usar o resultado para decidir uma ação posterior, mas a primeira iteração não concede ao Codex poderes de alterar repositório, aprovar PR ou publicar automaticamente.
+A implementação entrega workflow central, scripts pequenos de validação/persistência, catálogo inicial com templates de triagem e review, workflow consumidor de exemplo e duas documentações. O exemplo não recebe credenciais reais no repositório central público; indica onde o proprietário do consumidor privado cria as secrets. Como `workflow_call` executa em job próprio, o filesystem não é compartilhado com jobs posteriores do caller. Por isso, o consumidor lê outputs/artefato, valida a proposta e só então aplica alterações, comenta ou abre PR. O central não recebe essas permissões. Alternativa de "apenas fazer setup" no job chamado foi rejeitada: ferramentas e arquivos desse job não ficam disponíveis como ambiente preparado no job consumidor.
 
 ## Risks / Trade-offs
 
 - [Sessão Plus pode expirar, ser revogada ou exigir login] → falhar explicitamente e documentar reseed humano; PAT não cria uma nova sessão ChatGPT.
 - [PAT de escrita de secrets amplia o impacto de um job comprometido] → PAT fine-grained de um repositório, eventos confiáveis, sem checkout de código não confiável, PAT só na etapa final e revisão das permissões antes do piloto.
+- [Patch gerado por LLM é dado não confiável] → consumidor valida caminhos e escopo antes de aplicar e não executa scripts do patch com credenciais presentes.
+- [Diretriz de projeto ou PR pode tentar ampliar autoridade] → carregar instruções apenas da revisão confiável e impor limites por código/permissões, não por prompt.
+- [AGENTS.md global ainda evolui e cita skills locais] → sincronização versionada por PR, teste de tamanho/proveniência e documentação de quais skills estão realmente disponíveis no runner.
 - [Secret atualizada não muda o valor já carregado em jobs simultâneos] → serialização obrigatória por repositório e proibição de outros callers fora do mesmo grupo de concorrência.
 - [Fila de concorrência do GitHub é limitada] → usar `queue: max`, expor cancelamento como não execução e dimensionar o piloto para baixa frequência.
 - [CLI/formatos de autenticação mudam] → fixar versão no MVP, validar contrato em testes e exigir piloto privado antes de considerar a solução operacional.
@@ -54,3 +61,5 @@ A implementação entrega workflow central, scripts pequenos de validação/pers
 - [GitHub: permissões do `GITHUB_TOKEN`](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)
 - [GitHub: API de Actions Secrets](https://docs.github.com/en/rest/actions/secrets)
 - [GitHub: concorrência e limite da fila](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
+- [GitHub: outputs de workflows reutilizáveis](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows)
+- [OpenAI: descoberta e precedência de AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
