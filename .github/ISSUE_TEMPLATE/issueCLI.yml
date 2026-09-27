@@ -1,9 +1,8 @@
 name: 🐛 Reportar Bug na CLI
 description: Relate um problema encontrado ao utilizar a CLI Boilerplate Go.
 title: "[BUG]: "
-labels: ["bug", "triage"]
-assignees:
-  - 
+labels: ["bug"]
+type: Bug
 body:
   - type: markdown
     attributes:

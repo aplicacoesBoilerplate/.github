@@ -1,0 +1,13 @@
+# Exemplo para projeto sem tag: ajuste base-version para sua primeira versão.
+# Não deixe next-version permanente: ele força a mesma versão até ser removido.
+mode: Mainline
+base-version: 0.0.0
+branches:
+  main:
+    regex: ^master$
+    is-mainline: true
+    increment: Patch
+    tag: ''
+  release:
+    regex: ^release[/-]
+    is-release-branch: false

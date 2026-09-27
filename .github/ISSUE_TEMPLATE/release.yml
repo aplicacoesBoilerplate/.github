@@ -1,0 +1,62 @@
+name: Release não épica
+description: Entrega de versão PATCH, MINOR ou MAJOR vinculada a uma épica.
+title: "[LABEL] - "
+type: Release
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Esta opção **não é a épica** da sprint. Substitua `[LABEL]` pelo label da
+        categoria em maiúsculas (ex.: `[TEMPLATES]`). Depois de criar, associe
+        milestone e épica como parent, quando aplicável.
+        Preencha o Issue Field `Release` conforme a escolha abaixo e o Estimate
+        correspondente: PATCH = 7, MINOR = 8, MAJOR = 9. **Estimate 10 é exclusivo
+        da épica.** Size mede valor, não esforço; defina Effort separadamente.
+  - type: dropdown
+    id: classe-release
+    attributes:
+      label: Classe da release
+      description: Registre a mesma classe no Issue Field Release após criar a issue.
+      options:
+        - PATCH (Estimate 7)
+        - MINOR (Estimate 8)
+        - MAJOR (Estimate 9)
+    validations:
+      required: true
+  - type: input
+    id: epica
+    attributes:
+      label: Épica relacionada
+      description: Número ou URL da issue pai; depois de criar, adicione esta issue como sub-issue.
+      placeholder: "#1"
+    validations:
+      required: true
+  - type: input
+    id: milestone
+    attributes:
+      label: Milestone
+      description: Associe-a na barra lateral após criar a issue.
+      placeholder: "v1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: Qual necessidade de produto motiva a release?
+    validations:
+      required: true
+  - type: textarea
+    id: entrega
+    attributes:
+      label: Entrega esperada
+      description: Descreva o resultado e como será homologado.
+    validations:
+      required: true
+  - type: textarea
+    id: premissas
+    attributes:
+      label: Premissas
+      description: Dependências e restrições; escreva "Nenhuma" se não houver.
+    validations:
+      required: true

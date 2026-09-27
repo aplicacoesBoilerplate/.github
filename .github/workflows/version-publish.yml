@@ -1,0 +1,113 @@
+name: Publicação de versionamento por sprint
+
+on:
+  workflow_call:
+    inputs:
+      adapter:
+        required: true
+        type: string
+      release_branch:
+        required: true
+        type: string
+      project_path:
+        required: false
+        default: .
+        type: string
+      target_branch:
+        required: true
+        type: string
+      homologation_environment:
+        description: Ambiente protegido com aprovação humana no consumidor
+        required: true
+        type: string
+      changelog_path:
+        required: false
+        default: ''
+        type: string
+    secrets:
+      versioning_token:
+        description: Token de automação capaz de disparar checks/review do PR de versionamento Node
+        required: false
+    outputs:
+      version:
+        value: ${{ jobs.publish.outputs.version }}
+      tag:
+        value: ${{ jobs.publish.outputs.tag }}
+      published_sha:
+        value: ${{ jobs.publish.outputs.published_sha }}
+      release_url:
+        value: ${{ jobs.publish.outputs.release_url }}
+      outcome:
+        value: ${{ jobs.publish.outputs.outcome }}
+      version_pr_url:
+        value: ${{ jobs.publish.outputs.version_pr_url }}
+
+jobs:
+  publish:
+    if: github.event_name == 'push' && github.ref_name == inputs.target_branch
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.homologation_environment }}
+    concurrency:
+      group: version-publish-${{ github.repository }}-${{ inputs.target_branch }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: read
+      issues: read
+    outputs:
+      version: ${{ steps.publish.outputs.version }}
+      tag: ${{ steps.publish.outputs.tag }}
+      published_sha: ${{ steps.publish.outputs.published_sha }}
+      release_url: ${{ steps.publish.outputs.release_url }}
+      outcome: ${{ steps.publish.outputs.outcome }}
+      version_pr_url: ${{ steps.publish.outputs.version_pr_url }}
+    steps:
+      - name: Checkout do commit integrado no consumidor
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Checkout da automação na mesma revisão do workflow
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .shared-versioning
+          persist-credentials: false
+      - name: Preparar Node para projetos npm e Changesets
+        if: inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Instalar ferramentas Node do consumidor sem scripts de instalação
+        if: inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'
+        env:
+          PROJECT_PATH: ${{ inputs.project_path }}
+        run: bash .shared-versioning/scripts/versioning/install-node.sh
+      - name: Preparar Java para jgitver
+        if: inputs.adapter == 'jgitver'
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Preparar Go para go-gitsemver
+        if: inputs.adapter == 'go-gitsemver'
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version: '1.27.0'
+      - name: Instalar go-gitsemver em revisão fixa
+        if: inputs.adapter == 'go-gitsemver'
+        run: |
+          go install github.com/MyCarrier-DevOps/go-gitsemver@680c1c12d9a4f573a8da1b2e3ccebb3571b1cab6
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Conferir gates e publicar tag/release sem sobrescrever
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ADAPTER: ${{ inputs.adapter }}
+          RELEASE_BRANCH: ${{ inputs.release_branch }}
+          PROJECT_PATH: ${{ inputs.project_path }}
+          TARGET_BRANCH: ${{ inputs.target_branch }}
+          CHANGELOG_PATH: ${{ inputs.changelog_path }}
+          VERSIONING_TOKEN: ${{ secrets.versioning_token }}
+        run: bash .shared-versioning/scripts/versioning/publish.sh

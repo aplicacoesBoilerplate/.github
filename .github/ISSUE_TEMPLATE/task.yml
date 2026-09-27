@@ -1,0 +1,64 @@
+name: Task
+description: Trabalho delimitado da sprint, inclusive documentação e homologação.
+title: "[LABEL] - "
+type: Task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Troque `[LABEL]` pelo label da categoria em maiúsculas (ex.:
+        `[TEMPLATES]`). Associe a milestone e a épica depois de criar a issue.
+        Estimate representa **valor agregado**, não esforço. Homologação = 0;
+        feature por Size XS/S/M/L/XL = 1/2/3/4/5; hotfix = 6;
+        release PATCH/MINOR/MAJOR = 7/8/9; 10 é exclusivo da épica.
+        O Issue Type Task não impõe Estimate fixo (a issue #4 é Task).
+        Preencha Size, Estimate, Priority e Effort separadamente onde existirem.
+  - type: dropdown
+    id: classe-valor
+    attributes:
+      label: Classe de valor da tarefa
+      description: Oriente a escolha posterior de Estimate; não há valor predefinido para Task.
+      options:
+        - Homologação (Estimate 0)
+        - Feature por Size (Estimate 1 a 5)
+        - Hotfix (Estimate 6)
+        - Release PATCH, MINOR ou MAJOR (Estimate 7, 8 ou 9)
+    validations:
+      required: true
+  - type: input
+    id: epica
+    attributes:
+      label: Épica relacionada
+      description: Número ou URL da issue pai; adicione a relação após criar.
+      placeholder: "#1"
+    validations:
+      required: true
+  - type: input
+    id: milestone
+    attributes:
+      label: Milestone
+      description: Associe-a na barra lateral após criar a issue.
+      placeholder: "v1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: Por que esta tarefa é necessária?
+    validations:
+      required: true
+  - type: textarea
+    id: entrega
+    attributes:
+      label: Entrega esperada
+      description: O que estará pronto e como comprovar a conclusão?
+    validations:
+      required: true
+  - type: textarea
+    id: premissas
+    attributes:
+      label: Premissas
+      description: Dependências ou restrições; escreva "Nenhuma" se não houver.
+    validations:
+      required: true

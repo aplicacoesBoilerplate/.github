@@ -1,0 +1,65 @@
+name: Feature
+description: Nova funcionalidade ou entrega de valor para uma sprint.
+title: "[LABEL] - "
+type: Feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Troque `[LABEL]` pelo label da categoria em maiúsculas, por exemplo
+        `[TEMPLATES]`. Depois de criar, associe a milestone e adicione a issue
+        como sub-issue da épica. Size mede **valor agregado**, não esforço:
+        XS = Estimate 1 (docs/DX/modelagem); S = 2 (pequeno ajuste);
+        M = 3 (feature padrão); L = 4 (funcionalidade elaborada);
+        XL = 5 (novo recurso amplo). Preencha os Issue Fields e, se houver,
+        os campos do Project separadamente; Effort e Priority não derivam de Size.
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size por valor agregado
+      description: Selecione o valor da entrega e complete Size e Estimate após criar a issue.
+      options:
+        - XS (Estimate 1)
+        - S (Estimate 2)
+        - M (Estimate 3)
+        - L (Estimate 4)
+        - XL (Estimate 5)
+    validations:
+      required: true
+  - type: input
+    id: epica
+    attributes:
+      label: Épica relacionada
+      description: Número ou URL da issue pai; relacione as issues após criar.
+      placeholder: "#1"
+    validations:
+      required: true
+  - type: input
+    id: milestone
+    attributes:
+      label: Milestone
+      description: Associe-a na barra lateral após criar a issue.
+      placeholder: "v1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: Que problema ou oportunidade esta feature atende?
+    validations:
+      required: true
+  - type: textarea
+    id: entrega
+    attributes:
+      label: Entrega esperada
+      description: Resultado esperado e critérios de aceitação verificáveis.
+    validations:
+      required: true
+  - type: textarea
+    id: premissas
+    attributes:
+      label: Premissas
+      description: Dependências ou restrições; escreva "Nenhuma" se não houver.
+    validations:
+      required: true

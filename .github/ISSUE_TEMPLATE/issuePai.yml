@@ -1,7 +1,42 @@
-name: Issue épica
-description: "Realização do Milestone"
-title: "vx.x.x - Descrição do Milestone"
-labels: ["release"]
-release: "MAJOR"
-assignees:
-  - 
+name: Épica de release (milestone)
+description: Issue pai da sprint; o título deve ser exatamente o nome da milestone.
+title: "vX.Y.Z"
+type: Release
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Substitua o título por **exatamente** o nome da milestone (ex.: `v1.0.0`).
+        Após criar, associe a milestone e as sub-issues. Preencha manualmente os
+        Issue Fields `Release: MAJOR`, `Estimate: 10`, `Size: XL` e `Effort: Team`.
+        `Start date` e `Target date` devem corresponder às datas da milestone.
+        Size/Estimate representam valor agregado, não dificuldade ou esforço.
+  - type: input
+    id: milestone
+    attributes:
+      label: Milestone
+      description: Informe o nome exato da milestone e associe-a após criar a issue.
+      placeholder: "v1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: Qual objetivo de produto justifica esta sprint?
+    validations:
+      required: true
+  - type: textarea
+    id: entrega
+    attributes:
+      label: Entrega esperada
+      description: Quais resultados e sub-issues compõem esta release?
+    validations:
+      required: true
+  - type: textarea
+    id: premissas
+    attributes:
+      label: Premissas
+      description: Dependências, restrições e critérios para homologação; escreva "Nenhuma" se não houver.
+    validations:
+      required: true

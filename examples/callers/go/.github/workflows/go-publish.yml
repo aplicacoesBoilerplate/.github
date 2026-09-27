@@ -1,0 +1,41 @@
+name: Publicação Go após integração
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+  push:
+    branches: [master]
+
+jobs:
+  validate-pr:
+    if: github.event_name == 'pull_request' || github.event_name == 'pull_request_review'
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    uses: ModulosTestesAutomatizados/.github/.github/workflows/version-preview.yml@8b0c6a372ab560400a735bbe42a8a39af823cacf
+    with:
+      adapter: go-gitsemver
+      project_path: .
+      release_branch: release/v1.0.0
+      target_branch: master
+
+  go-ci:
+    uses: ./.github/workflows/go-ci.yml
+
+  publish:
+    if: github.event_name == 'push' && github.ref_name == 'master'
+    needs: go-ci
+    permissions:
+      contents: write
+      pull-requests: read
+      issues: read
+    uses: ModulosTestesAutomatizados/.github/.github/workflows/version-publish.yml@8b0c6a372ab560400a735bbe42a8a39af823cacf
+    with:
+      adapter: go-gitsemver
+      project_path: .
+      release_branch: release/v1.0.0
+      target_branch: master
+      homologation_environment: homologation

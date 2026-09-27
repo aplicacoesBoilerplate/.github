@@ -1,0 +1,11 @@
+.env*
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+node_modules/
+coverage/
+.vscode/
+.idea/
+.superpowers/

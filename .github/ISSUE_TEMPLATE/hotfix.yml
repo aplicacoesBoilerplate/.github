@@ -1,0 +1,60 @@
+name: Hotfix
+description: Correção urgente de falha em produção, com impacto e validação.
+title: "[LABEL] - "
+type: Hotfix
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Troque `[LABEL]` pelo label da categoria em maiúsculas (ex.:
+        `[PIPELINES]`). Estimate **6** é reservado a hotfix, com Size variável
+        conforme valor agregado; Effort e Priority são escolhas independentes.
+        Preencha o Issue Field `Hotfix` (`Release` ou `Fix`) quando disponível.
+        Se for sub-issue, associe a épica e milestone após criar.
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Falha em produção e urgência
+      description: O que falhou, desde quando e por que precisa ser corrigido agora?
+    validations:
+      required: true
+  - type: textarea
+    id: impacto
+    attributes:
+      label: Impacto
+      description: Usuários, serviços e versões afetados.
+    validations:
+      required: true
+  - type: textarea
+    id: entrega
+    attributes:
+      label: Correção esperada
+      description: Comportamento esperado após o reparo.
+    validations:
+      required: true
+  - type: textarea
+    id: validacao
+    attributes:
+      label: Validação da correção
+      description: Como reproduzir a falha e confirmar que o problema foi resolvido?
+    validations:
+      required: true
+  - type: textarea
+    id: premissas
+    attributes:
+      label: Premissas
+      description: Dependências, mitigação ou rollback; escreva "Nenhuma" se não houver.
+    validations:
+      required: true
+  - type: input
+    id: epica
+    attributes:
+      label: Épica relacionada (se houver)
+      description: Número ou URL da issue pai; crie o vínculo após registrar a correção.
+      placeholder: "#1"
+  - type: input
+    id: milestone
+    attributes:
+      label: Milestone (se houver)
+      description: Associe-a na barra lateral após criar a issue.
+      placeholder: "v1.0.0"
