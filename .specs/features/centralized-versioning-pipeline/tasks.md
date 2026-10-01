@@ -264,6 +264,8 @@ T11 → T12 → T13
 
 ### T8: Revalidate integrated policy before publication
 
+**Status**: Complete
+
 **What**: Replace legacy epic/homologation-text gates with commit-associated PR snapshot and the same release policy used during preview.
 **Where**: `scripts/versioning/release-gates.sh`
 **Depends on**: T7
@@ -277,11 +279,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Only a push in the configured target branch and current remote SHA proceeds.
-- [ ] The associated merged PR must uniquely be `develop → master`.
-- [ ] Milestone and override policy is recalculated from current API evidence.
-- [ ] Direct pushes, ambiguous PRs, stale override and API errors fail before write.
-- [ ] Gate passes with the expected test count recorded before commit.
+- [x] Only a push in the configured target branch and current remote SHA proceeds.
+- [x] The associated merged PR must uniquely be `develop → master`.
+- [x] Milestone and override policy is recalculated from current API evidence.
+- [x] Direct pushes, ambiguous PRs, stale override and API errors fail before write.
+- [x] Gate passes with 24 assertions recorded before commit.
 
 **Tests**: integration updates in `tests/versioning/post-merge.mjs` for every provenance and policy failure
 **Gate**: full, `node tests/versioning/post-merge.mjs`
@@ -499,8 +501,8 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
 | VER-01 | T1, T2, T6, T9 | In Progress (T1-T2, T6 complete) |
-| VER-02 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6 complete) |
-| VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6 complete) |
+| VER-02 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6, T8 complete) |
+| VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6, T8 complete) |
 | VER-04 | T5, T6, T7, T13 | In Progress (T5-T7 complete) |
-| VER-05 | T4, T8, T9, T10, T13 | In Progress (T4 complete) |
+| VER-05 | T4, T8, T9, T10, T13 | In Progress (T4, T8 complete) |
 | VER-06 | T7, T11, T12, T13 | In Progress (T7 complete) |
