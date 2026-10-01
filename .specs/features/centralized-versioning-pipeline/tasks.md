@@ -129,6 +129,8 @@ T11 → T12 → T13
 
 ### T3: Evaluate milestone and override policy
 
+**Status**: Complete
+
 **What**: Implement the pure policy decision for optional milestone, exact version, bump type and two-maintainer override ordering.
 **Where**: `scripts/versioning/release-policy.mjs`
 **Depends on**: T2
@@ -142,11 +144,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] No milestone returns `adapter-authoritative` without override requirements.
-- [ ] Valid matching milestone returns `matched` for version and bump.
-- [ ] Invalid or divergent milestone returns `blocked` unless the complete override is current.
-- [ ] Labeler and approver must be distinct Maintain/Admin actors in chronological order and on the current SHA.
-- [ ] Gate passes with the expected test count recorded before commit.
+- [x] No milestone returns `adapter-authoritative` without override requirements.
+- [x] Valid matching milestone returns `matched` for version and bump.
+- [x] Invalid or divergent milestone returns `blocked` unless the complete override is current.
+- [x] Labeler and approver must be distinct Maintain/Admin actors in chronological order and on the current SHA.
+- [x] Gate passes with 24 assertions recorded before commit.
 
 **Tests**: unit in `tests/versioning/release-policy.mjs`, 1:1 with every VER-02 and VER-03 criterion
 **Gate**: quick, `node tests/versioning/release-policy.mjs`
@@ -489,8 +491,8 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
 | VER-01 | T1, T2, T6, T9 | In Progress (T1-T2 complete) |
-| VER-02 | T3, T4, T6, T8, T13 | In Tasks |
-| VER-03 | T3, T4, T6, T8, T13 | In Tasks |
+| VER-02 | T3, T4, T6, T8, T13 | In Progress (T3 complete) |
+| VER-03 | T3, T4, T6, T8, T13 | In Progress (T3 complete) |
 | VER-04 | T5, T6, T7, T13 | In Tasks |
 | VER-05 | T4, T8, T9, T10, T13 | In Tasks |
 | VER-06 | T7, T11, T12, T13 | In Tasks |
