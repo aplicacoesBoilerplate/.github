@@ -41,7 +41,14 @@ try {
     [{ id: 'smoke', description: 'Execute `cli --help`', status: 'pending' }]);
   assert.equal('suggestedChecks' in json.facts, false, 'suggestions must not be reported as collected facts');
   const markdown = readFileSync(join(output, 'homologation.md'), 'utf8');
+  assert.match(markdown, /Repository: `owner\/repo`/);
+  assert.match(markdown, /Pull request: `42`/);
+  assert.ok(markdown.includes(`SHA: \`${sha}\``));
   assert.match(markdown, /Candidate version: `0\.0\.1`/);
+  assert.match(markdown, /Increment: `patch`/);
+  assert.match(markdown, /feat: safe/);
+  assert.match(markdown, /go\\-ci: completed \/ success/);
+  assert.match(markdown, /alert\\\(1\\\)/, 'native explanation must remain available as escaped text');
   assert.doesNotMatch(markdown, /<script>|javascript:/, 'untrusted Markdown must be neutralized');
   assert.match(markdown, /Suggested checks \(pending\)/);
   assert.equal(git('status', '--porcelain'), before, 'renderer must not mutate the consumer working tree');
@@ -50,7 +57,7 @@ try {
     [join(root, 'scripts/versioning/homologation-guide.mjs'), join(workspace, 'missing.json'), snapshotPath, output],
     { cwd: workspace, encoding: 'utf8' });
   assert.notEqual(missing.status, 0, 'missing native report must fail');
-  console.log('Homologation guide: 17 assertions passed');
+  console.log('Homologation guide assertions passed');
 } finally {
   rmSync(workspace, { recursive: true, force: true });
   rmSync(output, { recursive: true, force: true });

@@ -22,7 +22,11 @@ const outcome = (milestone, expected, override) => {
 };
 
 const authoritative = outcome(null, 'adapter-authoritative');
-assertions += 1; assert.equal(authoritative.plannedVersion, null);
+assertions += 4;
+assert.equal(authoritative.plannedVersion, null);
+assert.equal(authoritative.plannedBump, null);
+assert.equal(authoritative.calculatedVersion, '2.0.0');
+assert.equal(authoritative.calculatedBump, 'major');
 const matched = outcome({ title: 'v2.0.0' }, 'matched');
 assertions += 2;
 assert.equal(matched.plannedVersion, '2.0.0');

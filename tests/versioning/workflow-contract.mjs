@@ -7,6 +7,7 @@ const preview = readFileSync(resolve(root, '.github/workflows/version-preview.ym
 const publish = readFileSync(resolve(root, '.github/workflows/version-publish.yml'), 'utf8');
 const ci = readFileSync(resolve(root, '.github/workflows/ci.yml'), 'utf8');
 const goCaller = readFileSync(resolve(root, 'examples/callers/go/.github/workflows/go-publish.yml'), 'utf8');
+const documentation = readFileSync(resolve(root, 'docs/versioning.md'), 'utf8');
 let assertions = 0;
 const matches = (pattern, message) => { assertions += 1; assert.match(preview, pattern, message); };
 const excludes = (pattern, message) => { assertions += 1; assert.doesNotMatch(preview, pattern, message); };
@@ -15,6 +16,7 @@ const publishExcludes = (pattern, message) => { assertions += 1; assert.doesNotM
 const ciMatches = (pattern, message) => { assertions += 1; assert.match(ci, pattern, message); };
 const callerMatches = (pattern, message) => { assertions += 1; assert.match(goCaller, pattern, message); };
 const callerExcludes = (pattern, message) => { assertions += 1; assert.doesNotMatch(goCaller, pattern, message); };
+const docsMatch = (pattern, message) => { assertions += 1; assert.match(documentation, pattern, message); };
 
 matches(/workflow_call:/, 'preview must remain reusable');
 for (const output of ['phase', 'version', 'bump', 'policy_outcome', 'summary']) {
@@ -82,5 +84,10 @@ assert.equal(references.length, 2, 'caller must reference both centralized workf
 assert.equal(new Set(references.map(match => match[1])).size, 1, 'central workflow revisions must be consistent'); assertions += 1;
 callerExcludes(/release_branch:|homologation_environment:|approved:|force:|skip_validation:/,
   'caller must pass configuration only and contain no legacy or bypass policy');
+docsMatch(/`milestoned` e `demilestoned`/, 'documentation must require milestone-change events');
+docsMatch(/`checks: read`/, 'documentation must state the caller check-run permission');
+docsMatch(/bloqueie force-push e exclusão[\s\S]*restrinja atualizações diretas/,
+  'documentation must require direct-push protection');
+docsMatch(/exija o check de prévia central/, 'documentation must identify the required versioning check');
 
 console.log(`Workflow contract: ${assertions} assertions passed`);

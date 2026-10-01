@@ -124,7 +124,10 @@ console.error('unexpected '+a.join(' '));process.exit(2);
   setState({ tagSha: null, release: null });
   let published = runPublish();
   assert.equal(published.status, 0, published.stderr);
-  assert.match(readFileSync(output, 'utf8'), /outcome=published/);
+  const firstOutput = readFileSync(output, 'utf8');
+  assert.match(firstOutput, /outcome=published/);
+  assert.match(firstOutput, /version=0\.0\.1/);
+  assert.match(firstOutput, /tag=v0\.0\.1/);
   assert.equal(getState().tagSha, sha);
   assert.equal(getState().release.target_commitish, sha);
   assert.match(getState().release.body, /native release explanation/);
@@ -151,6 +154,10 @@ console.error('unexpected '+a.join(' '));process.exit(2);
     html_url: 'https://example.test/releases/v0.0.1', body: 'existing' } });
   assert.notEqual(runPublish().status, 0, 'a release without a verifiable tag must fail');
   assert.equal(getState().tagSha, null, 'a release conflict must not create a tag');
+  setState({ tagSha: sha, release: { tag_name: 'v0.0.1', target_commitish: 'c'.repeat(40),
+    html_url: 'https://example.test/releases/v0.0.1', body: 'divergent' } });
+  assert.notEqual(runPublish().status, 0, 'a release with a divergent target SHA must fail');
+  assert.equal(getState().tagSha, sha, 'a divergent release must not move the correct tag');
 
   setState({ tagSha: null, release: null });
   published = runPublish({ FIXTURE_MODE: 'race-tag' });

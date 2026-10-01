@@ -538,6 +538,8 @@ T14 → T15 → T16 → T17 → T18
 
 ### T18: Close verifier evidence and artifact-limit gaps
 
+**Status**: Complete
+
 **What**: Add exact conjunction assertions and enforce an artifact-size failure that preserves the already-written step summary.
 **Where**: `tests/versioning/`
 **Depends on**: T17
@@ -551,12 +553,12 @@ T14 → T15 → T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Exact assertions cover no-milestone calculated values, all divergence values and full override audit.
-- [ ] Markdown and step summary assertions cover SHA, PR, changes, checks and native explanation.
-- [ ] First publication asserts version/tag and divergent existing release fails.
-- [ ] Oversized guide fails with a diagnostic while the summary remains present.
-- [ ] Documentation outcomes and assertion counts are checked without hard-coded drift.
-- [ ] Full local and real-Go gates pass.
+- [x] Exact assertions cover no-milestone calculated values, all divergence values and full override audit.
+- [x] Markdown and step summary assertions cover SHA, PR, changes, checks and native explanation.
+- [x] First publication asserts version/tag and divergent existing release fails.
+- [x] Oversized guide fails with a diagnostic while the summary remains present.
+- [x] Documentation outcomes and assertion counts are checked without hard-coded drift.
+- [x] Full local and real-Go gates pass.
 
 **Tests**: unit, integration and static contract additions across existing `tests/versioning` fixtures; production change only for the artifact-size guard required by the spec
 **Gate**: build, `node tests/versioning/run.mjs --local && node tests/versioning/real-go-gitsemver.mjs`
@@ -663,9 +665,9 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
-| VER-01 | T1, T2, T6, T9, T14 | Needs Fix |
-| VER-02 | T3, T4, T6, T8, T13, T15, T18 | Needs Fix |
-| VER-03 | T3, T4, T6, T8, T13, T15, T17, T18 | Needs Fix |
-| VER-04 | T5, T6, T7, T13, T16, T18 | Needs Fix |
-| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18 | Needs Fix |
-| VER-06 | T7, T11, T12, T13, T16, T18 | Needs Fix |
+| VER-01 | T1, T2, T6, T9, T14 | Complete |
+| VER-02 | T3, T4, T6, T8, T13, T15, T18 | Complete |
+| VER-03 | T3, T4, T6, T8, T13, T15, T17, T18 | Complete |
+| VER-04 | T5, T6, T7, T13, T16, T18 | Complete |
+| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18 | Complete |
+| VER-06 | T7, T11, T12, T13, T16, T18 | Complete |

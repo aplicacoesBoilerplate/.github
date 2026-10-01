@@ -106,8 +106,11 @@ with:
 ```
 
 O caller deve encaminhar `opened`, `reopened`, `synchronize`, `edited`,
-`labeled` e `unlabeled`, além de reviews `submitted` e `dismissed`. A publicação
-só pode ser chamada em `push` para `master` e deve declarar `needs: go-ci`.
+`labeled`, `unlabeled`, `milestoned` e `demilestoned`, além de reviews
+`submitted` e `dismissed`. O job de prévia deve conceder `checks: read` porque o
+workflow reutilizável não pode elevar permissões omitidas pelo caller. A
+publicação só pode ser chamada em `push` para `master` e deve declarar
+`needs: go-ci`.
 
 ## Proteção de branches
 

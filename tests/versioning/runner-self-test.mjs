@@ -21,4 +21,4 @@ try {
   console.error = originalError;
 }
 
-console.log('Runner: 5 assertions passed');
+console.log('Runner assertions passed');

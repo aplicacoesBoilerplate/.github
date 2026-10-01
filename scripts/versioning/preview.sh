@@ -57,6 +57,16 @@ if [[ "$phase" == release-to-develop ]]; then
   node "$script_dir/homologation-guide.mjs" "$(as_node_path "$report_path")" \
     "$(as_node_path "$snapshot_path")" "$(as_node_path "$output_dir")" >"$output_dir/summary.md"
   if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then cat "$output_dir/summary.md" >>"$GITHUB_STEP_SUMMARY"; fi
+  artifact_limit="${VERSIONING_ARTIFACT_MAX_BYTES:-10737418240}"
+  [[ "$artifact_limit" =~ ^[1-9][0-9]*$ ]] || { echo 'VERSIONING_ARTIFACT_MAX_BYTES inválido' >&2; exit 1; }
+  artifact_bytes=$(node -e '
+    const fs=require("node:fs");
+    process.stdout.write(String(process.argv.slice(1).reduce((total,path)=>total+fs.statSync(path).size,0)));
+  ' "$(as_node_path "$output_dir/homologation.md")" "$(as_node_path "$output_dir/homologation.json")")
+  [[ "$artifact_bytes" -le "$artifact_limit" ]] || {
+    echo "Artifacts de homologação somam $artifact_bytes bytes e excedem o limite de $artifact_limit bytes; o step summary foi preservado" >&2
+    exit 1
+  }
   summary="Versão candidata $version; guia de homologação gerado"
 else
   node -e '

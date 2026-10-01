@@ -15,7 +15,7 @@ try {
   mkdirSync(bin);
   const goTool = join(bin, 'go-gitsemver');
   writeFileSync(goTool, `#!/usr/bin/env node
-console.error('native preview explanation');
+console.error(process.env.TEST_EXPLANATION || 'native preview explanation');
 console.log(JSON.stringify({SemVer:process.env.TEST_VERSION,Sha:process.env.GITHUB_SHA}));
 `);
   chmodSync(goTool, 0o755);
@@ -42,6 +42,7 @@ else {console.error('unexpected '+path);process.exit(2)}
     const caseDir = mkdtempSync(join(temp, 'case-'));
     const eventPath = join(caseDir, 'event.json');
     const outputPath = join(caseDir, 'outputs.txt');
+    const summaryPath = join(caseDir, 'step-summary.md');
     const callsPath = join(caseDir, 'gh.log');
     writeFileSync(eventPath, JSON.stringify(payload)); writeFileSync(outputPath, ''); writeFileSync(callsPath, '');
     const result = spawnSync(bash, [join(root, 'scripts/versioning/preview.sh')], {
@@ -49,11 +50,12 @@ else {console.error('unexpected '+path);process.exit(2)}
         PATH: `${bin}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH}`,
         GITHUB_EVENT_PATH: eventPath, GITHUB_WORKSPACE: root, GITHUB_REPOSITORY: 'owner/repo',
         TARGET_BRANCH: 'master', ADAPTER: 'go-gitsemver', PROJECT_PATH: '.', GITHUB_OUTPUT: outputPath,
-        VERSIONING_OUTPUT_DIR: caseDir, GH_TOKEN: 'fixture', TEST_VERSION: '0.0.1',
+        VERSIONING_OUTPUT_DIR: caseDir, GITHUB_STEP_SUMMARY: summaryPath,
+        GH_TOKEN: 'fixture', TEST_VERSION: '0.0.1',
         TEST_HEAD: payload.pull_request.head.ref, TEST_BASE: payload.pull_request.base.ref,
         TEST_MILESTONE: payload.pull_request.milestone?.title ?? '', GH_CALLS: callsPath, ...overrides },
     });
-    return { result, caseDir, output: readFileSync(outputPath, 'utf8'), calls: readFileSync(callsPath, 'utf8') };
+    return { result, caseDir, summaryPath, output: readFileSync(outputPath, 'utf8'), calls: readFileSync(callsPath, 'utf8') };
   };
 
   const headBefore = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
@@ -65,6 +67,10 @@ else {console.error('unexpected '+path);process.exit(2)}
   assert.match(develop.output, /bump=patch/);
   assert.ok(readFileSync(join(develop.caseDir, 'homologation.md'), 'utf8').includes('native preview explanation'));
   assert.equal(JSON.parse(readFileSync(join(develop.caseDir, 'homologation.json'), 'utf8')).facts.pullRequest, 42);
+  const summary = readFileSync(develop.summaryPath, 'utf8');
+  for (const expected of ['native preview explanation', sha, 'Pull request: `42`', 'Delivered changes', 'go\\-ci: completed / success']) {
+    assert.ok(summary.includes(expected), `step summary must include ${expected}`);
+  }
 
   const master = run(event('develop', 'master', { title: 'v0.0.1' }));
   assert.equal(master.result.status, 0, master.result.stderr);
@@ -78,11 +84,18 @@ else {console.error('unexpected '+path);process.exit(2)}
   assert.notEqual(divergent.result.status, 0, 'divergent milestone must block');
   const dismissed = run(event('develop', 'master', { title: 'v1.0.0' }), { TEST_REVIEW_MODE: 'dismissed' });
   assert.notEqual(dismissed.result.status, 0, 'dismissed approval must fail the preview policy gate');
+  const oversized = run(event('release/v0.0.1', 'develop'), {
+    TEST_EXPLANATION: 'x'.repeat(256), VERSIONING_ARTIFACT_MAX_BYTES: '100',
+  });
+  assert.notEqual(oversized.result.status, 0, 'oversized homologation artifacts must fail');
+  assert.match(oversized.result.stderr, /excedem o limite de 100 bytes/);
+  assert.ok(readFileSync(oversized.summaryPath, 'utf8').includes('x'.repeat(32)),
+    'step summary must remain available when artifact size validation fails');
   const failedAdapter = run(event('release/v0.0.1', 'develop'), { TEST_VERSION: 'invalid' });
   assert.notEqual(failedAdapter.result.status, 0, 'calculation failure must fail the check');
   const unsupported = run(event('feature/demo', 'master'));
   assert.notEqual(unsupported.result.status, 0, 'unsupported PR phase must fail');
-  console.log('PR preview: 15 assertions passed');
+  console.log('PR preview assertions passed');
 } finally {
   rmSync(temp, { recursive: true, force: true });
 }
