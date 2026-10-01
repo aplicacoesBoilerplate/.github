@@ -76,6 +76,12 @@ T11 → T12 → T13
 T14 → T15 → T16 → T17 → T18
 ```
 
+### Phase 6: Discrimination-sensor fixes
+
+```text
+T19 → T20 → T21 → T22
+```
+
 ---
 
 ## Task Breakdown
@@ -564,12 +570,106 @@ T14 → T15 → T16 → T17 → T18
 **Gate**: build, `node tests/versioning/run.mjs --local && node tests/versioning/real-go-gitsemver.mjs`
 **Commit**: `test(versioning): close release governance coverage gaps`
 
+### T19: Assert adapter rejection diagnostics
+
+**What**: Prove unknown adapters and unsafe project paths fail with their required diagnostics before any adapter execution.
+**Where**: `tests/versioning/go-version.mjs`
+**Depends on**: T18
+**Reuses**: Existing no-execution marker cases
+**Requirement**: VER-01
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `entregas`
+
+**Done when**:
+
+- [ ] Unknown adapter stderr identifies the unsupported adapter.
+- [ ] Unsafe project path stderr identifies checkout confinement.
+- [ ] Both cases remain nonzero and leave the execution marker absent.
+
+**Tests**: integration assertions in `tests/versioning/go-version.mjs`
+**Gate**: quick, `node tests/versioning/go-version.mjs`
+**Commit**: `test(versioning): assert adapter rejection diagnostics`
+
+### T20: Preserve blocked-policy evidence
+
+**What**: Assert all four comparison values and unauthorized-attempt identity/role evidence on blocked policy decisions.
+**Where**: `tests/versioning/release-policy.mjs`
+**Depends on**: T19
+**Reuses**: Existing version, bump and unauthorized-role fixtures
+**Requirement**: VER-02, VER-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `entregas`
+
+**Done when**:
+
+- [ ] Exact-version and bump mismatches each assert planned/calculated version and bump together.
+- [ ] Unauthorized labeler case asserts identity, current role and exact diagnostic/audit values.
+- [ ] A mutation removing any required field fails the focused gate.
+
+**Tests**: unit assertions in `tests/versioning/release-policy.mjs`
+**Gate**: quick, `node tests/versioning/release-policy.mjs`
+**Commit**: `test(versioning): assert blocked release policy evidence`
+
+### T21: Cover pull-request evidence cardinality and endpoints
+
+**What**: Prove zero and multiple associated PRs fail, and independently exercise timeline, review and collaborator-role API failures.
+**Where**: `tests/versioning/pr-policy.mjs`
+**Depends on**: T20
+**Reuses**: Existing deterministic `gh` mock and association fixture
+**Requirement**: VER-03, VER-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `cicd`, `entregas`
+
+**Done when**:
+
+- [ ] Zero and multiple matching merged PRs each fail with cardinality diagnostics.
+- [ ] Timeline, reviews and permission endpoint failures are injected after earlier requests succeed.
+- [ ] Every failure returns nonzero and no policy snapshot.
+- [ ] A mutation accepting zero associations fails the focused gate.
+
+**Tests**: integration assertions in `tests/versioning/pr-policy.mjs`
+**Gate**: full, `node tests/versioning/pr-policy.mjs`
+**Commit**: `test(versioning): cover pull request evidence failures`
+
+### T22: Assert release tag identity conflicts
+
+**What**: Prove a release with matching target SHA but different tag/version fails without modifying remote state.
+**Where**: `tests/versioning/post-merge.mjs`
+**Depends on**: T21
+**Reuses**: Existing release conflict and write-counter fixture
+**Requirement**: VER-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `cicd`, `entregas`
+
+**Done when**:
+
+- [ ] Existing release with wrong `tag_name` and matching SHA fails.
+- [ ] Tag and release state remain byte-for-byte unchanged after rejection.
+- [ ] A mutation removing release tag-name validation fails the focused gate.
+- [ ] Full local and real-Go gates pass.
+
+**Tests**: integration assertions in `tests/versioning/post-merge.mjs`
+**Gate**: build, `node tests/versioning/run.mjs --local && node tests/versioning/real-go-gitsemver.mjs`
+**Commit**: `test(versioning): assert release tag identity conflicts`
+
 ---
 
 ## Phase Execution Map
 
 ```text
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6
 
 Phase 1: T1 → T2 → T3 → T4
 Boundary: T4 → T5
@@ -580,6 +680,8 @@ Boundary: T10 → T11
 Phase 4: T11 → T12 → T13
 Boundary: T13 → T14
 Phase 5: T14 → T15 → T16 → T17 → T18
+Boundary: T18 → T19
+Phase 6: T19 → T20 → T21 → T22
 ```
 
 Execution is strictly sequential. Cross-phase dependencies are the final task of the previous phase.
@@ -608,6 +710,10 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | T16 | One caller event/permission contract | ✅ Granular |
 | T17 | One effective-review-state collector rule | ✅ Granular |
 | T18 | One verifier evidence closure | ✅ Cohesive verification task |
+| T19 | One adapter diagnostic assertion set | ✅ Granular |
+| T20 | One policy payload assertion set | ✅ Granular |
+| T21 | One GitHub evidence failure matrix | ✅ Granular |
+| T22 | One release identity conflict | ✅ Granular |
 
 ---
 
@@ -633,6 +739,10 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | T16 | T15 | T15 → T16 | ✅ Match |
 | T17 | T16 | T16 → T17 | ✅ Match |
 | T18 | T17 | T17 → T18 | ✅ Match |
+| T19 | T18 | T18 → T19 | ✅ Match |
+| T20 | T19 | T19 → T20 | ✅ Match |
+| T21 | T20 | T20 → T21 | ✅ Match |
+| T22 | T21 | T21 → T22 | ✅ Match |
 
 ---
 
@@ -658,6 +768,10 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | T16 | Caller contract | static integration | static integration | ✅ OK |
 | T17 | GitHub review-state integration | integration | integration | ✅ OK |
 | T18 | Cross-cutting verifier gaps | unit/integration/static | unit/integration/static | ✅ OK |
+| T19 | Adapter integration | integration | integration | ✅ OK |
+| T20 | Policy domain logic | unit | unit | ✅ OK |
+| T21 | GitHub data integration | integration | integration | ✅ OK |
+| T22 | Publisher integration | integration | integration | ✅ OK |
 
 ---
 
@@ -665,9 +779,9 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
-| VER-01 | T1, T2, T6, T9, T14 | Complete |
-| VER-02 | T3, T4, T6, T8, T13, T15, T18 | Complete |
-| VER-03 | T3, T4, T6, T8, T13, T15, T17, T18 | Complete |
+| VER-01 | T1, T2, T6, T9, T14, T19 | Needs Fix |
+| VER-02 | T3, T4, T6, T8, T13, T15, T18, T20 | Needs Fix |
+| VER-03 | T3, T4, T6, T8, T13, T15, T17, T18, T20, T21 | Needs Fix |
 | VER-04 | T5, T6, T7, T13, T16, T18 | Complete |
-| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18 | Complete |
+| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18, T21, T22 | Needs Fix |
 | VER-06 | T7, T11, T12, T13, T16, T18 | Complete |

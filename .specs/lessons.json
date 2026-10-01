@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 7,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "surviving_mutant::test every allowed association cardinality explicitly including zero and multiple matches",
+      "text": "Test every allowed association cardinality explicitly, including zero and multiple matches.",
+      "signal": "surviving_mutant",
+      "scope": "versioning",
+      "status": "candidate",
+      "features": [
+        "centralized-versioning-pipeline"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M4 (versioning)"
+      ],
+      "created": "2026-10-01T11:14:19Z",
+      "last_seen": "2026-10-01T11:14:19Z"
+    },
+    {
+      "id": "L-002",
+      "key": "surviving_mutant::assert every release identity field independently during reconcile before write tests",
+      "text": "Assert every release identity field independently during reconcile-before-write tests.",
+      "signal": "surviving_mutant",
+      "scope": "versioning",
+      "status": "candidate",
+      "features": [
+        "centralized-versioning-pipeline"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M5 (versioning)"
+      ],
+      "created": "2026-10-01T11:14:20Z",
+      "last_seen": "2026-10-01T11:14:20Z"
+    },
+    {
+      "id": "L-003",
+      "key": "surviving_mutant::assert complete diagnostic payloads on blocked decisions not only on authorized decisions",
+      "text": "Assert complete diagnostic payloads on blocked decisions, not only on authorized decisions.",
+      "signal": "surviving_mutant",
+      "scope": "versioning",
+      "status": "candidate",
+      "features": [
+        "centralized-versioning-pipeline"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M6 (versioning)"
+      ],
+      "created": "2026-10-01T11:14:20Z",
+      "last_seen": "2026-10-01T11:14:20Z"
+    },
+    {
+      "id": "L-004",
+      "key": "ac_gap::assert rejected authorization evidence preserves the attempted actor and effective role",
+      "text": "Assert rejected authorization evidence preserves the attempted actor and effective role.",
+      "signal": "ac_gap",
+      "scope": "versioning",
+      "status": "candidate",
+      "features": [
+        "centralized-versioning-pipeline"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "VER-03.3 (versioning)"
+      ],
+      "created": "2026-10-01T11:14:21Z",
+      "last_seen": "2026-10-01T11:14:21Z"
+    },
+    {
+      "id": "L-005",
+      "key": "ac_gap::inject failures independently at each external evidence endpoint after prior collection succeeds",
+      "text": "Inject failures independently at each external evidence endpoint after prior collection succeeds.",
+      "signal": "ac_gap",
+      "scope": "versioning",
+      "status": "candidate",
+      "features": [
+        "centralized-versioning-pipeline"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "VER-03.8 (versioning)"
+      ],
+      "created": "2026-10-01T11:14:22Z",
+      "last_seen": "2026-10-01T11:14:22Z"
+    },
+    {
+      "id": "L-006",
+      "key": "ac_gap::assert rejection diagnostics together with nonzero status and no execution evidence",
+      "text": "Assert rejection diagnostics together with nonzero status and no-execution evidence.",
+      "signal": "ac_gap",
+      "scope": "versioning",
+      "status": "candidate",
+      "features": [
+        "centralized-versioning-pipeline"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "VER-01.5 (versioning)"
+      ],
+      "created": "2026-10-01T11:14:22Z",
+      "last_seen": "2026-10-01T11:14:22Z"
+    }
+  ]
+}

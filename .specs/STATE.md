@@ -29,10 +29,10 @@
 ## Handoff
 
 - **Feature**: Pipeline centralizada de versionamento
-- **Phase / Task**: Verifier fix loop 1 - T14
-- **Completed**: T1-T13; independent verification FAIL recorded
+- **Phase / Task**: Verifier fix loop 2 - T19
+- **Completed**: T1-T18; independent verification rounds 1 and 2 recorded
 - **In-progress** (file:line): none
-- **Next step**: execute T14-T18 and dispatch a fresh independent verifier
+- **Next step**: execute T19-T22 and dispatch independent verifier round 3
 - **Blockers**: none
-- **Uncommitted files**: `.specs/features/centralized-versioning-pipeline/validation.md`, `.specs/features/centralized-versioning-pipeline/tasks.md`, `.specs/features/centralized-versioning-pipeline/spec.md`, `.specs/STATE.md`
+- **Uncommitted files**: `.specs/features/centralized-versioning-pipeline/validation.md`, `.specs/features/centralized-versioning-pipeline/tasks.md`, `.specs/STATE.md`, `.specs/LESSONS.md`, `.specs/lessons.json`
 - **Branch**: feature/issue-4-versionamento
