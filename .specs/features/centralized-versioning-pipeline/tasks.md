@@ -346,6 +346,8 @@ T11 → T12 → T13
 
 ### T11: Run the full versioning suite in central CI
 
+**Status**: Complete
+
 **What**: Add a deterministic local test runner and a CI job that executes local fixtures plus the real pinned Go adapter test.
 **Where**: `tests/versioning/run.mjs`
 **Depends on**: T10
@@ -359,11 +361,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `--local` executes every deterministic fixture in a stable order.
-- [ ] `--real-go` executes the real Go fixture separately.
-- [ ] Any child failure returns a nonzero status and identifies the fixture.
-- [ ] `.github/workflows/ci.yml` invokes both modes with pinned actions and installs pinned `go-gitsemver`.
-- [ ] The final build gate passes with expected fixture and assertion counts recorded.
+- [x] `--local` executes every deterministic fixture in a stable order.
+- [x] `--real-go` executes the real Go fixture separately.
+- [x] Any child failure returns a nonzero status and identifies the fixture.
+- [x] `.github/workflows/ci.yml` invokes both modes with pinned actions and installs pinned `go-gitsemver`.
+- [x] The final build gate passes with 9 deterministic fixtures, 5 runner assertions and 35 workflow assertions recorded.
 
 **Tests**: integration self-check of the runner plus complete existing suite; CI YAML checked by contract test
 **Gate**: build, `node tests/versioning/run.mjs --local && node tests/versioning/workflow-contract.mjs`
@@ -509,4 +511,4 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6, T8 complete) |
 | VER-04 | T5, T6, T7, T13 | In Progress (T5-T7 complete) |
 | VER-05 | T4, T8, T9, T10, T13 | In Progress (T4, T8-T10 complete) |
-| VER-06 | T7, T11, T12, T13 | In Progress (T7 complete) |
+| VER-06 | T7, T11, T12, T13 | In Progress (T7, T11 complete) |

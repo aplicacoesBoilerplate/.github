@@ -5,11 +5,13 @@ import { resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '../..');
 const preview = readFileSync(resolve(root, '.github/workflows/version-preview.yml'), 'utf8');
 const publish = readFileSync(resolve(root, '.github/workflows/version-publish.yml'), 'utf8');
+const ci = readFileSync(resolve(root, '.github/workflows/ci.yml'), 'utf8');
 let assertions = 0;
 const matches = (pattern, message) => { assertions += 1; assert.match(preview, pattern, message); };
 const excludes = (pattern, message) => { assertions += 1; assert.doesNotMatch(preview, pattern, message); };
 const publishMatches = (pattern, message) => { assertions += 1; assert.match(publish, pattern, message); };
 const publishExcludes = (pattern, message) => { assertions += 1; assert.doesNotMatch(publish, pattern, message); };
+const ciMatches = (pattern, message) => { assertions += 1; assert.match(ci, pattern, message); };
 
 matches(/workflow_call:/, 'preview must remain reusable');
 for (const output of ['phase', 'version', 'bump', 'policy_outcome', 'summary']) {
@@ -48,5 +50,13 @@ publishMatches(/permissions:\s*\n\s+contents: write\s*\n\s+pull-requests: read\s
   'the sole publication job must keep minimal permissions');
 publishExcludes(/environment:\s*\$\{\{ inputs\./,
   'the write job must not bind an empty environment dynamically');
+ciMatches(/actions\/checkout@[0-9a-f]{40}/, 'central CI checkout must be SHA pinned');
+ciMatches(/actions\/setup-node@[0-9a-f]{40}[\s\S]*node-version: '24'/,
+  'central CI must use pinned Node 24');
+ciMatches(/actions\/setup-go@[0-9a-f]{40}/, 'central CI Go setup must be SHA pinned');
+ciMatches(/go install github\.com\/MyCarrier-DevOps\/go-gitsemver@680c1c12d9a4f573a8da1b2e3ccebb3571b1cab6/,
+  'central CI must install the immutable adapter revision');
+ciMatches(/node tests\/versioning\/run\.mjs --local/, 'central CI must run deterministic fixtures');
+ciMatches(/node tests\/versioning\/run\.mjs --real-go/, 'central CI must run the real Go fixture separately');
 
 console.log(`Workflow contract: ${assertions} assertions passed`);
