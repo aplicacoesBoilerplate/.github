@@ -27,10 +27,11 @@ else if(path.endsWith('/pulls/42')) console.log(JSON.stringify(pr));
 else if(path.includes('/timeline')) console.log(JSON.stringify([[
   {event:'labeled',label:{name:'versioning:override'},actor:{login:'old'},created_at:'2026-10-01T09:00:00Z'},
   {event:'unlabeled',label:{name:'versioning:override'},actor:{login:'old'},created_at:'2026-10-01T09:10:00Z'}],
-  [{event:'labeled',label:{name:'versioning:override'},actor:{login:'alice'},created_at:'2026-10-01T10:00:00Z'}]]));
-else if(path.includes('/reviews')) console.log(JSON.stringify([[
+  [{event:'labeled',label:{name:'versioning:override'},actor:{login:'alice'},created_at:mode==='relabel'?'2026-10-01T10:02:00Z':'2026-10-01T10:00:00Z'}]]));
+else if(path.includes('/reviews')) { const later=mode==='dismissed'?'DISMISSED':mode==='changes-requested'?'CHANGES_REQUESTED':'APPROVED', laterAt=mode==='relabel'?'2026-10-01T10:01:00Z':'2026-10-01T10:03:00Z'; console.log(JSON.stringify([[
   {state:'APPROVED',user:{login:'early'},submitted_at:'2026-10-01T09:59:00Z',commit_id:sha}],
-  [{state:'APPROVED',user:{login:'bob'},submitted_at:'2026-10-01T10:01:00Z',commit_id:sha}]]));
+  [{state:'APPROVED',user:{login:'bob'},submitted_at:'2026-10-01T10:01:00Z',commit_id:mode==='stale'?'b'.repeat(40):sha},
+   {state:later,user:{login:'bob'},submitted_at:laterAt,commit_id:mode==='stale'?'b'.repeat(40):sha}]])); }
 else if(path.includes('/collaborators/')) { const u=path.split('/collaborators/')[1].split('/')[0];
   console.log(JSON.stringify({role_name:u==='old'?'triage':u==='early'?'write':u==='alice'?'maintain':'admin'})); }
 else { console.error('unexpected '+path); process.exit(2); }
@@ -60,6 +61,16 @@ else { console.error('unexpected '+path); process.exit(2); }
   assert.match(callLog, /timeline.*--paginate.*--slurp/);
   assert.match(callLog, /reviews.*--paginate.*--slurp/);
 
+  for (const mode of ['dismissed', 'changes-requested', 'relabel', 'stale']) {
+    const invalidated = run(mode);
+    assert.equal(invalidated.status, 0, invalidated.stderr);
+    const invalidatedSnapshot = JSON.parse(readFileSync(output, 'utf8'));
+    assert.equal(invalidatedSnapshot.override.approvalBy, null,
+      `${mode} must invalidate the historical approval`);
+    assert.equal(invalidatedSnapshot.override.reviewedCommitSha, null,
+      `${mode} must not retain an invalidated review SHA`);
+  }
+
   const byCommit = run('success', ['--commit', sha, output]);
   assert.equal(byCommit.status, 0, byCommit.stderr);
   assert.equal(JSON.parse(readFileSync(output, 'utf8')).number, 42);
@@ -67,7 +78,7 @@ else { console.error('unexpected '+path); process.exit(2); }
     'ambiguous commit association must fail closed');
   assert.notEqual(run('api-error').status, 0, 'API errors must fail closed');
   assert.notEqual(run('incomplete').status, 0, 'incomplete pagination must fail closed');
-  console.log('PR policy: 16 assertions passed');
+  console.log('PR policy: current review state and invalidation rules passed');
 } finally {
   rmSync(workspace, { recursive: true, force: true });
 }

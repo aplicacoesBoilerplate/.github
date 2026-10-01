@@ -81,7 +81,10 @@ node -e '
     else if(event.event==="unlabeled") label=null;
   }
   const authorized=new Set(["maintain","admin"]);
-  const approvals=label ? reviews.filter(review=>review.state==="APPROVED" &&
+  const effectiveReviews=new Map();
+  reviews.sort((a,b)=>String(a.submitted_at).localeCompare(String(b.submitted_at)))
+    .forEach(review=>{if(review.user?.login) effectiveReviews.set(review.user.login,review)});
+  const approvals=label ? [...effectiveReviews.values()].filter(review=>review.state==="APPROVED" &&
     review.commit_id===pr.head?.sha && Date.parse(review.submitted_at)>Date.parse(label.created_at) &&
     review.user?.login!==label.actor?.login && authorized.has(roles.get(review.user?.login)))
     .sort((a,b)=>String(a.submitted_at).localeCompare(String(b.submitted_at))) : [];

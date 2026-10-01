@@ -24,8 +24,12 @@ console.log(JSON.stringify({SemVer:process.env.TEST_VERSION,Sha:process.env.GITH
 const fs=require('node:fs'),a=process.argv.slice(2),path=a[a.indexOf('api')+1],sha=process.env.GITHUB_SHA;
 fs.appendFileSync(process.env.GH_CALLS,path+'\\n');
 const milestone=process.env.TEST_MILESTONE?{title:process.env.TEST_MILESTONE}:null;
-if(path.includes('/pulls/42/reviews')) console.log(JSON.stringify([[]]));
-else if(path.includes('/issues/42/timeline')) console.log(JSON.stringify([[]]));
+if(path.includes('/pulls/42/reviews')) console.log(JSON.stringify(process.env.TEST_REVIEW_MODE==='dismissed'?[[
+  {state:'APPROVED',user:{login:'bob'},submitted_at:'2026-10-01T10:01:00Z',commit_id:sha},
+  {state:'DISMISSED',user:{login:'bob'},submitted_at:'2026-10-01T10:02:00Z',commit_id:sha}]]:[[]]));
+else if(path.includes('/issues/42/timeline')) console.log(JSON.stringify(process.env.TEST_REVIEW_MODE==='dismissed'?[[
+  {event:'labeled',label:{name:'versioning:override'},actor:{login:'alice'},created_at:'2026-10-01T10:00:00Z'}]]:[[]]));
+else if(path.includes('/collaborators/')) console.log(JSON.stringify({role_name:path.includes('/alice/')?'maintain':'admin'}));
 else if(path.includes('/commits/')&&path.includes('/check-runs')) console.log(JSON.stringify([[{name:'go-ci',status:'completed',conclusion:'success'}]]));
 else if(path.endsWith('/pulls/42')) console.log(JSON.stringify({number:42,head:{ref:process.env.TEST_HEAD,sha},base:{ref:process.env.TEST_BASE},merged_at:null,merge_commit_sha:null,milestone}));
 else {console.error('unexpected '+path);process.exit(2)}
@@ -72,6 +76,8 @@ else {console.error('unexpected '+path);process.exit(2)}
 
   const divergent = run(event('develop', 'master', { title: 'v1.0.0' }));
   assert.notEqual(divergent.result.status, 0, 'divergent milestone must block');
+  const dismissed = run(event('develop', 'master', { title: 'v1.0.0' }), { TEST_REVIEW_MODE: 'dismissed' });
+  assert.notEqual(dismissed.result.status, 0, 'dismissed approval must fail the preview policy gate');
   const failedAdapter = run(event('release/v0.0.1', 'develop'), { TEST_VERSION: 'invalid' });
   assert.notEqual(failedAdapter.result.status, 0, 'calculation failure must fail the check');
   const unsupported = run(event('feature/demo', 'master'));

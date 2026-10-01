@@ -512,6 +512,8 @@ T14 → T15 → T16 → T17 → T18
 
 ### T17: Reject dismissed or stale approvals
 
+**Status**: Complete
+
 **What**: Derive each reviewer's current effective review state and accept only a current approval after the active label for the current SHA.
 **Where**: `scripts/versioning/collect-pr-policy.sh`
 **Depends on**: T16
@@ -525,10 +527,10 @@ T14 → T15 → T16 → T17 → T18
 
 **Done when**:
 
-- [ ] A later dismissed or changes-requested review invalidates an older approval by that reviewer.
-- [ ] Relabeling requires a new later approval.
-- [ ] Approval for an older SHA remains invalid.
-- [ ] Preview and post-merge gates fail closed for invalidated approvals.
+- [x] A later dismissed or changes-requested review invalidates an older approval by that reviewer.
+- [x] Relabeling requires a new later approval.
+- [x] Approval for an older SHA remains invalid.
+- [x] Preview and post-merge gates fail closed for invalidated approvals.
 
 **Tests**: integration additions in `tests/versioning/pr-policy.mjs`, `tests/versioning/pr-check.mjs`, and `tests/versioning/post-merge.mjs`
 **Gate**: full, `node tests/versioning/run.mjs --local`
