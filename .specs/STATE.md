@@ -29,10 +29,10 @@
 ## Handoff
 
 - **Feature**: Pipeline centralizada de versionamento
-- **Phase / Task**: Execute - Batch 2 / T13 complete
-- **Completed**: T1-T13, todos os gates determinísticos, documentação e commits atômicos
+- **Phase / Task**: Verifier fix loop 1 - T14
+- **Completed**: T1-T13; independent verification FAIL recorded
 - **In-progress** (file:line): none
-- **Next step**: executar o Verifier independente e registrar `validation.md`
+- **Next step**: execute T14-T18 and dispatch a fresh independent verifier
 - **Blockers**: none
-- **Uncommitted files**: none expected after the T13 commit
+- **Uncommitted files**: `.specs/features/centralized-versioning-pipeline/validation.md`, `.specs/features/centralized-versioning-pipeline/tasks.md`, `.specs/features/centralized-versioning-pipeline/spec.md`, `.specs/STATE.md`
 - **Branch**: feature/issue-4-versionamento

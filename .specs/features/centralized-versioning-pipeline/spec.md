@@ -193,12 +193,12 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| VER-01 | P1: Adaptador nativo | Execute | Complete |
-| VER-02 | P1: Milestone | Execute | Complete |
-| VER-03 | P1: Override | Execute | Complete |
-| VER-04 | P1: Homologação | Execute | Complete |
-| VER-05 | P1: Publicação | Execute | Complete |
-| VER-06 | P1: CI central | Execute | Complete |
+| VER-01 | P1: Adaptador nativo | Verification | Needs Fix |
+| VER-02 | P1: Milestone | Verification | Needs Fix |
+| VER-03 | P1: Override | Verification | Needs Fix |
+| VER-04 | P1: Homologação | Verification | Needs Fix |
+| VER-05 | P1: Publicação | Verification | Needs Fix |
+| VER-06 | P1: CI central | Verification | Needs Fix |
 
 **Coverage:** 6 total, 6 mapped to tasks, 0 unmapped.
 

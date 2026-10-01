@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/centralized-versioning-pipeline/design.md`
-**Status**: Approved
+**Status**: In Progress
 
 ---
 
@@ -68,6 +68,12 @@ T8 → T9 → T10
 
 ```text
 T11 → T12 → T13
+```
+
+### Phase 5: Independent-verifier fixes
+
+```text
+T14 → T15 → T16 → T17 → T18
 ```
 
 ---
@@ -426,12 +432,134 @@ T11 → T12 → T13
 **Gate**: build, `node tests/versioning/run.mjs --local && node tests/versioning/workflow-contract.mjs`
 **Commit**: `docs(versioning): document centralized release governance`
 
+### T14: Reconcile real tagged Go commits
+
+**What**: Accept an empty native SHA only when the exact candidate tag resolves to the evaluated commit, preserving fail-closed behavior otherwise.
+**Where**: `scripts/versioning/version-report.mjs`
+**Depends on**: T13
+**Reuses**: Tagged-commit reconciliation from `scripts/versioning/prepare-release.sh`
+**Requirement**: VER-01, VER-05
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `cicd`
+
+**Done when**:
+
+- [ ] The pinned real Go adapter normalizes an already-tagged commit with empty native SHA.
+- [ ] The candidate tag resolves exactly to the evaluated SHA.
+- [ ] Missing, wrong or conflicting tags remain rejected.
+- [ ] The collector-to-publication rerun reaches `already-published`.
+
+**Tests**: integration and real-adapter additions in `tests/versioning/version-report.mjs` and `tests/versioning/real-go-gitsemver.mjs`
+**Gate**: hosted Go, `node tests/versioning/real-go-gitsemver.mjs`
+**Commit**: `fix(versioning): reconcile tagged Go release reports`
+
+### T15: Make malformed milestones non-overridable
+
+**What**: Separate invalid contract input from intentional version or bump divergence so override applies only to a valid milestone.
+**Where**: `scripts/versioning/release-policy.mjs`
+**Depends on**: T14
+**Reuses**: Existing strict milestone parser and audit diagnostics
+**Requirement**: VER-02, VER-03
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`
+
+**Done when**:
+
+- [ ] Invalid milestone always returns `blocked`, even with two valid maintainers.
+- [ ] The diagnostic includes the received title and expected strict format.
+- [ ] Valid version or bump divergence remains overridable.
+- [ ] The four compared values and full override audit payload have exact assertions.
+
+**Tests**: unit additions in `tests/versioning/release-policy.mjs`
+**Gate**: quick, `node tests/versioning/release-policy.mjs`
+**Commit**: `fix(versioning): reject overrides for malformed milestones`
+
+### T16: Complete caller events and permissions
+
+**What**: Re-run policy on milestone assignment/removal and grant the read permission required to collect check runs.
+**Where**: `examples/callers/go/.github/workflows/go-publish.yml`
+**Depends on**: T15
+**Reuses**: Existing caller event and permission blocks
+**Requirement**: VER-02, VER-04, VER-06
+
+**Tools**:
+
+- MCP: Context7 for GitHub Actions events and permission inheritance
+- Skill: `tlc-spec-driven`, `cicd`
+
+**Done when**:
+
+- [ ] Pull-request types include `milestoned` and `demilestoned`.
+- [ ] Preview caller permissions include `checks: read`.
+- [ ] Contract tests fail when either event or permission is absent.
+- [ ] CI workflow triggers and Maven/npm jobs remain asserted.
+
+**Tests**: static integration additions in `tests/versioning/workflow-contract.mjs`
+**Gate**: full, `node tests/versioning/workflow-contract.mjs`
+**Commit**: `fix(versioning): revalidate milestone changes in Go caller`
+
+### T17: Reject dismissed or stale approvals
+
+**What**: Derive each reviewer's current effective review state and accept only a current approval after the active label for the current SHA.
+**Where**: `scripts/versioning/collect-pr-policy.sh`
+**Depends on**: T16
+**Reuses**: Paginated review and role collection already implemented
+**Requirement**: VER-03, VER-05
+
+**Tools**:
+
+- MCP: Context7 for review-state semantics
+- Skill: `tlc-spec-driven`, `cicd`
+
+**Done when**:
+
+- [ ] A later dismissed or changes-requested review invalidates an older approval by that reviewer.
+- [ ] Relabeling requires a new later approval.
+- [ ] Approval for an older SHA remains invalid.
+- [ ] Preview and post-merge gates fail closed for invalidated approvals.
+
+**Tests**: integration additions in `tests/versioning/pr-policy.mjs`, `tests/versioning/pr-check.mjs`, and `tests/versioning/post-merge.mjs`
+**Gate**: full, `node tests/versioning/run.mjs --local`
+**Commit**: `fix(versioning): honor current pull request review state`
+
+### T18: Close verifier evidence and artifact-limit gaps
+
+**What**: Add exact conjunction assertions and enforce an artifact-size failure that preserves the already-written step summary.
+**Where**: `tests/versioning/`
+**Depends on**: T17
+**Reuses**: Existing fixtures and homologation renderer
+**Requirement**: VER-02, VER-03, VER-04, VER-05, VER-06
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`, `cicd`, `entregas`
+
+**Done when**:
+
+- [ ] Exact assertions cover no-milestone calculated values, all divergence values and full override audit.
+- [ ] Markdown and step summary assertions cover SHA, PR, changes, checks and native explanation.
+- [ ] First publication asserts version/tag and divergent existing release fails.
+- [ ] Oversized guide fails with a diagnostic while the summary remains present.
+- [ ] Documentation outcomes and assertion counts are checked without hard-coded drift.
+- [ ] Full local and real-Go gates pass.
+
+**Tests**: unit, integration and static contract additions across existing `tests/versioning` fixtures; production change only for the artifact-size guard required by the spec
+**Gate**: build, `node tests/versioning/run.mjs --local && node tests/versioning/real-go-gitsemver.mjs`
+**Commit**: `test(versioning): close release governance coverage gaps`
+
 ---
 
 ## Phase Execution Map
 
 ```text
-Phase 1 → Phase 2 → Phase 3 → Phase 4
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 
 Phase 1: T1 → T2 → T3 → T4
 Boundary: T4 → T5
@@ -440,6 +568,8 @@ Boundary: T7 → T8
 Phase 3: T8 → T9 → T10
 Boundary: T10 → T11
 Phase 4: T11 → T12 → T13
+Boundary: T13 → T14
+Phase 5: T14 → T15 → T16 → T17 → T18
 ```
 
 Execution is strictly sequential. Cross-phase dependencies are the final task of the previous phase.
@@ -463,6 +593,11 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | T11 | One suite runner plus its CI wiring | ✅ Cohesive integration task |
 | T12 | One caller example directory | ✅ Cohesive copyable artifact |
 | T13 | One adoption document | ✅ Granular |
+| T14 | One tagged-report reconciliation rule | ✅ Granular |
+| T15 | One malformed-milestone policy rule | ✅ Granular |
+| T16 | One caller event/permission contract | ✅ Granular |
+| T17 | One effective-review-state collector rule | ✅ Granular |
+| T18 | One verifier evidence closure | ✅ Cohesive verification task |
 
 ---
 
@@ -483,6 +618,11 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | T11 | T10 | Phase 3 → Phase 4; T11 first | ✅ Match |
 | T12 | T11 | T11 → T12 | ✅ Match |
 | T13 | T12 | T12 → T13 | ✅ Match |
+| T14 | T13 | T13 → T14 | ✅ Match |
+| T15 | T14 | T14 → T15 | ✅ Match |
+| T16 | T15 | T15 → T16 | ✅ Match |
+| T17 | T16 | T16 → T17 | ✅ Match |
+| T18 | T17 | T17 → T18 | ✅ Match |
 
 ---
 
@@ -503,6 +643,11 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | T11 | Test runner and CI | integration | integration | ✅ OK |
 | T12 | Caller contract | static integration | static integration | ✅ OK |
 | T13 | Documentation | none | none | ✅ OK |
+| T14 | Report and real adapter integration | integration | integration | ✅ OK |
+| T15 | Policy domain logic | unit | unit | ✅ OK |
+| T16 | Caller contract | static integration | static integration | ✅ OK |
+| T17 | GitHub review-state integration | integration | integration | ✅ OK |
+| T18 | Cross-cutting verifier gaps | unit/integration/static | unit/integration/static | ✅ OK |
 
 ---
 
@@ -510,9 +655,9 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
-| VER-01 | T1, T2, T6, T9 | Complete |
-| VER-02 | T3, T4, T6, T8, T13 | Complete |
-| VER-03 | T3, T4, T6, T8, T13 | Complete |
-| VER-04 | T5, T6, T7, T13 | Complete |
-| VER-05 | T4, T8, T9, T10, T13 | Complete |
-| VER-06 | T7, T11, T12, T13 | Complete |
+| VER-01 | T1, T2, T6, T9, T14 | Needs Fix |
+| VER-02 | T3, T4, T6, T8, T13, T15, T18 | Needs Fix |
+| VER-03 | T3, T4, T6, T8, T13, T15, T17, T18 | Needs Fix |
+| VER-04 | T5, T6, T7, T13, T16, T18 | Needs Fix |
+| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18 | Needs Fix |
+| VER-06 | T7, T11, T12, T13, T16, T18 | Needs Fix |
