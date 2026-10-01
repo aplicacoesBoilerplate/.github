@@ -4,9 +4,12 @@ import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '../..');
 const preview = readFileSync(resolve(root, '.github/workflows/version-preview.yml'), 'utf8');
+const publish = readFileSync(resolve(root, '.github/workflows/version-publish.yml'), 'utf8');
 let assertions = 0;
 const matches = (pattern, message) => { assertions += 1; assert.match(preview, pattern, message); };
 const excludes = (pattern, message) => { assertions += 1; assert.doesNotMatch(preview, pattern, message); };
+const publishMatches = (pattern, message) => { assertions += 1; assert.match(publish, pattern, message); };
+const publishExcludes = (pattern, message) => { assertions += 1; assert.doesNotMatch(publish, pattern, message); };
 
 matches(/workflow_call:/, 'preview must remain reusable');
 for (const output of ['phase', 'version', 'bump', 'policy_outcome', 'summary']) {
@@ -30,5 +33,20 @@ excludes(/continue-on-error:\s*true/, 'required preview operations may not be ig
 matches(/opened, reopened, synchronize, edited, labeled, unlabeled/,
   'the reusable contract must declare required pull request events for callers');
 matches(/submitted, dismissed/, 'the reusable contract must declare required review events for callers');
+
+publishMatches(/publication_environment:\s*\n\s+description:[^\n]*\n\s+required: false\s*\n\s+default: ''\s*\n\s+type: string/,
+  'publication environment must be an optional empty string');
+publishExcludes(/homologation_environment:|\b(?:approved|force|skip_validation):/,
+  'caller-controlled approval and bypass inputs are forbidden');
+publishMatches(/environment-gate:\s*\n\s+if: inputs\.publication_environment != ''[\s\S]*?environment:\s*\n\s+name: \$\{\{ inputs\.publication_environment \}\}/,
+  'a named environment must gate publication');
+publishMatches(/publish:\s*\n\s+needs: environment-gate\s*\n\s+if: >-\s*\n\s+\$\{\{ always\(\)[\s\S]*needs\.environment-gate\.result == 'success'[\s\S]*needs\.environment-gate\.result == 'skipped'/,
+  'publish must accept only a successful or skipped environment gate');
+publishMatches(/concurrency:\s*\n\s+group: version-publish-[^\n]+\n\s+cancel-in-progress: false/,
+  'publication concurrency must serialize without cancellation');
+publishMatches(/permissions:\s*\n\s+contents: write\s*\n\s+pull-requests: read\s*\n\s+issues: read/,
+  'the sole publication job must keep minimal permissions');
+publishExcludes(/environment:\s*\$\{\{ inputs\./,
+  'the write job must not bind an empty environment dynamically');
 
 console.log(`Workflow contract: ${assertions} assertions passed`);

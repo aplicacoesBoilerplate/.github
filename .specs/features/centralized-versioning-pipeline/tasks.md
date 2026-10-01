@@ -319,6 +319,8 @@ T11 → T12 → T13
 
 ### T10: Make the publication environment optional
 
+**Status**: Complete
+
 **What**: Add a conditional environment gate, keep one write job and expose the finalized reusable-workflow contract.
 **Where**: `.github/workflows/version-publish.yml`
 **Depends on**: T9
@@ -332,11 +334,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `publication_environment` is optional and defaults to empty.
-- [ ] A non-empty value gates the write job through the named environment.
-- [ ] An empty value skips only the gate and still permits publication after CI.
-- [ ] The write job keeps concurrency without cancellation and minimal permissions.
-- [ ] Contract test rejects approval/force/skip boolean inputs.
+- [x] `publication_environment` is optional and defaults to empty.
+- [x] A non-empty value gates the write job through the named environment.
+- [x] An empty value skips only the gate and still permits publication after CI.
+- [x] The write job keeps concurrency without cancellation and minimal permissions.
+- [x] Contract test rejects approval/force/skip boolean inputs with 29 workflow assertions.
 
 **Tests**: static integration additions in `tests/versioning/workflow-contract.mjs` plus publication integration gate
 **Gate**: full, `node tests/versioning/workflow-contract.mjs && node tests/versioning/post-merge.mjs`
@@ -506,5 +508,5 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | VER-02 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6, T8 complete) |
 | VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6, T8 complete) |
 | VER-04 | T5, T6, T7, T13 | In Progress (T5-T7 complete) |
-| VER-05 | T4, T8, T9, T10, T13 | In Progress (T4, T8-T9 complete) |
+| VER-05 | T4, T8, T9, T10, T13 | In Progress (T4, T8-T10 complete) |
 | VER-06 | T7, T11, T12, T13 | In Progress (T7 complete) |
