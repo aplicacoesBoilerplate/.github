@@ -2,7 +2,7 @@ name: Publicação Go após integração
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, edited, ready_for_review]
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
   pull_request_review:
     types: [submitted, dismissed]
   push:
@@ -15,11 +15,10 @@ jobs:
       contents: read
       pull-requests: read
       issues: read
-    uses: ModulosTestesAutomatizados/.github/.github/workflows/version-preview.yml@8b0c6a372ab560400a735bbe42a8a39af823cacf
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-preview.yml@2a7887c712776fe12502ec3aaa2a3641c485d20a
     with:
       adapter: go-gitsemver
       project_path: .
-      release_branch: release/v1.0.0
       target_branch: master
 
   go-ci:
@@ -32,10 +31,8 @@ jobs:
       contents: write
       pull-requests: read
       issues: read
-    uses: ModulosTestesAutomatizados/.github/.github/workflows/version-publish.yml@8b0c6a372ab560400a735bbe42a8a39af823cacf
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-publish.yml@2a7887c712776fe12502ec3aaa2a3641c485d20a
     with:
       adapter: go-gitsemver
       project_path: .
-      release_branch: release/v1.0.0
       target_branch: master
-      homologation_environment: homologation

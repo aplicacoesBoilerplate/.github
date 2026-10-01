@@ -373,6 +373,8 @@ T11 → T12 → T13
 
 ### T12: Update the copyable Go caller
 
+**Status**: Complete
+
 **What**: Provide a caller that chains consumer CI, preview and post-merge publication while only passing configuration to central workflows.
 **Where**: `examples/callers/go/`
 **Depends on**: T11
@@ -386,11 +388,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Preview responds to all required PR and review changes.
-- [ ] Publish is reachable only on push to `master` and depends on Go CI.
-- [ ] Environment is optional and no business rule is duplicated in the caller.
-- [ ] References to central workflows are immutable and consistent.
-- [ ] The contract test validates the example without touching `boilerplate-cli`.
+- [x] Preview responds to all required PR and review changes.
+- [x] Publish is reachable only on push to `master` and depends on Go CI.
+- [x] Environment is optional and no business rule is duplicated in the caller.
+- [x] References to central workflows are immutable and consistent.
+- [x] The contract test validates the example with 42 assertions without touching `boilerplate-cli`.
 
 **Tests**: static integration additions in `tests/versioning/workflow-contract.mjs`
 **Gate**: full, `node tests/versioning/workflow-contract.mjs`
@@ -511,4 +513,4 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6, T8 complete) |
 | VER-04 | T5, T6, T7, T13 | In Progress (T5-T7 complete) |
 | VER-05 | T4, T8, T9, T10, T13 | In Progress (T4, T8-T10 complete) |
-| VER-06 | T7, T11, T12, T13 | In Progress (T7, T11 complete) |
+| VER-06 | T7, T11, T12, T13 | In Progress (T7, T11-T12 complete) |
