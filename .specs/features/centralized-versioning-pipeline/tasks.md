@@ -183,6 +183,8 @@ T11 → T12 → T13
 
 ### T5: Render structured homologation guides
 
+**Status**: Complete
+
 **What**: Generate Markdown and JSON from the normalized report, PR facts, known checks and suggested validation items.
 **Where**: `scripts/versioning/homologation-guide.mjs`
 **Depends on**: T4
@@ -196,11 +198,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `homologation.md` and `homologation.json` contain every field from the design.
-- [ ] JSON separates collected facts from pending suggestions.
-- [ ] Untrusted PR, commit and native text is rendered without shell evaluation or unsafe Markdown interpretation.
-- [ ] Missing report fails and generation leaves the consumer working tree unchanged.
-- [ ] Gate passes with the expected test count recorded before commit.
+- [x] `homologation.md` and `homologation.json` contain every field from the design.
+- [x] JSON separates collected facts from pending suggestions.
+- [x] Untrusted PR, commit and native text is rendered without shell evaluation or unsafe Markdown interpretation.
+- [x] Missing report fails and generation leaves the consumer working tree unchanged.
+- [x] Gate passes with 17 assertions recorded before commit.
 
 **Tests**: unit/integration in `tests/versioning/homologation-guide.mjs`, covering all VER-04 criteria and malicious-looking text
 **Gate**: quick, `node tests/versioning/homologation-guide.mjs`
@@ -495,6 +497,6 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | VER-01 | T1, T2, T6, T9 | In Progress (T1-T2 complete) |
 | VER-02 | T3, T4, T6, T8, T13 | In Progress (T3-T4 complete) |
 | VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4 complete) |
-| VER-04 | T5, T6, T7, T13 | In Tasks |
+| VER-04 | T5, T6, T7, T13 | In Progress (T5 complete) |
 | VER-05 | T4, T8, T9, T10, T13 | In Progress (T4 complete) |
 | VER-06 | T7, T11, T12, T13 | In Tasks |
