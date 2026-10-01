@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { chmodSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+
+const root = resolve(import.meta.dirname, '../..');
+const workspace = mkdtempSync(join(tmpdir(), 'pr-policy-'));
+const bin = join(workspace, 'bin');
+const output = join(workspace, 'snapshot.json');
+const calls = join(workspace, 'calls.log');
+const sha = 'a'.repeat(40);
+const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
+
+try {
+  mkdirSync(bin);
+  const gh = join(bin, 'gh');
+  writeFileSync(gh, `#!/usr/bin/env node
+const fs=require('node:fs'); const a=process.argv.slice(2); const path=a[a.indexOf('api')+1];
+fs.appendFileSync(process.env.CALLS_FILE, a.join(' ')+'\\n');
+const mode=process.env.FIXTURE_MODE;
+if(mode==='api-error'||mode==='incomplete'){console.error('simulated API failure');process.exit(1)}
+const sha=process.env.TEST_SHA;
+const pr={number:42,head:{ref:'develop',sha},base:{ref:'master'},merged_at:'2026-10-01T10:02:00Z',merge_commit_sha:sha,milestone:{title:'v2.0.0'}};
+if(path.includes('/commits/')) { const values=mode==='ambiguous'?[pr,{...pr,number:43}]:[pr]; console.log(JSON.stringify([values])); }
+else if(path.endsWith('/pulls/42')) console.log(JSON.stringify(pr));
+else if(path.includes('/timeline')) console.log(JSON.stringify([[
+  {event:'labeled',label:{name:'versioning:override'},actor:{login:'old'},created_at:'2026-10-01T09:00:00Z'},
+  {event:'unlabeled',label:{name:'versioning:override'},actor:{login:'old'},created_at:'2026-10-01T09:10:00Z'}],
+  [{event:'labeled',label:{name:'versioning:override'},actor:{login:'alice'},created_at:'2026-10-01T10:00:00Z'}]]));
+else if(path.includes('/reviews')) console.log(JSON.stringify([[
+  {state:'APPROVED',user:{login:'early'},submitted_at:'2026-10-01T09:59:00Z',commit_id:sha}],
+  [{state:'APPROVED',user:{login:'bob'},submitted_at:'2026-10-01T10:01:00Z',commit_id:sha}]]));
+else if(path.includes('/collaborators/')) { const u=path.split('/collaborators/')[1].split('/')[0];
+  console.log(JSON.stringify({role_name:u==='old'?'triage':u==='early'?'write':u==='alice'?'maintain':'admin'})); }
+else { console.error('unexpected '+path); process.exit(2); }
+`);
+  chmodSync(gh, 0o755);
+  const run = (mode = 'success', args = ['42', output]) => spawnSync(bash,
+    [join(root, 'scripts/versioning/collect-pr-policy.sh'), ...args], {
+      cwd: workspace, encoding: 'utf8', env: { ...process.env,
+        PATH: `${bin}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH}`,
+        GH_TOKEN: 'fixture', GITHUB_REPOSITORY: 'owner/repo', TARGET_BRANCH: 'master',
+        FIXTURE_MODE: mode, TEST_SHA: sha, CALLS_FILE: calls },
+    });
+
+  const success = run();
+  assert.equal(success.status, 0, success.stderr);
+  const snapshot = JSON.parse(readFileSync(output, 'utf8'));
+  assert.equal(snapshot.number, 42);
+  assert.equal(snapshot.headSha, sha);
+  assert.equal(snapshot.milestone.title, 'v2.0.0');
+  assert.equal(snapshot.override.labelPresent, true);
+  assert.equal(snapshot.override.labeledBy, 'alice');
+  assert.equal(snapshot.override.labelerRole, 'maintain');
+  assert.equal(snapshot.override.approvalBy, 'bob', JSON.stringify(snapshot));
+  assert.equal(snapshot.override.approverRole, 'admin', readFileSync(calls, 'utf8'));
+  assert.equal(snapshot.override.reviewedCommitSha, sha);
+  const callLog = readFileSync(calls, 'utf8');
+  assert.match(callLog, /timeline.*--paginate.*--slurp/);
+  assert.match(callLog, /reviews.*--paginate.*--slurp/);
+
+  const byCommit = run('success', ['--commit', sha, output]);
+  assert.equal(byCommit.status, 0, byCommit.stderr);
+  assert.equal(JSON.parse(readFileSync(output, 'utf8')).number, 42);
+  assert.notEqual(run('ambiguous', ['--commit', sha, output]).status, 0,
+    'ambiguous commit association must fail closed');
+  assert.notEqual(run('api-error').status, 0, 'API errors must fail closed');
+  assert.notEqual(run('incomplete').status, 0, 'incomplete pagination must fail closed');
+  console.log('PR policy: 16 assertions passed');
+} finally {
+  rmSync(workspace, { recursive: true, force: true });
+}

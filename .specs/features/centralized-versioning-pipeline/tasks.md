@@ -156,6 +156,8 @@ T11 → T12 → T13
 
 ### T4: Collect an auditable pull-request policy snapshot
 
+**Status**: Complete
+
 **What**: Fetch the current PR, active label event, later reviews, current roles and unique PR associated with a merge SHA into one JSON snapshot.
 **Where**: `scripts/versioning/collect-pr-policy.sh`
 **Depends on**: T3
@@ -169,11 +171,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Timeline and reviews are paginated and filtered to the current label and SHA.
-- [ ] Role checks use current `role_name`, accepting only Maintain/Admin.
-- [ ] Commit lookup requires exactly one integrated `develop → master` PR matching the SHA.
-- [ ] API errors, incomplete pagination and ambiguous association fail closed.
-- [ ] Gate passes with the expected test count recorded before commit.
+- [x] Timeline and reviews are paginated and filtered to the current label and SHA.
+- [x] Role checks use current `role_name`, accepting only Maintain/Admin.
+- [x] Commit lookup requires exactly one integrated `develop → master` PR matching the SHA.
+- [x] API errors, incomplete pagination and ambiguous association fail closed.
+- [x] Gate passes with 16 assertions recorded before commit.
 
 **Tests**: integration in `tests/versioning/pr-policy.mjs` using a deterministic `gh` mock for all success and failure paths
 **Gate**: quick, `node tests/versioning/pr-policy.mjs`
@@ -491,8 +493,8 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
 | VER-01 | T1, T2, T6, T9 | In Progress (T1-T2 complete) |
-| VER-02 | T3, T4, T6, T8, T13 | In Progress (T3 complete) |
-| VER-03 | T3, T4, T6, T8, T13 | In Progress (T3 complete) |
+| VER-02 | T3, T4, T6, T8, T13 | In Progress (T3-T4 complete) |
+| VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4 complete) |
 | VER-04 | T5, T6, T7, T13 | In Tasks |
-| VER-05 | T4, T8, T9, T10, T13 | In Tasks |
+| VER-05 | T4, T8, T9, T10, T13 | In Progress (T4 complete) |
 | VER-06 | T7, T11, T12, T13 | In Tasks |
