@@ -88,10 +88,21 @@ export function normalizeGoReport({ nativeJson, explanation, branch, sha, reposi
 
 if (process.argv[1] && import.meta.filename === process.argv[1]) {
   try {
-    const [command, inputPath] = process.argv.slice(2);
-    if (command !== 'validate') throw new Error(`Subcomando desconhecido: ${command}`);
-    const report = JSON.parse(readFileSync(inputPath, 'utf8'));
-    process.stdout.write(`${JSON.stringify(validateVersionReport(report))}\n`);
+    const [command, ...args] = process.argv.slice(2);
+    if (command === 'validate') {
+      const report = JSON.parse(readFileSync(args[0], 'utf8'));
+      process.stdout.write(`${JSON.stringify(validateVersionReport(report))}\n`);
+    } else if (command === 'normalize-go') {
+      const [nativePath, explanationPath, branch, sha, repository] = args;
+      const report = normalizeGoReport({
+        nativeJson: readFileSync(nativePath, 'utf8'),
+        explanation: readFileSync(explanationPath, 'utf8'),
+        branch, sha, repository,
+      });
+      process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+    } else {
+      throw new Error(`Subcomando desconhecido: ${command}`);
+    }
   } catch (error) {
     console.error(error.message);
     process.exitCode = 1;

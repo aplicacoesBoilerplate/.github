@@ -103,6 +103,8 @@ T11 → T12 → T13
 
 ### T2: Collect the native adapter report
 
+**Status**: Complete
+
 **What**: Execute the selected adapter once, capture stdout and explanation separately, and persist the normalized report without shell evaluation.
 **Where**: `scripts/versioning/collect-version-report.sh`
 **Depends on**: T1
@@ -116,10 +118,10 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Go runs with branch, SHA, JSON output and `--explain` at the pinned caller revision.
-- [ ] Native JSON and explanation remain distinguishable in `VersionReport`.
-- [ ] Unknown adapter and unsafe project path fail before command execution.
-- [ ] Gate passes with the expected test count recorded before commit.
+- [x] Go runs with branch, SHA, JSON output and `--explain` at the pinned caller revision.
+- [x] Native JSON and explanation remain distinguishable in `VersionReport`.
+- [x] Unknown adapter and unsafe project path fail before command execution.
+- [x] Gate passes with 17 assertions recorded before commit.
 
 **Tests**: integration additions in `tests/versioning/go-version.mjs`, including stderr explanation and no working-tree mutation
 **Gate**: quick, `node tests/versioning/go-version.mjs`
@@ -486,7 +488,7 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
-| VER-01 | T1, T2, T6, T9 | In Progress (T1 complete) |
+| VER-01 | T1, T2, T6, T9 | In Progress (T1-T2 complete) |
 | VER-02 | T3, T4, T6, T8, T13 | In Tasks |
 | VER-03 | T3, T4, T6, T8, T13 | In Tasks |
 | VER-04 | T5, T6, T7, T13 | In Tasks |
