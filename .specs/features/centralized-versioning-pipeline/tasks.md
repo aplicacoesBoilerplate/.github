@@ -648,6 +648,8 @@ T19 → T20 → T21 → T22
 
 ### T22: Assert release tag identity conflicts
 
+**Status**: Complete
+
 **What**: Prove a release with matching target SHA but different tag/version fails without modifying remote state.
 **Where**: `tests/versioning/post-merge.mjs`
 **Depends on**: T21
@@ -661,10 +663,10 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Existing release with wrong `tag_name` and matching SHA fails.
-- [ ] Tag and release state remain byte-for-byte unchanged after rejection.
-- [ ] A mutation removing release tag-name validation fails the focused gate.
-- [ ] Full local and real-Go gates pass.
+- [x] Existing release with wrong `tag_name` and matching SHA fails.
+- [x] Tag and release state remain byte-for-byte unchanged after rejection.
+- [x] A mutation removing release tag-name validation fails the focused gate.
+- [x] Full local and real-Go gates pass.
 
 **Tests**: integration assertions in `tests/versioning/post-merge.mjs`
 **Gate**: build, `node tests/versioning/run.mjs --local && node tests/versioning/real-go-gitsemver.mjs`
@@ -785,9 +787,9 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
-| VER-01 | T1, T2, T6, T9, T14, T19 | Needs Fix |
-| VER-02 | T3, T4, T6, T8, T13, T15, T18, T20 | Needs Fix |
-| VER-03 | T3, T4, T6, T8, T13, T15, T17, T18, T20, T21 | Needs Fix |
+| VER-01 | T1, T2, T6, T9, T14, T19 | Complete |
+| VER-02 | T3, T4, T6, T8, T13, T15, T18, T20 | Complete |
+| VER-03 | T3, T4, T6, T8, T13, T15, T17, T18, T20, T21 | Complete |
 | VER-04 | T5, T6, T7, T13, T16, T18 | Complete |
-| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18, T21, T22 | Needs Fix |
+| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18, T21, T22 | Complete |
 | VER-06 | T7, T11, T12, T13, T16, T18 | Complete |

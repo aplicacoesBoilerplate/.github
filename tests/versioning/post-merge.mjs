@@ -158,6 +158,17 @@ console.error('unexpected '+a.join(' '));process.exit(2);
     html_url: 'https://example.test/releases/v0.0.1', body: 'divergent' } });
   assert.notEqual(runPublish().status, 0, 'a release with a divergent target SHA must fail');
   assert.equal(getState().tagSha, sha, 'a divergent release must not move the correct tag');
+  const wrongTagState = { tagSha: sha, release: { tag_name: 'v9.9.9', target_commitish: sha,
+    html_url: 'https://example.test/releases/v9.9.9', body: 'wrong version' } };
+  setState(wrongTagState);
+  const stateBeforeWrongTag = readFileSync(stateFile, 'utf8');
+  const writesBeforeWrongTag = readFileSync(apiWrites, 'utf8');
+  assert.notEqual(runPublish().status, 0,
+    'a release with the integrated SHA but a different tag_name must fail');
+  assert.equal(readFileSync(stateFile, 'utf8'), stateBeforeWrongTag,
+    'a release tag identity conflict must leave remote state byte-for-byte unchanged');
+  assert.equal(readFileSync(apiWrites, 'utf8'), writesBeforeWrongTag,
+    'a release tag identity conflict must not perform writes');
 
   setState({ tagSha: null, release: null });
   published = runPublish({ FIXTURE_MODE: 'race-tag' });
