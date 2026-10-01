@@ -210,6 +210,8 @@ T11 → T12 → T13
 
 ### T6: Integrate report and policy into preview orchestration
 
+**Status**: Complete
+
 **What**: Replace epic/body-based final validation with adapter report, PR milestone policy and required guide generation by PR phase.
 **Where**: `scripts/versioning/preview.sh`
 **Depends on**: T5
@@ -223,11 +225,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] PR to `develop` emits version outputs and both guide files.
-- [ ] PR `develop → master` evaluates current milestone and override evidence.
-- [ ] No preview path creates tag, release or commit.
-- [ ] Failure to calculate or render fails the check rather than continuing.
-- [ ] Gate passes with the expected test count recorded before commit.
+- [x] PR to `develop` emits version outputs and both guide files.
+- [x] PR `develop → master` evaluates current milestone and override evidence.
+- [x] No preview path creates tag, release or commit.
+- [x] Failure to calculate or render fails the check rather than continuing.
+- [x] Gate passes with 32 assertions across the declared fixtures recorded before commit.
 
 **Tests**: integration updates in `tests/versioning/pr-check.mjs`, covering both phases and policy re-evaluation
 **Gate**: full, `node tests/versioning/pr-check.mjs && node tests/versioning/homologation-guide.mjs`
@@ -494,9 +496,9 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
-| VER-01 | T1, T2, T6, T9 | In Progress (T1-T2 complete) |
-| VER-02 | T3, T4, T6, T8, T13 | In Progress (T3-T4 complete) |
-| VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4 complete) |
-| VER-04 | T5, T6, T7, T13 | In Progress (T5 complete) |
+| VER-01 | T1, T2, T6, T9 | In Progress (T1-T2, T6 complete) |
+| VER-02 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6 complete) |
+| VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6 complete) |
+| VER-04 | T5, T6, T7, T13 | In Progress (T5-T6 complete) |
 | VER-05 | T4, T8, T9, T10, T13 | In Progress (T4 complete) |
 | VER-06 | T7, T11, T12, T13 | In Tasks |
