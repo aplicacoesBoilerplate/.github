@@ -7,7 +7,9 @@ const strictMilestone = /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 function auditFrom(override = {}) {
   return {
     labeler: override.labeledBy ?? null,
+    labelerRole: override.labelerRole ?? null,
     approver: override.approvalBy ?? null,
+    approverRole: override.approverRole ?? null,
     labeledAt: override.labeledAt ?? null,
     approvedAt: override.approvedAt ?? null,
   };
@@ -16,7 +18,7 @@ function auditFrom(override = {}) {
 function validOverride(override, currentSha, reasons) {
   if (!override?.labelPresent) { reasons.push('label versioning:override ausente'); return false; }
   if (!override.labeledAt || !override.labeledBy || !authorizedRoles.has(override.labelerRole)) {
-    reasons.push(`autor do label sem papel Maintain/Admin: ${override.labeledBy ?? '<ausente>'}`);
+    reasons.push(`autor do label sem papel Maintain/Admin: ${override.labeledBy ?? '<ausente>'} (papel atual: ${override.labelerRole ?? '<ausente>'})`);
     return false;
   }
   if (!override.approvedAt || !override.approvalBy || !authorizedRoles.has(override.approverRole)) {

@@ -597,6 +597,8 @@ T19 → T20 → T21 → T22
 
 ### T20: Preserve blocked-policy evidence
 
+**Status**: Complete
+
 **What**: Assert all four comparison values and unauthorized-attempt identity/role evidence on blocked policy decisions.
 **Where**: `tests/versioning/release-policy.mjs`
 **Depends on**: T19
@@ -610,9 +612,9 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Exact-version and bump mismatches each assert planned/calculated version and bump together.
-- [ ] Unauthorized labeler case asserts identity, current role and exact diagnostic/audit values.
-- [ ] A mutation removing any required field fails the focused gate.
+- [x] Exact-version and bump mismatches each assert planned/calculated version and bump together.
+- [x] Unauthorized labeler case asserts identity, current role and exact diagnostic/audit values.
+- [x] A mutation removing any required field fails the focused gate.
 
 **Tests**: unit assertions in `tests/versioning/release-policy.mjs`
 **Gate**: quick, `node tests/versioning/release-policy.mjs`

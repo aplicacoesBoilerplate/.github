@@ -39,12 +39,21 @@ assertions += 2;
 assert.match(invalidWithOverride.reasons.join(' '), /milestone inválida: release-2/);
 assert.match(invalidWithOverride.reasons.join(' '), /esperado vMAJOR\.MINOR\.PATCH/);
 const exactMismatch = outcome({ title: 'v3.0.0' }, 'blocked');
-assertions += 1; assert.match(exactMismatch.reasons.join(' '), /planejada 3\.0\.0.*calculada 2\.0\.0/);
+assertions += 5;
+assert.equal(exactMismatch.plannedVersion, '3.0.0');
+assert.equal(exactMismatch.calculatedVersion, '2.0.0');
+assert.equal(exactMismatch.plannedBump, 'major');
+assert.equal(exactMismatch.calculatedBump, 'major');
+assert.match(exactMismatch.reasons.join(' '), /planejada 3\.0\.0.*calculada 2\.0\.0/);
 const bumpMismatchReport = { ...report, candidateVersion: '1.3.0', bump: 'patch' };
 const bumpMismatch = evaluateReleasePolicy({ report: bumpMismatchReport,
   snapshot: snapshot({ title: 'v1.3.0' }) });
-assertions += 2;
+assertions += 6;
 assert.equal(bumpMismatch.outcome, 'blocked');
+assert.equal(bumpMismatch.plannedVersion, '1.3.0');
+assert.equal(bumpMismatch.calculatedVersion, '1.3.0');
+assert.equal(bumpMismatch.plannedBump, 'minor');
+assert.equal(bumpMismatch.calculatedBump, 'patch');
 assert.match(bumpMismatch.reasons.join(' '), /incremento planejado minor.*calculado patch/);
 
 const overridden = outcome({ title: 'v3.0.0' }, 'overridden', validOverride);
@@ -59,7 +68,15 @@ assert.equal(overridden.audit.labeledAt, validOverride.labeledAt);
 assert.equal(overridden.audit.approvedAt, validOverride.approvedAt);
 
 outcome({ title: 'v3.0.0' }, 'blocked', { ...validOverride, labelPresent: false });
-outcome({ title: 'v3.0.0' }, 'blocked', { ...validOverride, labelerRole: 'triage' });
+const unauthorizedLabeler = outcome({ title: 'v3.0.0' }, 'blocked',
+  { ...validOverride, labelerRole: 'triage' });
+assertions += 3;
+assert.equal(unauthorizedLabeler.audit.labeler, 'maintainer-one');
+assert.equal(unauthorizedLabeler.audit.labelerRole, 'triage');
+assert.deepEqual(unauthorizedLabeler.reasons, [
+  'versão planejada 3.0.0 diverge da calculada 2.0.0',
+  'autor do label sem papel Maintain/Admin: maintainer-one (papel atual: triage)',
+]);
 outcome({ title: 'v3.0.0' }, 'blocked', { ...validOverride, approverRole: 'write' });
 outcome({ title: 'v3.0.0' }, 'blocked', { ...validOverride, approvalBy: 'maintainer-one' });
 outcome({ title: 'v3.0.0' }, 'blocked', { ...validOverride,
