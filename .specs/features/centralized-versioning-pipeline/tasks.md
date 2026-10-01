@@ -291,6 +291,8 @@ T11 → T12 → T13
 
 ### T9: Publish from the normalized report idempotently
 
+**Status**: Complete
+
 **What**: Make publication consume `VersionReport`, generate release notes from the normalized/native report and preserve reconcile-before-write behavior.
 **Where**: `scripts/versioning/publish.sh`
 **Depends on**: T8
@@ -304,12 +306,12 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] The integrated SHA is recalculated once and used for tag and release.
-- [ ] Matching tag/release returns `already-published`.
-- [ ] Correct tag with missing release recovers by creating only the release.
-- [ ] Conflicting tag/release never moves or overwrites state.
-- [ ] Ten retries and simulated partial/racing writes meet VER-05.
-- [ ] Gate passes with the expected test count recorded before commit.
+- [x] The integrated SHA is recalculated once and used for tag and release.
+- [x] Matching tag/release returns `already-published`.
+- [x] Correct tag with missing release recovers by creating only the release.
+- [x] Conflicting tag/release never moves or overwrites state.
+- [x] Ten retries and simulated partial/racing writes meet VER-05.
+- [x] Gate passes with 62 assertions recorded before commit.
 
 **Tests**: integration updates in `tests/versioning/post-merge.mjs`, including notes, ten retries, partial state and collision
 **Gate**: full, `node tests/versioning/post-merge.mjs`
@@ -500,9 +502,9 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
-| VER-01 | T1, T2, T6, T9 | In Progress (T1-T2, T6 complete) |
+| VER-01 | T1, T2, T6, T9 | Complete |
 | VER-02 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6, T8 complete) |
 | VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6, T8 complete) |
 | VER-04 | T5, T6, T7, T13 | In Progress (T5-T7 complete) |
-| VER-05 | T4, T8, T9, T10, T13 | In Progress (T4, T8 complete) |
+| VER-05 | T4, T8, T9, T10, T13 | In Progress (T4, T8-T9 complete) |
 | VER-06 | T7, T11, T12, T13 | In Progress (T7 complete) |
