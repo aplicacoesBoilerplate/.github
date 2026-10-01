@@ -237,6 +237,8 @@ T11 → T12 → T13
 
 ### T7: Expose preview artifacts through the reusable workflow
 
+**Status**: Complete
+
 **What**: Install the pinned Go adapter, upload homologation artifacts, expose normalized outputs and run for all policy-changing PR/review events.
 **Where**: `.github/workflows/version-preview.yml`
 **Depends on**: T6
@@ -250,11 +252,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] The workflow supports Go calculation in read-only jobs.
-- [ ] Artifact upload is mandatory for PRs to `develop`.
-- [ ] Outputs include version, bump and policy outcome.
-- [ ] Permissions contain no write capability.
-- [ ] Contract test proves required events and artifact handling.
+- [x] The workflow supports Go calculation in read-only jobs.
+- [x] Artifact upload is mandatory for PRs to `develop`.
+- [x] Outputs include version, bump and policy outcome.
+- [x] Permissions contain no write capability.
+- [x] Contract test proves required events and artifact handling with 37 assertions across the declared fixtures.
 
 **Tests**: static integration additions in `tests/versioning/workflow-contract.mjs`
 **Gate**: full, `node tests/versioning/workflow-contract.mjs && node tests/versioning/pr-check.mjs`
@@ -499,6 +501,6 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | VER-01 | T1, T2, T6, T9 | In Progress (T1-T2, T6 complete) |
 | VER-02 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6 complete) |
 | VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6 complete) |
-| VER-04 | T5, T6, T7, T13 | In Progress (T5-T6 complete) |
+| VER-04 | T5, T6, T7, T13 | In Progress (T5-T7 complete) |
 | VER-05 | T4, T8, T9, T10, T13 | In Progress (T4 complete) |
-| VER-06 | T7, T11, T12, T13 | In Tasks |
+| VER-06 | T7, T11, T12, T13 | In Progress (T7 complete) |
