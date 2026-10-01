@@ -76,6 +76,8 @@ T11 → T12 → T13
 
 ### T1: Create the normalized version report model
 
+**Status**: Complete
+
 **What**: Implement schema validation, reachable stable-tag selection, bootstrap `v0.0.1` and Go native-result normalization.
 **Where**: `scripts/versioning/version-report.mjs`
 **Depends on**: None
@@ -89,11 +91,11 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] `VersionReport` schema version 1 is emitted deterministically.
-- [ ] Stable tags outside the evaluated SHA history are ignored.
-- [ ] No stable tag accepts only candidate `0.0.1`.
-- [ ] Invalid SemVer, native JSON and mismatched SHA fail.
-- [ ] Gate passes with the expected test count recorded before commit.
+- [x] `VersionReport` schema version 1 is emitted deterministically.
+- [x] Stable tags outside the evaluated SHA history are ignored.
+- [x] No stable tag accepts only candidate `0.0.1`.
+- [x] Invalid SemVer, native JSON and mismatched SHA fail.
+- [x] Gate passes with 14 assertions recorded before commit.
 
 **Tests**: unit in `tests/versioning/version-report.mjs`, covering every VER-01 branch and edge case
 **Gate**: quick, `node tests/versioning/version-report.mjs`
@@ -484,7 +486,7 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
-| VER-01 | T1, T2, T6, T9 | In Tasks |
+| VER-01 | T1, T2, T6, T9 | In Progress (T1 complete) |
 | VER-02 | T3, T4, T6, T8, T13 | In Tasks |
 | VER-03 | T3, T4, T6, T8, T13 | In Tasks |
 | VER-04 | T5, T6, T7, T13 | In Tasks |
