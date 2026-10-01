@@ -44,6 +44,20 @@ try {
   equal(report.bump, 'patch', 'increment is derived only for comparison metadata');
   equal(report.native.explanation, 'native explanation', 'stderr explanation remains separate');
 
+  const taggedCommit = normalizeGoReport({
+    nativeJson: JSON.stringify({ SemVer: '0.2.0', Sha: '' }),
+    explanation: 'already tagged', branch: 'master', sha: evaluatedSha, repository,
+  });
+  equal(taggedCommit.sha, evaluatedSha, 'empty native SHA reconciles to the evaluated SHA');
+  equal(taggedCommit.tag, 'v0.2.0', 'empty native SHA requires the exact candidate tag');
+  throws(() => normalizeGoReport({ nativeJson: JSON.stringify({ SemVer: '0.2.1', Sha: '' }),
+    explanation: '', branch: 'master', sha: evaluatedSha, repository }), /não há tag v0\.2\.1/,
+  'empty native SHA without the candidate tag fails');
+  git('tag', 'v0.2.1', 'HEAD~1');
+  throws(() => normalizeGoReport({ nativeJson: JSON.stringify({ SemVer: '0.2.1', Sha: '' }),
+    explanation: '', branch: 'master', sha: evaluatedSha, repository }), /não aponta para/,
+  'empty native SHA with a candidate tag on another commit fails');
+
   const noTags = mkdtempSync(join(tmpdir(), 'version-report-empty-'));
   try {
     const emptyGit = (...args) => execFileSync('git', args, { cwd: noTags, encoding: 'utf8' }).trim();

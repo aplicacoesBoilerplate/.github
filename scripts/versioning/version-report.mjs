@@ -65,7 +65,20 @@ export function normalizeGoReport({ nativeJson, explanation, branch, sha, reposi
   try { nativeResult = JSON.parse(nativeJson); }
   catch (error) { throw new Error(`JSON nativo inválido: ${error.message}`); }
   const candidateVersion = parseStableVersion(nativeResult?.SemVer).text;
-  if (String(nativeResult?.Sha ?? '').toLowerCase() !== sha.toLowerCase()) {
+  if (nativeResult?.Sha === '') {
+    const candidateTag = `v${candidateVersion}`;
+    let taggedSha;
+    try {
+      taggedSha = execFileSync('git', ['rev-parse', '-q', '--verify', `refs/tags/${candidateTag}^{commit}`], {
+        cwd: repository, encoding: 'utf8',
+      }).trim();
+    } catch {
+      throw new Error(`SHA nativo vazio e não há tag ${candidateTag} no checkout`);
+    }
+    if (taggedSha.toLowerCase() !== sha.toLowerCase()) {
+      throw new Error(`SHA nativo vazio e a tag ${candidateTag} não aponta para ${sha}`);
+    }
+  } else if (String(nativeResult?.Sha ?? '').toLowerCase() !== sha.toLowerCase()) {
     throw new Error(`SHA calculado diverge do SHA avaliado: ${nativeResult?.Sha ?? '<ausente>'} != ${sha}`);
   }
   const reachable = selectReachableStableTag(repository, sha);

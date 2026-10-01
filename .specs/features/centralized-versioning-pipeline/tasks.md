@@ -434,6 +434,8 @@ T14 → T15 → T16 → T17 → T18
 
 ### T14: Reconcile real tagged Go commits
 
+**Status**: Complete
+
 **What**: Accept an empty native SHA only when the exact candidate tag resolves to the evaluated commit, preserving fail-closed behavior otherwise.
 **Where**: `scripts/versioning/version-report.mjs`
 **Depends on**: T13
@@ -447,10 +449,10 @@ T14 → T15 → T16 → T17 → T18
 
 **Done when**:
 
-- [ ] The pinned real Go adapter normalizes an already-tagged commit with empty native SHA.
-- [ ] The candidate tag resolves exactly to the evaluated SHA.
-- [ ] Missing, wrong or conflicting tags remain rejected.
-- [ ] The collector-to-publication rerun reaches `already-published`.
+- [x] The pinned real Go adapter normalizes an already-tagged commit with empty native SHA.
+- [x] The candidate tag resolves exactly to the evaluated SHA.
+- [x] Missing, wrong or conflicting tags remain rejected.
+- [x] The collector-to-publication rerun reaches `already-published`.
 
 **Tests**: integration and real-adapter additions in `tests/versioning/version-report.mjs` and `tests/versioning/real-go-gitsemver.mjs`
 **Gate**: hosted Go, `node tests/versioning/real-go-gitsemver.mjs`

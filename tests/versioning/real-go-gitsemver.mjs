@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -55,6 +55,41 @@ branches:
     const path = join(repo, 'scripts/versioning', file);
     writeFileSync(path, readFileSync(path, 'utf8').replaceAll('\r\n', '\n'));
   }
+  const reportPath = join(repo, 'version-report.json');
+  execFileSync(bash, ['scripts/versioning/collect-version-report.sh', reportPath], {
+    cwd: repo, encoding: 'utf8', env: { ...process.env,
+      ADAPTER_BIN: tool, ADAPTER: 'go-gitsemver', PROJECT_PATH: '.', GITHUB_WORKSPACE: repo,
+      TARGET_BRANCH: 'master', GITHUB_SHA: publishedSha },
+  });
+  const taggedReport = JSON.parse(readFileSync(reportPath, 'utf8'));
+  assert.equal(taggedReport.sha, publishedSha, 'collector reconciles the tagged commit SHA');
+  assert.equal(taggedReport.tag, 'v0.0.1', 'collector preserves the exact native candidate tag');
+  const mockBin = join(repo, 'mock-bin');
+  mkdirSync(mockBin);
+  const gh = join(mockBin, 'gh');
+  writeFileSync(gh, `#!/usr/bin/env node
+const a=process.argv.slice(2), path=a.find(v=>v.startsWith('repos/'))??'', sha=process.env.GITHUB_SHA;
+const pr={number:7,head:{ref:'develop',sha},base:{ref:'master'},merged_at:'2026-10-01T10:00:00Z',merge_commit_sha:sha,milestone:null};
+if(path==='repos/acme/real-go'){console.log('master');process.exit(0)}
+if(path.endsWith('/git/ref/heads/master')){console.log(sha);process.exit(0)}
+if(path.includes('/commits/')&&path.includes('/pulls')){console.log(JSON.stringify([[pr]]));process.exit(0)}
+if(path.endsWith('/pulls/7')){console.log(JSON.stringify(pr));process.exit(0)}
+if(path.includes('/timeline')||path.includes('/reviews')){console.log('[[]]');process.exit(0)}
+if(path.endsWith('/git/ref/tags/v0.0.1')){console.log(JSON.stringify({object:{type:'commit',sha}}));process.exit(0)}
+if(path.endsWith('/releases/tags/v0.0.1')){console.log(JSON.stringify({tag_name:'v0.0.1',target_commitish:sha,html_url:'https://example.test/v0.0.1'}));process.exit(0)}
+console.error('unexpected gh call: '+a.join(' '));process.exit(2);
+`);
+  chmodSync(gh, 0o755);
+  const publishOutput = join(repo, 'publish-output.txt');
+  execFileSync(bash, ['scripts/versioning/publish.sh'], { cwd: repo, encoding: 'utf8', env: {
+    ...process.env, PATH: `${mockBin}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH}`,
+    ADAPTER_BIN: tool, ADAPTER: 'go-gitsemver', PROJECT_PATH: '.', GITHUB_WORKSPACE: repo,
+    GITHUB_REPOSITORY: 'acme/real-go', GH_TOKEN: 'fixture', GITHUB_EVENT_NAME: 'push',
+    GITHUB_REF_NAME: 'master', TARGET_BRANCH: 'master', GITHUB_SHA: publishedSha,
+    GITHUB_OUTPUT: publishOutput,
+  } });
+  assert.match(readFileSync(publishOutput, 'utf8'), /outcome=already-published/,
+    'collector-to-publication rerun reconciles the existing tag and release');
   const rerun = execFileSync(bash, ['scripts/versioning/prepare-release.sh'],
     { cwd: repo, encoding: 'utf8', env: { ...process.env,
       RELEASE_GATES_VALIDATED: '1', ADAPTER: 'go-gitsemver', PROJECT_PATH: '.',
