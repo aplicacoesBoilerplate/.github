@@ -486,6 +486,8 @@ T14 → T15 → T16 → T17 → T18
 
 ### T16: Complete caller events and permissions
 
+**Status**: Complete
+
 **What**: Re-run policy on milestone assignment/removal and grant the read permission required to collect check runs.
 **Where**: `examples/callers/go/.github/workflows/go-publish.yml`
 **Depends on**: T15
@@ -499,10 +501,10 @@ T14 → T15 → T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Pull-request types include `milestoned` and `demilestoned`.
-- [ ] Preview caller permissions include `checks: read`.
-- [ ] Contract tests fail when either event or permission is absent.
-- [ ] CI workflow triggers and Maven/npm jobs remain asserted.
+- [x] Pull-request types include `milestoned` and `demilestoned`.
+- [x] Preview caller permissions include `checks: read`.
+- [x] Contract tests fail when either event or permission is absent.
+- [x] CI workflow triggers and Maven/npm jobs remain asserted.
 
 **Tests**: static integration additions in `tests/versioning/workflow-contract.mjs`
 **Gate**: full, `node tests/versioning/workflow-contract.mjs`

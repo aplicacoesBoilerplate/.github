@@ -61,12 +61,20 @@ ciMatches(/go install github\.com\/MyCarrier-DevOps\/go-gitsemver@680c1c12d9a4f5
   'central CI must install the immutable adapter revision');
 ciMatches(/node tests\/versioning\/run\.mjs --local/, 'central CI must run deterministic fixtures');
 ciMatches(/node tests\/versioning\/run\.mjs --real-go/, 'central CI must run the real Go fixture separately');
+ciMatches(/on:\s*\n\s+pull_request:\s*\n\s+push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+- master\s*\n\s+- develop\s*\n\s+- "release\/\*\*"/,
+  'central CI must monitor pull requests and all integration branches');
+ciMatches(/name: Validate Maven project[\s\S]*?run: mvn -B verify/,
+  'central CI must preserve Maven validation');
+ciMatches(/name: Install npm dependencies[\s\S]*?run: npm ci[\s\S]*?name: Run npm tests when available/,
+  'central CI must preserve npm validation');
 
-callerMatches(/pull_request:\s*\n\s+types: \[opened, reopened, synchronize, edited, labeled, unlabeled\]/,
+callerMatches(/pull_request:\s*\n\s+types: \[opened, reopened, synchronize, edited, labeled, unlabeled, milestoned, demilestoned\]/,
   'Go caller must react to every PR policy change');
 callerMatches(/pull_request_review:\s*\n\s+types: \[submitted, dismissed\]/,
   'Go caller must react to review changes');
 callerMatches(/push:\s*\n\s+branches: \[master\]/, 'Go caller publication trigger must be master push only');
+callerMatches(/validate-pr:[\s\S]*?permissions:\s*\n\s+contents: read\s*\n\s+pull-requests: read\s*\n\s+issues: read\s*\n\s+checks: read/,
+  'Go preview caller must grant the read scopes required by the reusable workflow');
 callerMatches(/publish:\s*\n\s+if: github\.event_name == 'push' && github\.ref_name == 'master'\s*\n\s+needs: go-ci/,
   'Go publication must depend on consumer CI');
 const references = [...goCaller.matchAll(/uses: aplicacoesBoilerplate\/\.github\/\.github\/workflows\/(?:version-preview|version-publish)\.yml@([0-9a-f]{40})/g)];
