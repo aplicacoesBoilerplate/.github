@@ -622,6 +622,8 @@ T19 → T20 → T21 → T22
 
 ### T21: Cover pull-request evidence cardinality and endpoints
 
+**Status**: Complete
+
 **What**: Prove zero and multiple associated PRs fail, and independently exercise timeline, review and collaborator-role API failures.
 **Where**: `tests/versioning/pr-policy.mjs`
 **Depends on**: T20
@@ -635,10 +637,10 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Zero and multiple matching merged PRs each fail with cardinality diagnostics.
-- [ ] Timeline, reviews and permission endpoint failures are injected after earlier requests succeed.
-- [ ] Every failure returns nonzero and no policy snapshot.
-- [ ] A mutation accepting zero associations fails the focused gate.
+- [x] Zero and multiple matching merged PRs each fail with cardinality diagnostics.
+- [x] Timeline, reviews and permission endpoint failures are injected after earlier requests succeed.
+- [x] Every failure returns nonzero and no policy snapshot.
+- [x] A mutation accepting zero associations fails the focused gate.
 
 **Tests**: integration assertions in `tests/versioning/pr-policy.mjs`
 **Gate**: full, `node tests/versioning/pr-policy.mjs`

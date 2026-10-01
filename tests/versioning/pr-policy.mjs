@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { chmodSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -22,7 +22,10 @@ const mode=process.env.FIXTURE_MODE;
 if(mode==='api-error'||mode==='incomplete'){console.error('simulated API failure');process.exit(1)}
 const sha=process.env.TEST_SHA;
 const pr={number:42,head:{ref:'develop',sha},base:{ref:'master'},merged_at:'2026-10-01T10:02:00Z',merge_commit_sha:sha,milestone:{title:'v2.0.0'}};
-if(path.includes('/commits/')) { const values=mode==='ambiguous'?[pr,{...pr,number:43}]:[pr]; console.log(JSON.stringify([values])); }
+if(mode==='timeline-error'&&path.includes('/timeline')){console.error('simulated timeline failure');process.exit(1)}
+if(mode==='reviews-error'&&path.includes('/reviews')){console.error('simulated reviews failure');process.exit(1)}
+if(mode==='role-error'&&path.includes('/collaborators/')){console.error('simulated role failure');process.exit(1)}
+if(path.includes('/commits/')) { const values=mode==='zero'?[]:mode==='ambiguous'?[pr,{...pr,number:43}]:[pr]; console.log(JSON.stringify([values])); }
 else if(path.endsWith('/pulls/42')) console.log(JSON.stringify(pr));
 else if(path.includes('/timeline')) console.log(JSON.stringify([[
   {event:'labeled',label:{name:'versioning:override'},actor:{login:'old'},created_at:'2026-10-01T09:00:00Z'},
@@ -74,8 +77,27 @@ else { console.error('unexpected '+path); process.exit(2); }
   const byCommit = run('success', ['--commit', sha, output]);
   assert.equal(byCommit.status, 0, byCommit.stderr);
   assert.equal(JSON.parse(readFileSync(output, 'utf8')).number, 42);
-  assert.notEqual(run('ambiguous', ['--commit', sha, output]).status, 0,
-    'ambiguous commit association must fail closed');
+
+  const expectFailure = (mode, args, diagnostic, priorCalls = []) => {
+    rmSync(output, { force: true });
+    writeFileSync(calls, '');
+    const failed = run(mode, args);
+    assert.notEqual(failed.status, 0, `${mode} must fail closed`);
+    assert.match(failed.stderr, diagnostic);
+    assert.equal(existsSync(output), false, `${mode} must not create a policy snapshot`);
+    const failedCalls = readFileSync(calls, 'utf8');
+    for (const expectedCall of priorCalls) assert.match(failedCalls, expectedCall);
+  };
+  expectFailure('zero', ['--commit', sha, output],
+    /Associação ambígua: 0 PRs integrados develop -> master/);
+  expectFailure('ambiguous', ['--commit', sha, output],
+    /Associação ambígua: 2 PRs integrados develop -> master/);
+  expectFailure('timeline-error', ['42', output], /simulated timeline failure/,
+    [/pulls\/42/, /timeline/]);
+  expectFailure('reviews-error', ['42', output], /simulated reviews failure/,
+    [/pulls\/42/, /timeline/, /reviews/]);
+  expectFailure('role-error', ['42', output], /simulated role failure/,
+    [/pulls\/42/, /timeline/, /reviews/, /collaborators\/alice\/permission/]);
   assert.notEqual(run('api-error').status, 0, 'API errors must fail closed');
   assert.notEqual(run('incomplete').status, 0, 'incomplete pagination must fail closed');
   console.log('PR policy: current review state and invalidation rules passed');
