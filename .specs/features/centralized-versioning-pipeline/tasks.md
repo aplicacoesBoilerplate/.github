@@ -572,6 +572,8 @@ T19 → T20 → T21 → T22
 
 ### T19: Assert adapter rejection diagnostics
 
+**Status**: Complete
+
 **What**: Prove unknown adapters and unsafe project paths fail with their required diagnostics before any adapter execution.
 **Where**: `tests/versioning/go-version.mjs`
 **Depends on**: T18
@@ -585,9 +587,9 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Unknown adapter stderr identifies the unsupported adapter.
-- [ ] Unsafe project path stderr identifies checkout confinement.
-- [ ] Both cases remain nonzero and leave the execution marker absent.
+- [x] Unknown adapter stderr identifies the unsupported adapter.
+- [x] Unsafe project path stderr identifies checkout confinement.
+- [x] Both cases remain nonzero and leave the execution marker absent.
 
 **Tests**: integration assertions in `tests/versioning/go-version.mjs`
 **Gate**: quick, `node tests/versioning/go-version.mjs`

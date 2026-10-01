@@ -84,9 +84,11 @@ console.log(JSON.stringify({SemVer:process.env.TEST_VERSION,Sha:process.env.TEST
   rmSync(marker, { force: true });
   const unknown = runCollector({ ADAPTER: 'shell-from-pr' });
   assert.notEqual(unknown.status, 0, 'unknown adapter must fail');
+  assert.equal(unknown.stderr.trim(), 'Adapter não suportado: shell-from-pr');
   assert.equal(existsSync(marker), false, 'unknown adapter must fail before command execution');
   const unsafe = runCollector({}, '../outside');
   assert.notEqual(unsafe.status, 0, 'unsafe project path must fail');
+  assert.equal(unsafe.stderr.trim(), 'project_path deve ser relativo e não pode conter ..');
   assert.equal(existsSync(marker), false, 'unsafe path must fail before adapter execution');
   rmSync(artifactDirectory, { recursive: true, force: true });
   console.log('Go version: native JSON, commit identity and stable version validated');
