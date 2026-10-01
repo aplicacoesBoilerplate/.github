@@ -29,10 +29,10 @@
 ## Handoff
 
 - **Feature**: Pipeline centralizada de versionamento
-- **Phase / Task**: Execute - Batch 1 / T1
-- **Completed**: Specify, Discuss, Design e Tasks aprovados e validados
+- **Phase / Task**: Execute - Batch 2 / T13 complete
+- **Completed**: T1-T13, todos os gates determinísticos, documentação e commits atômicos
 - **In-progress** (file:line): none
-- **Next step**: executar T1–T7 em sequência com gates e commits atômicos
+- **Next step**: executar o Verifier independente e registrar `validation.md`
 - **Blockers**: none
-- **Uncommitted files**: `.specs/STATE.md`, `.specs/features/centralized-versioning-pipeline/spec.md`, `.specs/features/centralized-versioning-pipeline/context.md`, `.specs/features/centralized-versioning-pipeline/design.md`, `.specs/features/centralized-versioning-pipeline/tasks.md`, `AGENTS.md`
+- **Uncommitted files**: none expected after the T13 commit
 - **Branch**: feature/issue-4-versionamento

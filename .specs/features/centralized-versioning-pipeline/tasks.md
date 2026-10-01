@@ -400,6 +400,8 @@ T11 → T12 → T13
 
 ### T13: Document adoption and branch protection
 
+**Status**: Complete
+
 **What**: Document the lifecycle, milestone rules, secure override, optional environment, required checks, direct-push protection and Go adoption steps.
 **Where**: `docs/versioning.md`
 **Depends on**: T12
@@ -413,12 +415,12 @@ T11 → T12 → T13
 
 **Done when**:
 
-- [ ] Documentation matches every finalized workflow input and output.
-- [ ] Maintainers can configure required checks and block direct pushes on `develop` and `master`.
-- [ ] The override explains why the label alone is insufficient.
-- [ ] Migration from `homologation_environment` to `publication_environment` is explicit.
-- [ ] Commands for local and hosted verification are copyable.
-- [ ] Build gate and TLC validators pass with no stale contract references.
+- [x] Documentation matches every finalized workflow input and output.
+- [x] Maintainers can configure required checks and block direct pushes on `develop` and `master`.
+- [x] The override explains why the label alone is insufficient.
+- [x] Migration from `homologation_environment` to `publication_environment` is explicit.
+- [x] Commands for local and hosted verification are copyable.
+- [x] Build gate and TLC validators pass with no stale contract references.
 
 **Tests**: none - documentation layer; contract search and build gate only
 **Gate**: build, `node tests/versioning/run.mjs --local && node tests/versioning/workflow-contract.mjs`
@@ -509,8 +511,8 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | Requirement | Tasks | Status |
 | ----------- | ----- | ------ |
 | VER-01 | T1, T2, T6, T9 | Complete |
-| VER-02 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6, T8 complete) |
-| VER-03 | T3, T4, T6, T8, T13 | In Progress (T3-T4, T6, T8 complete) |
-| VER-04 | T5, T6, T7, T13 | In Progress (T5-T7 complete) |
-| VER-05 | T4, T8, T9, T10, T13 | In Progress (T4, T8-T10 complete) |
-| VER-06 | T7, T11, T12, T13 | In Progress (T7, T11-T12 complete) |
+| VER-02 | T3, T4, T6, T8, T13 | Complete |
+| VER-03 | T3, T4, T6, T8, T13 | Complete |
+| VER-04 | T5, T6, T7, T13 | Complete |
+| VER-05 | T4, T8, T9, T10, T13 | Complete |
+| VER-06 | T7, T11, T12, T13 | Complete |

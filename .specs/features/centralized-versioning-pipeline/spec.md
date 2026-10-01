@@ -194,11 +194,11 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | VER-01 | P1: Adaptador nativo | Execute | Complete |
-| VER-02 | P1: Milestone | Execute | In Progress (T3-T4, T6, T8 complete) |
-| VER-03 | P1: Override | Execute | In Progress (T3-T4, T6, T8 complete) |
-| VER-04 | P1: Homologação | Execute | In Progress (T5-T7 complete) |
-| VER-05 | P1: Publicação | Execute | In Progress (T4, T8-T10 complete) |
-| VER-06 | P1: CI central | Execute | In Progress (T7, T11-T12 complete) |
+| VER-02 | P1: Milestone | Execute | Complete |
+| VER-03 | P1: Override | Execute | Complete |
+| VER-04 | P1: Homologação | Execute | Complete |
+| VER-05 | P1: Publicação | Execute | Complete |
+| VER-06 | P1: CI central | Execute | Complete |
 
 **Coverage:** 6 total, 6 mapped to tasks, 0 unmapped.
 
@@ -206,10 +206,10 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 
 ## Success Criteria
 
-- [ ] A fixture Go sem tag produz `v0.0.1` e uma execução repetida não duplica a publicação.
-- [ ] Todo cenário de milestone produz resultado determinístico e diagnóstico com versão e incremento.
-- [ ] Nenhum usuário abaixo de Maintain consegue tornar válido um override.
-- [ ] Um novo commit invalida uma autorização de divergência anterior.
-- [ ] Pull requests para `develop` recebem guia Markdown e JSON sem alteração no working tree.
-- [ ] O workflow só publica depois do merge em `master`, da CI e do environment quando configurado.
-- [ ] A CI central executa e bloqueia por falhas na suíte completa de versionamento.
+- [x] A fixture Go sem tag produz `v0.0.1` e uma execução repetida não duplica a publicação.
+- [x] Todo cenário de milestone produz resultado determinístico e diagnóstico com versão e incremento.
+- [x] Nenhum usuário abaixo de Maintain consegue tornar válido um override.
+- [x] Um novo commit invalida uma autorização de divergência anterior.
+- [x] Pull requests para `develop` recebem guia Markdown e JSON sem alteração no working tree.
+- [x] O workflow só publica depois do merge em `master`, da CI e do environment quando configurado.
+- [x] A CI central executa e bloqueia por falhas na suíte completa de versionamento.
