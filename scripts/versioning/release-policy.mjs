@@ -62,6 +62,7 @@ export function evaluateReleasePolicy({ report, snapshot }) {
   const match = strictMilestone.exec(title);
   if (!match) {
     decision.reasons.push(`milestone inválida: ${title}; esperado vMAJOR.MINOR.PATCH`);
+    return decision;
   } else {
     decision.plannedVersion = parseStableVersion(title).text;
     decision.plannedBump = bumpBetween(report.baseVersion, decision.plannedVersion);

@@ -460,6 +460,8 @@ T14 → T15 → T16 → T17 → T18
 
 ### T15: Make malformed milestones non-overridable
 
+**Status**: Complete
+
 **What**: Separate invalid contract input from intentional version or bump divergence so override applies only to a valid milestone.
 **Where**: `scripts/versioning/release-policy.mjs`
 **Depends on**: T14
@@ -473,10 +475,10 @@ T14 → T15 → T16 → T17 → T18
 
 **Done when**:
 
-- [ ] Invalid milestone always returns `blocked`, even with two valid maintainers.
-- [ ] The diagnostic includes the received title and expected strict format.
-- [ ] Valid version or bump divergence remains overridable.
-- [ ] The four compared values and full override audit payload have exact assertions.
+- [x] Invalid milestone always returns `blocked`, even with two valid maintainers.
+- [x] The diagnostic includes the received title and expected strict format.
+- [x] Valid version or bump divergence remains overridable.
+- [x] The four compared values and full override audit payload have exact assertions.
 
 **Tests**: unit additions in `tests/versioning/release-policy.mjs`
 **Gate**: quick, `node tests/versioning/release-policy.mjs`

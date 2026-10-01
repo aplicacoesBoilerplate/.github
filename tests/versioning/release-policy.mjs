@@ -30,6 +30,10 @@ assert.equal(matched.plannedBump, 'major');
 
 const invalid = outcome({ title: 'release-2' }, 'blocked');
 assertions += 1; assert.match(invalid.reasons.join(' '), /vMAJOR\.MINOR\.PATCH/);
+const invalidWithOverride = outcome({ title: 'release-2' }, 'blocked', validOverride);
+assertions += 2;
+assert.match(invalidWithOverride.reasons.join(' '), /milestone inválida: release-2/);
+assert.match(invalidWithOverride.reasons.join(' '), /esperado vMAJOR\.MINOR\.PATCH/);
 const exactMismatch = outcome({ title: 'v3.0.0' }, 'blocked');
 assertions += 1; assert.match(exactMismatch.reasons.join(' '), /planejada 3\.0\.0.*calculada 2\.0\.0/);
 const bumpMismatchReport = { ...report, candidateVersion: '1.3.0', bump: 'patch' };
@@ -40,7 +44,11 @@ assert.equal(bumpMismatch.outcome, 'blocked');
 assert.match(bumpMismatch.reasons.join(' '), /incremento planejado minor.*calculado patch/);
 
 const overridden = outcome({ title: 'v3.0.0' }, 'overridden', validOverride);
-assertions += 4;
+assertions += 8;
+assert.equal(overridden.plannedVersion, '3.0.0');
+assert.equal(overridden.calculatedVersion, '2.0.0');
+assert.equal(overridden.plannedBump, 'major');
+assert.equal(overridden.calculatedBump, 'major');
 assert.equal(overridden.audit.labeler, 'maintainer-one');
 assert.equal(overridden.audit.approver, 'maintainer-two');
 assert.equal(overridden.audit.labeledAt, validOverride.labeledAt);
