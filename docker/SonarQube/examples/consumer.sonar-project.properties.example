@@ -1,0 +1,15 @@
+# Copie para sonar-project.properties na raiz de cada projeto consumidor.
+# A chave deve ser a mesma do projeto criado no servidor SonarQube.
+sonar.projectKey=meu-projeto
+sonar.projectName=Meu projeto
+sonar.sources=src
+sonar.sourceEncoding=UTF-8
+
+# Habilite apenas os caminhos e relatorios que existirem neste projeto.
+# sonar.tests=tests
+# sonar.exclusions=src/generated/**,src/**/*.min.js
+# sonar.test.inclusions=tests/**/*.test.ts
+# sonar.coverage.exclusions=src/generated/**,src/bootstrap.ts
+# sonar.cpd.exclusions=src/generated/**
+# sonar.javascript.lcov.reportPaths=coverage/lcov.info
+# sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml

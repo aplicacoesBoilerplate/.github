@@ -1,0 +1,5 @@
+.env
+!.env.example
+.envrc
+!.envrc.example
+.scannerwork/

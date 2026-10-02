@@ -1,0 +1,18 @@
+{
+  "profiles": [
+    {
+      "Language": "js",
+      "Name": "TEK pPascal JavaScript",
+      "Parent": "Sonar way",
+      "Rule": "javascript:S7718",
+      "AcceptedCatchName": "^p[A-Z][A-Za-z0-9]*$"
+    },
+    {
+      "Language": "ts",
+      "Name": "TEK pPascal TypeScript",
+      "Parent": "Sonar way",
+      "Rule": "typescript:S7718",
+      "AcceptedCatchName": "^p[A-Z][A-Za-z0-9]*$"
+    }
+  ]
+}

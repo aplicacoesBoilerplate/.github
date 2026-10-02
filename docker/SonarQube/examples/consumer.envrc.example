@@ -1,0 +1,24 @@
+# Copie para .envrc na raiz de CADA projeto consumidor (nao versionar).
+# Git Bash no Windows: pwd -W devolve o caminho absoluto no formato C:/...
+export SONAR_PROJECT_PATH="$(pwd -W)"
+
+# Mapeie a variavel fixa SONAR_TOKEN para a variavel externa deste projeto.
+# SQP_K6 e apenas um exemplo de nome; o valor do token nao fica no .envrc.
+export SONAR_TOKEN="$SQP_K6"
+
+# Caminho do compose central neste computador. Use / no caminho do Windows.
+export SONAR_STACK_COMPOSE='C:/caminho/SonarQubeAnalyzer/docker-compose.yml'
+
+# Opcional: apenas se usar SonarQube CLI ou MCP. Use um User Token externo,
+# distinto do Project Analysis token acima. Ajuste o nome da variavel externa.
+# export SONARQUBE_CLI_SERVER='http://localhost:9000'
+# export SONARQUBE_CLI_TOKEN="$SONAR_USER_TOKEN"
+# export SONARQUBE_URL='http://host.docker.internal:9000'
+# export SONARQUBE_TOKEN="$SONAR_USER_TOKEN"
+# export SONARQUBE_PROJECT_KEY='minha-chave-de-projeto'
+
+# MCPs opcionais do Codex CLI. O perfil Docker e escolhido pelo consumidor;
+# os outros valores sao referencias a variaveis externas, sem copiar segredos.
+# export PROFILE_TOOLKIT='perfil-deste-projeto'
+# export GITHUB_PERSONAL_ACCESS_TOKEN="$PAT_DESTE_PROJETO"
+# export API_KEY_CONTEXT7="$CONTEXT7_KEY_EXTERNA"

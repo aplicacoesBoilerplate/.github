@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: sonar
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: ${SONAR_DB_PASSWORD:?Set SONAR_DB_PASSWORD in .env}
+    volumes:
+      - postgres_data_17:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  sonarqube:
+    image: sonarqube:26.9.0.129388-community
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: ${SONAR_DB_PASSWORD:?Set SONAR_DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${SONAR_PORT:-9000}:9000"
+    volumes:
+      - sonarqube_data_26:/opt/sonarqube/data
+      - sonarqube_extensions_26:/opt/sonarqube/extensions
+      - sonarqube_logs_26:/opt/sonarqube/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"'"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 10
+    restart: unless-stopped
+
+  scanner:
+    image: sonarsource/sonar-scanner-cli:12.1.0.3233_8.0.1
+    profiles: [scan]
+    depends_on:
+      sonarqube:
+        condition: service_healthy
+    environment:
+      SONAR_HOST_URL: http://sonarqube:9000
+      SONAR_TOKEN: ${SONAR_TOKEN:-}
+    volumes:
+      - ${SONAR_PROJECT_PATH:-.}:/usr/src
+
+volumes:
+  postgres_data_17:
+  sonarqube_data_26:
+  sonarqube_extensions_26:
+  sonarqube_logs_26:
