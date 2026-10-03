@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/centralized-versioning-pipeline/design.md`
-**Status**: In Progress
+**Status**: Awaiting escalation after independent verification round 3 (FAIL)
 
 ---
 
@@ -791,5 +791,13 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | VER-02 | T3, T4, T6, T8, T13, T15, T18, T20 | Complete |
 | VER-03 | T3, T4, T6, T8, T13, T15, T17, T18, T20, T21 | Complete |
 | VER-04 | T5, T6, T7, T13, T16, T18 | Complete |
-| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18, T21, T22 | Complete |
+| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18, T21, T22 | Verification gap: distinct PR head and merge SHAs |
 | VER-06 | T7, T11, T12, T13, T16, T18 | Complete |
+
+## Final caller correction and escalation
+
+- Completed atomic follow-up: pin both Go caller jobs to `009e72b56ebc61caacd0441ea695a082aca2cfaf`, which contains the implemented corrections; document milestone events in the preview contract comment.
+- Files: `examples/callers/go/.github/workflows/go-publish.yml`, `.github/workflows/version-preview.yml`.
+- Requirement: VER-06.5. Gate: `node tests/versioning/workflow-contract.mjs` (50 assertions PASS); independent round 3 audited referenced production contents.
+- Pending proposed correction (not implemented): distinguish PR `headSha`, which anchors approval, from integrated `mergeCommitSha`, which anchors calculation, tag and release. Add realistic merge fixtures with different SHAs and preserve stale-review rejection.
+- Round 3: 37/41 acceptance criteria verified, seven listed edges covered, six mutants killed; publication remains blocked. A fourth correction cycle requires escalation under TLC. No push performed.
