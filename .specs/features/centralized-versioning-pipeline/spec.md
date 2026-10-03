@@ -6,12 +6,12 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 
 ## Goals
 
-- [ ] Validar e publicar versões a partir do cálculo nativo do adaptador configurado pelo caller.
-- [ ] Publicar uma tag e uma GitHub Release somente depois da integração validada em `master` e da CI do consumidor.
-- [ ] Usar a milestone do pull request como contrato opcional de versão exata e tipo de incremento.
-- [ ] Permitir divergência somente por um override com duas pessoas autorizadas e trilha de auditoria.
-- [ ] Gerar um guia de homologação a partir do relatório nativo do adaptador em pull requests para `develop`.
-- [ ] Entregar e verificar o primeiro perfil real com `go-gitsemver` sem alterar o projeto piloto nesta iteração.
+- [x] Validar e publicar versões a partir do cálculo nativo do adaptador configurado pelo caller.
+- [x] Publicar uma tag e uma GitHub Release somente depois da integração validada em `master` e da CI do consumidor.
+- [x] Usar a milestone do pull request como contrato opcional de versão exata e tipo de incremento.
+- [x] Permitir divergência somente por um override com duas pessoas autorizadas e trilha de auditoria.
+- [x] Gerar um guia de homologação a partir do relatório nativo do adaptador em pull requests para `develop`.
+- [x] Entregar e verificar o primeiro perfil real com `go-gitsemver` sem alterar o projeto piloto nesta iteração.
 
 ## Out of Scope
 
@@ -193,12 +193,12 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| VER-01 | P1: Adaptador nativo | Verification | Complete |
-| VER-02 | P1: Milestone | Verification | Complete |
-| VER-03 | P1: Override | Verification | Complete |
-| VER-04 | P1: Homologação | Verification | Complete |
-| VER-05 | P1: Publicação | Verification | SHA correction implemented; independent verification pending |
-| VER-06 | P1: CI central | Verification | Complete |
+| VER-01 | P1: Adaptador nativo | Verification | Verified |
+| VER-02 | P1: Milestone | Verification | Verified |
+| VER-03 | P1: Override | Verification | Verified |
+| VER-04 | P1: Homologação | Verification | Verified |
+| VER-05 | P1: Publicação | Verification | Verified |
+| VER-06 | P1: CI central | Verification | Verified |
 
 **Coverage:** 6 total, 6 mapped to tasks, 0 unmapped.
 
@@ -211,5 +211,5 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 - [x] Nenhum usuário abaixo de Maintain consegue tornar válido um override.
 - [x] Um novo commit invalida uma autorização de divergência anterior.
 - [x] Pull requests para `develop` recebem guia Markdown e JSON sem alteração no working tree.
-- [ ] O workflow só publica depois do merge em `master`, da CI e do environment quando configurado. Round 3 exposed distinct-head/merge-SHA failure; see `validation.md`.
+- [x] O workflow só publica depois do merge em `master`, da CI e do environment quando configurado. SHA correction independently verified; see `validation.md` for local behavior and static-contract evidence.
 - [x] A CI central executa e bloqueia por falhas na suíte completa de versionamento.

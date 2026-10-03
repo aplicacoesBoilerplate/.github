@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/centralized-versioning-pipeline/design.md`
-**Status**: In Progress - user authorized SHA-only correction on 2026-10-03
+**Status**: Complete - independent local MVP validation PASS on 2026-10-03
 
 ---
 
@@ -793,14 +793,14 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | VER-02 | T3, T4, T6, T8, T13, T15, T18, T20 | Complete |
 | VER-03 | T3, T4, T6, T8, T13, T15, T17, T18, T20, T21 | Complete |
 | VER-04 | T5, T6, T7, T13, T16, T18 | Complete |
-| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18, T21, T22 | Verification gap: distinct PR head and merge SHAs |
-| VER-06 | T7, T11, T12, T13, T16, T18 | Complete |
+| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18, T21, T22, T23 | Verified |
+| VER-06 | T7, T11, T12, T13, T16, T18, T24 | Verified |
 
 ## SHA-only correction (authorized 2026-10-03)
 
 ### T23: Separate reviewed PR head from integrated publication SHA
 
-**Status**: Complete - independent verification pending
+**Status**: Complete - independent verification PASS
 **What**: Use an explicit publication phase for merge-SHA calculation identity while keeping override approval anchored to PR head SHA.
 **Where**: `scripts/versioning/release-policy.mjs`, `scripts/versioning/release-gates.sh`, `tests/versioning/release-policy.mjs`, `tests/versioning/post-merge.mjs`
 **Design note**: `.specs/features/centralized-versioning-pipeline/design.md` documents the explicit phase and separate SHA identities.
@@ -843,3 +843,5 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 - Requirement: VER-06.5. Gate: `node tests/versioning/workflow-contract.mjs` (50 assertions PASS); independent round 3 audited referenced production contents.
 - Pending proposed correction (not implemented): distinguish PR `headSha`, which anchors approval, from integrated `mergeCommitSha`, which anchors calculation, tag and release. Add realistic merge fixtures with different SHAs and preserve stale-review rejection.
 - Round 3: 37/41 acceptance criteria verified, seven listed edges covered, six mutants killed; publication remains blocked. A fourth correction cycle requires escalation under TLC. No push performed.
+
+**Resolved on 2026-10-03**: the user authorized the SHA-only follow-up. T23/T24 close this historical blocker. Fresh independent verification confirms 41/41 ACs, 7/7 edges, 9/9 local fixtures, real pinned Go and 5/5 killed mutants. No hosted execution, pilot adoption or push was performed; these are not claimed by local MVP validation.

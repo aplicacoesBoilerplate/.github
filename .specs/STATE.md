@@ -29,10 +29,10 @@
 ## Handoff
 
 - **Feature**: Pipeline centralizada de versionamento
-- **Phase / Task**: Independent verification round 3 - FAIL; escalation required
-- **Completed**: T1-T22; corrected Go caller refs; independent verification rounds 1-3 recorded
+- **Phase / Task**: SHA-only follow-up complete; independent local MVP validation PASS
+- **Completed**: T1-T24; 41/41 ACs, 7/7 edges, 9/9 local fixtures, pinned real Go, 5/5 mutants killed; OpenSpec preserved
 - **In-progress** (file:line): none
-- **Next step**: obtain direction for a fourth correction cycle separating reviewed PR head SHA from integrated merge SHA; then reverify before authorized branch push
-- **Blockers**: realistic merged PR fails because release-policy compares PR head SHA to calculated merge SHA; 37/41 ACs verified, 7/7 edges covered, 6/6 mutants killed
+- **Next step**: user decides when to proceed with remote branch publication and pilot integration; this focused iteration stops after the local stability report
+- **Blockers**: none within the validated local MVP; hosted execution and boilerplate-cli integration not performed
 - **Uncommitted files**: none after progress/caller commits; no remote push, merge or release performed
 - **Branch**: feature/issue-4-versionamento
