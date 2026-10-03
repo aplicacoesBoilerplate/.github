@@ -85,4 +85,29 @@ outcome({ title: 'v3.0.0' }, 'blocked', { ...validOverride, approvedAt: 'not-a-d
 outcome({ title: 'v3.0.0' }, 'blocked', { ...validOverride, reviewedCommitSha: 'b'.repeat(40) });
 outcome({ title: 'v3.0.0' }, 'blocked', { ...validOverride, labeledAt: null });
 
+const mergeSha = 'c'.repeat(40);
+const mergedSnapshot = { ...snapshot({ title: 'v3.0.0' }, validOverride),
+  mergedAt: '2026-10-01T10:02:00Z', mergeCommitSha: mergeSha };
+const mergedReport = { ...report, sha: mergeSha };
+const mergedDecision = evaluateReleasePolicy({ report: mergedReport,
+  snapshot: mergedSnapshot, phase: 'publication' });
+assert.equal(mergedDecision.outcome, 'overridden');
+for (const reviewedCommitSha of [mergeSha, 'd'.repeat(40)]) {
+  assert.equal(evaluateReleasePolicy({ report: mergedReport, phase: 'publication',
+    snapshot: { ...mergedSnapshot, override: { ...validOverride, reviewedCommitSha } } }).outcome,
+  'blocked', 'publication approval must reference the reviewed PR head, not merge or stale SHA');
+}
+assert.throws(() => evaluateReleasePolicy({ report, snapshot: mergedSnapshot,
+  phase: 'publication' }), /Snapshot não corresponde ao SHA calculado/);
+assert.throws(() => evaluateReleasePolicy({ report: mergedReport, snapshot: mergedSnapshot }),
+  /Snapshot não corresponde ao SHA calculado/);
+assert.throws(() => evaluateReleasePolicy({ report: mergedReport, phase: 'publication',
+  snapshot: { ...mergedSnapshot, mergedAt: null } }), /PR integrado obrigatório/);
+for (const field of ['mergeCommitSha', 'headSha']) {
+  assert.throws(() => evaluateReleasePolicy({ report: mergedReport, phase: 'publication',
+    snapshot: { ...mergedSnapshot, [field]: null } }), /PR integrado obrigatório/);
+}
+assert.throws(() => evaluateReleasePolicy({ report, snapshot: snapshot(null), phase: 'invalid' }),
+  /Fase de avaliação inválida/);
+assertions += 9;
 console.log(`Release policy: ${assertions} assertions passed`);

@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/centralized-versioning-pipeline/design.md`
-**Status**: Awaiting escalation after independent verification round 3 (FAIL)
+**Status**: In Progress - user authorized SHA-only correction on 2026-10-03
 
 ---
 
@@ -677,7 +677,7 @@ T19 → T20 → T21 → T22
 ## Phase Execution Map
 
 ```text
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
 
 Phase 1: T1 → T2 → T3 → T4
 Boundary: T4 → T5
@@ -690,6 +690,8 @@ Boundary: T13 → T14
 Phase 5: T14 → T15 → T16 → T17 → T18
 Boundary: T18 → T19
 Phase 6: T19 → T20 → T21 → T22
+Boundary: T22 → T23
+Phase 7: T23
 ```
 
 Execution is strictly sequential. Cross-phase dependencies are the final task of the previous phase.
@@ -794,7 +796,31 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | VER-05 | T4, T8, T9, T10, T13, T14, T17, T18, T21, T22 | Verification gap: distinct PR head and merge SHAs |
 | VER-06 | T7, T11, T12, T13, T16, T18 | Complete |
 
-## Final caller correction and escalation
+## SHA-only correction (authorized 2026-10-03)
+
+### T23: Separate reviewed PR head from integrated publication SHA
+
+**Status**: Complete - independent verification pending
+**What**: Use an explicit publication phase for merge-SHA calculation identity while keeping override approval anchored to PR head SHA.
+**Where**: `scripts/versioning/release-policy.mjs`, `scripts/versioning/release-gates.sh`, `tests/versioning/release-policy.mjs`, `tests/versioning/post-merge.mjs`
+**Design note**: `.specs/features/centralized-versioning-pipeline/design.md` documents the explicit phase and separate SHA identities.
+**Depends on**: T22
+**Requirement**: VER-03.7, VER-05.1, VER-05.3, VER-05.6, VER-05.7
+**Done when**:
+
+- [x] Real local non-fast-forward merge has distinct head and merge commits and publishes the integrated SHA.
+- [x] A valid override reviewed on PR head succeeds after merge; reviews on merge or stale SHA remain blocked.
+- [x] Preview still requires report SHA equal to PR head; publication requires an integrated PR and matching merge SHA.
+- [x] Full local and real Go gates pass without weakening existing tests. Independent mutation verification follows this atomic task commit.
+
+**Tests**: unit and integration in the two named test files.
+**Gate**: build, `node tests/versioning/run.mjs --local && node tests/versioning/run.mjs --real-go`
+**Commit**: `fix(versioning): separate reviewed and integrated commit identities`
+
+**Gate evidence**: all nine local fixtures PASS; 54 policy assertions and 50 workflow-contract assertions; pinned real-Go fixture PASS. Tests added before implementation reproduced the old SHA error. All existing assertions preserved.
+**Adequacy**: `tests/versioning/release-policy.mjs:94` asserts merged override succeeds; :96-100 rejects merge/stale reviews; :102-115 reject incorrect calculation SHA, missing integrated metadata and invalid phase. `tests/versioning/post-merge.mjs:34` asserts distinct real commits; publication assertions preserve exact integrated tag/release SHA and ten write-free retries. These map to VER-03.7 and VER-05.1/.3/.6/.7; no unclaimed tests.
+
+## Previous caller correction and escalation
 
 - Completed atomic follow-up: pin both Go caller jobs to `009e72b56ebc61caacd0441ea695a082aca2cfaf`, which contains the implemented corrections; document milestone events in the preview contract comment.
 - Files: `examples/callers/go/.github/workflows/go-publish.yml`, `.github/workflows/version-preview.yml`.

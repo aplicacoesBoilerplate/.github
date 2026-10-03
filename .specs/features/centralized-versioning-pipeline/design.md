@@ -89,6 +89,7 @@ flowchart TD
 - **Location**: `scripts/versioning/release-policy.mjs`
 - **Interfaces**:
   - `release-policy.mjs evaluate <policy-input.json> <policy-output.json>` - retorna decisão e diagnóstico.
+  - Input `phase` defaults to `preview`: report SHA must equal PR `headSha`. Trusted post-merge gates set `publication`: report SHA must equal `mergeCommitSha` of the integrated PR. Override reviews always match PR `headSha`, never the merge SHA.
   - `release-policy.mjs milestone <base> <candidate> <title-or-empty>` - usado por fixtures focadas.
 - **Dependencies**: Snapshot coletado pelo orquestrador e utilitários SemVer.
 - **Reuses**: `version.mjs compare` e convenções de saída JSON dos testes atuais.

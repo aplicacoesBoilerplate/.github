@@ -197,7 +197,7 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 | VER-02 | P1: Milestone | Verification | Complete |
 | VER-03 | P1: Override | Verification | Complete |
 | VER-04 | P1: Homologação | Verification | Complete |
-| VER-05 | P1: Publicação | Verification | Gap: PR head SHA differs from merge SHA |
+| VER-05 | P1: Publicação | Verification | SHA correction implemented; independent verification pending |
 | VER-06 | P1: CI central | Verification | Complete |
 
 **Coverage:** 6 total, 6 mapped to tasks, 0 unmapped.

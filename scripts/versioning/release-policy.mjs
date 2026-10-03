@@ -42,9 +42,14 @@ function validOverride(override, currentSha, reasons) {
   return true;
 }
 
-export function evaluateReleasePolicy({ report, snapshot }) {
+export function evaluateReleasePolicy({ report, snapshot, phase = 'preview' }) {
   if (!report || !snapshot) throw new Error('Relatório e snapshot são obrigatórios');
-  if (snapshot.headSha !== report.sha) throw new Error('Snapshot não corresponde ao SHA calculado');
+  if (!['preview', 'publication'].includes(phase)) throw new Error('Fase de avaliação inválida');
+  if (phase === 'publication' && (!snapshot.mergedAt || !snapshot.mergeCommitSha || !snapshot.headSha)) {
+    throw new Error('PR integrado obrigatório para publicação');
+  }
+  const calculatedSha = phase === 'publication' ? snapshot.mergeCommitSha : snapshot.headSha;
+  if (calculatedSha !== report.sha) throw new Error('Snapshot não corresponde ao SHA calculado');
   const decision = {
     outcome: 'blocked',
     plannedVersion: null,
@@ -82,7 +87,7 @@ export function evaluateReleasePolicy({ report, snapshot }) {
     return decision;
   }
   const policyReasons = [...decision.reasons];
-  if (validOverride(snapshot.override, report.sha, decision.reasons)) {
+  if (validOverride(snapshot.override, snapshot.headSha, decision.reasons)) {
     decision.outcome = 'overridden';
     decision.reasons = [...policyReasons, 'divergência autorizada por override auditável'];
   }

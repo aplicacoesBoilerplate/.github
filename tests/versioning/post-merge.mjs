@@ -22,7 +22,14 @@ try {
   git('config', 'user.name', 'Fixture'); git('config', 'user.email', 'fixture@example.test');
   writeFileSync(join(workspace, 'go.mod'), 'module example.test/release\n\ngo 1.24\n');
   git('add', 'go.mod'); git('commit', '-m', 'feat: initial release');
+  git('checkout', '-b', 'develop');
+  writeFileSync(join(workspace, 'README.md'), 'Initial feature\n');
+  git('add', 'README.md'); git('commit', '-m', 'feat: application');
+  const headSha = git('rev-parse', 'HEAD');
+  git('checkout', 'master');
+  git('merge', '--no-ff', 'develop', '-m', 'Merge develop');
   const sha = git('rev-parse', 'HEAD');
+  assert.notEqual(headSha, sha, 'reviewed head and integrated merge are distinct real commits');
   execFileSync('git', ['clone', '--bare', workspace, bare]);
   git('remote', 'add', 'origin', bare);
   writeFileSync(stateFile, JSON.stringify({ tagSha: null, release: null }));
@@ -38,20 +45,20 @@ console.log(JSON.stringify({SemVer:'0.0.1',Sha:process.env.GITHUB_SHA}));
   writeFileSync(gh, `#!/usr/bin/env node
 const fs=require('node:fs'), cp=require('node:child_process');
 const a=process.argv.slice(2), path=a.find(v=>v.startsWith('repos/'))??'';
-const mode=process.env.FIXTURE_MODE, sha=process.env.GITHUB_SHA;
+const mode=process.env.FIXTURE_MODE, sha=process.env.GITHUB_SHA, headSha='${headSha}';
 const state=JSON.parse(fs.readFileSync(process.env.STATE_FILE,'utf8'));
 const save=()=>fs.writeFileSync(process.env.STATE_FILE,JSON.stringify(state));
 const git=(...args)=>cp.execFileSync('git',['--git-dir='+process.env.MOCK_BARE,...args],{encoding:'utf8'}).trim();
-const pr={number:42,head:{ref:mode==='wrong-head'?'feature/x':'develop',sha},base:{ref:'master'},
+const pr={number:42,head:{ref:mode==='wrong-head'?'feature/x':'develop',sha:headSha},base:{ref:'master'},
   merged_at:'2026-10-01T10:02:00Z',merge_commit_sha:sha,
-  milestone:mode==='no-milestone'?null:{title:['bad-milestone','stale-review','dismissed-review','unauthorized'].includes(mode)?'v2.0.0':'v0.0.1'}};
+  milestone:mode==='no-milestone'?null:{title:['override','merge-review','bad-milestone','stale-review','dismissed-review','unauthorized'].includes(mode)?'v2.0.0':'v0.0.1'}};
 if(mode==='api-error'){console.error('simulated API failure');process.exit(1)}
 if(path==='repos/acme/consumer'){console.log('master');process.exit(0)}
 if(path.endsWith('/git/ref/heads/master')){console.log(mode==='remote-stale'?'f'.repeat(40):git('rev-parse','refs/heads/master'));process.exit(0)}
 if(path.includes('/commits/')&&path.includes('/pulls')){console.log(JSON.stringify([mode==='ambiguous'?[pr,{...pr,number:43}]:[pr]]));process.exit(0)}
 if(path.endsWith('/pulls/42')){console.log(JSON.stringify(pr));process.exit(0)}
 if(path.includes('/timeline')){console.log(JSON.stringify(mode==='bad-milestone'?[[]]:[[{event:'labeled',label:{name:'versioning:override'},actor:{login:'alice'},created_at:'2026-10-01T10:00:00Z'}]]));process.exit(0)}
-if(path.includes('/reviews')){const reviews=[{state:'APPROVED',user:{login:'bob'},submitted_at:'2026-10-01T10:01:00Z',commit_id:mode==='stale-review'?'e'.repeat(40):sha}];if(mode==='dismissed-review')reviews.push({state:'DISMISSED',user:{login:'bob'},submitted_at:'2026-10-01T10:02:00Z',commit_id:sha});console.log(JSON.stringify([reviews]));process.exit(0)}
+if(path.includes('/reviews')){const reviews=[{state:'APPROVED',user:{login:'bob'},submitted_at:'2026-10-01T10:01:00Z',commit_id:mode==='stale-review'?'e'.repeat(40):mode==='merge-review'?sha:headSha}];if(mode==='dismissed-review')reviews.push({state:'DISMISSED',user:{login:'bob'},submitted_at:'2026-10-01T10:02:00Z',commit_id:headSha});console.log(JSON.stringify([reviews]));process.exit(0)}
 if(path.includes('/collaborators/')){console.log(JSON.stringify({role_name:mode==='unauthorized'?'triage':path.includes('/alice/')?'maintain':'admin'}));process.exit(0)}
 if(path.includes('/git/ref/tags/')){
   if(!state.tagSha){console.error('gh: Not Found (HTTP 404)');process.exit(1)}
@@ -93,12 +100,15 @@ console.error('unexpected '+a.join(' '));process.exit(2);
   assert.throws(() => readFileSync(apiWrites), /ENOENT/, 'gate must not perform API writes');
   const withoutMilestone = runGate({ FIXTURE_MODE: 'no-milestone' });
   assert.equal(withoutMilestone.status, 0, withoutMilestone.stderr);
+  const authorizedOverride = runGate({ FIXTURE_MODE: 'override' });
+  assert.equal(authorizedOverride.status, 0, authorizedOverride.stderr);
   for (const overrides of [
     { GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF_NAME: 'develop' },
     { GITHUB_SHA: 'd'.repeat(40) }, { FIXTURE_MODE: 'remote-stale' },
     { FIXTURE_MODE: 'wrong-head' }, { FIXTURE_MODE: 'ambiguous' },
     { FIXTURE_MODE: 'bad-milestone' }, { FIXTURE_MODE: 'stale-review' },
     { FIXTURE_MODE: 'dismissed-review' },
+    { FIXTURE_MODE: 'merge-review' },
     { FIXTURE_MODE: 'unauthorized' }, { FIXTURE_MODE: 'api-error' },
   ]) {
     const failed = runGate(overrides);
