@@ -29,10 +29,10 @@
 ## Handoff
 
 - **Feature**: Pipeline centralizada de versionamento
-- **Phase / Task**: Verifier fix loop 2 - T19
-- **Completed**: T1-T18; independent verification rounds 1 and 2 recorded
+- **Phase / Task**: Independent verification round 3 - FAIL; escalation required
+- **Completed**: T1-T22; corrected Go caller refs; independent verification rounds 1-3 recorded
 - **In-progress** (file:line): none
-- **Next step**: execute T19-T22 and dispatch independent verifier round 3
-- **Blockers**: none
-- **Uncommitted files**: `.specs/features/centralized-versioning-pipeline/validation.md`, `.specs/features/centralized-versioning-pipeline/tasks.md`, `.specs/STATE.md`, `.specs/LESSONS.md`, `.specs/lessons.json`
+- **Next step**: obtain direction for a fourth correction cycle separating reviewed PR head SHA from integrated merge SHA; then reverify before authorized branch push
+- **Blockers**: realistic merged PR fails because release-policy compares PR head SHA to calculated merge SHA; 37/41 ACs verified, 7/7 edges covered, 6/6 mutants killed
+- **Uncommitted files**: none after progress/caller commits; no remote push, merge or release performed
 - **Branch**: feature/issue-4-versionamento

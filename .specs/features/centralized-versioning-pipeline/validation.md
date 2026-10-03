@@ -1,189 +1,131 @@
 # Pipeline Centralizada de Versionamento Validation
 
-## Validation: FAIL ❌
+## Validation: FAIL
 
-**Verdict**: FAIL ❌
-**Date**: 2026-10-01
+**Verdict**: FAIL
+**Date**: 2026-10-03
 **Spec**: `.specs/features/centralized-versioning-pipeline/spec.md`
-**Diff range**: `59663cd..39ddb38` (`59663cd..HEAD`)
-**Verifier**: independent TLC Verifier, round 2 (author ≠ verifier)
+**Diff range**: `59663cd..009e72b56ebc61caacd0441ea695a082aca2cfaf`, plus audited caller-ref and preview-comment overlay.
+**Verifier**: fresh independent TLC Verifier, round 3 (author != verifier).
 
-The implementation passes every requested execution gate, and the fixes for tagged Go commits, malformed milestones, caller events/permissions, dismissed approvals, and oversized artifacts are observable. The feature is still not ready under evidence-or-zero: three high-risk mutants survive, and three additional acceptance outcomes lack exact assertion-level evidence.
+The prior six gaps are closed and all six repeated mutants are killed. A separate realistic merge fixture exposes a publication blocker: PR head SHA and integrated merge SHA are treated as the same commit. Normal merged PRs therefore fail before publication. The existing passing publication fixtures assign identical values to both fields and conceal the problem.
 
----
+## Task completion
 
-## Task Completion
+T1-T22 are declared Complete. T19 adapter diagnostics, T20 blocked payload/audit, T21 zero association and endpoint failures, and T22 release tag identity have exact discriminating evidence below. T8/T9 remain incomplete at the feature level because a real merged PR with distinct head and merge commits cannot pass. The earlier Complete labels and traceability are implementation declarations, not independent verification.
 
-| Task | Declared | Verifier status | Notes |
-| ---- | -------- | --------------- | ----- |
-| T1 | Complete | ✅ Verified | Normalization, reachable tags, bootstrap, and invalid report inputs have exact assertions. |
-| T2 | Complete | ⚠️ Partial | Safe adapter/path rejection is asserted, but its required diagnostic is not. |
-| T3 | Complete | ⚠️ Partial | Core milestone/override decisions pass; blocked divergence payload and unauthorized-attempt audit are not fully asserted. |
-| T4 | Complete | ⚠️ Partial | Current review-state fixes pass; zero matching merged PRs and endpoint-specific evidence failures lack discriminating tests. |
-| T5 | Complete | ✅ Verified | Markdown/JSON values, escaping, facts/suggestions, and clean tree are asserted. |
-| T6 | Complete | ✅ Verified | Develop/master preview paths, summary, no-write behavior, and artifact limit are asserted. |
-| T7 | Complete | ✅ Verified | Read-only reusable preview contract and artifact upload are asserted. |
-| T8 | Complete | ⚠️ Partial | Revalidation rejects tested provenance/policy failures, but zero-PR association survives the sensor. |
-| T9 | Complete | ⚠️ Partial | Idempotency and SHA conflicts pass; release tag/version mismatch is not discriminated. |
-| T10 | Complete | ✅ Verified | Optional environment, serialization, and permissions are asserted. |
-| T11 | Complete | ✅ Verified | Local and pinned real-Go runners are wired and pass. |
-| T12 | Complete | ✅ Verified | Caller events, permissions, CI dependency, and immutable workflow refs are asserted. |
-| T13 | Complete | ✅ Verified | Required checks and direct-push protection documentation are asserted. |
-| T14 | Complete | ✅ Verified | Empty native SHA is accepted only through exact tag-to-SHA reconciliation; real rerun reaches `already-published`. |
-| T15 | Complete | ✅ Verified | Malformed milestones remain blocked with a complete valid override. |
-| T16 | Complete | ✅ Verified | `milestoned`, `demilestoned`, and `checks: read` are asserted. |
-| T17 | Complete | ✅ Verified | Dismissed, changes-requested, relabeled, and stale approvals are invalidated. |
-| T18 | Complete | ❌ Incomplete evidence | Several prior gaps closed, but three surviving mutants remain. |
+## Spec-anchored acceptance criteria
 
----
+Each citation names an executable assertion and its expected value. PASS rows concern the stated behavior; the four affected publication rows remain GAP even though the equal-SHA fixture passes.
 
-## Spec-Anchored Acceptance Criteria
+| AC | Spec-defined outcome | Exact evidence and assertion | Result |
+| --- | --- | --- | --- |
+| VER-01.1 | Pinned native Go evaluates the requested SHA and emits JSON. | `tests/versioning/workflow-contract.mjs:32` matches install revision `680c1c12d9a4f573a8da1b2e3ccebb3571b1cab6`; `tests/versioning/go-version.mjs:79` asserts `normalized.sha === commit`; the mock at :22 rejects missing JSON/explain/SHA flags. | PASS |
+| VER-01.2 | Normalize native candidate, SHA, bump and explanation without recomputing candidate. | `tests/versioning/version-report.mjs:39` asserts schema 1; :42 candidate `0.2.1`, :43 tag `v0.2.1`, :44 bump `patch`, :45 native explanation; `tests/versioning/go-version.mjs:79` asserts SHA identity. | PASS |
+| VER-01.3 | Bad SemVer/SHA/JSON or adapter execution fails before writes. | `tests/versioning/version-report.mjs:75` throws /JSON nativo inválido/; :77 /SemVer estável inválido/; :80 /SHA calculado diverge/; `tests/versioning/go-version.mjs:56` rejects prerelease; `tests/versioning/real-go-gitsemver.mjs:144` asserts invalid native configuration throws. | PASS |
+| VER-01.4 | Bootstrap publishes only v0.0.1 with internal base v0.0.0. | `tests/versioning/version-report.mjs:67` asserts base `0.0.0`; :70 rejects native `0.1.0`; `tests/versioning/real-go-gitsemver.mjs:49` asserts bootstrap `0.0.1`. | PASS |
+| VER-01.5 | Unknown adapter/path escapes fail with diagnostics before execution. | `tests/versioning/go-version.mjs:86` nonzero; :87 exact `Adapter não suportado: shell-from-pr`; :88 marker absent; :90 nonzero; :91 exact `project_path deve ser relativo e não pode conter ..`; :92 marker absent. | PASS |
+| VER-02.1 | No milestone accepts adapter values without extra approval. | `tests/versioning/release-policy.mjs:24` via :20 asserts `adapter-authoritative`; :26-29 assert null planned fields, calculated `2.0.0` and `major`. | PASS |
+| VER-02.2 | Strict milestone compares exact candidate. | `tests/versioning/release-policy.mjs:30` asserts matched; :32 planned `2.0.0`; :41 blocked exact mismatch; :43-44 assert planned `3.0.0` versus calculated `2.0.0`. | PASS |
+| VER-02.3 | Compare planned and native increment. | `tests/versioning/release-policy.mjs:33` planned `major`; :52 blocked; :55-56 planned `minor` versus calculated `patch`. | PASS |
+| VER-02.4 | Invalid milestone blocks with title and expected syntax. | `tests/versioning/release-policy.mjs:35` and :37 assert blocked, including valid override; :39 received `release-2`; :40 expected `vMAJOR.MINOR.PATCH`. | PASS |
+| VER-02.5 | Blocked divergence records all four comparison values. | `tests/versioning/release-policy.mjs:43` through :46 assert `3.0.0/2.0.0/major/major`; :53 through :56 assert `1.3.0/1.3.0/minor/patch`; :20 and :52 assert blocked. M6 kills loss of this payload. | PASS |
+| VER-02.6 | Milestone changes rerun current policy. | `tests/versioning/workflow-contract.mjs:73` through callerMatches(:17) asserts milestone events; `tests/versioning/pr-policy.mjs:56` asserts current API milestone `v2.0.0`. | PASS |
+| VER-03.1 | No override label leaves divergence blocked. | `tests/versioning/release-policy.mjs:70` uses :20 to assert blocked with `labelPresent:false`. | PASS |
+| VER-03.2 | Timeline identifies current label actor. | `tests/versioning/pr-policy.mjs:57` true active label; :58 `alice`; :59 `maintain`; :64 asserts paginated timeline after old label/unlabel events. | PASS |
+| VER-03.3 | Unauthorized labeler blocks and is audited. | `tests/versioning/release-policy.mjs:71` uses :20 for blocked; :74 actor `maintainer-one`; :75 role `triage`; :76 exact reasons include identity/current role. | PASS |
+| VER-03.4 | Missing later distinct authorized approval blocks. | `tests/versioning/release-policy.mjs:80` through :86 use :20 to assert blocked for write role, same actor, earlier/invalid timestamp, old commit, absent label time. | PASS |
+| VER-03.5 | Two authorized distinct actors allow audited divergence. | `tests/versioning/release-policy.mjs:59` uses :20 for overridden; :61-64 assert four values; :65-68 actors and exact timestamps. | PASS |
+| VER-03.6 | Same actor cannot label and approve. | `tests/versioning/release-policy.mjs:81` uses :20 for blocked with approvalBy `maintainer-one`. | PASS |
+| VER-03.7 | Relevant commit/label/review/milestone changes invalidate and reevaluate. | `tests/versioning/release-policy.mjs:70`, :85 block removed label/stale SHA; `tests/versioning/pr-policy.mjs:71` and :73 assert null approver/review SHA for dismissed, changes-requested, relabel, stale; `tests/versioning/workflow-contract.mjs:73` and :75 assert milestone/review event types. | PASS |
+| VER-03.8 | Timeline/review/current-role API failures fail closed. | `tests/versioning/pr-policy.mjs:85` asserts nonzero, :86 diagnostic, :87 absent snapshot, :89 prior endpoint calls; :95-100 invoke separately timeline, reviews, role failures after earlier evidence succeeds. | PASS |
+| VER-04.1 | Develop PR calculates PR SHA read-only. | `tests/versioning/pr-check.mjs:64` success; :65 phase; :66 candidate; :80-81 unchanged HEAD/tags; `tests/versioning/go-version.mjs:79` exact evaluated SHA and :82 unchanged consumer porcelain. | PASS |
+| VER-04.2 | Native report is source of versioning guide. | `tests/versioning/pr-check.mjs:68` native preview explanation preserved; `tests/versioning/homologation-guide.mjs:37` JSON native text and :51 escaped Markdown explanation. | PASS |
+| VER-04.3 | Both formats contain version/explanation/SHA/PR/changes/CI/checklist. | `tests/versioning/homologation-guide.mjs:32` through :42 assert exact JSON fields/arrays and pending status; :44 through :53 assert corresponding Markdown values. | PASS |
+| VER-04.4 | Summary and both artifacts appear without commits. | `tests/versioning/pr-check.mjs:72` asserts all required summary strings; :80-81 unchanged HEAD/tags; `tests/versioning/workflow-contract.mjs:36`, :37, :38 assert upload action, both files, missing-file failure. | PASS |
+| VER-04.5 | Missing native report fails. | `tests/versioning/homologation-guide.mjs:59` asserts nonzero for missing report file; `tests/versioning/pr-check.mjs:95` asserts failed calculation blocks preview. | PASS |
+| VER-04.6 | Facts differ from suggested pending checks. | `tests/versioning/homologation-guide.mjs:38` and :39 exact changes/checks; :40 exact pending suggestions; :42 suggestions absent from facts. | PASS |
+| VER-05.1 | Successful CI after integrated master push can publish integrated SHA. | `tests/versioning/workflow-contract.mjs:77` and :80 assert master push and needs go-ci. The equal-SHA success at `tests/versioning/post-merge.mjs:92` fails with status 1 when PR head differs from merge commit; F1 below. | GAP |
+| VER-05.2 | Invalid event/ref/nonunique merged develop PR provenance is refused. | `tests/versioning/post-merge.mjs:105` nonzero for all invalid provenance modes and :106 no writes; `tests/versioning/pr-policy.mjs:91` and :93 invoke zero/two PR checks via :85 nonzero/:86 exact cardinality diagnostic/:87 absent snapshot. M4 killed. | PASS |
+| VER-05.3 | Recalculate integrated SHA and revalidate integrated PR before writes. | `tests/versioning/post-merge.mjs:134` asserts one calculation and :106 no writes on failed policy. Realistic distinct head/merge case never reaches a valid integrated policy because `scripts/versioning/release-policy.mjs:47` rejects it. | GAP |
+| VER-05.4 | Named environment gates write job. | `tests/versioning/workflow-contract.mjs:48` asserts named conditional gate; :50 asserts needs and successful gate requirement through publishMatches(:14). | PASS |
+| VER-05.5 | Empty environment proceeds after CI/checks. | `tests/versioning/workflow-contract.mjs:44` asserts empty default; :50 accepts skipped environment; :80 asserts consumer CI dependency. This workflow condition passes; publication defect tracked separately. | PASS |
+| VER-05.6 | Gates create immutable tag/release on integrated SHA using native notes. | `tests/versioning/post-merge.mjs:128` through :133 assert published/version/tag/SHAs/native notes only with head==merge. F1 makes a normal distinct-head merge fail before any tag/release. | GAP |
+| VER-05.7 | Same version/SHA rerun returns already-published without writes. | `tests/versioning/post-merge.mjs:139`, :140, :142 assert ten successful identical-SHA retries and unchanged writes; `tests/versioning/real-go-gitsemver.mjs:91` asserts tagged rerun. Both mocks equate PR head and merge SHA, so normal merge retries fail under F1. | GAP |
+| VER-05.8 | Tag/release version/SHA conflicts fail without overwrite. | `tests/versioning/post-merge.mjs:151`, :155, :159 reject existing conflicts; :166 wrong release tag with same SHA is nonzero; :168 and :170 assert unchanged byte-for-byte remote state/writes. M5 killed. | PASS |
+| VER-05.9 | Serialize repository/branch publications without cancellation. | `tests/versioning/workflow-contract.mjs:52` matches concurrency group and cancel-in-progress false. | PASS |
+| VER-05.10 | Only publisher gets contents write. | `tests/versioning/workflow-contract.mjs:54` matches publisher permissions; :29 excludes preview write permissions; production workflow has contents read on environment gate. | PASS |
+| VER-06.1 | Central monitored PR/push CI preserves Maven/npm and runs versioning. | `tests/versioning/workflow-contract.mjs:64`, :65 local/real invocation; :66 monitored branches; :68 Maven verify; :70 npm install/test. | PASS |
+| VER-06.2 | Positive/negative milestone, override, guide, retry and publication scenarios run. | `tests/versioning/release-policy.mjs:20`, `tests/versioning/pr-check.mjs:64`, :84, `tests/versioning/post-merge.mjs:126`, :139, :166 assert scenario families. Missing realistic merge scenario is F1. | PASS |
+| VER-06.3 | Pinned real Go proves bootstrap/patch/minor/major/combined sprint. | `tests/versioning/workflow-contract.mjs:62` matches install pin; `tests/versioning/real-go-gitsemver.mjs:49`, :126, :130, :134, :139 assert `0.0.1/0.0.2/0.1.0/2.0.0/2.1.0`. Installed binary build metadata confirms revision suffix `680c1c12d9a4`. | PASS |
+| VER-06.4 | Child versioning failure fails CI. | `tests/versioning/runner-self-test.mjs:18` exact status 7; :19 exact broken fixture diagnostic; `tests/versioning/workflow-contract.mjs:64` direct runner invocation without failure suppression. | PASS |
+| VER-06.5 | Copyable caller delegates configuration using actual current central implementation. | `tests/versioning/workflow-contract.mjs:83` exactly two immutable refs; :84 one revision; :85 excludes bypass inputs. Independent parity assertion confirms both overlay refs equal `009e72b56ebc61caacd0441ea695a082aca2cfaf`, all 18 production script/publisher files match that revision, and preview differs only by its event comment. | PASS |
+| VER-06.6 | Docs specify required checks and direct-push protections on develop/master. | `tests/versioning/workflow-contract.mjs:89` asserts force-push/deletion/direct-update protections; :91 required preview check; `docs/versioning.md:121` targets both branches. | PASS |
 
-Every row cites an executable assertion. A criterion is PASS only when the cited assertion observes the complete spec outcome.
+**Outcome**: 37/41 ACs matched; 4 affected publication ACs blocked by one confirmed defect; 0 spec-precision gaps.
 
-| AC | Spec-defined outcome | Exact `file:line` assertion evidence | Result |
-| -- | -------------------- | ------------------------------------ | ------ |
-| VER-01.1 | Run pinned `go-gitsemver` for the evaluated SHA and consume native JSON. | `tests/versioning/workflow-contract.mjs:31-33` asserts pinned setup/tool revision; `tests/versioning/go-version.mjs:76-81` asserts collector success, candidate, SHA, native SemVer, and explanation. | ✅ PASS |
-| VER-01.2 | Normalize candidate, SHA, bump, and explanation without a competing release algorithm. | `tests/versioning/version-report.mjs:39-45` asserts schema, adapter, base, candidate, tag, bump, and native explanation values. | ✅ PASS |
-| VER-01.3 | Unstable SemVer, wrong SHA, invalid JSON, or adapter execution error fails before publication. | `tests/versioning/version-report.mjs:75-84` asserts malformed JSON, unstable SemVer, wrong SHA, and schema rejection; `tests/versioning/real-go-gitsemver.mjs:141-144` asserts real adapter failure. | ✅ PASS |
-| VER-01.4 | With no stable tag, only `v0.0.1` is publishable and `v0.0.0` is internal base only. | `tests/versioning/version-report.mjs:67-72` asserts base `0.0.0` and rejects candidate `0.1.0`; `tests/versioning/real-go-gitsemver.mjs:49` asserts `0.0.1`. | ✅ PASS |
-| VER-01.5 | Unknown adapter or unsafe project path fails with a diagnostic before executing PR-controlled commands. | `tests/versioning/go-version.mjs:85-90` asserts nonzero status and absent execution marker, but no assertion checks either required diagnostic. | ❌ EVIDENCE GAP |
-| VER-02.1 | No milestone accepts the adapter values without extra version review. | `tests/versioning/release-policy.mjs:24-29` asserts `adapter-authoritative`, null planned values, calculated version `2.0.0`, and bump `major`. | ✅ PASS |
-| VER-02.2 | A strict milestone is compared to the exact candidate version. | `tests/versioning/release-policy.mjs:30-33` asserts the matched planned version; `tests/versioning/release-policy.mjs:41-42` asserts exact-version divergence is blocked and diagnosed. | ✅ PASS |
-| VER-02.3 | Milestone bump from stable base is compared with adapter bump. | `tests/versioning/release-policy.mjs:32-33,43-48` asserts planned `major` and blocks/diagnoses planned `minor` versus calculated `patch`. | ✅ PASS |
-| VER-02.4 | Non-strict milestone always blocks and reports received title plus expected format. | `tests/versioning/release-policy.mjs:35-40` asserts blocked both without and with a valid override, including `release-2` and `vMAJOR.MINOR.PATCH`. | ✅ PASS |
-| VER-02.5 | A non-overridden divergence blocks and records planned/calculated version and bump together. | `tests/versioning/release-policy.mjs:41-48` asserts blocking and separate reason strings; the four field assertions at `:52-55` apply only to an `overridden` decision. M6 erased all four fields from blocked decisions and the test still passed. | ❌ SURVIVING MUTANT |
-| VER-02.6 | Added, removed, or replaced milestone reruns policy against current PR metadata. | `tests/versioning/workflow-contract.mjs:73-76` asserts `milestoned`, `demilestoned`, `submitted`, and `dismissed` caller events. | ✅ PASS |
-| VER-03.1 | Divergence without `versioning:override` remains blocked. | `tests/versioning/release-policy.mjs:20,61` asserts `blocked` when `labelPresent` is false. | ✅ PASS |
-| VER-03.2 | Timeline identifies the actor for the currently active label event. | `tests/versioning/pr-policy.mjs:51-62` asserts active label, `alice`, current role, and paginated timeline/review calls after an older label/unlabel pair. | ✅ PASS |
-| VER-03.3 | Labeler below Maintain blocks and records the unauthorized attempt. | `tests/versioning/release-policy.mjs:20,62` asserts only `blocked`; no assertion observes the attempted actor, role, audit payload, or unauthorized diagnostic. | ❌ EVIDENCE GAP |
-| VER-03.4 | Missing later, distinct, authorized approval remains blocked. | `tests/versioning/release-policy.mjs:63-69` asserts blocking for insufficient role, same actor, early/invalid timestamp, stale SHA, and missing label time. | ✅ PASS |
-| VER-03.5 | Two valid maintainers accept divergence and record identities, timestamps, and four compared values. | `tests/versioning/release-policy.mjs:50-59` asserts `overridden`, all four values, both actors, and both timestamps. | ✅ PASS |
-| VER-03.6 | One person cannot both label and approve. | `tests/versioning/release-policy.mjs:20,64` asserts `blocked` for identical labeler/approver. | ✅ PASS |
-| VER-03.7 | Commit, milestone, label, or review changes invalidate and recalculate authorization. | `tests/versioning/release-policy.mjs:61,68`; `tests/versioning/pr-policy.mjs:64-71`; and `tests/versioning/workflow-contract.mjs:73-76` assert label removal, stale SHA, dismissed/changed/relabelled review, and rerun events. | ✅ PASS |
-| VER-03.8 | Failure to confirm timeline, current role, or reviews fails closed. | `tests/versioning/pr-policy.mjs:79-80` asserts generic `api-error`/`incomplete` failure, but its mock fails the first PR request at `:22`; no assertion reaches distinct timeline, role, or review API failure paths. | ❌ EVIDENCE GAP |
-| VER-04.1 | Develop PR evaluates the PR SHA read-only. | `tests/versioning/pr-check.mjs:63-69,80-81` asserts phase/version/bump/artifacts and unchanged HEAD/tags. | ✅ PASS |
-| VER-04.2 | Native adapter report is the guide's versioning source. | `tests/versioning/homologation-guide.mjs:37,51` and `tests/versioning/pr-check.mjs:68` assert native explanation in JSON, Markdown, and preview. | ✅ PASS |
-| VER-04.3 | Markdown and JSON contain version, explanation, SHA, PR, changes, CI, and checklist. | `tests/versioning/homologation-guide.mjs:31-53` asserts every specified JSON and Markdown value. | ✅ PASS |
-| VER-04.4 | Human summary and both artifacts are published without consumer commit. | `tests/versioning/pr-check.mjs:70-81` asserts summary fields and unchanged HEAD/tags; `tests/versioning/workflow-contract.mjs:34-38` asserts mandatory upload of both files. | ✅ PASS |
-| VER-04.5 | Missing native report fails instead of inventing an explanation. | `tests/versioning/homologation-guide.mjs:56-59` asserts nonzero exit for a missing report. | ✅ PASS |
-| VER-04.6 | Collected facts and suggested checks stay distinct. | `tests/versioning/homologation-guide.mjs:38-42` asserts exact arrays, pending status, and absence of suggestions from `facts`. | ✅ PASS |
-| VER-05.1 | Successful consumer CI after merged `master` push can invoke publication for integrated SHA. | `tests/versioning/workflow-contract.mjs:77-81` asserts master-push trigger and `needs: go-ci`; `tests/versioning/post-merge.mjs:91-95` asserts accepted integrated gates. | ✅ PASS |
-| VER-05.2 | Any non-master/non-push/non-unique merged `develop → master` provenance is refused. | `tests/versioning/post-merge.mjs:96-106` asserts wrong event/ref/SHA/remote/head and two-PR ambiguity. M4 accepted zero matching PRs; `tests/versioning/pr-policy.mjs` still passed because it has no zero-association assertion. | ❌ SURVIVING MUTANT |
-| VER-05.3 | Publication recalculates once and revalidates current policy before writing. | `tests/versioning/post-merge.mjs:96-106,134-135` asserts tested policy/provenance failures before writes and exactly one adapter call for a publication. | ✅ PASS |
-| VER-05.4 | Non-empty environment gates the write job. | `tests/versioning/workflow-contract.mjs:44-51` asserts optional input, named conditional gate, and publish dependency. | ✅ PASS |
-| VER-05.5 | Empty environment skips only that gate and proceeds after CI/checks. | `tests/versioning/workflow-contract.mjs:44-51,80-81` asserts empty default, `skipped` acceptance, and consumer CI dependency. | ✅ PASS |
-| VER-05.6 | Successful gates create immutable tag/release at integrated SHA from normalized notes. | `tests/versioning/post-merge.mjs:126-135` asserts published outcome, version, tag, both SHAs, native notes, and one calculation. | ✅ PASS |
-| VER-05.7 | Matching version/SHA returns `already-published` without duplicate effects. | `tests/versioning/post-merge.mjs:137-142` asserts ten idempotent reruns and unchanged writes; `tests/versioning/real-go-gitsemver.mjs:91-92` asserts real tagged rerun reconciliation. | ✅ PASS |
-| VER-05.8 | Existing tag/release with different version or SHA fails without move/overwrite/partial effect. | `tests/versioning/post-merge.mjs:150-160` asserts tag-SHA, missing-tag, and release-target-SHA conflicts. M5 removed both `tag_name` checks from `publish.sh`; the full post-merge test still passed, so different release version/tag is unproved. | ❌ SURVIVING MUTANT |
-| VER-05.9 | Concurrent publication serializes per repository/branch without cancellation. | `tests/versioning/workflow-contract.mjs:52-53` asserts concurrency group and `cancel-in-progress: false`. | ✅ PASS |
-| VER-05.10 | Repository write permission is limited to `contents: write` on publisher. | `tests/versioning/workflow-contract.mjs:54-57` asserts the publish permission block and no dynamic environment on the write job. | ✅ PASS |
-| VER-06.1 | Central PR/push CI runs versioning alongside preserved Maven/npm validation. | `tests/versioning/workflow-contract.mjs:58-71` asserts monitored triggers, local/real runners, Maven verify, and npm install/test. | ✅ PASS |
-| VER-06.2 | Suite covers positive and negative milestone, override, guide, idempotency, and publication paths. | `tests/versioning/release-policy.mjs:24-69`, `tests/versioning/pr-check.mjs:63-97`, and `tests/versioning/post-merge.mjs:91-169` assert the required scenario families. | ✅ PASS |
-| VER-06.3 | Real Go installs pinned revision and proves bootstrap, patch, minor, major, and combined sprint. | `tests/versioning/workflow-contract.mjs:61-65` asserts revision/install; `tests/versioning/real-go-gitsemver.mjs:49,126,130,134,139-140` asserts exact versions. | ✅ PASS |
-| VER-06.4 | Any versioning child failure fails the required CI check. | `tests/versioning/runner-self-test.mjs:16-19` asserts status `7` propagation and fixture identity; `tests/versioning/workflow-contract.mjs:64-65` asserts direct runner invocation. | ✅ PASS |
-| VER-06.5 | Copyable Go caller passes configuration only, with immutable central refs. | `tests/versioning/workflow-contract.mjs:73-86` asserts events, permissions, CI dependency, two consistent SHA refs, and absence of legacy/bypass inputs. | ✅ PASS |
-| VER-06.6 | Documentation identifies required checks and direct-push protection for `develop`/`master`. | `tests/versioning/workflow-contract.mjs:87-91` asserts milestone/check permission guidance, force-push/deletion/direct-update protection, and required preview check. | ✅ PASS |
+## Edge cases
 
-**Acceptance-criterion status**: 35/41 match the full spec outcome; 3 evidence gaps and 3 surviving-mutant gaps remain. The spec itself has 0 precision gaps.
+| Edge | Exact assertion evidence | Result |
+| --- | --- | --- |
+| Highest stable reachable SemVer | `tests/versioning/version-report.mjs:31`: selectReachableStableTag(...) equals `0.2.0` with two reachable tags. | PASS |
+| Unreachable larger global tag | `tests/versioning/version-report.mjs:29` creates unrelated `v9.0.0`; :31 still equals `0.2.0`. | PASS |
+| Missing/ambiguous associated PR | `tests/versioning/pr-policy.mjs:91`, :93 invoke zero/two via :85 nonzero/:86 diagnostics/:87 absent snapshot. | PASS |
+| Removed label invalidates | `tests/versioning/release-policy.mjs:70` asserts blocked via :20. | PASS |
+| Downgraded current actor role | `tests/versioning/release-policy.mjs:71` and :80 assert blocked for triage labeler/write approver; :75 exact role audit. | PASS |
+| Lost release API response reconciles | `tests/versioning/post-merge.mjs:179` success and :180 already-published after mock stores release then returns API failure. | PASS for isolated reconciliation; F1 still affects real merged-PR retries. |
+| Oversized artifact fails while summary remains | `tests/versioning/pr-check.mjs:90` nonzero; :91 exact 100-byte diagnostic; :92 preserved summary text. | PASS |
 
----
+**Outcome**: 7/7 enumerated edges covered. A distinct-head/merge integration edge was absent from the plan and exposes F1.
 
-## Edge Cases
+## Gates and integrity
 
-| Edge case | Exact evidence | Result |
-| --------- | -------------- | ------ |
-| Highest stable reachable SemVer tag is selected. | `tests/versioning/version-report.mjs:22-32` sets `v0.1.0`, reachable `v0.2.0`, and asserts result `0.2.0`. | ✅ PASS |
-| Highest global tag outside evaluated history is ignored. | `tests/versioning/version-report.mjs:27-32` creates unreachable `v9.0.0` and still asserts `0.2.0`. | ✅ PASS |
-| Missing or ambiguous PR association blocks publication. | `tests/versioning/pr-policy.mjs:77-78` asserts only two-PR ambiguity. M4 accepted zero matches and survived. | ❌ SURVIVING MUTANT |
-| Removed override label invalidates the exception. | `tests/versioning/release-policy.mjs:20,61` asserts no active label remains blocked. | ✅ PASS |
-| Downgraded current role blocks authorization. | `tests/versioning/release-policy.mjs:20,62-63` asserts `triage` labeler and `write` approver remain blocked. | ✅ PASS |
-| Lost response after release creation reconciles on rerun. | `tests/versioning/post-merge.mjs:166-169` asserts simulated release race returns `already-published`. | ✅ PASS |
-| Oversized homologation artifact fails with diagnostic while summary remains. | `tests/versioning/pr-check.mjs:87-93` asserts nonzero status, byte-limit diagnostic, and retained summary text. | ✅ PASS |
+- `node tests/versioning/run.mjs --local`: exit 0; 9/9 fixtures, zero failed/skipped. Policy reports 45 assertions, report fixture 18, workflow contract 50.
+- Build YAML gate: exit 0; recursive all-YAML load also parses 18/18 files.
+- `node tests/versioning/real-go-gitsemver.mjs`: exit 0. Bootstrap, tagged empty-SHA normalization, collector-to-publication retry, patch/minor/major/combined sprint and invalid native config all execute.
+- `go version -m C:/Users/gerso/go/bin/go-gitsemver.exe`: Go 1.27.0, module `v1.11.1-0.20260831223728-680c1c12d9a4`, matches workflow install pin.
+- `git diff --check 59663cd..HEAD` and overlay diff check: exit 0.
+- Test files grow from 6 at baseline to 13 at HEAD (+7). No test deletion or weakened assertion found. Existing non-Go hosted profiles are outside MVP and not selected by local/real-Go gates.
+- Infrastructure feature: human interactive UAT is not required.
 
-**Edge-case status**: 6/7 covered.
+## Discrimination sensor
 
----
+Six faults were applied only to disposable file-copy scratches. No stash or real production edit was used. The first run killed all six but its initial clean porcelain changed due to the orchestrator's two authorized caller/comment edits; that run is excluded as isolation evidence. All six were repeated after capturing the corrected two-file porcelain baseline, with no further concurrent edits.
 
-## Gate Check
+| Mutant | Fault location | Gate and killing assertion | Result |
+| --- | --- | --- | --- |
+| M1 | `scripts/versioning/version-report.mjs:68`: bypass tagged empty-SHA reconciliation. | version-report fixture fails at `tests/versioning/version-report.mjs:47` before tagged-result assertions :51-52. | KILLED |
+| M2 | `scripts/versioning/release-policy.mjs:63`: valid override authorizes malformed milestone. | `tests/versioning/release-policy.mjs:20`, called at :37, observes overridden instead of blocked. | KILLED |
+| M3 | `scripts/versioning/collect-pr-policy.sh:84`: retain historical approved reviews instead of latest state. | `tests/versioning/pr-policy.mjs:71`: dismissed returns bob instead of null. | KILLED |
+| M4 | `scripts/versioning/collect-pr-policy.sh:27`: reject only multiple matches and default zero matches to PR42. | `tests/versioning/pr-policy.mjs:85`, called at :91: zero association exits 0 instead of failing. | KILLED |
+| M5 | `scripts/versioning/publish.sh:87`, :105: ignore release tag_name in both reconciliation checks. | `tests/versioning/post-merge.mjs:166`: wrong tag at same SHA exits 0 instead of failing. | KILLED |
+| M6 | `scripts/versioning/release-policy.mjs:89`: erase four blocked comparison fields. | `tests/versioning/release-policy.mjs:43`: plannedVersion becomes null instead of 3.0.0. | KILLED |
 
-- **Build command**: `node tests/versioning/run.mjs --local && python -c "import glob,yaml; [yaml.safe_load(open(p,encoding='utf-8')) for p in glob.glob('.github/workflows/*.yml')]"`
-- **Build outcome**: PASS; 9 deterministic fixtures passed, 0 failed, 0 skipped.
-- **All-YAML command**: recursive PyYAML load of every `*.yml` and `*.yaml` under the repository.
-- **All-YAML outcome**: PASS; 18 files parsed.
-- **Pinned real-Go command**: `node tests/versioning/real-go-gitsemver.mjs`
-- **Pinned real-Go outcome**: PASS; bootstrap, tagged empty-SHA reconciliation, collector-to-publication `already-published`, patch, minor, major, combined sprint, and invalid configuration executed.
-- **Test files before feature**: 6 at `59663cd`.
-- **Test files after feature**: 13 at `39ddb38` (`+7`).
-- **Diff hygiene**: `git diff --check 59663cd..HEAD` PASS.
-- **Skipped tests**: none.
+**Sensor outcome**: 6/6 killed, 0 survived. Repeated-run pre/post porcelain identical; every scratch removed before report write.
 
----
+## Ranked findings and concrete fix plan
 
-## Discrimination Sensor
+### F1: Blocker, normal merge commits cannot publish
 
-Sensor ran in disposable detached worktrees at `39ddb38`; no stash was used. The real-tree porcelain baseline was empty before the sensor and remained byte-for-byte empty after scratch removal. Scratch directories and worktree registrations were removed.
+`scripts/versioning/collect-pr-policy.sh:92` preserves PR head SHA and :93 separately preserves merge commit SHA. `scripts/versioning/release-gates.sh:35` recalculates at GITHUB_SHA, and :41 correctly requires mergeCommitSha to equal that integrated SHA. `scripts/versioning/release-policy.mjs:47` then wrongly requires headSha to equal report.sha. Even bypassing that comparison would leave :85 validating override reviews against the merge SHA, although reviews belong to the PR head.
 
-| Mutation | Production fault | Relevant gate | Result |
-| -------- | ---------------- | ------------- | ------ |
-| M1 tagged Go reconciliation | `scripts/versioning/version-report.mjs:68` bypassed the empty-native-SHA/tag reconciliation branch. | `node tests/versioning/version-report.mjs` | ✅ KILLED at tagged-report assertions `tests/versioning/version-report.mjs:47-59`. |
-| M2 malformed milestone | `scripts/versioning/release-policy.mjs:63-65` allowed a valid override to authorize invalid milestone syntax. | `node tests/versioning/release-policy.mjs` | ✅ KILLED at `tests/versioning/release-policy.mjs:20,37-40`. |
-| M3 dismissed approval | `scripts/versioning/collect-pr-policy.sh:84-90` retained historical approvals instead of each reviewer's latest state. | `node tests/versioning/pr-policy.mjs` | ✅ KILLED at `tests/versioning/pr-policy.mjs:68-71`. |
-| M4 zero PR association | `scripts/versioning/collect-pr-policy.sh:25-28` accepted zero matching merged PRs while still rejecting multiple matches. | `node tests/versioning/pr-policy.mjs` | ❌ SURVIVED; no zero-association fixture exists. |
-| M5 release version conflict | `scripts/versioning/publish.sh:87-88,105-106` ignored `release.tag_name` and compared only target SHA. | `node tests/versioning/post-merge.mjs` | ❌ SURVIVED; only target-SHA divergence is asserted. |
-| M6 blocked divergence payload | `scripts/versioning/release-policy.mjs:82-87` erased planned/calculated version and bump when divergence remained blocked. | `node tests/versioning/release-policy.mjs` | ❌ SURVIVED; four-value assertions cover only the overridden decision. |
+Reproduction: copy scripts/tests to isolated scratch; change only the PR mock's head.sha in `tests/versioning/post-merge.mjs:45` to a different valid 40-character SHA, preserving merge_commit_sha and all event/ref/remote/CI/milestone values. Running that fixture fails its initial accepted-gate assertion at :92 with status 1 and `Snapshot não corresponde ao SHA calculado`. Baseline fixture passes. No production file changed.
 
-**Sensor depth**: expanded lightweight, 6 high-risk behavior mutations.
-**Sensor outcome**: 3/6 killed, 3/6 survived — FAIL ❌.
+The happy publication mocks at `tests/versioning/post-merge.mjs:45` and :46 and `tests/versioning/real-go-gitsemver.mjs:72` explicitly make PR head and merge commit identical, explaining the false confidence from green gates.
 
----
+**Fix task**: represent evaluation phase or separate publication SHA from review SHA. Preview must still require report SHA == PR head SHA. Publication must require report SHA == associated merged PR's mergeCommitSha, while any override review remains anchored to that PR's approved head SHA. Retain unique merged PR, branch/event/remote identity and fail-closed rules. Add an accepted normal merge with distinct head/merge SHAs, no-milestone and matching milestone cases, authorized override at head SHA, stale-head review rejection, publication at merge SHA, and idempotent retry. Do not just remove SHA validation.
 
-## Code Quality
+**Affected ACs**: VER-05.1, VER-05.3, VER-05.6, VER-05.7.
+**Disposition**: no implementation fix or remote write by this Verifier. Round 3 has reached the bounded fix/reverify limit; escalate to the user before continuing.
 
-| Principle | Status | Evidence |
-| --------- | ------ | -------- |
-| Minimum code / no unnecessary abstraction | ✅ | Changed production modules remain small and responsibility-focused. |
-| Surgical scope | ✅ | `59663cd..HEAD` is limited to central versioning, its workflows/caller/docs/tests, and TLC artifacts. |
-| Matches project patterns | ✅ | Bash orchestration, pure Node evaluators, pinned Actions, and fixture style match repository conventions. |
-| Spec-anchored outcome check | ❌ | 6/41 ACs lack full exact evidence. |
-| Per-layer coverage expectation | ❌ | Three high-risk faults survive targeted suites. |
-| Payload/conjunction rule | ❌ | Blocked divergence can lose its four-value payload without failure. |
-| Every changed test is claimed by spec/edge/done-when | ✅ | No unrelated test scope found. |
-| Documented guidelines | ✅ | `AGENTS.md` and TLC validation instructions were followed; real repository gates ran. |
+### Resolved adoption finding
 
----
+The initial caller referenced 2a7887c, which did not contain tagged-SHA reconciliation or latest-review fixes. During this audit the orchestrator changed both refs to 009e72b and extended the preview required-event comment. The corrected overlay passes independent production-revision parity and workflow-contract assertions. This resolution does not fix F1.
 
-## Ranked Gaps
+## Code quality and traceability
 
-1. **Add a zero-associated-PR fixture** (Blocker): M4 survived. Assert both zero and multiple matching merged `develop → master` PRs fail before adapter execution or writes. Covers VER-05.2 and edge case 3.
-2. **Assert release tag/version conflicts independently of SHA** (Blocker): M5 survived. Add an existing release whose `tag_name` differs while `target_commitish` matches; assert failure and no mutation. Covers VER-05.8.
-3. **Assert all four comparison fields on the blocked decision** (Major): M6 survived. For both exact-version and bump mismatch without override, assert `plannedVersion`, `calculatedVersion`, `plannedBump`, and `calculatedBump` together. Covers VER-02.5.
-4. **Assert unauthorized-attempt audit evidence** (Major): assert the blocked decision records attempted labeler/current role or an exact identity-bearing diagnostic. Covers VER-03.3.
-5. **Exercise each GitHub evidence failure point** (Major): independently fail timeline, collaborator-role, and reviews requests after the PR request succeeds. Covers VER-03.8.
-6. **Assert adapter/path diagnostics** (Minor): match the unknown-adapter and unsafe-path stderr in addition to nonzero status and absent execution marker. Covers VER-01.5.
+Scope remains central scripts/workflows, caller, docs, tests and TLC artifacts; no pilot repository edits. Shell orchestrators and pure Node evaluators follow existing conventions without unrelated abstraction. Changed tests map to spec ACs, listed edges or task Done-when criteria. Project guidelines: `AGENTS.md:19` requires real tests and independent review. Domain policy assertions are exact, including four-field blocked payload and actor/role audit.
 
----
+Per-layer integrated publication coverage is FAIL because mocks collapse distinct Git commit identities. VER-01/02/03/04/06 are independently Verified for the stated scope; VER-05 Needs Fix. No spec/tasks declarations were edited by the verifier.
 
-## Requirement Traceability
-
-| Requirement | Declared | Verifier status |
-| ----------- | -------- | --------------- |
-| VER-01 | Complete | ❌ Needs exact diagnostic evidence |
-| VER-02 | Complete | ❌ Surviving blocked-payload mutant |
-| VER-03 | Complete | ❌ Unauthorized/API evidence gaps |
-| VER-04 | Complete | ✅ Verified |
-| VER-05 | Complete | ❌ Two surviving provenance/release mutants |
-| VER-06 | Complete | ✅ Verified |
-
----
-
-## Summary
-
-**Overall**: ❌ Not Ready
-
-**Spec-anchored check**: 35/41 ACs matched; 3 evidence gaps and 3 surviving-mutant gaps; 0 spec-precision gaps.
-**Edge cases**: 6/7 covered.
-**Sensor**: 3/6 killed, 3/6 survived.
-**Gate**: 9/9 local fixtures PASS; 18/18 YAML files parse; pinned real-Go fixture PASS.
-
-The repaired T14-T18 behaviors named in this round are working and their three targeted mutants were killed. Delivery remains blocked because the suite does not discriminate zero-PR provenance, release version/tag mismatch, or loss of the four-field blocked-divergence payload, and three explicit diagnostic/audit outcomes still lack exact assertions.
+**Completion gate**: validate_state must reject this persisted FAIL verdict. This feature is not ready to publish.

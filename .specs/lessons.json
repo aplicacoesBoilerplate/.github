@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 7,
+  "next_id": 8,
   "lessons": [
     {
       "id": "L-001",
@@ -112,6 +112,24 @@
       ],
       "created": "2026-10-01T11:14:22Z",
       "last_seen": "2026-10-01T11:14:22Z"
+    },
+    {
+      "id": "L-007",
+      "key": "ac_gap::keep pull request review identity separate from integrated merge identity and test distinct head and merge shas in publication fixtures",
+      "text": "Keep pull-request review identity separate from integrated merge identity and test distinct head and merge SHAs in publication fixtures",
+      "signal": "ac_gap",
+      "scope": "versioning",
+      "status": "candidate",
+      "features": [
+        "centralized-versioning-pipeline"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md:F1; scripts/versioning/release-policy.mjs:47 (versioning)"
+      ],
+      "created": "2026-10-03T18:36:21Z",
+      "last_seen": "2026-10-03T18:36:21Z"
     }
   ]
 }

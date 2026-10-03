@@ -197,7 +197,7 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 | VER-02 | P1: Milestone | Verification | Complete |
 | VER-03 | P1: Override | Verification | Complete |
 | VER-04 | P1: Homologação | Verification | Complete |
-| VER-05 | P1: Publicação | Verification | Complete |
+| VER-05 | P1: Publicação | Verification | Gap: PR head SHA differs from merge SHA |
 | VER-06 | P1: CI central | Verification | Complete |
 
 **Coverage:** 6 total, 6 mapped to tasks, 0 unmapped.
@@ -211,5 +211,5 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 - [x] Nenhum usuário abaixo de Maintain consegue tornar válido um override.
 - [x] Um novo commit invalida uma autorização de divergência anterior.
 - [x] Pull requests para `develop` recebem guia Markdown e JSON sem alteração no working tree.
-- [x] O workflow só publica depois do merge em `master`, da CI e do environment quando configurado.
+- [ ] O workflow só publica depois do merge em `master`, da CI e do environment quando configurado. Round 3 exposed distinct-head/merge-SHA failure; see `validation.md`.
 - [x] A CI central executa e bloqueia por falhas na suíte completa de versionamento.

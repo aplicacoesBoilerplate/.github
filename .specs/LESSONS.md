@@ -50,6 +50,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: VER-01.5 (versioning)
 - last seen: 2026-10-01T11:14:22Z
 
+### L-007 - Keep pull-request review identity separate from integrated merge identity and test distinct head and merge SHAs in publication fixtures
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `versioning` · harmful: 0
+- features: centralized-versioning-pipeline
+- evidence: validation.md:F1; scripts/versioning/release-policy.mjs:47 (versioning)
+- last seen: 2026-10-03T18:36:21Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
