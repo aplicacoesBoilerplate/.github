@@ -691,7 +691,7 @@ Phase 5: T14 → T15 → T16 → T17 → T18
 Boundary: T18 → T19
 Phase 6: T19 → T20 → T21 → T22
 Boundary: T22 → T23
-Phase 7: T23
+Phase 7: T23 → T24
 ```
 
 Execution is strictly sequential. Cross-phase dependencies are the final task of the previous phase.
@@ -819,6 +819,22 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 
 **Gate evidence**: all nine local fixtures PASS; 54 policy assertions and 50 workflow-contract assertions; pinned real-Go fixture PASS. Tests added before implementation reproduced the old SHA error. All existing assertions preserved.
 **Adequacy**: `tests/versioning/release-policy.mjs:94` asserts merged override succeeds; :96-100 rejects merge/stale reviews; :102-115 reject incorrect calculation SHA, missing integrated metadata and invalid phase. `tests/versioning/post-merge.mjs:34` asserts distinct real commits; publication assertions preserve exact integrated tag/release SHA and ten write-free retries. These map to VER-03.7 and VER-05.1/.3/.6/.7; no unclaimed tests.
+
+### T24: Pin Go example to the SHA correction
+
+**Status**: Complete
+**What**: Make the copyable caller consume the production revision containing the SHA fix.
+**Where**: `examples/callers/go/.github/workflows/go-publish.yml`
+**Depends on**: T23
+**Requirement**: VER-06.5
+**Done when**:
+
+- [x] Both caller references use `be8fff51d92c10bb00fa8188184117130621a2bb`.
+- [x] Existing workflow-contract gate passes (50 assertions).
+
+**Tests**: static integration, `tests/versioning/workflow-contract.mjs`
+**Gate**: quick, `node tests/versioning/workflow-contract.mjs`
+**Commit**: `fix(versioning): pin go example to commit identity fix`
 
 ## Previous caller correction and escalation
 
