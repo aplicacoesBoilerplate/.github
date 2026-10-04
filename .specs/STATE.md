@@ -32,7 +32,7 @@
 - **Phase / Task**: SHA-only follow-up complete; independent local MVP validation PASS
 - **Completed**: T1-T24; 41/41 ACs, 7/7 edges, 9/9 local fixtures, pinned real Go, 5/5 mutants killed; OpenSpec preserved
 - **In-progress** (file:line): none
-- **Next step**: publish codex/issue-4-versioning-mvp and open PR directly to master as authorized; await review and separate pilot authorization
-- **Blockers**: none within the validated local MVP; hosted execution and boilerplate-cli integration not performed
-- **Uncommitted files**: none after delivery commit; remote PR delivery authorized, no merge/release or pilot changes
+- **Next step**: authorized user grants PR creation access or opens codex/issue-4-versioning-mvp -> master in GitHub; await review and separate pilot authorization
+- **Blockers**: branch push succeeded; PR creation denied by organization OAuth restrictions in gh and FORBIDDEN/write permission in GitHub connector. Hosted PR CI and boilerplate-cli integration not performed
+- **Uncommitted files**: none after delivery commit; branch published, PR not created, no merge/release or pilot changes
 - **Branch**: codex/issue-4-versioning-mvp

@@ -12,6 +12,11 @@ Esta entrega segue por `codex/issue-4-versioning-mvp` diretamente para
 `master` do repositório `aplicacoesBoilerplate/.github`. Não integra nem
 modifica `boilerplate-cli`. Não cria release ou faz merge automaticamente.
 
+Publicação remota em 2026-10-03: branch enviada e SHA remoto conferido.
+A criação do PR foi negada pela restrição OAuth da organização na CLI e
+por falta de permissão de escrita no conector GitHub. Não há PR criado;
+o usuário precisa autorizar acesso ou abrir a comparação com destino `master`.
+
 ## Fontes modificados
 
 - `.github/workflows/ci.yml`
