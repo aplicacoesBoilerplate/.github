@@ -15,13 +15,13 @@ continuam como histórico; a especificação ativa está em
    somente leitura. Ele publica `homologation.md` e `homologation.json` como
    artifact e escreve o resumo humano no check. Nenhum commit, tag ou release é
    criado.
-2. Em um PR `develop → master`, a prévia recalcula a versão e avalia a milestone
+2. Em um PR `develop → master` ou `hotfix/<nome> → master`, a prévia recalcula a versão e avalia a milestone
    atual do próprio PR.
 3. Sem milestone, o cálculo do adaptador é autoritativo. Com milestone, o título
    deve ser SemVer estrito, como `v1.2.0`, e precisa coincidir com a versão exata
    e com o tipo de incremento calculado.
 4. Depois do merge, o `push` em `master` executa primeiro a CI do consumidor. O
-   publicador encontra o único PR integrado `develop → master`, recalcula a
+   publicador encontra o único PR integrado de `develop` ou `hotfix/<nome>` para `master`, recalcula a
    versão e reavalia a policy com os dados atuais da API.
 5. Com os gates aprovados, a tag imutável e a GitHub Release são criadas no SHA
    integrado. Sem tags estáveis anteriores, somente `v0.0.1` é aceita.
@@ -29,6 +29,17 @@ continuam como histórico; a especificação ativa está em
 O relatório nativo do `go-gitsemver`, inclusive `--explain`, é preservado no
 `VersionReport` e serve de base para o guia e para as notas da release. O central
 não implementa um segundo algoritmo de SemVer.
+
+### Correções de produção (hotfix)
+
+Crie `hotfix/<nome>` a partir da `master` atualizada e abra o PR para `master`.
+Sem milestone, vale o cálculo nativo; com milestone, versão e incremento são
+validados normalmente. Não há PATCH forçado nem dispensa de CI, proteção de
+branch, review/override, environment configurado ou verificação de SHA.
+Somente após integração e gates normais são criadas tag e Release.
+`hotfix`, `hotfix/` sem nome e `feature/* -> master` continuam recusados.
+O output da prévia identifica esse caminho como `hotfix-to-main`; ele usa a
+mesma policy de `develop-to-main`, sem novo input de bypass no caller.
 
 ## Milestone e override auditável
 

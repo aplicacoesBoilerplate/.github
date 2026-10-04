@@ -21,7 +21,7 @@ fs.appendFileSync(process.env.CALLS_FILE, a.join(' ')+'\\n');
 const mode=process.env.FIXTURE_MODE;
 if(mode==='api-error'||mode==='incomplete'){console.error('simulated API failure');process.exit(1)}
 const sha=process.env.TEST_SHA;
-const pr={number:42,head:{ref:'develop',sha},base:{ref:'master'},merged_at:'2026-10-01T10:02:00Z',merge_commit_sha:sha,milestone:{title:'v2.0.0'}};
+const pr={number:42,head:{ref:process.env.TEST_HEAD??'develop',sha},base:{ref:'master'},merged_at:'2026-10-01T10:02:00Z',merge_commit_sha:sha,milestone:{title:'v2.0.0'}};
 if(mode==='timeline-error'&&path.includes('/timeline')){console.error('simulated timeline failure');process.exit(1)}
 if(mode==='reviews-error'&&path.includes('/reviews')){console.error('simulated reviews failure');process.exit(1)}
 if(mode==='role-error'&&path.includes('/collaborators/')){console.error('simulated role failure');process.exit(1)}
@@ -40,12 +40,12 @@ else if(path.includes('/collaborators/')) { const u=path.split('/collaborators/'
 else { console.error('unexpected '+path); process.exit(2); }
 `);
   chmodSync(gh, 0o755);
-  const run = (mode = 'success', args = ['42', output]) => spawnSync(bash,
+  const run = (mode = 'success', args = ['42', output], overrides = {}) => spawnSync(bash,
     [join(root, 'scripts/versioning/collect-pr-policy.sh'), ...args], {
       cwd: workspace, encoding: 'utf8', env: { ...process.env,
         PATH: `${bin}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH}`,
         GH_TOKEN: 'fixture', GITHUB_REPOSITORY: 'owner/repo', TARGET_BRANCH: 'master',
-        FIXTURE_MODE: mode, TEST_SHA: sha, CALLS_FILE: calls },
+        FIXTURE_MODE: mode, TEST_SHA: sha, CALLS_FILE: calls, ...overrides },
     });
 
   const success = run();
@@ -77,6 +77,16 @@ else { console.error('unexpected '+path); process.exit(2); }
   const byCommit = run('success', ['--commit', sha, output]);
   assert.equal(byCommit.status, 0, byCommit.stderr);
   assert.equal(JSON.parse(readFileSync(output, 'utf8')).number, 42);
+  const hotfixCommit = run('success', ['--commit', sha, output], { TEST_HEAD: 'hotfix/correct-production' });
+  assert.equal(hotfixCommit.status, 0, hotfixCommit.stderr);
+  assert.equal(JSON.parse(readFileSync(output, 'utf8')).headBranch, 'hotfix/correct-production');
+  for (const [mode, head] of [['zero', 'hotfix/fix'], ['ambiguous', 'hotfix/fix'],
+    ['success', 'hotfix'], ['success', 'hotfix/'], ['success', 'feature/fix']]) {
+    rmSync(output, { force: true });
+    const invalid = run(mode, ['--commit', sha, output], { TEST_HEAD: head });
+    assert.notEqual(invalid.status, 0, `${mode}/${head} cannot authorize publication`);
+    assert.equal(existsSync(output), false);
+  }
 
   const expectFailure = (mode, args, diagnostic, priorCalls = []) => {
     rmSync(output, { force: true });
@@ -89,9 +99,9 @@ else { console.error('unexpected '+path); process.exit(2); }
     for (const expectedCall of priorCalls) assert.match(failedCalls, expectedCall);
   };
   expectFailure('zero', ['--commit', sha, output],
-    /Associação ambígua: 0 PRs integrados develop -> master/);
+    /Associação ambígua: 0 PRs integrados \(develop ou hotfix\/<nome>\) -> master/);
   expectFailure('ambiguous', ['--commit', sha, output],
-    /Associação ambígua: 2 PRs integrados develop -> master/);
+    /Associação ambígua: 2 PRs integrados \(develop ou hotfix\/<nome>\) -> master/);
   expectFailure('timeline-error', ['42', output], /simulated timeline failure/,
     [/pulls\/42/, /timeline/]);
   expectFailure('reviews-error', ['42', output], /simulated reviews failure/,

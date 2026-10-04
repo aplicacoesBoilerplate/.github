@@ -76,10 +76,10 @@ e publicação, com um guia para homologação e sem duplicar a lógica no calle
 
 ## Limites deste MVP
 
-PRs `hotfix/* -> master` ainda são recusados: prévia e publicação aceitam
-somente `develop -> master` para entrega final. Milestone ausente aceita o
-adaptador apenas dentro das transições suportadas. Suporte a hotfix fica
-para evolução explícita, sem ampliar este PR.
+PRs `develop -> master` e `hotfix/<nome> -> master` são as únicas transições
+finais permitidas. A extensão hotfix solicitada em 2026-10-04 aplica todas
+as mesmas regras de cálculo, milestone, override, CI, environment, SHA e
+idempotência; não força PATCH nem autoriza origens genéricas.
 
 O caller já declara seus três jobs em um workflow. A CI Go é reutilizada de
 um segundo arquivo; pode ser inline em futura adoção mantendo dependências

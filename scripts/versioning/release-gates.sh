@@ -37,12 +37,12 @@ validate_release_gates() {
     const fs=require("node:fs");
     const report=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
     const snapshot=JSON.parse(fs.readFileSync(process.argv[2],"utf8"));
-    if(snapshot.headBranch!=="develop"||snapshot.baseBranch!==process.argv[4]||
+    if(!(snapshot.headBranch==="develop"||/^hotfix\/.+$/.test(snapshot.headBranch??""))||snapshot.baseBranch!==process.argv[4]||
       !snapshot.mergedAt||snapshot.mergeCommitSha!==process.argv[3]) process.exit(1);
     fs.writeFileSync(process.argv[5],JSON.stringify({report,snapshot,phase:"publication"},null,2)+"\n");
   ' "$(as_node_path "$report_path")" "$(as_node_path "$snapshot_path")" "$GITHUB_SHA" \
     "$TARGET_BRANCH" "$(as_node_path "$input_path")" || {
-      echo 'Commit não corresponde a um PR integrado develop → branch principal' >&2; return 1;
+      echo 'Commit não corresponde a um PR integrado develop ou hotfix/<nome> → branch principal' >&2; return 1;
     }
   node "$script_dir/release-policy.mjs" evaluate "$(as_node_path "$input_path")" \
     "$(as_node_path "$policy_path")" || return 1

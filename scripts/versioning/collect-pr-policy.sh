@@ -22,9 +22,9 @@ if [[ "${1:-}" == --commit ]]; then
   pr_number=$(node -e '
     const pages=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8"));
     const sha=process.argv[2], target=process.argv[3];
-    const matches=pages.flat().filter(p=>p.head?.ref==="develop"&&p.base?.ref===target&&
+    const matches=pages.flat().filter(p=>(p.head?.ref==="develop"||/^hotfix\/.+$/.test(p.head?.ref??""))&&p.base?.ref===target&&
       p.merged_at&&p.merge_commit_sha===sha);
-    if(matches.length!==1){console.error(`Associação ambígua: ${matches.length} PRs integrados develop -> ${target}`);process.exit(1)}
+    if(matches.length!==1){console.error(`Associação ambígua: ${matches.length} PRs integrados (develop ou hotfix/<nome>) -> ${target}`);process.exit(1)}
     process.stdout.write(String(matches[0].number));
   ' "$(as_node_path "$tmp_dir/associated.json")" "$sha" "$TARGET_BRANCH")
 else

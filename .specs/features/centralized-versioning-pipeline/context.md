@@ -50,7 +50,7 @@ Esta feature ajusta somente o repositório central `.github`. Ela entrega workfl
 
 ### Publicação
 
-- A GitHub Release só é criada depois do merge de `develop` em `master` e do sucesso da CI do consumidor.
+- A GitHub Release só é criada depois do merge de `develop` ou `hotfix/<nome>` em `master` e do sucesso da CI do consumidor. Hotfix foi adicionado explicitamente em 2026-10-04, preservando todas as demais regras.
 - O merge aciona o fluxo por `push`; a pipeline associa o SHA ao pull request integrado e revalida seus gates.
 - O environment de publicação é opcional no caller.
 - Quando informado, suas regras são respeitadas; quando omitido, a publicação segue automaticamente após CI e checks.

@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/centralized-versioning-pipeline/design.md`
-**Status**: Complete - independent local MVP validation PASS on 2026-10-03
+**Status**: In Progress - governed hotfix extension authorized on 2026-10-04
 
 ---
 
@@ -677,7 +677,7 @@ T19 → T20 → T21 → T22
 ## Phase Execution Map
 
 ```text
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
 
 Phase 1: T1 → T2 → T3 → T4
 Boundary: T4 → T5
@@ -692,6 +692,8 @@ Boundary: T18 → T19
 Phase 6: T19 → T20 → T21 → T22
 Boundary: T22 → T23
 Phase 7: T23 → T24
+Boundary: T24 → T25
+Phase 8: T25
 ```
 
 Execution is strictly sequential. Cross-phase dependencies are the final task of the previous phase.
@@ -835,6 +837,27 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 **Tests**: static integration, `tests/versioning/workflow-contract.mjs`
 **Gate**: quick, `node tests/versioning/workflow-contract.mjs`
 **Commit**: `fix(versioning): pin go example to commit identity fix`
+
+### T25: Allow hotfix publication with unchanged governance
+
+**Status**: Complete - independent verification pending
+**What**: Permit only `develop` and nonempty `hotfix/<name>` as final PR origins; use identical milestone, override, SHA and publication gates.
+**Where**: `scripts/versioning/preview.sh`, `scripts/versioning/collect-pr-policy.sh`, `scripts/versioning/release-gates.sh`, their three integration fixtures and versioning documentation/spec/context/design.
+**Depends on**: T24
+**Requirement**: VER-05.2, VER-05.11, VER-05.12, VER-03.7
+**Done when**:
+
+- [x] Hotfix preview accepts no milestone, matched milestone and authorized override; blocks invalid/divergent milestone and unauthorized/stale/dismissed approval.
+- [x] Commit association and post-merge gates accept hotfix, reject missing/ambiguous PR and unsupported/empty origins.
+- [x] Hotfix publication targets integrated SHA and retries without extra writes; preview never writes.
+- [x] All existing develop assertions remain; full local and pinned real-Go gates pass.
+
+**Tests**: integration in `pr-check.mjs`, `pr-policy.mjs`, `post-merge.mjs`.
+**Gate**: build, `node tests/versioning/run.mjs --local && node tests/versioning/run.mjs --real-go`
+**Commit**: `feat(versioning): allow governed hotfix releases`
+
+**Gate evidence**: nine local fixtures PASS, real pinned Go PASS, and the final `post-merge.mjs` rerun PASS with a real hotfix created from master and merged without fast-forward. No existing test removed/skipped; exact association diagnostics updated to name both permitted sources.
+**Adequacy (forward/reverse mapping)**: `pr-check.mjs:104-107` asserts accepted hotfix phase and all three policy outcomes without release calls; :112-118 rejects invalid milestone, invalid authorization and unsupported names. `pr-policy.mjs:81-88` asserts hotfix association and fail-closed missing/ambiguous/unsupported snapshots. `post-merge.mjs:108-117` asserts gates and no writes; :212 proves distinct real hotfix/head SHA; :219-226 asserts publication at integrated SHA and write-free retry. Each new assertion maps to VER-05.11/.12 or VER-05.2/VER-03.7; no speculative scope or weakened assertion.
 
 ## Previous caller correction and escalation
 

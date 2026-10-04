@@ -33,6 +33,7 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 | --------------------- | -------------- | --------- | ---------- |
 | Branch de publicação do primeiro caso de uso | `master` | É a branch principal definida pelo usuário para o MVP. | y |
 | Branch de homologação | `develop` | É a branch adotada para homologação. | y |
+| Exceção para produção | `hotfix/<nome> → master` | Origem adicional autorizada em 2026-10-04; todas as demais regras permanecem iguais. | y |
 | Milestone ausente | Aceitar o cálculo do adaptador sem revisão extra | A milestone é planejamento opcional, não requisito de toda publicação. | y |
 | Formato da milestone presente | Título SemVer estável estrito no formato `vMAJOR.MINOR.PATCH` | Milestones não aceitam campos customizados e o título já representa a release planejada. | y |
 | Conteúdo validado da milestone | Versão exata e tipo de incremento | O contrato precisa detectar tanto destino errado quanto categoria de mudança errada. | y |
@@ -130,7 +131,7 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 **Acceptance Criteria**:
 
 1. WHEN a CI do consumidor concluir com sucesso após um push resultante de merge em `master` THEN o caller SHALL poder invocar o workflow reutilizável de publicação para o SHA integrado.
-2. IF a execução não corresponder a um push em `master` associado a um pull request integrado de `develop` THEN a pipeline SHALL recusar a publicação.
+2. IF a execução não corresponder a um push em `master` associado a um pull request integrado de `develop` ou `hotfix/<nome>` THEN a pipeline SHALL recusar a publicação.
 3. WHEN a publicação iniciar THEN a pipeline SHALL recalcular a versão e revalidar milestone ou override contra o pull request integrado antes de escrever no repositório.
 4. WHERE `publication_environment` for informado, a publicação SHALL aguardar e respeitar as regras do environment do consumidor.
 5. WHERE `publication_environment` for omitido, a publicação SHALL prosseguir automaticamente depois da CI e dos checks exigidos.
@@ -139,6 +140,8 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 8. IF a tag ou release existente apontar para versão ou SHA diferente THEN a pipeline SHALL falhar sem force-push, sobrescrita ou publicação parcial adicional.
 9. WHILE uma publicação do mesmo repositório e branch estiver em andamento, outra publicação SHALL aguardar sem cancelar a primeira.
 10. The publication workflow SHALL limitar permissão de escrita a `contents: write` no job que cria tag e release.
+11. WHEN um PR `hotfix/<nome> → master` for avaliado THEN a pipeline SHALL aplicar o mesmo cálculo nativo, milestone opcional e override auditável do PR `develop → master`, sem permitir outras origens ou um sufixo vazio.
+12. WHEN um PR `hotfix/<nome> → master` for integrado THEN a pipeline SHALL publicar somente após CI e gates normais, no SHA integrado, preservando rejeição de review antigo e reexecução idempotente.
 
 **Independent Test**: Simular evento inválido, CI falha, environment omitido e presente, primeira publicação, reexecução idempotente e colisão de tag.
 
@@ -197,7 +200,7 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 | VER-02 | P1: Milestone | Verification | Verified |
 | VER-03 | P1: Override | Verification | Verified |
 | VER-04 | P1: Homologação | Verification | Verified |
-| VER-05 | P1: Publicação | Verification | Verified |
+| VER-05 | P1: Publicação | Verification | Hotfix implemented; independent verification pending |
 | VER-06 | P1: CI central | Verification | Verified |
 
 **Coverage:** 6 total, 6 mapped to tasks, 0 unmapped.

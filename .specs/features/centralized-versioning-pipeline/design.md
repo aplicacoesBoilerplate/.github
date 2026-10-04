@@ -100,7 +100,7 @@ flowchart TD
 - **Location**: `scripts/versioning/collect-pr-policy.sh`
 - **Interfaces**:
   - `collect-pr-policy.sh <pr-number> <output.json>` - coleta PR, milestone, timeline, reviews e permissões relevantes.
-  - `collect-pr-policy.sh --commit <sha> <output.json>` - exige uma associação única `develop → master` integrada.
+  - `collect-pr-policy.sh --commit <sha> <output.json>` - exige uma associação única `develop → master` ou `hotfix/<nome> → master` integrada.
 - **Dependencies**: `gh`, `GH_TOKEN`, GitHub REST API.
 - **Reuses**: Helpers de API e associação commit/PR de `release-gates.sh`.
 
@@ -257,7 +257,7 @@ interface HomologationGuide {
 
 | Output | Meaning |
 | ------ | ------- |
-| `phase` | `release-to-develop` ou `develop-to-main` no MVP. |
+| `phase` | `release-to-develop`, `develop-to-main` ou `hotfix-to-main` no MVP. |
 | `version` | Versão candidata normalizada. |
 | `bump` | Incremento calculado. |
 | `policy_outcome` | Resultado da milestone e do override. |
@@ -280,11 +280,11 @@ O input legado `homologation_environment` será removido do exemplo e documentad
 ## Event and State Rules
 
 1. Um PR para `develop` calcula a versão e gera o guia. A ausência de milestone não interfere.
-2. Um PR `develop → master` calcula a versão e avalia a milestone atual.
+2. Um PR `develop → master` ou `hotfix/<nome> → master` calcula a versão e avalia a mesma milestone/policy atual.
 3. Divergência chama a avaliação do override; correspondência não exige override.
 4. Eventos que alteram conteúdo ou política executam novamente o mesmo check obrigatório.
 5. Depois do merge, o push em `master` inicia o caller. O job de publicação depende da CI do consumidor.
-6. O workflow central encontra o PR integrado pelo SHA, exige origem `develop`, recalcula e reavalia a mesma policy.
+6. O workflow central encontra o PR integrado pelo SHA, exige origem `develop` ou `hotfix/<nome>` com nome não vazio, recalcula e reavalia a mesma policy. Nenhum gate adicional é dispensado para hotfix.
 7. O gate de environment roda antes do job de escrita somente quando configurado.
 8. Tag e release são reconciliadas antes de qualquer POST. Estado idêntico conclui como `already-published`; conflito falha.
 
@@ -333,7 +333,7 @@ O input legado `homologation_environment` será removido do exemplo e documentad
 | Acesso ao GitHub | Shell orquestra `gh api`; Node decide | Mantém autenticação e paginação próximas à CLI e política testável sem rede. |
 | Environment opcional | Job de gate condicional separado | Não depende de nome vazio e evita duplicar o job de publicação. |
 | Verificação de papel | `role_name` atual do colaborador | O campo legado `permission` não distingue de forma confiável Write de Maintain. |
-| Proveniência pós-merge | PR único associado ao SHA e origem `develop` | Defende contra push direto mesmo se a proteção estiver configurada incorretamente. |
+| Proveniência pós-merge | PR único associado ao SHA e origem `develop` ou `hotfix/<nome>` | Defende contra push direto mesmo se a proteção estiver configurada incorretamente. |
 | Saída de homologação | Markdown + JSON + summary | Atende pessoas e automações sem criar commit. |
 | Publicação | Reconcile-before-write | Torna retries seguros e recupera tag criada sem release. |
 

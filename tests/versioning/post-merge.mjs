@@ -26,6 +26,7 @@ try {
   writeFileSync(join(workspace, 'README.md'), 'Initial feature\n');
   git('add', 'README.md'); git('commit', '-m', 'feat: application');
   const headSha = git('rev-parse', 'HEAD');
+  git('branch', 'hotfix/correct-production', headSha);
   git('checkout', 'master');
   git('merge', '--no-ff', 'develop', '-m', 'Merge develop');
   const sha = git('rev-parse', 'HEAD');
@@ -45,13 +46,13 @@ console.log(JSON.stringify({SemVer:'0.0.1',Sha:process.env.GITHUB_SHA}));
   writeFileSync(gh, `#!/usr/bin/env node
 const fs=require('node:fs'), cp=require('node:child_process');
 const a=process.argv.slice(2), path=a.find(v=>v.startsWith('repos/'))??'';
-const mode=process.env.FIXTURE_MODE, sha=process.env.GITHUB_SHA, headSha='${headSha}';
+const mode=process.env.FIXTURE_MODE, sha=process.env.GITHUB_SHA, headSha=process.env.TEST_PR_HEAD_SHA??'${headSha}';
 const state=JSON.parse(fs.readFileSync(process.env.STATE_FILE,'utf8'));
 const save=()=>fs.writeFileSync(process.env.STATE_FILE,JSON.stringify(state));
 const git=(...args)=>cp.execFileSync('git',['--git-dir='+process.env.MOCK_BARE,...args],{encoding:'utf8'}).trim();
-const pr={number:42,head:{ref:mode==='wrong-head'?'feature/x':'develop',sha:headSha},base:{ref:'master'},
+const pr={number:42,head:{ref:mode==='wrong-head'?'feature/x':process.env.TEST_HEAD_BRANCH??'develop',sha:headSha},base:{ref:'master'},
   merged_at:'2026-10-01T10:02:00Z',merge_commit_sha:sha,
-  milestone:mode==='no-milestone'?null:{title:['override','merge-review','bad-milestone','stale-review','dismissed-review','unauthorized'].includes(mode)?'v2.0.0':'v0.0.1'}};
+  milestone:mode==='no-milestone'?null:{title:mode==='invalid-title'?'invalid':['override','merge-review','bad-milestone','stale-review','dismissed-review','unauthorized'].includes(mode)?'v2.0.0':'v0.0.1'}};
 if(mode==='api-error'){console.error('simulated API failure');process.exit(1)}
 if(path==='repos/acme/consumer'){console.log('master');process.exit(0)}
 if(path.endsWith('/git/ref/heads/master')){console.log(mode==='remote-stale'?'f'.repeat(40):git('rev-parse','refs/heads/master'));process.exit(0)}
@@ -102,6 +103,19 @@ console.error('unexpected '+a.join(' '));process.exit(2);
   assert.equal(withoutMilestone.status, 0, withoutMilestone.stderr);
   const authorizedOverride = runGate({ FIXTURE_MODE: 'override' });
   assert.equal(authorizedOverride.status, 0, authorizedOverride.stderr);
+  for (const mode of ['no-milestone', '', 'override']) {
+    const hotfixGate = runGate({ TEST_HEAD_BRANCH: 'hotfix/correct-production', FIXTURE_MODE: mode });
+    assert.equal(hotfixGate.status, 0, hotfixGate.stderr);
+    assert.throws(() => readFileSync(apiWrites), /ENOENT/);
+  }
+  for (const overrides of [
+    ...['invalid-title', 'bad-milestone', 'stale-review', 'merge-review', 'dismissed-review', 'unauthorized', 'ambiguous', 'api-error'].map(FIXTURE_MODE =>
+      ({ TEST_HEAD_BRANCH: 'hotfix/correct-production', FIXTURE_MODE })),
+    { TEST_HEAD_BRANCH: 'hotfix' }, { TEST_HEAD_BRANCH: 'hotfix/' }, { TEST_HEAD_BRANCH: 'hotfixes/fix' },
+  ]) {
+    assert.notEqual(runGate(overrides).status, 0, `reject hotfix gate ${JSON.stringify(overrides)}`);
+    assert.throws(() => readFileSync(apiWrites), /ENOENT/);
+  }
   for (const overrides of [
     { GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF_NAME: 'develop' },
     { GITHUB_SHA: 'd'.repeat(40) }, { FIXTURE_MODE: 'remote-stale' },
@@ -188,6 +202,29 @@ console.error('unexpected '+a.join(' '));process.exit(2);
   published = runPublish({ FIXTURE_MODE: 'race-release' });
   assert.equal(published.status, 0, published.stderr);
   assert.match(readFileSync(output, 'utf8'), /outcome=already-published/);
+  git('checkout', '-b', 'hotfix/publish-real', 'master');
+  writeFileSync(join(workspace, 'fix.txt'), 'Production correction\n');
+  git('add', 'fix.txt'); git('commit', '-m', 'fix: production correction');
+  const hotfixHead = git('rev-parse', 'HEAD');
+  git('checkout', 'master');
+  git('merge', '--no-ff', 'hotfix/publish-real', '-m', 'Merge hotfix');
+  const hotfixMerge = git('rev-parse', 'HEAD');
+  assert.notEqual(hotfixHead, hotfixMerge);
+  git('push', 'origin', 'master');
+  for (const FIXTURE_MODE of ['no-milestone', '', 'override']) {
+    setState({ tagSha: null, release: null });
+    const config = { TEST_HEAD_BRANCH: 'hotfix/publish-real', TEST_PR_HEAD_SHA: hotfixHead,
+      GITHUB_SHA: hotfixMerge, FIXTURE_MODE };
+    const hotfixPublished = runPublish(config);
+    assert.equal(hotfixPublished.status, 0, hotfixPublished.stderr);
+    assert.match(readFileSync(output, 'utf8'), /outcome=published/);
+    assert.equal(getState().tagSha, hotfixMerge);
+    assert.equal(getState().release.target_commitish, hotfixMerge);
+    const beforeRetry = readFileSync(apiWrites, 'utf8');
+    assert.equal(runPublish(config).status, 0);
+    assert.match(readFileSync(output, 'utf8'), /outcome=already-published/);
+    assert.equal(readFileSync(apiWrites, 'utf8'), beforeRetry);
+  }
   console.log('Pós-merge: proveniência, policy e publicação idempotente aprovadas');
 } finally {
   rmSync(temp, { recursive: true, force: true });
