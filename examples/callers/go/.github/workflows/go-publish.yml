@@ -16,7 +16,7 @@ jobs:
       pull-requests: read
       issues: read
       checks: read
-    uses: aplicacoesBoilerplate/.github/.github/workflows/version-preview.yml@be8fff51d92c10bb00fa8188184117130621a2bb
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-preview.yml@07bd5372f7fc4a34a1b04134a84a0b9f4aba3b45
     with:
       adapter: go-gitsemver
       project_path: .
@@ -32,7 +32,7 @@ jobs:
       contents: write
       pull-requests: read
       issues: read
-    uses: aplicacoesBoilerplate/.github/.github/workflows/version-publish.yml@be8fff51d92c10bb00fa8188184117130621a2bb
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-publish.yml@07bd5372f7fc4a34a1b04134a84a0b9f4aba3b45
     with:
       adapter: go-gitsemver
       project_path: .

@@ -693,7 +693,7 @@ Phase 6: T19 → T20 → T21 → T22
 Boundary: T22 → T23
 Phase 7: T23 → T24
 Boundary: T24 → T25
-Phase 8: T25
+Phase 8: T25 → T26
 ```
 
 Execution is strictly sequential. Cross-phase dependencies are the final task of the previous phase.
@@ -858,6 +858,22 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 
 **Gate evidence**: nine local fixtures PASS, real pinned Go PASS, and the final `post-merge.mjs` rerun PASS with a real hotfix created from master and merged without fast-forward. No existing test removed/skipped; exact association diagnostics updated to name both permitted sources.
 **Adequacy (forward/reverse mapping)**: `pr-check.mjs:104-107` asserts accepted hotfix phase and all three policy outcomes without release calls; :112-118 rejects invalid milestone, invalid authorization and unsupported names. `pr-policy.mjs:81-88` asserts hotfix association and fail-closed missing/ambiguous/unsupported snapshots. `post-merge.mjs:108-117` asserts gates and no writes; :212 proves distinct real hotfix/head SHA; :219-226 asserts publication at integrated SHA and write-free retry. Each new assertion maps to VER-05.11/.12 or VER-05.2/VER-03.7; no speculative scope or weakened assertion.
+
+### T26: Pin Go example to governed hotfix support
+
+**Status**: Complete
+**What**: Select the central production revision containing hotfix support without changing job arrangement or pilot.
+**Where**: `examples/callers/go/.github/workflows/go-publish.yml`
+**Depends on**: T25
+**Requirement**: VER-06.5
+**Done when**:
+
+- [x] Both caller references select `07bd5372f7fc4a34a1b04134a84a0b9f4aba3b45`, containing all three updated guards.
+- [x] The existing workflow-contract gate passes; go-ci remains in its current separate file.
+
+**Tests**: static integration, `tests/versioning/workflow-contract.mjs`
+**Gate**: quick, `node tests/versioning/workflow-contract.mjs`
+**Commit**: `fix(versioning): pin go caller to hotfix support`
 
 ## Previous caller correction and escalation
 
