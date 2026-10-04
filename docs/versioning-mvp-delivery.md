@@ -6,7 +6,8 @@ Implementada a automação central de prévia, guia de homologação e publicaç
 Go com milestone opcional, override auditável, environment opcional e
 reexecução idempotente. A aprovação permanece vinculada ao SHA do PR; a
 publicação usa o SHA integrado. Verificação independente local aprovada:
-41 critérios, sete casos de borda e cinco mutações detectadas.
+43 critérios, sete casos de borda e cinco mutações detectadas, incluindo
+hotfix criado a partir de master e publicado no SHA do merge real.
 
 Esta entrega segue por `codex/issue-4-versioning-mvp` diretamente para
 `master` do repositório `aplicacoesBoilerplate/.github`. Não integra nem
@@ -16,6 +17,12 @@ Publicação remota em 2026-10-03: branch enviada e SHA remoto conferido.
 A criação do PR foi negada pela restrição OAuth da organização na CLI e
 por falta de permissão de escrita no conector GitHub. Não há PR criado;
 o usuário precisa autorizar acesso ou abrir a comparação com destino `master`.
+
+Extensão hotfix concluída e verificada em 2026-10-04 (T25/T26): nove fixtures
+locais, adaptador Go real e 18 arquivos YAML aprovados. O exemplo aponta para
+`07bd5372f7fc4a34a1b04134a84a0b9f4aba3b45`, com os mesmos gates para
+`develop -> master` e `hotfix/<nome> -> master`. Evidência hospedada continua
+pendente; o piloto e seu job go-ci não foram alterados.
 
 ## Fontes modificados
 

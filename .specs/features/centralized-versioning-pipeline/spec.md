@@ -200,7 +200,7 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 | VER-02 | P1: Milestone | Verification | Verified |
 | VER-03 | P1: Override | Verification | Verified |
 | VER-04 | P1: Homologação | Verification | Verified |
-| VER-05 | P1: Publicação | Verification | Hotfix implemented; independent verification pending |
+| VER-05 | P1: Publicação | Verification | Verified |
 | VER-06 | P1: CI central | Verification | Verified |
 
 **Coverage:** 6 total, 6 mapped to tasks, 0 unmapped.

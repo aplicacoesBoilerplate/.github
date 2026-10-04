@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/centralized-versioning-pipeline/design.md`
-**Status**: In Progress - governed hotfix extension authorized on 2026-10-04
+**Status**: Complete - governed hotfix independently verified on 2026-10-04
 
 ---
 
@@ -793,10 +793,10 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 | ----------- | ----- | ------ |
 | VER-01 | T1, T2, T6, T9, T14, T19 | Complete |
 | VER-02 | T3, T4, T6, T8, T13, T15, T18, T20 | Complete |
-| VER-03 | T3, T4, T6, T8, T13, T15, T17, T18, T20, T21 | Complete |
+| VER-03 | T3, T4, T6, T8, T13, T15, T17, T18, T20, T21, T23, T25 | Verified |
 | VER-04 | T5, T6, T7, T13, T16, T18 | Complete |
-| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18, T21, T22, T23 | Verified |
-| VER-06 | T7, T11, T12, T13, T16, T18, T24 | Verified |
+| VER-05 | T4, T8, T9, T10, T13, T14, T17, T18, T21, T22, T23, T25 | Verified |
+| VER-06 | T7, T11, T12, T13, T16, T18, T24, T26 | Verified |
 
 ## SHA-only correction (authorized 2026-10-03)
 
@@ -840,7 +840,7 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 
 ### T25: Allow hotfix publication with unchanged governance
 
-**Status**: Complete - independent verification pending
+**Status**: Complete - independent verification PASS
 **What**: Permit only `develop` and nonempty `hotfix/<name>` as final PR origins; use identical milestone, override, SHA and publication gates.
 **Where**: `scripts/versioning/preview.sh`, `scripts/versioning/collect-pr-policy.sh`, `scripts/versioning/release-gates.sh`, their three integration fixtures and versioning documentation/spec/context/design.
 **Depends on**: T24
@@ -876,6 +876,8 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 **Commit**: `fix(versioning): pin go caller to hotfix support`
 
 ## Previous caller correction and escalation
+
+**Hotfix verification on 2026-10-04**: T25/T26 independently PASS; 43/43 acceptance criteria, 7/7 edges, 9/9 local fixtures, pinned real Go and 5/5 killed mutations. Report: `validation.md`. Production at caller pin `07bd537` matches audited HEAD. No hosted pilot execution or go-ci consolidation is claimed.
 
 - Completed atomic follow-up: pin both Go caller jobs to `009e72b56ebc61caacd0441ea695a082aca2cfaf`, which contains the implemented corrections; document milestone events in the preview contract comment.
 - Files: `examples/callers/go/.github/workflows/go-publish.yml`, `.github/workflows/version-preview.yml`.

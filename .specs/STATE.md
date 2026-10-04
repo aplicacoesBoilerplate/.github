@@ -29,10 +29,11 @@
 ## Handoff
 
 - **Feature**: Pipeline centralizada de versionamento
-- **Phase / Task**: SHA-only follow-up complete; independent local MVP validation PASS
-- **Completed**: T1-T24; 41/41 ACs, 7/7 edges, 9/9 local fixtures, pinned real Go, 5/5 mutants killed; OpenSpec preserved
+- **Phase / Task**: Governed hotfix extension complete; independent local MVP validation PASS
+- **Completed**: T1-T26; 43/43 ACs, 7/7 edges, 9/9 local fixtures, pinned real Go, 5/5 mutants killed; OpenSpec preserved
 - **In-progress** (file:line): none
 - **Next step**: authorized user grants PR creation access or opens codex/issue-4-versioning-mvp -> master in GitHub; await review and separate pilot authorization
 - **Blockers**: branch push succeeded; PR creation denied by organization OAuth restrictions in gh and FORBIDDEN/write permission in GitHub connector. Hosted PR CI and boilerplate-cli integration not performed
-- **Uncommitted files**: none after delivery commit; branch published, PR not created, no merge/release or pilot changes
+- **Uncommitted files**: none after hotfix delivery commit; PR not created, no merge/release or pilot changes
 - **Branch**: codex/issue-4-versioning-mvp
+- **Hotfix decision**: develop -> master and hotfix/<name> -> master share every gate; hotfix starts from master and does not force PATCH. Caller pinned to 07bd5372f7fc4a34a1b04134a84a0b9f4aba3b45. Pilot go-ci consolidation remains deferred.
