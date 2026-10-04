@@ -32,7 +32,7 @@
 - **Phase / Task**: SHA-only follow-up complete; independent local MVP validation PASS
 - **Completed**: T1-T24; 41/41 ACs, 7/7 edges, 9/9 local fixtures, pinned real Go, 5/5 mutants killed; OpenSpec preserved
 - **In-progress** (file:line): none
-- **Next step**: user decides when to proceed with remote branch publication and pilot integration; this focused iteration stops after the local stability report
+- **Next step**: publish codex/issue-4-versioning-mvp and open PR directly to master as authorized; await review and separate pilot authorization
 - **Blockers**: none within the validated local MVP; hosted execution and boilerplate-cli integration not performed
-- **Uncommitted files**: none after progress/caller commits; no remote push, merge or release performed
-- **Branch**: feature/issue-4-versionamento
+- **Uncommitted files**: none after delivery commit; remote PR delivery authorized, no merge/release or pilot changes
+- **Branch**: codex/issue-4-versioning-mvp
