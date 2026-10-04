@@ -32,8 +32,9 @@
 - **Phase / Task**: Governed hotfix extension complete; independent local MVP validation PASS
 - **Completed**: T1-T26; 43/43 ACs, 7/7 edges, 9/9 local fixtures, pinned real Go, 5/5 mutants killed; OpenSpec preserved
 - **In-progress** (file:line): none
-- **Next step**: authorized user grants PR creation access or opens codex/issue-4-versioning-mvp -> master in GitHub; await review and separate pilot authorization
-- **Blockers**: branch push succeeded; PR creation denied by organization OAuth restrictions in gh and FORBIDDEN/write permission in GitHub connector. Hosted PR CI and boilerplate-cli integration not performed
-- **Uncommitted files**: none after hotfix delivery commit; PR not created, no merge/release or pilot changes
+- **Next step**: review PR #10 (codex/issue-4-versioning-mvp -> master), inspect hosted checks, and await separate pilot authorization
+- **Blockers**: previous PR creation denial resolved after user-requested authentication switch to agentegersonfribeiro-AI; PR #10 created successfully. Hosted check results and boilerplate-cli integration are not claimed
+- **Uncommitted files**: none after documentation delivery commit; no merge/release or pilot changes
 - **Branch**: codex/issue-4-versioning-mvp
 - **Hotfix decision**: develop -> master and hotfix/<name> -> master share every gate; hotfix starts from master and does not force PATCH. Caller pinned to 07bd5372f7fc4a34a1b04134a84a0b9f4aba3b45. Pilot go-ci consolidation remains deferred.
+- **Documentation / PR**: workflows and scripts READMEs independently reviewed, 32 relative links and 50 workflow assertions PASS; docs commit c79429f. PR https://github.com/aplicacoesBoilerplate/.github/pull/10 authored by agentegersonfribeiro-AI; review requested from gersonfribeiro, milestone v1.0.0, issue #4 linked.

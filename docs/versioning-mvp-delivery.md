@@ -15,8 +15,11 @@ modifica `boilerplate-cli`. Não cria release ou faz merge automaticamente.
 
 Publicação remota em 2026-10-03: branch enviada e SHA remoto conferido.
 A criação do PR foi negada pela restrição OAuth da organização na CLI e
-por falta de permissão de escrita no conector GitHub. Não há PR criado;
-o usuário precisa autorizar acesso ou abrir a comparação com destino `master`.
+por falta de permissão de escrita no conector GitHub. Esse impedimento histórico
+foi resolvido em 2026-10-04: após troca autorizada da conta ativa da CLI para
+`agentegersonfribeiro-AI`, o [PR #10](https://github.com/aplicacoesBoilerplate/.github/pull/10)
+foi criado para `master`, com review solicitado a `gersonfribeiro`, milestone
+`v1.0.0`, labels da issue e vínculo de fechamento à issue #4. Não houve merge.
 
 Extensão hotfix concluída e verificada em 2026-10-04 (T25/T26): nove fixtures
 locais, adaptador Go real e 18 arquivos YAML aprovados. O exemplo aponta para
@@ -24,9 +27,15 @@ locais, adaptador Go real e 18 arquivos YAML aprovados. O exemplo aponta para
 `develop -> master` e `hotfix/<nome> -> master`. Evidência hospedada continua
 pendente; o piloto e seu job go-ci não foram alterados.
 
+Documentação ampliada no commit `c79429f`: READMEs interligados nos workflows
+e scripts explicam execução por `run`, checkouts, contratos, dados, gates,
+arquivos legados, testes e diagnóstico. Revisão independente aprovada,
+32 links relativos válidos e 50 asserções de workflow aprovadas.
+
 ## Fontes modificados
 
 - `.github/workflows/ci.yml`
+- `.github/workflows/README.md`
 - `.github/workflows/version-preview.yml`
 - `.github/workflows/version-publish.yml`
 - `.specs/LESSONS.md`
@@ -43,6 +52,7 @@ pendente; o piloto e seu job go-ci não foram alterados.
 - `examples/callers/go/.github/workflows/go-publish.yml`
 - `examples/callers/go/README.md`
 - `scripts/versioning/collect-pr-policy.sh`
+- `scripts/versioning/README.md`
 - `scripts/versioning/collect-version-report.sh`
 - `scripts/versioning/homologation-guide.mjs`
 - `scripts/versioning/preview.sh`
