@@ -4,6 +4,15 @@ import { readFileSync } from 'node:fs';
 const stableSemver = /^(?:v)?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 const shaPattern = /^[0-9a-f]{40}$/i;
 const bumps = new Set(['none', 'patch', 'minor', 'major']);
+const prefixPattern = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+
+export function validateTagPrefix(prefix) {
+  if (typeof prefix !== 'string' || !prefixPattern.test(prefix) || prefix.includes('..') ||
+      prefix.endsWith('.') || prefix.endsWith('/')) {
+    throw new Error(`Prefixo de tag inválido: ${prefix}`);
+  }
+  return prefix;
+}
 
 export function parseStableVersion(value) {
   const match = stableSemver.exec(String(value ?? '').trim());
@@ -29,8 +38,9 @@ export function bumpBetween(before, after) {
   return 'patch';
 }
 
-export function selectReachableStableTag(repository, sha) {
+export function selectReachableStableTag(repository, sha, tagPrefix = 'v') {
   if (!shaPattern.test(sha)) throw new Error(`SHA avaliado inválido: ${sha}`);
+  validateTagPrefix(tagPrefix);
   let output = '';
   try {
     output = execFileSync('git', ['tag', '--merged', sha], { cwd: repository, encoding: 'utf8' });
@@ -38,6 +48,8 @@ export function selectReachableStableTag(repository, sha) {
     throw new Error(`Não foi possível consultar tags alcançáveis: ${error.message}`);
   }
   const versions = output.split(/\r?\n/).filter(Boolean)
+    .filter(tag => tag.startsWith(tagPrefix))
+    .map(tag => tag.slice(tagPrefix.length))
     .filter(tag => stableSemver.test(tag))
     .map(tag => parseStableVersion(tag).text)
     .sort(compareVersions);
@@ -47,17 +59,55 @@ export function selectReachableStableTag(repository, sha) {
 export function validateVersionReport(report) {
   if (!report || typeof report !== 'object' || Array.isArray(report)) throw new Error('VersionReport inválido');
   if (report.schemaVersion !== 1) throw new Error('VersionReport schemaVersion deve ser 1');
-  if (report.adapter !== 'go-gitsemver') throw new Error(`Adaptador não suportado no MVP: ${report.adapter}`);
+  if (!['go-gitsemver', 'standard-version', 'jgitver'].includes(report.adapter)) {
+    throw new Error(`Adaptador não suportado: ${report.adapter}`);
+  }
   if (!shaPattern.test(report.sha)) throw new Error('VersionReport sha inválido');
   if (typeof report.branch !== 'string' || !report.branch) throw new Error('VersionReport branch inválida');
   parseStableVersion(report.baseVersion);
   parseStableVersion(report.candidateVersion);
-  if (report.tag !== `v${report.candidateVersion}`) throw new Error('VersionReport tag diverge da versão candidata');
+  const prefix = validateTagPrefix(report.tagPrefix ?? 'v');
+  if (report.adapter === 'go-gitsemver' && prefix !== 'v') {
+    throw new Error('go-gitsemver usa prefixo v neste contrato');
+  }
+  if (report.tag !== `${prefix}${report.candidateVersion}`) throw new Error('VersionReport tag diverge da versão candidata');
   if (!bumps.has(report.bump)) throw new Error('VersionReport bump inválido');
-  if (!report.native || report.native.format !== 'json' || typeof report.native.explanation !== 'string') {
+  if (!report.native || !['json', 'text'].includes(report.native.format) ||
+      typeof report.native.explanation !== 'string') {
     throw new Error('VersionReport native inválido');
   }
+  if (report.adapter === 'go-gitsemver' && report.native.format !== 'json') {
+    throw new Error('go-gitsemver exige JSON nativo');
+  }
   return report;
+}
+
+function normalizeTextReport({ adapter, candidate, nativeOutput, branch, sha, repository, tagPrefix = 'v' }) {
+  if (!shaPattern.test(sha)) throw new Error(`SHA avaliado inválido: ${sha}`);
+  const prefix = validateTagPrefix(tagPrefix);
+  const candidateVersion = parseStableVersion(candidate).text;
+  const baseVersion = selectReachableStableTag(repository, sha, prefix) ?? '0.0.0';
+  return validateVersionReport({
+    schemaVersion: 1, adapter, sha: sha.toLowerCase(), branch, tagPrefix: prefix,
+    baseVersion, candidateVersion, tag: `${prefix}${candidateVersion}`,
+    bump: bumpBetween(baseVersion, candidateVersion),
+    native: { format: 'text', result: { version: candidateVersion }, explanation: nativeOutput },
+  });
+}
+
+export function normalizeStandardVersionReport({ nativeOutput, branch, sha, repository, tagPrefix = 'v' }) {
+  const matches = [...nativeOutput.matchAll(/bumping version in [^\r\n]+? from \S+ to (\S+)/gi)];
+  if (!matches.length) throw new Error('standard-version não informou a versão calculada');
+  const candidates = new Set(matches.map(match => parseStableVersion(match[1]).text));
+  if (candidates.size !== 1) throw new Error('standard-version informou versões divergentes');
+  return normalizeTextReport({ adapter: 'standard-version', candidate: [...candidates][0],
+    nativeOutput, branch, sha, repository, tagPrefix });
+}
+
+export function normalizeJgitverReport({ nativeOutput, branch, sha, repository, tagPrefix = 'v' }) {
+  const candidate = nativeOutput.replace(/\x1b\[[0-9;]*m/g, '').trim().split(/\r?\n/).at(-1);
+  return normalizeTextReport({ adapter: 'jgitver', candidate,
+    nativeOutput, branch, sha, repository, tagPrefix });
 }
 
 export function normalizeGoReport({ nativeJson, explanation, branch, sha, repository }) {
@@ -102,7 +152,15 @@ export function normalizeGoReport({ nativeJson, explanation, branch, sha, reposi
 if (process.argv[1] && import.meta.filename === process.argv[1]) {
   try {
     const [command, ...args] = process.argv.slice(2);
-    if (command === 'validate') {
+    if (command === 'validate-prefix') {
+      process.stdout.write(`${validateTagPrefix(args[0])}\n`);
+    } else if (command === 'ensure-new-tag') {
+      const [repository, sha, candidate, prefix = 'v'] = args;
+      const latest = selectReachableStableTag(repository, sha, prefix);
+      if (latest && compareVersions(candidate, latest) <= 0) {
+        throw Error(`Versão ${candidate} não supera a última tag alcançável ${prefix}${latest}`);
+      }
+    } else if (command === 'validate') {
       const report = JSON.parse(readFileSync(args[0], 'utf8'));
       process.stdout.write(`${JSON.stringify(validateVersionReport(report))}\n`);
     } else if (command === 'normalize-go') {
@@ -112,6 +170,12 @@ if (process.argv[1] && import.meta.filename === process.argv[1]) {
         explanation: readFileSync(explanationPath, 'utf8'),
         branch, sha, repository,
       });
+      process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+    } else if (command === 'normalize-standard' || command === 'normalize-jgitver') {
+      const [nativePath, branch, sha, repository, tagPrefix = 'v'] = args;
+      const normalize = command === 'normalize-standard' ? normalizeStandardVersionReport : normalizeJgitverReport;
+      const report = normalize({ nativeOutput: readFileSync(nativePath, 'utf8'),
+        branch, sha, repository, tagPrefix });
       process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
     } else {
       throw new Error(`Subcomando desconhecido: ${command}`);

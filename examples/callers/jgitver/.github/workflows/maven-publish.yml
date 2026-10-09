@@ -1,0 +1,42 @@
+name: Versão e publicação Maven
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled, milestoned, demilestoned]
+  pull_request_review:
+    types: [submitted, dismissed]
+  push:
+    branches: [master]
+
+jobs:
+  validate-pr:
+    if: github.event_name == 'pull_request' || github.event_name == 'pull_request_review'
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      checks: read
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-preview.yml@b41582e2a6535fc3f9b4a8059c3d4e8971160aae
+    with:
+      adapter: jgitver
+      project_path: .
+      target_branch: master
+      tag_prefix: v
+
+  maven-ci:
+    uses: ./.github/workflows/maven-ci.yml
+
+  publish:
+    if: github.event_name == 'push' && github.ref_name == 'master'
+    needs: maven-ci
+    permissions:
+      contents: write
+      pull-requests: read
+      issues: read
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-publish.yml@b41582e2a6535fc3f9b4a8059c3d4e8971160aae
+    with:
+      adapter: jgitver
+      project_path: .
+      target_branch: master
+      tag_prefix: v
+      publication_environment: production

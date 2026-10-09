@@ -7,6 +7,8 @@ const preview = readFileSync(resolve(root, '.github/workflows/version-preview.ym
 const publish = readFileSync(resolve(root, '.github/workflows/version-publish.yml'), 'utf8');
 const ci = readFileSync(resolve(root, '.github/workflows/ci.yml'), 'utf8');
 const goCaller = readFileSync(resolve(root, 'examples/callers/go/.github/workflows/go-publish.yml'), 'utf8');
+const nodeCaller = readFileSync(resolve(root, 'examples/callers/standard-version/.github/workflows/node-publish.yml'), 'utf8');
+const mavenCaller = readFileSync(resolve(root, 'examples/callers/jgitver/.github/workflows/maven-publish.yml'), 'utf8');
 const documentation = readFileSync(resolve(root, 'docs/versioning.md'), 'utf8');
 let assertions = 0;
 const matches = (pattern, message) => { assertions += 1; assert.match(preview, pattern, message); };
@@ -51,6 +53,16 @@ publishMatches(/publish:\s*\n\s+needs: environment-gate\s*\n\s+if: >-\s*\n\s+\$\
   'publish must accept only a successful or skipped environment gate');
 publishMatches(/concurrency:\s*\n\s+group: version-publish-[^\n]+\n\s+cancel-in-progress: false/,
   'publication concurrency must serialize without cancellation');
+matches(/if: inputs\.adapter == 'standard-version'[\s\S]*?actions\/setup-node@[0-9a-f]{40}[\s\S]*?install-node\.sh/,
+  'standard-version preview must install Node dependencies');
+matches(/NODE_PACKAGE_MANAGER: npm/, 'standard-version preview must select npm lockfile mode');
+matches(/if: inputs\.adapter == 'jgitver'[\s\S]*?actions\/setup-java@[0-9a-f]{40}/,
+  'jgitver preview must prepare Java');
+publishMatches(/if: inputs\.adapter == 'standard-version'[\s\S]*?actions\/setup-node@[0-9a-f]{40}[\s\S]*?install-node\.sh/,
+  'standard-version publisher must install Node dependencies');
+publishMatches(/NODE_PACKAGE_MANAGER: npm/, 'standard-version publisher must select npm lockfile mode');
+publishMatches(/actions\/create-github-app-token@[0-9a-f]{40}[\s\S]*?permission-contents: write[\s\S]*?permission-pull-requests: write/,
+  'standard-version must mint scoped app token for technical PR');
 publishMatches(/permissions:\s*\n\s+contents: write\s*\n\s+pull-requests: read\s*\n\s+issues: read/,
   'the sole publication job must keep minimal permissions');
 publishExcludes(/environment:\s*\$\{\{ inputs\./,
@@ -84,6 +96,16 @@ assert.equal(references.length, 2, 'caller must reference both centralized workf
 assert.equal(new Set(references.map(match => match[1])).size, 1, 'central workflow revisions must be consistent'); assertions += 1;
 callerExcludes(/release_branch:|homologation_environment:|approved:|force:|skip_validation:/,
   'caller must pass configuration only and contain no legacy or bypass policy');
+for (const [name, caller, adapter, ci] of [
+  ['Node', nodeCaller, 'standard-version', 'node-ci'],
+  ['Maven', mavenCaller, 'jgitver', 'maven-ci'],
+]) {
+  assert.match(caller, new RegExp(`adapter: ${adapter}`), `${name} caller must use its native adapter`); assertions += 1;
+  assert.match(caller, new RegExp(`needs: ${ci}`), `${name} publisher must depend on CI`); assertions += 1;
+  const refs = [...caller.matchAll(/uses: aplicacoesBoilerplate\/\.github\/\.github\/workflows\/(?:version-preview|version-publish)\.yml@([0-9a-f]{40})/g)];
+  assert.equal(refs.length, 2, `${name} caller must pin both workflows`); assertions += 1;
+  assert.equal(new Set(refs.map(match => match[1])).size, 1, `${name} caller must use one shared SHA`); assertions += 1;
+}
 docsMatch(/`milestoned` e `demilestoned`/, 'documentation must require milestone-change events');
 docsMatch(/`checks: read`/, 'documentation must state the caller check-run permission');
 docsMatch(/bloqueie force-push e exclusão[\s\S]*restrinja atualizações diretas/,

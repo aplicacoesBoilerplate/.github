@@ -68,6 +68,15 @@ jobs:
           node-version: '24'
       - name: Run deterministic versioning fixtures
         run: node tests/versioning/run.mjs --local
+      - name: Run real standard-version fixture
+        run: node tests/versioning/real-standard-version.mjs
+      - name: Set up Java for real jgitver fixture
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Run real jgitver fixture
+        run: node tests/versioning/real-jgitver.mjs
       - name: Set up Go
         uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:

@@ -9,13 +9,13 @@ Para entender a implementação, leia o
 [README dos scripts de versionamento](../../scripts/versioning/README.md).
 Para configurar uma aplicação, consulte o
 [guia de adoção](../../docs/versioning.md) e o
-[caller Go de exemplo](../../examples/callers/go/README.md).
+[callers de exemplo](../../examples/callers/).
 
 ## Catálogo atual
 
 | Workflow | Acionamento | Responsabilidade |
 | --- | --- | --- |
-| [ci.yml](ci.yml) | PR e push nas branches declaradas | Validar este repositório, executar fixtures de versionamento e o teste real do adaptador Go. Também verifica Maven/npm quando há projetos correspondentes. |
+| [ci.yml](ci.yml) | PR e push nas branches declaradas | Validar este repositório, executar fixtures de versionamento e testes reais de Go, standard-version e jgitver. Também verifica Maven/npm quando há projetos correspondentes. |
 | [pull-request-hygiene.yml](pull-request-hygiene.yml) | Eventos de PR | Exigir título no formato Conventional Commits. |
 | [version-preview.yml](version-preview.yml) | `workflow_call` | Calcular prévia, gerar guia de homologação em develop e validar a policy dos PRs finais. |
 | [version-publish.yml](version-publish.yml) | `workflow_call` | Executar environment opcional e publicar tag/Release após integração e gates. |
@@ -55,9 +55,10 @@ pelo caller. Portanto, o consumidor **não precisa copiar os scripts**.
 ## Limites e segurança
 
 - Prévia: leitura apenas; não cria commits, tags ou Releases.
-- Publicação: somente `push` na branch alvo, associado a um único PR integrado
-  `develop -> master` ou `hotfix/<nome> -> master`, com SHA conferido.
-- CI da aplicação: o caller encadeia a publicação com `needs: go-ci`;
+- Publicação: somente `push` na branch alvo, associado a PR funcional integrado
+  `develop -> master` ou `hotfix/<nome> -> master`. Em standard-version, o
+  primeiro push abre PR técnico; somente o merge revisado desse PR publica.
+- CI da aplicação: o caller encadeia a publicação com `needs` da CI própria;
   o called não substitui os testes do consumidor.
 - Environment: opcional; quando informado, as regras vivem no consumidor.
 - Permissões: o caller deve conceder as permissões exigidas pelo called;

@@ -886,3 +886,126 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 - Round 3: 37/41 acceptance criteria verified, seven listed edges covered, six mutants killed; publication remains blocked. A fourth correction cycle requires escalation under TLC. No push performed.
 
 **Resolved on 2026-10-03**: the user authorized the SHA-only follow-up. T23/T24 close this historical blocker. Fresh independent verification confirms 41/41 ACs, 7/7 edges, 9/9 local fixtures, real pinned Go and 5/5 killed mutants. No hosted execution, pilot adoption or push was performed; these are not claimed by local MVP validation.
+
+## Extensão Node/Maven (2026-10-09)
+
+```text
+T26 → T27 → T28 → T30 → T32 → T31 → T34 → T35 → T29
+```
+
+### T27: Normalizar e publicar perfis nativos
+
+**Status**: Complete
+**What**: Coletar versões com standard-version e jgitver, instalar seus runtimes,
+validar prefixo e preservar o SHA funcional ao persistir manifests/changelog via
+PR técnico Node revisado.
+**Where**: `scripts/versioning/collect-version-report.sh`, `version-report.mjs`,
+`version-pr.mjs`, `collect-origin-report.sh`, `validate-version-pr.sh`,
+`preview.sh`, `release-gates.sh`, `prepare-version-pr.sh`, `publish.sh`,
+`.github/workflows/version-preview.yml`, `version-publish.yml`, `ci.yml` e
+`tests/versioning/`.
+**Depends on**: T26
+**Requirement**: VER-07, VER-08
+**Tests**: `node tests/versioning/run.mjs --local`,
+`node tests/versioning/real-standard-version.mjs`,
+`node tests/versioning/real-jgitver.mjs` programado na CI com Maven.
+**Gate**: suíte local integral, teste real Node e sintaxe shell/YAML. Maven real
+é validado no job hospedado após publicar a branch.
+**Commit**: `feat(versioning): support native node and maven releases`
+
+### T28: Publicar contrato e calleds copiáveis
+
+**Status**: Complete
+**What**: Documentar configuração, prefixos de infra, segredos, aprovação,
+outputs e calleds Node/Maven fixados em um SHA central que contenha T27.
+**Where**: `docs/versioning.md`, READMEs e `examples/callers/standard-version/`,
+`examples/callers/jgitver/`.
+**Depends on**: T27
+**Requirement**: VER-09
+**Tests**: `node tests/versioning/workflow-contract.mjs` e inspeção dos SHA dos
+callers no histórico remoto.
+**Gate**: contrato estático e links relativos válidos.
+**Commit**: `docs(versioning): publish node and maven caller contracts`
+
+### T29: Confirmar execução hospedada e revisão independente
+
+**Status**: Pending
+**What**: Observar a CI real com Maven/Node e registrar as evidências e limites
+do novo contrato após uma revisão independente.
+**Where**: `.specs/features/centralized-versioning-pipeline/validation.md`.
+**Depends on**: T35
+**Requirement**: VER-09.3
+**Tests**: GitHub Actions versioning job e auditoria independente das asserções.
+**Gate**: CI hospedada verde e relatório de validação com evidência.
+**Commit**: `test(versioning): record hosted native adapter validation`
+
+### T30: Respeitar o prefixo literal da versão-base
+
+**Status**: Complete
+**What**: Excluir tags sem o prefixo configurado, inclusive quando ele é `v`.
+**Where**: `scripts/versioning/version-report.mjs`,
+`tests/versioning/version-report.mjs`.
+**Depends on**: T28
+**Requirement**: VER-07.4
+**Tests**: fixture com `v0.2.0` e `99.0.0` no mesmo SHA.
+**Gate**: teste unitário e suíte local de regressão.
+**Commit**: `fix(versioning): enforce literal tag prefixes`
+
+### T31: Atualizar o pin dos callers após a correção
+
+**Status**: Complete
+**What**: Fixar os dois calleds Node/Maven no SHA completo que inclui T30.
+**Where**: `examples/callers/standard-version/.github/workflows/node-publish.yml`,
+`examples/callers/jgitver/.github/workflows/maven-publish.yml`.
+**Depends on**: T32
+**Requirement**: VER-09.1
+**Tests**: contrato estático e comparação das quatro referências.
+**Gate**: as quatro referências usam o SHA completo do commit T30.
+**Commit**: `fix(versioning): pin callers after prefix correction`
+
+### T32: Bloquear publicação Node sem evidência íntegra
+
+**Status**: Complete
+**What**: Confirmar que a aprovação efetiva no GitHub inclui uma review humana
+no SHA atual do PR técnico, distinta da GitHub App autora; comprovar que versão
+nativa ambígua, origem alterada e manifest divergente não produzem tag e que
+reexecução antiga só reconcilia artefatos já completos.
+**Where**: `scripts/versioning/validate-version-pr.sh`, `version-pr.mjs`,
+`verify-version-files.mjs`, `install-node.sh`, `release-gates.sh`, `publish.sh`,
+workflows de prévia/publicação
+e `tests/versioning/`.
+**Depends on**: T30
+**Requirement**: VER-07.3, VER-08.2, VER-08.3, VER-08.4
+**Tests**: aprovação por bot e por SHA anterior recusadas; aprovação humana
+vigente aceita no fluxo completo. Saída ambígua, origem, diff e lockfile
+divergentes são recusados antes da tag. O perfil Node instala npm apenas e
+recusa lockfiles de outros gerenciadores. Push antigo com tag/Release completos
+retorna `already-published`; sem Release não cria nada.
+**Gate**: teste unitário e fluxo Node de publicação/idempotência.
+**Commit**: `fix(versioning): enforce release evidence and stale retry safety`
+
+### T34: Discriminar aprovação de outro bot
+
+**Status**: Complete
+**What**: Provar que o gate humano recusa um bot diferente da App autora,
+evitando que a identidade distinta masque o tipo de ator.
+**Where**: `tests/versioning/version-pr.mjs`.
+**Depends on**: T31
+**Requirement**: VER-08.2
+**Tests**: aprovação de `other-app[bot]` no SHA vigente deve ser recusada.
+**Gate**: teste unitário e sensor que remove a checagem de `User` deve falhar.
+**Commit**: `test(versioning): distinguish bot approval from human review`
+
+### T35: Provar o dispatch pós-merge funcional
+
+**Status**: Complete
+**What**: Exercitar o publicador completo desde um push funcional Node para
+confirmar que ele abre o PR técnico após gates, em vez de chamar o preparador
+diretamente no teste.
+**Where**: `tests/versioning/standard-flow.mjs`.
+**Depends on**: T34
+**Requirement**: VER-08.1
+**Tests**: fluxo completo via `publish.sh`, PR técnico aberto, sem tag no SHA
+funcional e publicação no merge técnico após revisão.
+**Gate**: fluxo Node e sensor que remove o dispatch devem falhar.
+**Commit**: `test(versioning): exercise functional publish dispatch`

@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { normalizeStandardVersionReport } from '../../scripts/versioning/version-report.mjs';
 
 const cwd = mkdtempSync(join(tmpdir(), 'real-standard-version-'));
 const git = (...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
@@ -27,6 +28,12 @@ try {
 
   execFileSync('bash', ['-c', 'npm install --no-save --ignore-scripts --no-audit standard-version@9.5.0'],
     { cwd, stdio: 'pipe', timeout: 120000 });
+  const preview = execFileSync('bash', ['-c', './node_modules/.bin/standard-version --dry-run --skip.commit --skip.tag'],
+    { cwd, encoding: 'utf8', timeout: 120000 });
+  const report = normalizeStandardVersionReport({ nativeOutput: preview, branch: 'main', sha, repository: cwd });
+  assert.equal(report.candidateVersion, '1.1.0');
+  assert.equal(report.baseVersion, '1.0.0');
+  assert.equal(git('rev-parse', 'HEAD'), sha, 'Dry-run must preserve the approved SHA');
   execFileSync('bash', ['-c', './node_modules/.bin/standard-version --skip.commit --skip.tag'],
     { cwd, stdio: 'pipe', timeout: 120000 });
   const pkg = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8'));
