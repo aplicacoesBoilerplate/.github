@@ -890,7 +890,7 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 ## Extensão Node/Maven (2026-10-09)
 
 ```text
-T26 → T27 → T28 → T29
+T26 → T27 → T28 → T30 → T32 → T31 → T29
 ```
 
 ### T27: Normalizar e publicar perfis nativos
@@ -933,8 +933,46 @@ callers no histórico remoto.
 **What**: Observar a CI real com Maven/Node e registrar as evidências e limites
 do novo contrato após uma revisão independente.
 **Where**: `.specs/features/centralized-versioning-pipeline/validation.md`.
-**Depends on**: T28
+**Depends on**: T31
 **Requirement**: VER-09.3
 **Tests**: GitHub Actions versioning job e auditoria independente das asserções.
 **Gate**: CI hospedada verde e relatório de validação com evidência.
 **Commit**: `test(versioning): record hosted native adapter validation`
+
+### T30: Respeitar o prefixo literal da versão-base
+
+**Status**: Complete
+**What**: Excluir tags sem o prefixo configurado, inclusive quando ele é `v`.
+**Where**: `scripts/versioning/version-report.mjs`,
+`tests/versioning/version-report.mjs`.
+**Depends on**: T28
+**Requirement**: VER-07.4
+**Tests**: fixture com `v0.2.0` e `99.0.0` no mesmo SHA.
+**Gate**: teste unitário e suíte local de regressão.
+**Commit**: `fix(versioning): enforce literal tag prefixes`
+
+### T31: Atualizar o pin dos callers após a correção
+
+**Status**: Pending
+**What**: Fixar os dois calleds Node/Maven no SHA completo que inclui T30.
+**Where**: `examples/callers/standard-version/.github/workflows/node-publish.yml`,
+`examples/callers/jgitver/.github/workflows/maven-publish.yml`.
+**Depends on**: T32
+**Requirement**: VER-09.1
+**Tests**: contrato estático e comparação das quatro referências.
+**Gate**: as quatro referências usam o SHA completo do commit T30.
+**Commit**: `fix(versioning): pin callers after prefix correction`
+
+### T32: Exigir aprovação humana no PR técnico
+
+**Status**: Pending
+**What**: Confirmar que a aprovação efetiva no GitHub inclui uma review humana
+no SHA atual do PR técnico, distinta da GitHub App autora.
+**Where**: `scripts/versioning/validate-version-pr.sh`, `version-pr.mjs`,
+`tests/versioning/version-pr.mjs`, `standard-flow.mjs`.
+**Depends on**: T30
+**Requirement**: VER-08.2
+**Tests**: aprovação por bot e por SHA anterior recusadas; aprovação humana
+vigente aceita no fluxo completo.
+**Gate**: teste unitário e fluxo Node de publicação/idempotência.
+**Commit**: `fix(versioning): require human review for version pr`

@@ -48,8 +48,8 @@ export function selectReachableStableTag(repository, sha, tagPrefix = 'v') {
     throw new Error(`Não foi possível consultar tags alcançáveis: ${error.message}`);
   }
   const versions = output.split(/\r?\n/).filter(Boolean)
-    .filter(tag => tagPrefix === 'v' ? stableSemver.test(tag) : tag.startsWith(tagPrefix))
-    .map(tag => tagPrefix === 'v' ? tag : tag.slice(tagPrefix.length))
+    .filter(tag => tag.startsWith(tagPrefix))
+    .map(tag => tag.slice(tagPrefix.length))
     .filter(tag => stableSemver.test(tag))
     .map(tag => parseStableVersion(tag).text)
     .sort(compareVersions);

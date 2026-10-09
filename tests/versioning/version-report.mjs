@@ -32,6 +32,9 @@ try {
 
   equal(selectReachableStableTag(repository, evaluatedSha), '0.2.0',
     'highest stable tag reachable from evaluated SHA is authoritative');
+  git('tag', '99.0.0', evaluatedSha);
+  equal(selectReachableStableTag(repository, evaluatedSha, 'v'), '0.2.0',
+    'literal v prefix excludes an unprefixed tag on the same commit');
   git('tag', 'infra/v0.1.0', 'HEAD~1');
   equal(selectReachableStableTag(repository, evaluatedSha, 'infra/v'), '0.1.0',
     'custom prefix selects only its own reachable tags');
