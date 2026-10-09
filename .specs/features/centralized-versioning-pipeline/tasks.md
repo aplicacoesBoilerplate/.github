@@ -953,7 +953,7 @@ do novo contrato após uma revisão independente.
 
 ### T31: Atualizar o pin dos callers após a correção
 
-**Status**: Pending
+**Status**: Complete
 **What**: Fixar os dois calleds Node/Maven no SHA completo que inclui T30.
 **Where**: `examples/callers/standard-version/.github/workflows/node-publish.yml`,
 `examples/callers/jgitver/.github/workflows/maven-publish.yml`.
