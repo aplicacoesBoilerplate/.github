@@ -65,6 +65,11 @@ try {
   'unsafe tag prefix fails');
   throws(() => normalizeStandardVersionReport({ nativeOutput: 'nothing changed', branch: 'master',
     sha: evaluatedSha, repository }), /versão calculada/, 'missing native calculation fails');
+  throws(() => normalizeStandardVersionReport({ nativeOutput:
+    'bumping version in package.json from 0.2.0 to 0.3.0\n' +
+    'bumping version in package-lock.json from 0.2.0 to 0.4.0',
+    branch: 'master', sha: evaluatedSha, repository }), /versões divergentes/,
+  'conflicting native bump outputs fail');
 
   const jgitver = normalizeJgitverReport({ nativeOutput: '0.2.1\n',
     branch: 'master', sha: evaluatedSha, repository,

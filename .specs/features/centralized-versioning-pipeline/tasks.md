@@ -963,16 +963,23 @@ do novo contrato após uma revisão independente.
 **Gate**: as quatro referências usam o SHA completo do commit T30.
 **Commit**: `fix(versioning): pin callers after prefix correction`
 
-### T32: Exigir aprovação humana no PR técnico
+### T32: Bloquear publicação Node sem evidência íntegra
 
-**Status**: Pending
+**Status**: Complete
 **What**: Confirmar que a aprovação efetiva no GitHub inclui uma review humana
-no SHA atual do PR técnico, distinta da GitHub App autora.
+no SHA atual do PR técnico, distinta da GitHub App autora; comprovar que versão
+nativa ambígua, origem alterada e manifest divergente não produzem tag e que
+reexecução antiga só reconcilia artefatos já completos.
 **Where**: `scripts/versioning/validate-version-pr.sh`, `version-pr.mjs`,
-`tests/versioning/version-pr.mjs`, `standard-flow.mjs`.
+`verify-version-files.mjs`, `install-node.sh`, `release-gates.sh`, `publish.sh`,
+workflows de prévia/publicação
+e `tests/versioning/`.
 **Depends on**: T30
-**Requirement**: VER-08.2
+**Requirement**: VER-07.3, VER-08.2, VER-08.3, VER-08.4
 **Tests**: aprovação por bot e por SHA anterior recusadas; aprovação humana
-vigente aceita no fluxo completo.
+vigente aceita no fluxo completo. Saída ambígua, origem, diff e lockfile
+divergentes são recusados antes da tag. O perfil Node instala npm apenas e
+recusa lockfiles de outros gerenciadores. Push antigo com tag/Release completos
+retorna `already-published`; sem Release não cria nada.
 **Gate**: teste unitário e fluxo Node de publicação/idempotência.
-**Commit**: `fix(versioning): require human review for version pr`
+**Commit**: `fix(versioning): enforce release evidence and stale retry safety`

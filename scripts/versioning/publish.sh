@@ -6,6 +6,7 @@ source "$script_dir/release-gates.sh"
 
 validate_release_gates
 if [[ "$ADAPTER" == standard-version && "$PUBLISH_PHASE" == functional ]]; then
+  [[ "$STALE_PUSH" == 0 ]] || { echo 'Push funcional antigo não pode abrir PR técnico' >&2; exit 1; }
   exec bash "$script_dir/prepare-version-pr.sh"
 fi
 report_path="$VERSION_REPORT_PATH"
@@ -74,6 +75,25 @@ current_ref_sha() {
   [[ "$type" == commit ]] || { echo 'Tag não aponta para commit' >&2; return 2; }
   printf '%s' "$object_sha"
 }
+
+if [[ "$STALE_PUSH" == 1 ]]; then
+  if ! ref_sha=$(current_ref_sha); then
+    echo 'Push antigo sem tag completa; nenhuma escrita será feita' >&2; exit 1
+  fi
+  [[ "$ref_sha" == "$sha" ]] || {
+    report_outcome conflict
+    echo 'Push antigo tem tag em outro SHA; nenhuma escrita será feita' >&2; exit 1
+  }
+  if ! release=$(get_optional_api "repos/$repo/releases/tags/$tag"); then
+    echo 'Push antigo sem Release completa; nenhuma escrita será feita' >&2; exit 1
+  fi
+  node -e 'const r=JSON.parse(process.argv[1]);if(r.tag_name!==process.argv[2]||r.target_commitish!==process.argv[3])process.exit(1)' \
+    "$release" "$tag" "$sha" || { report_outcome conflict; echo 'Release antiga diverge da tag/SHA' >&2; exit 1; }
+  url=$(node -p 'JSON.parse(process.argv[1]).html_url' "$release")
+  report_outcome already-published "$url"
+  printf 'Release antiga já publicada: %s\n' "$url"
+  exit 0
+fi
 
 if ref_sha=$(current_ref_sha); then
   [[ "$ref_sha" == "$sha" ]] || {

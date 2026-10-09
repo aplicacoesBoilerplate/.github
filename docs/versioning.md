@@ -231,8 +231,13 @@ release cria somente a release. Tag em outro SHA, release sem tag verificável
 ou release divergente retorna conflito sem force-push nem sobrescrita. Corridas
 de criação são consultadas novamente por até dez tentativas.
 
-Erros de API, associação ausente ou ambígua, branch/SHA remoto divergente,
+Erros de API, associação ausente ou ambígua, branch/SHA remoto divergente para
+publicação nova,
 saída nativa inválida e prerelease falham fechados antes da escrita.
+Uma reexecução de push antigo, depois de `master` avançar, só retorna
+`already-published` se a tag e a Release já existirem no SHA original e os
+gates de proveniência continuarem válidos; ela nunca completa uma publicação
+parcial ou cria nova tag nessa condição.
 
 ## Verificação
 

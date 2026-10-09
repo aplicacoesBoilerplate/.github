@@ -98,6 +98,8 @@ console.error('unexpected '+a.join(' '));process.exit(2);
 
   const valid = runGate();
   assert.equal(valid.status, 0, valid.stderr);
+  const staleButReconcilable = runGate({ FIXTURE_MODE: 'remote-stale' });
+  assert.equal(staleButReconcilable.status, 0, staleButReconcilable.stderr);
   assert.throws(() => readFileSync(apiWrites), /ENOENT/, 'gate must not perform API writes');
   const withoutMilestone = runGate({ FIXTURE_MODE: 'no-milestone' });
   assert.equal(withoutMilestone.status, 0, withoutMilestone.stderr);
@@ -118,7 +120,7 @@ console.error('unexpected '+a.join(' '));process.exit(2);
   }
   for (const overrides of [
     { GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF_NAME: 'develop' },
-    { GITHUB_SHA: 'd'.repeat(40) }, { FIXTURE_MODE: 'remote-stale' },
+    { GITHUB_SHA: 'd'.repeat(40) },
     { FIXTURE_MODE: 'wrong-head' }, { FIXTURE_MODE: 'ambiguous' },
     { FIXTURE_MODE: 'bad-milestone' }, { FIXTURE_MODE: 'stale-review' },
     { FIXTURE_MODE: 'dismissed-review' },
@@ -164,8 +166,16 @@ console.error('unexpected '+a.join(' '));process.exit(2);
     assert.match(readFileSync(output, 'utf8'), /outcome=already-published/);
   }
   assert.equal(readFileSync(apiWrites, 'utf8'), writesAfterFirst, 'reruns must not duplicate writes');
+  published = runPublish({ FIXTURE_MODE: 'remote-stale' });
+  assert.equal(published.status, 0, published.stderr);
+  assert.match(readFileSync(output, 'utf8'), /outcome=already-published/);
+  assert.equal(readFileSync(apiWrites, 'utf8'), writesAfterFirst,
+    'old published push may reconcile without writes after main advances');
 
   setState({ tagSha: sha, release: null });
+  assert.notEqual(runPublish({ FIXTURE_MODE: 'remote-stale' }).status, 0,
+    'old push cannot complete a missing release after main advances');
+  assert.equal(getState().release, null);
   published = runPublish();
   assert.equal(published.status, 0, published.stderr);
   assert.match(readFileSync(output, 'utf8'), /outcome=published/);

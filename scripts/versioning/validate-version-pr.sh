@@ -11,7 +11,8 @@ snapshot_path="${3:?Snapshot obrigatório}"
 context_path="${4:?Contexto obrigatório}"
 [[ "$ADAPTER" == standard-version ]] || { echo 'PR técnico disponível somente para standard-version' >&2; exit 1; }
 pr_path=$(mktemp)
-trap 'rm -f -- "$pr_path"' EXIT
+reviews_path=$(mktemp)
+trap 'rm -f -- "$pr_path" "$reviews_path"' EXIT
 gh api "repos/$GITHUB_REPOSITORY/pulls/$number" >"$pr_path"
 node "$script_dir/version-pr.mjs" parse "$(as_node_path "$pr_path")" \
   "$TARGET_BRANCH" "${PROJECT_PATH:-.}" "${TAG_PREFIX:-v}" >"$context_path"
@@ -24,6 +25,9 @@ if [[ "${REQUIRE_MERGED:-}" == 1 ]]; then
     "$(as_node_path "$pr_path")" "$GITHUB_SHA" || { echo 'PR de versão não corresponde ao merge integrado' >&2; exit 1; }
   review=$(gh pr view "$number" -R "$GITHUB_REPOSITORY" --json reviewDecision --jq .reviewDecision)
   [[ "$review" == APPROVED ]] || { echo 'PR de versão sem aprovação humana vigente' >&2; exit 1; }
+  gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/pulls/$number/reviews?per_page=100" >"$reviews_path"
+  node "$script_dir/version-pr.mjs" validate-human-review "$(as_node_path "$pr_path")" \
+    "$(as_node_path "$reviews_path")" >/dev/null
   diff_base="$GITHUB_SHA^"
   diff_head="$GITHUB_SHA"
 else

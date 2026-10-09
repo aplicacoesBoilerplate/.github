@@ -102,6 +102,7 @@ jobs:
         if: inputs.adapter == 'standard-version'
         env:
           PROJECT_PATH: ${{ inputs.project_path }}
+          NODE_PACKAGE_MANAGER: npm
         run: bash .shared-versioning/scripts/versioning/install-node.sh
       - name: Preparar Java para jgitver
         if: inputs.adapter == 'jgitver'

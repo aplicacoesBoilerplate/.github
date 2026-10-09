@@ -236,7 +236,8 @@ mas mantém a aprovação ligada ao head revisado.
 
 O gate também consulta a branch padrão do repositório e o SHA remoto atual.
 Um push direto sem PR integrado elegível é recusado. Se master já avançou para
-outro commit, uma execução antiga falha; não publica usando evidências antigas.
+outro commit, uma execução antiga apenas reconcilia tag e Release já completas
+no SHA antigo e retorna `already-published`; nenhuma escrita é permitida.
 
 Environment é opcional. Vazio, o job de environment é skipped e a publicação
 pode seguir; informado, o job aguarda as regras do environment do consumidor.

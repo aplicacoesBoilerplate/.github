@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseStableVersion, validateTagPrefix } from './version-report.mjs';
 
@@ -28,6 +28,19 @@ export function parseVersionPr(pr, { targetBranch, projectPath, tagPrefix }) {
   return { originPr: Number(originPr), originSha: originSha.toLowerCase(), version };
 }
 
+export function validateHumanReview(pr, reviewPages) {
+  if (!sha.test(pr?.head?.sha ?? '') || !Array.isArray(reviewPages) ||
+      reviewPages.some(page => !Array.isArray(page))) {
+    throw Error('Reviews do PR de versão incompletos');
+  }
+  const approvals = reviewPages.flat().filter(review =>
+    review?.state === 'APPROVED' && review.commit_id === pr.head.sha &&
+    review.user?.type === 'User' && review.user.login &&
+    review.user.login !== pr.user?.login);
+  if (!approvals.length) throw Error('PR de versão sem aprovação humana no SHA atual');
+  return approvals[0].user.login;
+}
+
 export function verifyVersionFiles({ repository, projectPath, version, base, head }) {
   const project = resolve(repository, projectPath);
   if (project !== resolve(repository) && !project.startsWith(`${resolve(repository)}${process.platform === 'win32' ? '\\' : '/'}`)) {
@@ -37,6 +50,12 @@ export function verifyVersionFiles({ repository, projectPath, version, base, hea
     'pr', 'standard-version', projectPath, base, head], { cwd: repository, stdio: 'pipe' });
   const pkg = JSON.parse(readFileSync(join(project, 'package.json'), 'utf8'));
   if (pkg.version !== version) throw Error('package.json diverge da versão nativa homologada');
+  if (['pnpm-lock.yaml', 'yarn.lock'].some(name => existsSync(join(project, name)))) {
+    throw Error('Perfil standard-version aceita apenas lockfile npm');
+  }
+  if (!['package-lock.json', 'npm-shrinkwrap.json'].some(name => existsSync(join(project, name)))) {
+    throw Error('Perfil standard-version exige lockfile npm');
+  }
   const changelog = readFileSync(join(project, 'CHANGELOG.md'), 'utf8');
   if (!new RegExp(`(?:^|\\n)#{1,3}\\s+\\[?${version.replaceAll('.', '\\.')}\\]?(?:\\s|$|\\()`).test(changelog)) {
     throw Error('CHANGELOG.md não registra a versão nativa homologada');
@@ -58,6 +77,10 @@ if (process.argv[1] && import.meta.filename === process.argv[1]) {
       const [prPath, targetBranch, projectPath, tagPrefix] = args;
       process.stdout.write(`${JSON.stringify(parseVersionPr(JSON.parse(readFileSync(prPath, 'utf8')),
         { targetBranch, projectPath, tagPrefix }))}\n`);
+    } else if (command === 'validate-human-review') {
+      const [prPath, reviewsPath] = args;
+      process.stdout.write(`${validateHumanReview(JSON.parse(readFileSync(prPath, 'utf8')),
+        JSON.parse(readFileSync(reviewsPath, 'utf8')))}\n`);
     } else if (command === 'verify-files' || command === 'verify-manifests') {
       const [repository, projectPath, version, base, head] = args;
       verifyVersionFiles({ repository, projectPath, version, base, head });

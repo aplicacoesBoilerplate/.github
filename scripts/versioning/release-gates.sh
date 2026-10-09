@@ -23,9 +23,8 @@ validate_release_gates() {
     echo "Publicação permitida somente na branch principal ($default_branch)" >&2; return 1;
   }
   remote_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$TARGET_BRANCH" --jq '.object.sha') || return 1
-  [[ "$remote_sha" == "$GITHUB_SHA" ]] || {
-    echo 'SHA remoto da branch principal diverge do checkout' >&2; return 1;
-  }
+  STALE_PUSH=0
+  [[ "$remote_sha" == "$GITHUB_SHA" ]] || STALE_PUSH=1
 
   gate_dir=$(mktemp -d)
   snapshot_path="$gate_dir/pr-policy.json"
@@ -79,5 +78,5 @@ validate_release_gates() {
   ORIGIN_SHA="$expected_report_sha"
   VERSION_PR_NUMBER="$version_pr_number"
   export VERSION_REPORT_PATH PR_POLICY_PATH RELEASE_POLICY_PATH RELEASE_GATES_VALIDATED=1 \
-    PUBLISH_PHASE ORIGIN_SHA VERSION_PR_NUMBER
+    PUBLISH_PHASE ORIGIN_SHA VERSION_PR_NUMBER STALE_PUSH
 }

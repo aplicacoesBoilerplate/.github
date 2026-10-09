@@ -55,10 +55,12 @@ publishMatches(/concurrency:\s*\n\s+group: version-publish-[^\n]+\n\s+cancel-in-
   'publication concurrency must serialize without cancellation');
 matches(/if: inputs\.adapter == 'standard-version'[\s\S]*?actions\/setup-node@[0-9a-f]{40}[\s\S]*?install-node\.sh/,
   'standard-version preview must install Node dependencies');
+matches(/NODE_PACKAGE_MANAGER: npm/, 'standard-version preview must select npm lockfile mode');
 matches(/if: inputs\.adapter == 'jgitver'[\s\S]*?actions\/setup-java@[0-9a-f]{40}/,
   'jgitver preview must prepare Java');
 publishMatches(/if: inputs\.adapter == 'standard-version'[\s\S]*?actions\/setup-node@[0-9a-f]{40}[\s\S]*?install-node\.sh/,
   'standard-version publisher must install Node dependencies');
+publishMatches(/NODE_PACKAGE_MANAGER: npm/, 'standard-version publisher must select npm lockfile mode');
 publishMatches(/actions\/create-github-app-token@[0-9a-f]{40}[\s\S]*?permission-contents: write[\s\S]*?permission-pull-requests: write/,
   'standard-version must mint scoped app token for technical PR');
 publishMatches(/permissions:\s*\n\s+contents: write\s*\n\s+pull-requests: read\s*\n\s+issues: read/,
