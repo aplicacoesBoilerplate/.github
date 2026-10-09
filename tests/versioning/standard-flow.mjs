@@ -55,6 +55,8 @@ const git=(...args)=>cp.execFileSync('git',['--git-dir='+process.env.MOCK_BARE,.
 const versionPr=()=>({number:13,merged_at:s.versionMergeSha?'2026-10-09T12:00:00Z':null,
  merge_commit_sha:s.versionMergeSha??null,head:{ref:s.pr?.branch,sha:s.versionHeadSha},
  base:{ref:'master',sha:s.originSha},user:{login:'test-app[bot]'},body:s.pr?.body});
+const functionalPr=()=>({number:12,head:{ref:'develop',sha:s.originSha},base:{ref:'master'},
+ merged_at:'2026-10-09T11:00:00Z',merge_commit_sha:s.originSha,milestone:null});
 if(a[0]==='auth')process.exit(0);
 if(a[0]==='pr'&&a[1]==='view'){console.log('APPROVED');process.exit(0)}
 if(a[0]==='pr'&&a[1]==='list'){console.log(JSON.stringify(s.pr?[s.pr]:[]));process.exit(0)}
@@ -67,7 +69,8 @@ if(a[0]==='api'&&a[1]==='repos/acme/consumer'){console.log('master');process.exi
 if(a[0]==='api'&&a[1].endsWith('/git/ref/heads/master')){console.log(git('rev-parse','refs/heads/master'));process.exit(0)}
 if(a[0]==='api'&&a[1]==='users/test-app[bot]'){console.log('12345');process.exit(0)}
 if(a[0]==='api'&&a[1].includes('/commits/')&&a[1].endsWith('/pulls?per_page=100')){
- const sha=a[1].split('/')[4];console.log(JSON.stringify(sha===s.versionMergeSha?[versionPr()]:[]));process.exit(0);
+ const sha=a[1].split('/')[4];console.log(JSON.stringify(sha===s.versionMergeSha?[versionPr()]:
+   sha===s.originSha?[functionalPr()]:[]));process.exit(0);
 }
 if(a[0]==='api'&&a[1]==='repos/acme/consumer/pulls/13'){
  console.log(JSON.stringify(versionPr()));process.exit(0);
@@ -78,8 +81,7 @@ if(a[0]==='api'&&url.includes('/pulls/13/reviews?')){
    user:{login:human?'maintainer':'test-app[bot]',type:human?'User':'Bot'}}]]));process.exit(0);
 }
 if(a[0]==='api'&&a[1]==='repos/acme/consumer/pulls/12'){
- console.log(JSON.stringify({number:12,head:{ref:'develop',sha:s.originSha},base:{ref:'master'},
-   merged_at:'2026-10-09T11:00:00Z',merge_commit_sha:s.originSha,milestone:null}));process.exit(0);
+ console.log(JSON.stringify(functionalPr()));process.exit(0);
 }
 if(a[0]==='api'&&url.includes('/issues/12/timeline?')){console.log('[[]]');process.exit(0)}
 if(a[0]==='api'&&url.includes('/pulls/12/reviews?')){console.log('[[]]');process.exit(0)}
@@ -116,7 +118,7 @@ console.error('unexpected gh '+a.join(' '));process.exit(1);
         ...overrides },
     });
   };
-  let result = run();
+  let result = run('publish.sh', { GITHUB_EVENT_NAME: 'push', GITHUB_REF_NAME: 'master' });
   assert.equal(result.status, 0, result.stderr);
   assert.match(readFileSync(outputPath, 'utf8'), /outcome=pending-version-pr/);
   assert.equal(JSON.parse(readFileSync(join(workspace, 'package.json'), 'utf8')).version, '1.0.1');

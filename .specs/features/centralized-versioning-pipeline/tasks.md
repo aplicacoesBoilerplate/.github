@@ -890,7 +890,7 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 ## Extensão Node/Maven (2026-10-09)
 
 ```text
-T26 → T27 → T28 → T30 → T32 → T31 → T34 → T29
+T26 → T27 → T28 → T30 → T32 → T31 → T34 → T35 → T29
 ```
 
 ### T27: Normalizar e publicar perfis nativos
@@ -933,7 +933,7 @@ callers no histórico remoto.
 **What**: Observar a CI real com Maven/Node e registrar as evidências e limites
 do novo contrato após uma revisão independente.
 **Where**: `.specs/features/centralized-versioning-pipeline/validation.md`.
-**Depends on**: T34
+**Depends on**: T35
 **Requirement**: VER-09.3
 **Tests**: GitHub Actions versioning job e auditoria independente das asserções.
 **Gate**: CI hospedada verde e relatório de validação com evidência.
@@ -995,3 +995,17 @@ evitando que a identidade distinta masque o tipo de ator.
 **Tests**: aprovação de `other-app[bot]` no SHA vigente deve ser recusada.
 **Gate**: teste unitário e sensor que remove a checagem de `User` deve falhar.
 **Commit**: `test(versioning): distinguish bot approval from human review`
+
+### T35: Provar o dispatch pós-merge funcional
+
+**Status**: Complete
+**What**: Exercitar o publicador completo desde um push funcional Node para
+confirmar que ele abre o PR técnico após gates, em vez de chamar o preparador
+diretamente no teste.
+**Where**: `tests/versioning/standard-flow.mjs`.
+**Depends on**: T34
+**Requirement**: VER-08.1
+**Tests**: fluxo completo via `publish.sh`, PR técnico aberto, sem tag no SHA
+funcional e publicação no merge técnico após revisão.
+**Gate**: fluxo Node e sensor que remove o dispatch devem falhar.
+**Commit**: `test(versioning): exercise functional publish dispatch`
