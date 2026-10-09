@@ -10,6 +10,11 @@ on:
         required: false
         default: .
         type: string
+      tag_prefix:
+        description: Prefixo literal da tag (v por padrão; alinhar à ferramenta nativa)
+        required: false
+        default: v
+        type: string
       target_branch:
         required: true
         type: string
@@ -22,6 +27,13 @@ on:
         required: false
         default: ''
         type: string
+    secrets:
+      versioning_app_id:
+        description: App ID da GitHub App de automação instalada no consumidor
+        required: false
+      versioning_app_private_key:
+        description: Chave privada da GitHub App para emitir token efêmero no job Node
+        required: false
     outputs:
       version:
         value: ${{ jobs.publish.outputs.version }}
@@ -33,6 +45,8 @@ on:
         value: ${{ jobs.publish.outputs.release_url }}
       outcome:
         value: ${{ jobs.publish.outputs.outcome }}
+      version_pr_url:
+        value: ${{ jobs.publish.outputs.version_pr_url }}
 
 jobs:
   environment-gate:
@@ -65,6 +79,7 @@ jobs:
       published_sha: ${{ steps.publish.outputs.published_sha }}
       release_url: ${{ steps.publish.outputs.release_url }}
       outcome: ${{ steps.publish.outputs.outcome }}
+      version_pr_url: ${{ steps.publish.outputs.version_pr_url }}
     steps:
       - name: Checkout do commit integrado no consumidor
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -78,6 +93,31 @@ jobs:
           ref: ${{ job.workflow_sha }}
           path: .shared-versioning
           persist-credentials: false
+      - name: Preparar Node para standard-version
+        if: inputs.adapter == 'standard-version'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+      - name: Instalar dependências Node sem lifecycle scripts
+        if: inputs.adapter == 'standard-version'
+        env:
+          PROJECT_PATH: ${{ inputs.project_path }}
+        run: bash .shared-versioning/scripts/versioning/install-node.sh
+      - name: Preparar Java para jgitver
+        if: inputs.adapter == 'jgitver'
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Emitir token efêmero para o PR técnico Node
+        id: versioning-app-token
+        if: inputs.adapter == 'standard-version'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          app-id: ${{ secrets.versioning_app_id }}
+          private-key: ${{ secrets.versioning_app_private_key }}
+          permission-contents: write
+          permission-pull-requests: write
       - name: Preparar Go para go-gitsemver
         if: inputs.adapter == 'go-gitsemver'
         uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
@@ -94,6 +134,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ADAPTER: ${{ inputs.adapter }}
           PROJECT_PATH: ${{ inputs.project_path }}
+          TAG_PREFIX: ${{ inputs.tag_prefix }}
           TARGET_BRANCH: ${{ inputs.target_branch }}
           CHANGELOG_PATH: ${{ inputs.changelog_path }}
+          VERSIONING_TOKEN: ${{ steps.versioning-app-token.outputs.token }}
+          VERSIONING_BOT_SLUG: ${{ steps.versioning-app-token.outputs.app-slug }}
         run: bash .shared-versioning/scripts/versioning/publish.sh

@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import {
   normalizeGoReport,
+  normalizeJgitverReport,
+  normalizeStandardVersionReport,
   selectReachableStableTag,
   validateVersionReport,
 } from '../../scripts/versioning/version-report.mjs';
@@ -30,6 +32,9 @@ try {
 
   equal(selectReachableStableTag(repository, evaluatedSha), '0.2.0',
     'highest stable tag reachable from evaluated SHA is authoritative');
+  git('tag', 'infra/v0.1.0', 'HEAD~1');
+  equal(selectReachableStableTag(repository, evaluatedSha, 'infra/v'), '0.1.0',
+    'custom prefix selects only its own reachable tags');
 
   const report = normalizeGoReport({
     nativeJson: JSON.stringify({ SemVer: '0.2.1', Sha: evaluatedSha }),
@@ -43,6 +48,28 @@ try {
   equal(report.tag, 'v0.2.1', 'tag is normalized with v prefix');
   equal(report.bump, 'patch', 'increment is derived only for comparison metadata');
   equal(report.native.explanation, 'native explanation', 'stderr explanation remains separate');
+
+  const standard = normalizeStandardVersionReport({
+    nativeOutput: '✔ bumping version in package.json from 0.2.0 to 0.3.0\n✔ outputting changes to CHANGELOG.md',
+    branch: 'master', sha: evaluatedSha, repository, tagPrefix: 'infra/v',
+  });
+  equal(standard.adapter, 'standard-version', 'standard-version has a normalized adapter identity');
+  equal(standard.candidateVersion, '0.3.0', 'native standard-version candidate is preserved');
+  equal(standard.baseVersion, '0.1.0', 'own tag prefix determines the base');
+  equal(standard.tag, 'infra/v0.3.0', 'own artifact prefix determines the tag');
+  throws(() => normalizeStandardVersionReport({ nativeOutput: 'bumping version in package.json from 0.2.0 to 0.3.0',
+    branch: 'master', sha: evaluatedSha, repository, tagPrefix: '../infra/v' }), /Prefixo de tag/,
+  'unsafe tag prefix fails');
+  throws(() => normalizeStandardVersionReport({ nativeOutput: 'nothing changed', branch: 'master',
+    sha: evaluatedSha, repository }), /versão calculada/, 'missing native calculation fails');
+
+  const jgitver = normalizeJgitverReport({ nativeOutput: '0.2.1\n',
+    branch: 'master', sha: evaluatedSha, repository,
+  });
+  equal(jgitver.adapter, 'jgitver', 'jgitver has a normalized adapter identity');
+  equal(jgitver.candidateVersion, '0.2.1', 'Maven project.version is authoritative');
+  throws(() => normalizeJgitverReport({ nativeOutput: '0.3.0-SNAPSHOT',
+    branch: 'master', sha: evaluatedSha, repository }), /SemVer estável/, 'jgitver prerelease fails');
 
   const taggedCommit = normalizeGoReport({
     nativeJson: JSON.stringify({ SemVer: '0.2.0', Sha: '' }),

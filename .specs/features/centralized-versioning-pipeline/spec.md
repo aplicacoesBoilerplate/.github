@@ -19,8 +19,8 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 | ------- | ------ |
 | Alterar o repositório `boilerplate-cli` | O piloto será integrado em uma iteração posterior. |
 | Aprovação autônoma de environments por LLM | Exige GitHub App e deployment protection rule próprios. |
-| Implementação completa dos perfis npm, Changesets e Java | Esta liberação comprova o contrato com Go e preserva a extensão existente. |
-| Commit automático de changelog ou versão no consumidor | O perfil Go deriva estado do Git e não precisa de commit artificial. |
+| Implementação completa de Changesets/Turbo | Pacotes dependentes e lockfile exigem preparação coordenada em uma etapa posterior. |
+| Commit automático de changelog ou versão no consumidor Go/Java | Esses perfis derivam estado do Git. O perfil standard-version usa um PR técnico revisado para persistir manifests e changelog. |
 | Algoritmo SemVer alternativo dentro da pipeline | O adaptador configurado é a fonte do cálculo. |
 | Criação automática de milestones ou alteração de seus metadados | A pipeline apenas lê e valida a milestone associada ao pull request. |
 | Configurar regras remotas de proteção em todos os consumidores | A entrega documenta os checks e a configuração exigidos; a adoção remota ocorre por repositório. |
@@ -216,3 +216,52 @@ Os repositórios consumidores precisam calcular e publicar versões com suas fer
 - [x] Pull requests para `develop` recebem guia Markdown e JSON sem alteração no working tree.
 - [x] O workflow só publica depois do merge em `master`, da CI e do environment quando configurado. SHA correction independently verified; see `validation.md` for local behavior and static-contract evidence.
 - [x] A CI central executa e bloqueia por falhas na suíte completa de versionamento.
+
+## Extensão: standard-version e jgitver
+
+Esta extensão amplia o contrato já validado com Go. O mesmo SHA da automação
+central fornece workflow e scripts ao consumidor. Nenhuma alteração no piloto
+`boilerplate-cli` faz parte da entrega.
+
+### VER-07: Relatórios nativos Node e Maven
+
+1. WHEN `adapter=standard-version` THEN o coletor SHALL instalar as dependências
+   Node do lockfile, executar `standard-version --dry-run` e normalizar a versão
+   estável exibida, preservando a saída nativa.
+2. WHEN `adapter=jgitver` THEN o coletor SHALL executar Maven com a extensão do
+   consumidor e normalizar `project.version` estável, preservando a saída nativa.
+3. IF a saída nativa for inválida, instável ou ambígua THEN a prévia e a
+   publicação SHALL falhar sem criar tag ou Release.
+4. WHEN `tag_prefix` for informado THEN tags SHALL usar esse prefixo literal e
+   a base SHALL considerar apenas sua família de tags alcançáveis.
+
+### VER-08: Persistência Node e proveniência
+
+1. WHEN o merge funcional Node passar CI, policy e homologação THEN o publicador
+   SHALL executar a preparação nativa de standard-version uma vez e abrir um PR
+   técnico com manifests e changelog, vinculado ao SHA funcional homologado.
+2. WHEN o PR técnico for integrado após revisão humana e CI THEN o publicador
+   SHALL recalcular a versão no SHA homologado, verificar os arquivos
+   persistidos e criar tag/Release no SHA integrado do PR técnico.
+3. IF origem, versão, revisão, diff ou manifests divergirem THEN a publicação
+   SHALL falhar sem tag ou Release.
+4. WHEN tag e Release já apontarem para o SHA integrado correto THEN uma
+   reexecução SHALL retornar `already-published` sem mover tag nem gerar outro PR.
+
+### VER-09: Adoção por consumidores
+
+1. The repository SHALL fornecer callers copiáveis para Node e Maven que
+   aguardem a CI do mesmo push e fixem workflow e scripts no mesmo SHA central.
+2. The documentation SHALL explicar `adapter`, `project_path`, `tag_prefix`,
+   configurações nativas, segredos da GitHub App, permissões e outputs de
+   prévia/publicação, incluindo o SHA publicado.
+3. A CI central SHALL executar fixtures determinísticas de ambos perfis e
+   ensaios com standard-version e jgitver reais antes de aprovar o PR.
+
+### Limites da extensão
+
+Changesets/Turbo permanece pendente. standard-version exige PR técnico porque
+seus manifests e changelog precisam ser commitados após o cálculo no SHA
+funcional homologado. A tag Node aponta ao merge revisado desse PR; o relatório
+registra separadamente o SHA funcional de origem. jgitver não modifica
+manifests: a extensão Maven do consumidor determina `project.version`.

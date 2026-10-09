@@ -4,7 +4,9 @@ import { dirname, join } from 'node:path';
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const localFixtures = [
+  'adapter-report.mjs',
   'version-report.mjs',
+  'version-pr.mjs',
   'go-version.mjs',
   'release-policy.mjs',
   'pr-policy.mjs',
@@ -13,6 +15,7 @@ const localFixtures = [
   'post-merge.mjs',
   'workflow-contract.mjs',
   'runner-self-test.mjs',
+  'standard-flow.mjs',
 ];
 
 export function runFixtures(fixtures, execute = file => spawnSync(process.execPath, [join(directory, file)], {

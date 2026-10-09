@@ -886,3 +886,55 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 - Round 3: 37/41 acceptance criteria verified, seven listed edges covered, six mutants killed; publication remains blocked. A fourth correction cycle requires escalation under TLC. No push performed.
 
 **Resolved on 2026-10-03**: the user authorized the SHA-only follow-up. T23/T24 close this historical blocker. Fresh independent verification confirms 41/41 ACs, 7/7 edges, 9/9 local fixtures, real pinned Go and 5/5 killed mutants. No hosted execution, pilot adoption or push was performed; these are not claimed by local MVP validation.
+
+## Extensão Node/Maven (2026-10-09)
+
+```text
+T26 → T27 → T28 → T29
+```
+
+### T27: Normalizar e publicar perfis nativos
+
+**Status**: Complete
+**What**: Coletar versões com standard-version e jgitver, instalar seus runtimes,
+validar prefixo e preservar o SHA funcional ao persistir manifests/changelog via
+PR técnico Node revisado.
+**Where**: `scripts/versioning/collect-version-report.sh`, `version-report.mjs`,
+`version-pr.mjs`, `collect-origin-report.sh`, `validate-version-pr.sh`,
+`preview.sh`, `release-gates.sh`, `prepare-version-pr.sh`, `publish.sh`,
+`.github/workflows/version-preview.yml`, `version-publish.yml`, `ci.yml` e
+`tests/versioning/`.
+**Depends on**: T26
+**Requirement**: VER-07, VER-08
+**Tests**: `node tests/versioning/run.mjs --local`,
+`node tests/versioning/real-standard-version.mjs`,
+`node tests/versioning/real-jgitver.mjs` programado na CI com Maven.
+**Gate**: suíte local integral, teste real Node e sintaxe shell/YAML. Maven real
+é validado no job hospedado após publicar a branch.
+**Commit**: `feat(versioning): support native node and maven releases`
+
+### T28: Publicar contrato e calleds copiáveis
+
+**Status**: Pending
+**What**: Documentar configuração, prefixos de infra, segredos, aprovação,
+outputs e calleds Node/Maven fixados em um SHA central que contenha T27.
+**Where**: `docs/versioning.md`, READMEs e `examples/callers/standard-version/`,
+`examples/callers/jgitver/`.
+**Depends on**: T27
+**Requirement**: VER-09
+**Tests**: `node tests/versioning/workflow-contract.mjs` e inspeção dos SHA dos
+callers no histórico remoto.
+**Gate**: contrato estático e links relativos válidos.
+**Commit**: `docs(versioning): publish node and maven caller contracts`
+
+### T29: Confirmar execução hospedada e revisão independente
+
+**Status**: Pending
+**What**: Observar a CI real com Maven/Node e registrar as evidências e limites
+do novo contrato após uma revisão independente.
+**Where**: `.specs/features/centralized-versioning-pipeline/validation.md`.
+**Depends on**: T28
+**Requirement**: VER-09.3
+**Tests**: GitHub Actions versioning job e auditoria independente das asserções.
+**Gate**: CI hospedada verde e relatório de validação com evidência.
+**Commit**: `test(versioning): record hosted native adapter validation`
