@@ -915,7 +915,7 @@ PR técnico Node revisado.
 
 ### T28: Publicar contrato e calleds copiáveis
 
-**Status**: Pending
+**Status**: Complete
 **What**: Documentar configuração, prefixos de infra, segredos, aprovação,
 outputs e calleds Node/Maven fixados em um SHA central que contenha T27.
 **Where**: `docs/versioning.md`, READMEs e `examples/callers/standard-version/`,
