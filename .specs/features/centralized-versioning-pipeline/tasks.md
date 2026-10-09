@@ -890,7 +890,7 @@ Execution is strictly sequential. Cross-phase dependencies are the final task of
 ## Extensão Node/Maven (2026-10-09)
 
 ```text
-T26 → T27 → T28 → T30 → T32 → T31 → T29
+T26 → T27 → T28 → T30 → T32 → T31 → T34 → T29
 ```
 
 ### T27: Normalizar e publicar perfis nativos
@@ -933,7 +933,7 @@ callers no histórico remoto.
 **What**: Observar a CI real com Maven/Node e registrar as evidências e limites
 do novo contrato após uma revisão independente.
 **Where**: `.specs/features/centralized-versioning-pipeline/validation.md`.
-**Depends on**: T31
+**Depends on**: T34
 **Requirement**: VER-09.3
 **Tests**: GitHub Actions versioning job e auditoria independente das asserções.
 **Gate**: CI hospedada verde e relatório de validação com evidência.
@@ -983,3 +983,15 @@ recusa lockfiles de outros gerenciadores. Push antigo com tag/Release completos
 retorna `already-published`; sem Release não cria nada.
 **Gate**: teste unitário e fluxo Node de publicação/idempotência.
 **Commit**: `fix(versioning): enforce release evidence and stale retry safety`
+
+### T34: Discriminar aprovação de outro bot
+
+**Status**: Complete
+**What**: Provar que o gate humano recusa um bot diferente da App autora,
+evitando que a identidade distinta masque o tipo de ator.
+**Where**: `tests/versioning/version-pr.mjs`.
+**Depends on**: T31
+**Requirement**: VER-08.2
+**Tests**: aprovação de `other-app[bot]` no SHA vigente deve ser recusada.
+**Gate**: teste unitário e sensor que remove a checagem de `User` deve falhar.
+**Commit**: `test(versioning): distinguish bot approval from human review`

@@ -47,6 +47,9 @@ try {
   assert.throws(() => validateHumanReview(reviewedPr, [[{ ...approval,
     user: { login: 'version-app[bot]', type: 'Bot' } }]]), /humana/);
   assert.throws(() => validateHumanReview(reviewedPr, [[{ ...approval,
+    user: { login: 'other-app[bot]', type: 'Bot' } }]]), /humana/,
+  'another bot cannot satisfy the human-review gate');
+  assert.throws(() => validateHumanReview(reviewedPr, [[{ ...approval,
     commit_id: originSha }]]), /humana/);
   writeFileSync(join(root, 'package-lock.json'), JSON.stringify({ version: '0.1.0' }));
   assert.throws(() => verifyVersionFiles({ repository: root, projectPath: '.', version: '0.2.0' }),
