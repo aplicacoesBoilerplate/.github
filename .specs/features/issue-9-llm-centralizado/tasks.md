@@ -1,6 +1,6 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 2/13 tarefas concluídas.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 3/13 tarefas concluídas.
 
 ## Execution Protocol
 
@@ -81,6 +81,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 
 ### T3: Compor diretrizes com proveniência
 
+**Status**: Complete. Evidências em [execution-review.md](execution-review.md#t3-instruções-integrais-e-proveniência).
+
 **What**: Implementar carregamento integral de instruções globais e específicas do consumidor.
 **Where**: `scripts/llm/instructions.mjs`
 **Depends on**: T2
@@ -88,9 +90,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 **Requirement**: LLM-15, LLM-16
 **Tools**: Node fs/crypto, documentação oficial; TLC.
 **Done when**:
-- [ ] Snapshot global e provenance correspondem ao arquivo aprovado no momento da implementação; diferenças desde a revisão são apresentadas.
-- [ ] Descoberta de AGENTS/overrides e teto de 65536 bytes não truncam instruções; skills ausentes são documentadas.
-- [ ] Pelo menos 8 casos (incluindo symlink e limites exato/excedido) passam.
+- [x] Snapshot global e provenance correspondem ao arquivo aprovado no momento da implementação; diferenças desde a revisão são apresentadas (somente CRLF para LF registrado).
+- [x] Descoberta de AGENTS/overrides e teto de 65536 bytes não truncam instruções; skills ausentes são documentadas.
+- [x] Pelo menos 8 casos (incluindo symlink e limites exato/excedido) passam (10 casos).
 **Tests**: unit em `tests/llm/instructions.test.mjs`.
 **Gate**: Quick + Build da fase (check de módulos existentes; actionlint somente onde houver YAML executável).
 **Commit**: `feat(llm): compose versioned execution guidance`

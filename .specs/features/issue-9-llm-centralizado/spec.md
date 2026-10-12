@@ -151,8 +151,8 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 | LLM-12 | Auth | Design | In Tasks | T4, T9 |
 | LLM-13 | Segurança | Execute | Partial: T2 complete | T2, T9 |
 | LLM-14 | Segurança | Design | In Tasks | T7, T9 |
-| LLM-15 | Diretrizes | Design | In Tasks | T3 |
-| LLM-16 | Diretrizes | Design | In Tasks | T3 |
+| LLM-15 | Diretrizes | Execute | Implemented: T3; final verification pending | T3 |
+| LLM-16 | Diretrizes | Execute | Implemented: T3; final verification pending | T3 |
 | LLM-17 | Resultado | Design | In Tasks | T8, T9 |
 | LLM-18 | Resultado | Design | In Tasks | T8 |
 | LLM-19 | Resultado | Design | In Tasks | T7, T8 |

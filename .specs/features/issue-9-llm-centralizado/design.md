@@ -163,6 +163,8 @@ Limite da fila é o documentado pela plataforma; excesso aparece cancelado, não
 
 Fonte global observada nesta revisão: `C:/Users/gerso/.agents/AGENTS.md`, 25298 bytes, SHA-256 `38ebd29a0c12506b5e53459d9a1add7734b19c56cca5fcc500302904d4cacf81`. A implementação copia o conteúdo integral para `scripts/llm/instructions/AGENTS.md` e cria proveniência com hash, data e versão. Atualização exige revisão; não há sincronização automática da máquina pessoal.
 
+T3 versionou o texto integral normalizado de CRLF para LF, com igualdade textual verificada: 24980 bytes, SHA-256 `5e5d5640dcb6827ff8df7a01e745c7027893483091791b7f01ac163166a3c40a`. `provenance.json` registra ambos os hashes e a transformação; `.gitattributes` local mantém LF no snapshot, evitando mudanças de hash entre Windows e Linux. Nenhuma regra foi reduzida. Nenhuma skill pessoal é instalada automaticamente.
+
 Carregar instruções de projeto da revisão confiável selecionada pelo caller, respeitando descoberta e overrides do CLI fixado. Validar limites antes de invocar, configurar `project_doc_max_bytes` suficiente e impedir symlinks para fora da raiz. Skills referidas no global não são automaticamente distribuídas: documentação lista as disponíveis; o MVP não promete acesso às skills locais.
 
 Codex recebe diretório de trabalho de leitura e credencial de inferência mínima. Não executar hooks/build/tests do consumidor. Não herdar `.codex/config.toml`, MCPs, plugins ou comandos arbitrários do checkout: usar cópia controlada dos arquivos necessários e configuração gerada pelo central, verificada por teste de isolamento do CLI. Permissões efetivas de rede e sandbox devem ser testadas; AGENTS é orientação, não controle de acesso.

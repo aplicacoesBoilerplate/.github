@@ -45,3 +45,23 @@ Gate: 16 testes aprovados, zero falhas/skips; check de sintaxe passou. Metadata 
 | preflight.test.mjs:58–74 | Política REST de GET/prazo/retry do design | Sim |
 
 Adequação: assertions verificam identidade e estados contratuais; todos os testes possuem requisito. A validação de origem está implementada, mas LLM-13 completo ainda depende da ligação em T9.
+
+## T3: instruções integrais e proveniência
+
+Gate de fase: 54 testes aprovados em Node 22.23.3 (28 contrato, 16 origem, 10 instruções), zero falhas/skips. Check de sintaxe passou. Ainda não há YAML executável desta feature; actionlint entra em T9. Igualdade do snapshot com o global normalizado para LF verificada por comparação do texto completo; hash original permaneceu o aprovado. Normalização e disponibilidade de skills registradas em provenance.json; Git mantém LF por atributo local.
+
+| Critério / requisito | Evidência e expressão | Resultado especificado | Coberto |
+| --- | --- | --- | --- |
+| LLM-15: texto integral e hashes | `tests/llm/instructions.test.mjs:24` `assert.equal(result.content, 'all global lines\nincluding final newline\n\n\nconsumer guidance')`; :25 `assert.deepEqual(result.sources, [...])`; :29 `assert.equal(result.sha256, hash(result.content))` | Fontes completas, hashes individuais e agregado | Sim |
+| Precedência e escopo Codex | `tests/llm/instructions.test.mjs:38–50` `assert.equal(...content, ...)`, `assert.deepEqual(...sources.map(s => s.path), [...])` | Global, raiz e cwd; override não vazio; irmãos não carregados | Sim |
+| LLM-16: limite exato/excedido | `tests/llm/instructions.test.mjs:56` `assert.equal(result.bytes, 65536)`; :57 `assert.equal(result.content.length, 65536)`; :59 e :64 `deny(...)` com código exato em :17 | Limite em bytes sem truncamento | Sim |
+| Symlinks, arquivos inválidos e cwd externo | `tests/llm/instructions.test.mjs:71–84` `deny(...)` | INSTRUCTIONS_INVALID | Sim |
+| Snapshot/proveniência do mantenedor | `tests/llm/instructions.test.mjs:92–95` `assert.equal(hash(bytes), provenance.sha256)`, `assert.equal(provenance.source_sha256, '38ebd29a0c12506b5e53459d9a1add7734b19c56cca5fcc500302904d4cacf81')`, `assert.equal(provenance.source_bytes, 25298)` | Fonte aprovada identificável, snapshot verificável | Sim |
+
+| Assertions | Origem | Manter |
+| --- | --- | --- |
+| instructions.test.mjs:24–50 | LLM-15, composição/prevalência documentada | Sim |
+| instructions.test.mjs:56–84 | LLM-16, limites e paths da spec | Sim |
+| instructions.test.mjs:92–95 | LLM-15 e Done-when de snapshot/proveniência | Sim |
+
+Adequação: os 10 casos verificam conteúdo, hashes, precedência e recusas; matriz e constituição seguidas. Uma contagem de bytes literal do fixture foi corrigida de 40 para 41 antes da implementação; requisito e assertions de comportamento foram preservados. Nenhum teste removido/ignorado. T7 ainda deve conectar o conteúdo ao processo isolado; nenhum comportamento de inferência foi homologado.

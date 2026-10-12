@@ -21,10 +21,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-9-llm-centralizado/`
-- **Phase / Task**: Execute; T1/T2 concluídas, T3 disponível.
-- **Completed**: Workspace existente confirmado, issue e dependências consultadas, planejamento TLC e protótipos de caller escritos.
-- **In-progress**: Contrato e preflight implementados; 44 testes passaram; evidências em `execution-review.md`.
-- **Next step**: Executar T3 em sequência; T13 depende de piloto privado e credenciais próprias.
-- **Blockers**: Nenhum para implementação offline. Auth real e compatibilidade de dependências ainda não homologadas.
-- **Uncommitted files**: T2 pronta para commit atômico (preflight, testes e status).
+- **Phase / Task**: Execute; Phase 1 concluída, T4 disponível. 3/13 tarefas.
+- **Completed**: Planejamento aprovado e persistido; T1 contrato/dependências, T2 origem/SHA, T3 diretrizes integrais/proveniência implementadas com commits por tarefa.
+- **In-progress**: Nenhuma tarefa parcial. 54 testes passaram em Node 22.23.3; check de sintaxe passou; evidências em `execution-review.md`.
+- **Next step**: Executar T4 (auth temporária), depois T5/T6 (freshness e persistência), sequencialmente.
+- **Blockers**: Nenhum para implementação offline. T13 requer repositório privado piloto e credenciais provisionadas pelo mantenedor; publicação não autorizada nesta iteração.
+- **Uncommitted files**: Nenhum após o commit de T3.
 - **Branch**: `feature/issue-9-llm-centralizado`
