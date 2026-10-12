@@ -28,10 +28,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-9-llm-centralizado/`
-- **Phase / Task**: Execute; T4 concluída. 4/13 tarefas.
+- **Phase / Task**: Execute; T5 concluída. 5/13 tarefas.
 - **Completed**: Planejamento aprovado e persistido; T1 contrato/dependências, T2 origem/SHA, T3 diretrizes integrais/proveniência implementadas com commits por tarefa.
-- **In-progress**: Auth temporária isolada e cleanup implementados; gate de auth e sintaxe passaram.
-- **Next step**: Executar T5/T6 (freshness e persistência), sequencialmente.
+- **In-progress**: Auth temporária e guard de sessão antiga implementados; seus gates passaram.
+- **Next step**: Executar T6 (persistência criptografada no consumidor).
 - **Blockers**: Nenhum para implementação offline. T13 requer repositório privado piloto e credenciais provisionadas pelo mantenedor; publicação não autorizada nesta iteração.
-- **Uncommitted files**: Nenhum após o commit de T4.
+- **Uncommitted files**: Nenhum após o commit de T5.
 - **Branch**: `feature/issue-9-llm-centralizado`

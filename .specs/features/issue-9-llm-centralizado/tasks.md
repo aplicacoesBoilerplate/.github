@@ -1,6 +1,6 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 4/13 tarefas concluídas.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 5/13 tarefas concluídas.
 
 ## Execution Protocol
 
@@ -119,6 +119,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 
 ### T5: Recusar snapshots de sessão antigos
 
+**Status**: Complete. Guard e origem da metadata verificados em `tests/llm/freshness.test.mjs`.
+
 **What**: Implementar o guard de freshness com metadata da secret e criação do workflow run.
 **Where**: `scripts/llm/check-session-freshness.mjs`
 **Depends on**: T4
@@ -126,9 +128,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 **Requirement**: LLM-09
 **Tools**: Node, REST Secrets/Actions documentadas; TLC.
 **Done when**:
-- [ ] `updated_at >= created_at` recusa execução antes de disponibilizar sessão ao CLI.
-- [ ] Timestamp inválido, 403, rerun antigo e precisão no mesmo segundo falham explicitamente.
-- [ ] Testes comprovam que snapshot recusado impede uso da sessão; indisponibilidade da metadata falha fechada.
+- [x] `updated_at >= created_at` recusa execução antes de disponibilizar sessão ao CLI.
+- [x] Timestamp inválido, 403, rerun antigo e precisão no mesmo segundo falham explicitamente.
+- [x] Testes comprovam que snapshot recusado impede uso da sessão; indisponibilidade da metadata falha fechada.
 **Tests**: unit/integration em `tests/llm/freshness.test.mjs`.
 **Gate**: Quick.
 **Commit**: `fix(llm): reject stale queued authentication snapshots`

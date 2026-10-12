@@ -1,5 +1,9 @@
 # Evidências de implementação
 
+## T5: freshness antes de utilizar a sessão
+
+Gate passou. LLM-09: `freshness.test.mjs:22–23` verifica boundary aprovado; :30 e :46 comprova que fila/rerun e metadata recusada não executam a continuação; :37 exige AUTH_SNAPSHOT_STALE para igualdade no segundo, calendário inválido e timestamps ausentes. As APIs simuladas verificam o destino e a credencial correta para cada GET (:12–16). A conexão ao job real permanece em T9.
+
 ## T4: autenticação isolada
 
 Gate de auth e sintaxe passou. LLM-06/07/12: `auth.test.mjs:14–16` verifica arquivos/conteúdo de consumidores distintos; :24–28 e :40–43 verificam ambiente mínimo e ausência de credenciais de escrita; :30–34 verifica remoção após sucesso/erro; :56 exige AUTH_CONFIG_ERROR para combinações inválidas. Esses cenários protegem isolamento e recuperação, sem piso quantitativo. Permissões POSIX são verificadas quando executado em Linux; ACL Windows não é homologação do runner Ubuntu. Sem login ou tokens reais.
