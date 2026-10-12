@@ -1,5 +1,9 @@
 # Evidências de implementação
 
+## T4: autenticação isolada
+
+Gate de auth e sintaxe passou. LLM-06/07/12: `auth.test.mjs:14–16` verifica arquivos/conteúdo de consumidores distintos; :24–28 e :40–43 verificam ambiente mínimo e ausência de credenciais de escrita; :30–34 verifica remoção após sucesso/erro; :56 exige AUTH_CONFIG_ERROR para combinações inválidas. Esses cenários protegem isolamento e recuperação, sem piso quantitativo. Permissões POSIX são verificadas quando executado em Linux; ACL Windows não é homologação do runner Ubuntu. Sem login ou tokens reais.
+
 ## T1: contrato de entrada
 
 Gate: 28 testes aprovados, zero falhas e zero skips. Instalação `npm ci --ignore-scripts` em diretório temporário com apenas manifesto/lock passou. `node --check` passou. Codex 0.162.1 confirmou via `exec --help` as opções `--model`, `--sandbox read-only`, `--output-schema`, `--output-last-message`, `--ephemeral`, `--ignore-user-config`, `--ignore-rules` e prompt por stdin. Nenhum login ou inferência foi executado.

@@ -18,13 +18,20 @@
 - **Date**: 2026-10-12
 - **Status**: active
 
+### AD-003
+- **Decision**: Testes protegem contratos e efeitos relevantes; a quantidade de casos não é gate. Evitar repetição que não detecte regressão adicional.
+- **Reason**: Correção explícita do mantenedor ao iniciar a fase de autenticação.
+- **Scope**: Execução da issue #9.
+- **Date**: 2026-10-12
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/issue-9-llm-centralizado/`
-- **Phase / Task**: Execute; Phase 1 concluída, T4 disponível. 3/13 tarefas.
+- **Phase / Task**: Execute; T4 concluída. 4/13 tarefas.
 - **Completed**: Planejamento aprovado e persistido; T1 contrato/dependências, T2 origem/SHA, T3 diretrizes integrais/proveniência implementadas com commits por tarefa.
-- **In-progress**: Nenhuma tarefa parcial. 54 testes passaram em Node 22.23.3; check de sintaxe passou; evidências em `execution-review.md`.
-- **Next step**: Executar T4 (auth temporária), depois T5/T6 (freshness e persistência), sequencialmente.
+- **In-progress**: Auth temporária isolada e cleanup implementados; gate de auth e sintaxe passaram.
+- **Next step**: Executar T5/T6 (freshness e persistência), sequencialmente.
 - **Blockers**: Nenhum para implementação offline. T13 requer repositório privado piloto e credenciais provisionadas pelo mantenedor; publicação não autorizada nesta iteração.
-- **Uncommitted files**: Nenhum após o commit de T3.
+- **Uncommitted files**: Nenhum após o commit de T4.
 - **Branch**: `feature/issue-9-llm-centralizado`

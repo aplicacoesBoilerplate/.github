@@ -1,6 +1,6 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 3/13 tarefas concluídas.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 4/13 tarefas concluídas.
 
 ## Execution Protocol
 
@@ -29,7 +29,7 @@ Implementação local autorizada pelo mantenedor em 2026-10-12. Usar `tlc-spec-d
 | Build | Fechamento de fase e YAML | Full + `npm --prefix scripts/llm run check` (node --check dos módulos) + actionlint na versão fixada |
 | Pilot | T13 | Duas execuções novas sequenciais e falhas controladas pelo caller privado; preencher evidência |
 
-Os mínimos de casos abaixo são piso de planejamento, não contagem observada. Ao implementar, registrar a contagem real e justificar acréscimos; não remover testes para atingir o piso.
+Os testes são escolhidos pelo valor: detectar falhas relevantes e proteger contratos/efeitos da entrega. A contagem não é um gate. Priorizar assertions de estado, isolamento e conteúdo persistido; não duplicar casos apenas para cumprir um piso. Esta orientação foi corrigida pelo mantenedor após T3.
 
 ## Execution Plan
 
@@ -101,6 +101,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 
 ### T4: Restaurar credenciais por invocação
 
+**Status**: Complete. Isolamento, modalidades e cleanup verificados em `tests/llm/auth.test.mjs`.
+
 **What**: Implementar auth temporária e cleanup para sessão ChatGPT e API key explícita.
 **Where**: `scripts/llm/auth.mjs`
 **Depends on**: T3
@@ -108,9 +110,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 **Requirement**: LLM-06, LLM-07, LLM-12
 **Tools**: Node, CLI falso; TLC/cicd.
 **Done when**:
-- [ ] Combinação de modalidade e secrets é validada; não existe fallback, conta central ou uso do home pessoal.
-- [ ] Sessão malformed, modo externo não suportado e segredo ausente não iniciam CLI.
-- [ ] Pelo menos 8 casos verificam permissões, ambiente e remoção normal/erro.
+- [x] Combinação de modalidade e secrets é validada; não existe fallback, conta central ou uso do home pessoal.
+- [x] Sessão malformed, modo externo não suportado e segredo ausente não iniciam CLI.
+- [x] Testes comprovam credenciais isoladas, ausência de PAT no ambiente do modelo e remoção no término normal/erro.
 **Tests**: unit/integration em `tests/llm/auth.test.mjs`.
 **Gate**: Quick.
 **Commit**: `feat(llm): isolate caller authentication lifecycle`
@@ -126,7 +128,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 **Done when**:
 - [ ] `updated_at >= created_at` recusa execução antes de disponibilizar sessão ao CLI.
 - [ ] Timestamp inválido, 403, rerun antigo e precisão no mesmo segundo falham explicitamente.
-- [ ] Pelo menos 7 casos provam zero chamadas e zero persistência em snapshot recusado.
+- [ ] Testes comprovam que snapshot recusado impede uso da sessão; indisponibilidade da metadata falha fechada.
 **Tests**: unit/integration em `tests/llm/freshness.test.mjs`.
 **Gate**: Quick.
 **Commit**: `fix(llm): reject stale queued authentication snapshots`
@@ -142,7 +144,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 **Done when**:
 - [ ] Fixture descriptografa o payload e encontra a sessão renovada, nunca seed anterior.
 - [ ] Sem alteração não há PUT; arquivo inválido, metadata modificada ou destino de outro repo são recusados.
-- [ ] Pelo menos 9 casos cobrem 201/204, 403, timeout ambíguo, erro de chave e falha após inferência válida.
+- [ ] Testes descriptografam o payload e comprovam que falhas de permissão, rede ou chave não sobrescrevem estado nem liberam resultado.
 **Tests**: integration em `tests/llm/persistence.test.mjs`.
 **Gate**: Quick.
 **Commit**: `feat(llm): persist refreshed consumer session`
@@ -159,7 +161,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 - [ ] CLI falso confirma número de invocações, modelo/esforço selecionados e zero interpolação de shell.
 - [ ] Processo não recebe tokens GitHub; checkout não muda; config/MCP/hooks do consumidor não são herdados.
 - [ ] Timeout agregado encerra subprocessos e retorna erro, sem retry automático de inferência.
-- [ ] Pelo menos 12 casos cobrem os modos, decisões, erro da segunda chamada, timeout e sandbox/config hostil.
+- [ ] Testes comprovam decisões e resultados, encerramento por timeout e isolamento frente à configuração do consumidor.
 **Tests**: integration em `tests/llm/execution.test.mjs`.
 **Gate**: Full; smoke de flags/sandbox com versão fixada, sem LLM real nesta tarefa.
 **Commit**: `feat(llm): execute caller-selected Codex requests`
@@ -176,7 +178,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 - [ ] Modelo não pode falsificar repositório, SHA ou run_id do envelope.
 - [ ] Duas chamadas do mesmo workflow no mesmo run/attempt geram nomes distintos com seus invocation_id; colisão não habilita overwrite.
 - [ ] Patch é somente dado; paths perigosos, arquivos de auth e excesso de bytes são recusados.
-- [ ] Pelo menos 10 casos comprovam schema, limites, allowlist de arquivos e ausência dos segredos-sentinela.
+- [ ] Testes comprovam identidade do resultado, limites, paths permitidos e ausência de credenciais no pacote.
 **Tests**: unit/integration em `tests/llm/result.test.mjs`.
 **Gate**: Full + Build da fase.
 **Commit**: `feat(llm): validate result and patch artifacts`
@@ -195,7 +197,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 - [ ] Workflow declara inputs/secrets/outputs do design; código central e contexto consumidor usam suas revisões corretas.
 - [ ] Sessão serializada por repo/secret; nenhuma configuração de org global ou secrets: inherit.
 - [ ] Erro de CLI ainda tenta persistir refresh; erro de persistência/upload não publica sucesso.
-- [ ] Pelo menos 10 contratos passam incluindo cancelamento e falha sem outputs.
+- [ ] Testes de contrato comprovam orquestração, persistência após erro e recusa de sucesso quando faltar resultado.
 **Tests**: contract/integration em `tests/llm/workflow.test.mjs`.
 **Gate**: Full + actionlint.
 **Commit**: `feat(llm): expose reusable invocation workflow`
@@ -210,7 +212,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 **Tools**: Node, actionlint; TLC/cicd.
 **Done when**:
 - [ ] CI instala somente dependências fixadas da feature, roda todos seus testes e check de sintaxe.
-- [ ] Pelo menos 3 casos de contrato provam execução sem package raiz e preservam os caminhos condicionais anteriores.
+- [ ] Contrato da CI comprova que o gate da feature roda sem package raiz, preservando os caminhos anteriores.
 **Tests**: contract em `tests/llm/ci.test.mjs`.
 **Gate**: Build.
 **Commit**: `ci(llm): enforce feature contract checks`
@@ -228,7 +230,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 - [ ] Cada chamada define invocation_id próprio; o consumo confere esse ID e o SHA no envelope.
 - [ ] Caller não contém comandos de autenticação copiados, sessão global nem credenciais nos inputs.
 - [ ] README cobre valores, alternativas, provisionamento, rerun versus novo run e leitura dos outputs.
-- [ ] Pelo menos 5 contratos validam as duas modalidades e a troca de modelo sem editar o central.
+- [ ] Contratos de consumo comprovam as modalidades e escolhas próprias sem editar o central.
 **Tests**: contract/documental em `tests/llm/caller.test.mjs`.
 **Gate**: Full + actionlint do exemplo após resolver a referência do piloto.
 **Commit**: `docs(llm): deliver consumer-owned caller examples`
@@ -244,7 +246,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 **Done when**:
 - [ ] Cada entrada/secret/saída e código de erro aparece no manual com efeito e configuração.
 - [ ] Limites da sessão Plus, snapshot antigo, PAT por repo e ausência de atomicidade externa estão documentados.
-- [ ] Pelo menos 3 verificações documentais cobrem campos, caminhos e exemplos sem credenciais.
+- [ ] Revisão documental confere contrato, caminhos e exemplos sem credenciais; automatizar somente verificações que detectem divergência relevante.
 **Tests**: documental em `tests/llm/docs.test.mjs`.
 **Gate**: Full + Build da fase antes da publicação.
 **Commit**: `docs(llm): document invocation and recovery contract`
@@ -261,7 +263,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 - [ ] Dois runs novos sequenciais retornam envelope válido; caminho de refresh real observado ou explicitamente pendente, sem adulterar credencial para fingir teste.
 - [ ] Execução enfileirada com snapshot antigo é recusada; novo run recebe estado atual.
 - [ ] Falha controlada de persistência impede sucesso e procedimento de recuperação é demonstrado.
-- [ ] Inspeção confirma ausência de secrets nos logs/artefatos; pelo menos 4 cenários documentados.
+- [ ] Evidências dos cenários definidos acima incluem inspeção de ausência de secrets em logs/artefatos.
 **Tests**: e2e privado, sem considerar fixtures como comprovação da autenticação real.
 **Gate**: Pilot + verificação independente TLC e relatório de conclusão, apenas depois das evidências necessárias.
 **Commit**: `docs(llm): record private pilot evidence`

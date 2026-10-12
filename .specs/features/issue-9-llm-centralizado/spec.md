@@ -142,13 +142,13 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 | LLM-03 | Caller | Design | In Tasks | T7 |
 | LLM-04 | Caller | Design | In Tasks | T7 |
 | LLM-05 | Caller | Design | In Tasks | T7 |
-| LLM-06 | Auth | Design | In Tasks | T4, T9 |
-| LLM-07 | Auth | Design | In Tasks | T4 |
+| LLM-06 | Auth | Execute | Partial: T4 complete | T4, T9 |
+| LLM-07 | Auth | Execute | Implemented: T4; final verification pending | T4 |
 | LLM-08 | Auth | Design | In Tasks | T9 |
 | LLM-09 | Auth | Design | In Tasks | T5 |
 | LLM-10 | Auth | Design | In Tasks | T6 |
 | LLM-11 | Auth | Design | In Tasks | T6, T9 |
-| LLM-12 | Auth | Design | In Tasks | T4, T9 |
+| LLM-12 | Auth | Execute | Partial: T4 complete | T4, T9 |
 | LLM-13 | Segurança | Execute | Partial: T2 complete | T2, T9 |
 | LLM-14 | Segurança | Design | In Tasks | T7, T9 |
 | LLM-15 | Diretrizes | Execute | Implemented: T3; final verification pending | T3 |
