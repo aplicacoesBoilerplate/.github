@@ -7,6 +7,7 @@ de issues/PRs e workflows chamados por pipelines menores nos consumidores.
 - [Versionamento por sprint: contratos, gates e exemplos](docs/versioning.md)
 - [Caller Go copiável e configuração do consumidor](examples/callers/go/)
 - [Especificação e estado da issue #2](specs/001-versionamento-por-sprint/spec.md)
+- [Planejamento TLC da pipeline LLM (#9), em revisão](.specs/features/issue-9-llm-centralizado/spec.md)
 
 Os workflows compartilhados devem ser referenciados por revisão fixa ou tag
 estável já publicada. Testes e consumidores mínimos ficam no repositório

@@ -1,5 +1,7 @@
 # Proposal
 
+> Histórico substituído em 2026-10-12 pelo [planejamento TLC da issue #9](../../../.specs/features/issue-9-llm-centralizado/spec.md). O novo contrato torna a configuração de invocação e as credenciais responsabilidade do caller e corrige o tratamento de snapshots de secrets. Não implementar estas tarefas antigas como fonte corrente.
+
 ## Why
 
 A issue #9 pede uma pipeline reutilizável para acionar o Codex CLI, mas os consumidores privados usam uma assinatura ChatGPT Plus, sem chave de API faturada separadamente nem runner persistente. Em runners efêmeros do GitHub Actions, a sessão do Codex precisa ser restaurada e sua versão renovada preservada com segurança entre execuções.

@@ -1,5 +1,7 @@
 # Design
 
+> Histórico substituído em 2026-10-12 pelo [design TLC da issue #9](../../../.specs/features/issue-9-llm-centralizado/design.md). Este documento não é o contrato corrente, inclusive para roteamento e persistência de sessão.
+
 ## Context
 
 Ver `proposal.md` e a delta spec. A organização já usa workflows `workflow_call` com checkout da automação na mesma revisão do workflow, permissões explícitas e `persist-credentials: false`. A origem da automação é pública; somente repositórios consumidores privados confiáveis podem receber a sessão ChatGPT. Não há runner persistente nem token de API OpenAI. O `GITHUB_TOKEN` não oferece a permissão de Secrets exigida para atualizar a secret de repositório.

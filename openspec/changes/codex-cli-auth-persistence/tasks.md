@@ -1,5 +1,7 @@
 # Tasks
 
+> Histórico substituído em 2026-10-12 pelas [tarefas TLC da issue #9](../../../.specs/features/issue-9-llm-centralizado/tasks.md). Nenhuma tarefa desta lista foi marcada como implementada pela migração documental.
+
 ## 1. Contrato e validação
 
 - [ ] 1.1 Criar workflow reutilizável com inputs, secrets e envelope de outputs explícitos; verificar sintaxe do workflow e correspondência com a delta spec.

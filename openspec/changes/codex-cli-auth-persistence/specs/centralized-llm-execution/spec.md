@@ -1,5 +1,7 @@
 # Spec Delta
 
+> Histórico substituído em 2026-10-12 pela [especificação TLC da issue #9](../../../../../.specs/features/issue-9-llm-centralizado/spec.md). Requisitos abaixo preservam a proposta anterior e não devem ser tratados como contrato corrente.
+
 ## Purpose
 
 Permitir que repositórios privados executem prompts pelo Codex CLI em um workflow reutilizável, preservando com segurança a sessão ChatGPT entre runners efêmeros.
