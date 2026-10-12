@@ -137,8 +137,8 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 
 | Requirement ID | Story | Phase | Status | Tasks |
 | --- | --- | --- | --- | --- |
-| LLM-01 | Caller | Design | In Tasks | T1, T9 |
-| LLM-02 | Caller | Design | In Tasks | T1, T2 |
+| LLM-01 | Caller | Execute | Partial: T1 complete | T1, T9 |
+| LLM-02 | Caller | Execute | Partial: T1 complete | T1, T2 |
 | LLM-03 | Caller | Design | In Tasks | T7 |
 | LLM-04 | Caller | Design | In Tasks | T7 |
 | LLM-05 | Caller | Design | In Tasks | T7 |

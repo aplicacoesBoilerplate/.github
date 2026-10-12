@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "invocation_mode", "execution"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "invocation_mode": { "enum": ["single", "decision-then-prompt"] },
+    "execution": { "$ref": "#/definitions/execution" },
+    "decision": { "$ref": "#/definitions/decision" }
+  },
+  "oneOf": [
+    { "properties": { "invocation_mode": { "const": "single" }, "decision": false } },
+    { "properties": { "invocation_mode": { "const": "decision-then-prompt" }, "decision": { "$ref": "#/definitions/decision" } }, "required": ["decision"] }
+  ],
+  "definitions": {
+    "model": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]*$" },
+    "execution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model", "effort", "template"],
+      "properties": {
+        "model": { "$ref": "#/definitions/model" },
+        "effort": { "enum": ["low", "medium", "high"] },
+        "template": { "enum": ["analyze", "propose-patch"] }
+      }
+    },
+    "decision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["model", "effort", "template"],
+      "properties": {
+        "model": { "$ref": "#/definitions/model" },
+        "effort": { "enum": ["low", "medium", "high"] },
+        "template": { "const": "decision" }
+      }
+    }
+  }
+}

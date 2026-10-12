@@ -21,10 +21,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-9-llm-centralizado/`
-- **Phase / Task**: Execute autorizado; T1 disponível.
+- **Phase / Task**: Execute; T1 concluída, T2 disponível.
 - **Completed**: Workspace existente confirmado, issue e dependências consultadas, planejamento TLC e protótipos de caller escritos.
-- **In-progress**: Aprovação registrada; validação documental em `planning-review.md`.
-- **Next step**: Executar T1 em sequência; T13 depende de piloto privado e credenciais próprias.
+- **In-progress**: Contrato v1 implementado; 28 testes e instalação limpa passaram; evidências em `execution-review.md`.
+- **Next step**: Executar T2 em sequência; T13 depende de piloto privado e credenciais próprias.
 - **Blockers**: Nenhum para implementação offline. Auth real e compatibilidade de dependências ainda não homologadas.
-- **Uncommitted files**: `.specs/`, README e avisos de supersessão no OpenSpec anterior.
+- **Uncommitted files**: T1 pronta para commit atômico (scripts, testes e status).
 - **Branch**: `feature/issue-9-llm-centralizado`

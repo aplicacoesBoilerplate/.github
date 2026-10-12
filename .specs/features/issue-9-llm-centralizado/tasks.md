@@ -1,6 +1,6 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 0/13 tarefas concluídas.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 1/13 tarefas concluídas.
 
 ## Execution Protocol
 
@@ -45,6 +45,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 
 ### T1: Validar o contrato de chamada
 
+**Status**: Complete. Evidências em [execution-review.md](execution-review.md#t1-contrato-de-entrada).
+
 **What**: Implementar o componente de normalização da configuração, com schema e manifesto de dependências da feature.
 **Where**: `scripts/llm/validate-request.mjs`
 **Depends on**: None
@@ -52,9 +54,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 **Requirement**: LLM-01, LLM-02
 **Tools**: Git, Node, documentação oficial; skills TLC e cicd.
 **Done when**:
-- [ ] Config v1 fecha campos, valida inputs/limites e diferencia os dois modos antes de qualquer credencial.
-- [ ] Manifesto/lock fixam versões exatas de Codex, Ajv, libsodium e parser YAML; registrar compatibilidade de flags sem autenticação.
-- [ ] Testes da tarefa cobrem pelo menos 12 casos; Quick passa.
+- [x] Config v1 fecha campos, valida inputs/limites e diferencia os dois modos antes de qualquer credencial.
+- [x] Manifesto/lock fixam versões exatas de Codex, Ajv, libsodium e parser YAML; registrar compatibilidade de flags sem autenticação.
+- [x] Testes da tarefa cobrem pelo menos 12 casos; Quick passa (28 casos).
 **Tests**: unit em `tests/llm/request.test.mjs`; schemas e dependências pertencem ao mesmo contrato, sem outros comportamentos.
 **Gate**: Quick + instalação com lock em diretório central limpo, sem código do consumidor.
 **Commit**: `feat(llm): validate caller invocation contract`
