@@ -1,5 +1,9 @@
 # Evidências de implementação
 
+## T6: persistência criptografada
+
+Gate passou. LLM-10/11: `persistence.test.mjs:43–50` verifica repo/secret/key_id e descriptografa sealed box para exigir conteúdo renovado; :55–56 verifica ausência de request quando inalterado; :60–68 recusa arquivo inválido, destino cruzado e escrita externa; :74–75 exige falha e um único PUT em 403/timeout, sem PUT para chave inválida. O cenário final preserva refresh mesmo após erro de provedor (:79–87). Metadata é conferida imediatamente antes do PUT; a ausência de CAS do GitHub permanece como limite operacional documentado. Nenhuma secret real foi alterada.
+
 ## T5: freshness antes de utilizar a sessão
 
 Gate passou. LLM-09: `freshness.test.mjs:22–23` verifica boundary aprovado; :30 e :46 comprova que fila/rerun e metadata recusada não executam a continuação; :37 exige AUTH_SNAPSHOT_STALE para igualdade no segundo, calendário inválido e timestamps ausentes. As APIs simuladas verificam o destino e a credencial correta para cada GET (:12–16). A conexão ao job real permanece em T9.

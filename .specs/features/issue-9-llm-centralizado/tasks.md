@@ -1,6 +1,6 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 5/13 tarefas concluídas.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 6/13 tarefas concluídas.
 
 ## Execution Protocol
 
@@ -137,6 +137,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 
 ### T6: Persistir somente a sessão do consumidor
 
+**Status**: Complete. Payload descriptografado e conflitos/falhas verificados em `tests/llm/persistence.test.mjs`.
+
 **What**: Implementar writeback criptografado condicionado à alteração do arquivo e ausência de conflito.
 **Where**: `scripts/llm/persist-session.mjs`
 **Depends on**: T5
@@ -144,9 +146,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 **Requirement**: LLM-10, LLM-11
 **Tools**: Node fetch, chaves criptográficas de teste; TLC.
 **Done when**:
-- [ ] Fixture descriptografa o payload e encontra a sessão renovada, nunca seed anterior.
-- [ ] Sem alteração não há PUT; arquivo inválido, metadata modificada ou destino de outro repo são recusados.
-- [ ] Testes descriptografam o payload e comprovam que falhas de permissão, rede ou chave não sobrescrevem estado nem liberam resultado.
+- [x] Fixture descriptografa o payload e encontra a sessão renovada, nunca seed anterior.
+- [x] Sem alteração não há PUT; arquivo inválido, metadata modificada ou destino de outro repo são recusados.
+- [x] Testes descriptografam o payload e comprovam que falhas de permissão, rede ou chave não sobrescrevem estado nem liberam resultado.
 **Tests**: integration em `tests/llm/persistence.test.mjs`.
 **Gate**: Quick.
 **Commit**: `feat(llm): persist refreshed consumer session`
