@@ -25,3 +25,23 @@ Versões resolvidas no registry e fixadas: Node 22.23.3 (runtime do workflow), C
 | request.test.mjs:86–92 | LLM-01/02, arquivo confiável/ausente/inválido/symlink | Sim |
 
 Adequação: cada caso mapeia ao contrato, assertions verificam valores e códigos previstos, sem testes removidos ou ignorados. Diretrizes: constituição e matriz de testes da feature. A comprovação do comportamento completo de LLM-01/02 ainda depende de T2/T9.
+
+## T2: origem e revisão confiáveis
+
+Gate: 16 testes aprovados, zero falhas/skips; check de sintaxe passou. Metadata REST e erros de rede são simulados; nenhum token real foi utilizado.
+
+| Critério / requisito | Evidência e expressão | Resultado especificado | Coberto |
+| --- | --- | --- | --- |
+| LLM-02/13: checkout resolvido pela branch padrão | `tests/llm/preflight.test.mjs:19` `assert.deepEqual(result, { repository: 'owner/app', default_branch: 'master', source_sha: latest, private: true })`; :20 `assert.deepEqual(calls, ['owner/app', ['owner/app', 'master']])` | SHA e destino obtidos de metadata, contexto não seleciona branch | Sim |
+| Eventos proibidos | `tests/llm/preflight.test.mjs:25` `deny(...)`; :26 `assert.equal(called, false)` | UNTRUSTED_CONTEXT antes de metadata | Sim |
+| Fork, repo, privacidade e revisão | `tests/llm/preflight.test.mjs:30–52` `deny(...)`, cujo assert em :11 exige código/mensagem exatos; :35 `assert.equal(...private, false)` | Rejeição explícita, API aceita contexto público confiável | Sim |
+| API indisponível e SHA malformado | `tests/llm/preflight.test.mjs:46–51` `deny(...)` | Falha fechada sem divulgar erro original | Sim |
+| REST com prazo/sem redirect | `tests/llm/preflight.test.mjs:58–62` `assert.deepEqual(result, repository())`, `assert.equal(...redirect, 'error')`, `assert.equal(...signal instanceof AbortSignal, true)` | Destino GitHub fixo e bearer somente no GET | Sim |
+| Retry restrito | `tests/llm/preflight.test.mjs:68` `assert.equal(calls, 1)`; :74 `assert.equal(calls, 2)` | 401/403/429 sem retry; rede até duas tentativas | Sim |
+
+| Assertions | Origem | Manter |
+| --- | --- | --- |
+| preflight.test.mjs:19–52 | LLM-02/13 e casos de borda da origem | Sim |
+| preflight.test.mjs:58–74 | Política REST de GET/prazo/retry do design | Sim |
+
+Adequação: assertions verificam identidade e estados contratuais; todos os testes possuem requisito. A validação de origem está implementada, mas LLM-13 completo ainda depende da ligação em T9.

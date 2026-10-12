@@ -138,7 +138,7 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 | Requirement ID | Story | Phase | Status | Tasks |
 | --- | --- | --- | --- | --- |
 | LLM-01 | Caller | Execute | Partial: T1 complete | T1, T9 |
-| LLM-02 | Caller | Execute | Partial: T1 complete | T1, T2 |
+| LLM-02 | Caller | Execute | Implemented: T1/T2; final verification pending | T1, T2 |
 | LLM-03 | Caller | Design | In Tasks | T7 |
 | LLM-04 | Caller | Design | In Tasks | T7 |
 | LLM-05 | Caller | Design | In Tasks | T7 |
@@ -149,7 +149,7 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 | LLM-10 | Auth | Design | In Tasks | T6 |
 | LLM-11 | Auth | Design | In Tasks | T6, T9 |
 | LLM-12 | Auth | Design | In Tasks | T4, T9 |
-| LLM-13 | Segurança | Design | In Tasks | T2, T9 |
+| LLM-13 | Segurança | Execute | Partial: T2 complete | T2, T9 |
 | LLM-14 | Segurança | Design | In Tasks | T7, T9 |
 | LLM-15 | Diretrizes | Design | In Tasks | T3 |
 | LLM-16 | Diretrizes | Design | In Tasks | T3 |

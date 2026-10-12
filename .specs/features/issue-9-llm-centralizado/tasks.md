@@ -1,6 +1,6 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 1/13 tarefas concluídas.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 2/13 tarefas concluídas.
 
 ## Execution Protocol
 
@@ -63,6 +63,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 
 ### T2: Validar a origem da chamada
 
+**Status**: Complete. Evidências em [execution-review.md](execution-review.md#t2-origem-e-revisão-confiáveis).
+
 **What**: Implementar o preflight de evento/repositório e resolução do SHA confiável.
 **Where**: `scripts/llm/preflight.mjs`
 **Depends on**: T1
@@ -70,9 +72,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 **Requirement**: LLM-02, LLM-13
 **Tools**: Node, GitHub REST simulada; TLC/cicd.
 **Done when**:
-- [ ] MVP aceita dispatch pela branch padrão, nega fork, pull_request_target, branch arbitrária e contexto público com sessão.
-- [ ] Checkout usa SHA resolvido e não altera referência por texto de contexto.
-- [ ] Pelo menos 8 casos em Quick passam, incluindo API indisponível.
+- [x] MVP aceita dispatch pela branch padrão, nega fork, pull_request_target, branch arbitrária e contexto público com sessão.
+- [x] Checkout usa SHA resolvido e não altera referência por texto de contexto.
+- [x] Pelo menos 8 casos em Quick passam, incluindo API indisponível (16 casos).
 **Tests**: unit/integration em `tests/llm/preflight.test.mjs`.
 **Gate**: Quick.
 **Commit**: `feat(llm): verify trusted caller context`
