@@ -1,6 +1,6 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 8/12 tarefas do MVP concluídas; T12 adiada.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 9/12 tarefas do MVP concluídas; T12 adiada.
 
 **Recorte MVP atualizado em 2026-10-13:** T12 adiada para o trabalho futuro de documentação central definido pelo mantenedor. Permanecem 12 tarefas no MVP, com 6 concluídas. T13 depende de T11; manual central extenso e testes documentais não bloqueiam o piloto. O caller recebe instruções completas de configuração e consumo, conforme correção do mantenedor sobre a transcrição. Reduzir intensidade de testes não significa reduzir essas instruções. T12 não está concluída nem dispensada como entrega futura.
 
@@ -201,6 +201,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 
 ### T9: Orquestrar o workflow reutilizável
 
+**Status**: Complete. Fluxo de callers, falhas e contrato do workflow verificados; adoção real ainda depende do piloto.
+
 **What**: Conectar componentes no job chamado com outputs, lock e finalização segura.
 **Where**: `.github/workflows/llm-execute.yml`
 **Depends on**: T8
@@ -208,10 +210,10 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 **Requirement**: LLM-01, LLM-06, LLM-08, LLM-11, LLM-12, LLM-13, LLM-14, LLM-17, LLM-21
 **Tools**: Parser YAML, actionlint, harness de job; TLC/cicd.
 **Done when**:
-- [ ] Workflow declara inputs/secrets/outputs do design; código central e contexto consumidor usam suas revisões corretas.
-- [ ] Sessão serializada por repo/secret; nenhuma configuração de org global ou secrets: inherit.
-- [ ] Erro de CLI ainda tenta persistir refresh; erro de persistência/upload não publica sucesso.
-- [ ] Testes de contrato comprovam orquestração, persistência após erro e recusa de sucesso quando faltar resultado.
+- [x] Workflow declara inputs/secrets/outputs do design; código central e contexto consumidor usam suas revisões corretas.
+- [x] Sessão serializada por repo/secret; nenhuma configuração de org global ou secrets: inherit.
+- [x] Erro de CLI ainda tenta persistir refresh; erro de persistência/upload não publica sucesso.
+- [x] Testes de contrato comprovam orquestração, persistência após erro e recusa de sucesso quando faltar resultado.
 **Tests**: contract/integration em `tests/llm/workflow.test.mjs`.
 **Gate**: Full + actionlint.
 **Commit**: `feat(llm): expose reusable invocation workflow`

@@ -1,5 +1,9 @@
 # Evidências de implementação
 
+## T9: workflow e caller simulado
+
+Gate Full, sintaxe e actionlint passaram. `workflow.test.mjs:39–47` valida dois consumidores atravessando a orquestração até seus envelopes, com modelo/esforço/prompt próprios; :58–74 preserva refresh/cleanup após erro e impede pacote após falha de persistência; cenários posteriores recusam credencial ausente e token renovado no resultado. Contrato YAML verifica referências fixadas, sessão por repo/secret, retenção e status liberado só após upload/cleanup. O subprocesso real de finalização escreve falha quando upload falha (:124–126). Actionlint tem somente os ignores de compatibilidade documentados no design. Nenhuma execução remota ou credencial pessoal foi usada.
+
 ## T8: resultados vinculados à origem
 
 Gate Full e sintaxe passaram. `result.test.mjs:16–33` confere conteúdo do pacote, todos os campos de proveniência e patch literal; :39–43 confere isolamento por chamada/tentativa e recusa de overwrite; :50–53 exige ausência de pacote para campo forjado/segredo/tamanho; :66–67 recusa paths perigosos, configuração de execução, symlink e binário; :75–79 confere skip sem patch e consumo contra SHA esperado. Schema fechado rejeita autoridade fornecida pelo modelo. O pacote não aplica a proposta; caller mantém validação/ação de domínio.

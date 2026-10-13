@@ -47,6 +47,8 @@ Não usar `secrets: inherit`. Não buscar credencial no `.github` central, em ar
 ```text
 .github/workflows/llm-execute.yml
 scripts/llm/
+  orchestrate.mjs               # fluxo completo, sem identidade global
+  run.mjs                       # adapter do runner/outputs/cleanup/finalização
   package.json                 # dependências e comandos próprios desta feature
   package-lock.json            # resolução exata
   validate-request.mjs
@@ -204,6 +206,8 @@ Caller seguinte exige `needs.<job>.result == 'success'`, `status == 'succeeded'`
 Nenhuma dependência será instalada a partir do consumidor. Instalar somente pacote central fixado, antes das credenciais; sem cache de auth. Checkout de scripts usa `job.workflow_repository` + `job.workflow_sha`, não `github.workflow_sha` do caller nem uma branch móvel. O central é público; se futuramente ficar privado, o acesso cruzado e a credencial de leitura exigem um contrato adicional, não reutilizar o PAT de secrets.
 
 As versões de pacotes ainda não estão homologadas. T1 fixa o conjunto e registra compatibilidade antes de execução real; o protótipo de caller usa marcadores explícitos em vez de inventar SHA ou nome de modelo.
+
+Actionlint 1.7.12 fixado: checksum do ZIP Windows amd64 `6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9`, tar.gz Linux amd64 `8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8`. A versão ainda não conhece `concurrency.queue` e `job.workflow_repository/workflow_sha`, documentados pelo GitHub.com. O lint ignora somente esses diagnósticos específicos; testes de contrato conferem seus valores. As demais verificações do YAML permanecem ativas. Pipeline real e semântica de concorrência ainda exigem piloto.
 
 ## Error Handling Strategy
 

@@ -138,27 +138,27 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 
 | Requirement ID | Story | Phase | Status | Tasks |
 | --- | --- | --- | --- | --- |
-| LLM-01 | Caller | Execute | Partial: T1/T7 complete | T1, T7, T9 |
+| LLM-01 | Caller | Execute | Implemented: T1/T7/T9; final verification pending | T1, T7, T9 |
 | LLM-02 | Caller | Execute | Implemented: T1/T2; final verification pending | T1, T2 |
 | LLM-03 | Caller | Execute | Implemented: T7; final verification pending | T7 |
 | LLM-04 | Caller | Execute | Implemented: T7; final verification pending | T7 |
 | LLM-05 | Caller | Execute | Implemented: T7; final verification pending | T7 |
-| LLM-06 | Auth | Execute | Partial: T4 complete | T4, T9 |
+| LLM-06 | Auth | Execute | Implemented: T4/T9; final verification pending | T4, T9 |
 | LLM-07 | Auth | Execute | Implemented: T4; final verification pending | T4 |
-| LLM-08 | Auth | Design | In Tasks | T9 |
+| LLM-08 | Auth | Execute | Implemented: T9; final verification pending | T9 |
 | LLM-09 | Auth | Execute | Implemented: T5; final verification pending | T5 |
 | LLM-10 | Auth | Execute | Implemented: T6; final verification pending | T6 |
-| LLM-11 | Auth | Execute | Partial: T6 complete | T6, T9 |
-| LLM-12 | Auth | Execute | Partial: T4 complete | T4, T9 |
-| LLM-13 | Segurança | Execute | Partial: T2 complete | T2, T9 |
-| LLM-14 | Segurança | Execute | Partial: T7 complete | T7, T9 |
+| LLM-11 | Auth | Execute | Implemented: T6/T9; final verification pending | T6, T9 |
+| LLM-12 | Auth | Execute | Implemented: T4/T9; final verification pending | T4, T9 |
+| LLM-13 | Segurança | Execute | Implemented: T2/T9; final verification pending | T2, T9 |
+| LLM-14 | Segurança | Execute | Implemented: T7/T9; final verification pending | T7, T9 |
 | LLM-15 | Diretrizes | Execute | Implemented: T3; final verification pending | T3 |
 | LLM-16 | Diretrizes | Execute | Implemented: T3; final verification pending | T3 |
-| LLM-17 | Resultado | Execute | Partial: T8 complete | T8, T9 |
+| LLM-17 | Resultado | Execute | Implemented: T8/T9; final verification pending | T8, T9 |
 | LLM-18 | Resultado | Execute | Implemented: T8; final verification pending | T8 |
 | LLM-19 | Resultado | Execute | Implemented: T7/T8; final verification pending | T7, T8 |
 | LLM-20 | Resultado | Execute | Implemented: T7; final verification pending | T7 |
-| LLM-21 | Resultado | Execute | Partial: T8 complete | T8, T9 |
+| LLM-21 | Resultado | Execute | Implemented: T8/T9; final verification pending | T8, T9 |
 | LLM-22 | Adoção | Design | In Tasks; extensive manual deferred | T10, T11; T12 deferred |
 | LLM-23 | Adoção | Design | In Tasks | T11 |
 | LLM-24 | Piloto | Design | In Tasks | T13 |

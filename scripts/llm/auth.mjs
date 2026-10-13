@@ -18,7 +18,7 @@ export function validateManagedSession(raw, code = 'AUTH_CONFIG_ERROR') {
   } catch { throw contractError(code); }
 }
 
-export async function restoreAuth(mode, secrets, { tempRoot = tmpdir(), runtimeEnv = process.env } = {}) {
+export function validateAuthConfig(mode, secrets) {
   if (mode === 'chatgpt-session') {
     if (!present(secrets.CODEX_AUTH_WRITE_PAT) || present(secrets.OPENAI_API_KEY)) throw contractError('AUTH_CONFIG_ERROR');
     validateManagedSession(secrets.CODEX_AUTH_JSON);
@@ -26,6 +26,10 @@ export async function restoreAuth(mode, secrets, { tempRoot = tmpdir(), runtimeE
     if (!present(secrets.OPENAI_API_KEY) || /[\r\n]/.test(secrets.OPENAI_API_KEY)
       || present(secrets.CODEX_AUTH_JSON) || present(secrets.CODEX_AUTH_WRITE_PAT)) throw contractError('AUTH_CONFIG_ERROR');
   } else throw contractError('AUTH_CONFIG_ERROR');
+}
+
+export async function restoreAuth(mode, secrets, { tempRoot = tmpdir(), runtimeEnv = process.env } = {}) {
+  validateAuthConfig(mode, secrets);
 
   let dir;
   try {

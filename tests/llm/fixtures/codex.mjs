@@ -19,6 +19,9 @@ else if (scenario === 'error') process.exit(7);
 else if (scenario === 'invalid') await writeFile(output, '{bad-json');
 else {
   const isDecision = args[args.indexOf('--model') + 1] === 'decision-model';
-  const response = isDecision ? { decision: scenario || 'proceed', reason: 'fixture decision' } : { summary: 'fixture result', patch: null };
+  const effortArgument = args.find(value => value.startsWith('model_reasoning_effort='));
+  const effort = effortArgument ? JSON.parse(effortArgument.slice('model_reasoning_effort='.length)) : '';
+  const response = isDecision ? { decision: scenario || 'proceed', reason: 'fixture decision' }
+    : { summary: scenario === 'caller' ? `${args[args.indexOf('--model') + 1]}|${effort}|${prompt.task}` : 'fixture result', patch: null };
   await writeFile(output, JSON.stringify(response));
 }
