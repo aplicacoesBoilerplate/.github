@@ -15,7 +15,7 @@ Para configurar uma aplicação, consulte o
 
 | Workflow | Acionamento | Responsabilidade |
 | --- | --- | --- |
-| [ci.yml](ci.yml) | PR e push nas branches declaradas | Validar este repositório, executar fixtures de versionamento e testes reais de Go, standard-version e jgitver. Também verifica Maven/npm quando há projetos correspondentes. |
+| [ci.yml](ci.yml) | PR e push nas branches declaradas | Validar este repositório, executar fixtures de versionamento e testes reais de Go, standard-version, jgitver e Changesets. Também verifica Maven/npm quando há projetos correspondentes. |
 | [pull-request-hygiene.yml](pull-request-hygiene.yml) | Eventos de PR | Exigir título no formato Conventional Commits. |
 | [version-preview.yml](version-preview.yml) | `workflow_call` | Calcular prévia, gerar guia de homologação em develop e validar a policy dos PRs finais. |
 | [version-publish.yml](version-publish.yml) | `workflow_call` | Executar environment opcional e publicar tag/Release após integração e gates. |
@@ -56,8 +56,9 @@ pelo caller. Portanto, o consumidor **não precisa copiar os scripts**.
 
 - Prévia: leitura apenas; não cria commits, tags ou Releases.
 - Publicação: somente `push` na branch alvo, associado a PR funcional integrado
-  `develop -> master` ou `hotfix/<nome> -> master`. Em standard-version, o
-  primeiro push abre PR técnico; somente o merge revisado desse PR publica.
+  `develop -> master` ou `hotfix/<nome> -> master`. Em standard-version e
+  Changesets, o primeiro push abre PR técnico; somente o merge revisado desse
+  PR publica. Changesets emite uma tag e Release por pacote do lote.
 - CI da aplicação: o caller encadeia a publicação com `needs` da CI própria;
   o called não substitui os testes do consumidor.
 - Environment: opcional; quando informado, as regras vivem no consumidor.

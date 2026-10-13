@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -120,10 +121,20 @@ assert.equal((changesetsCaller.match(/adapter: changesets/g) ?? []).length, 2,
   'one monorepo caller must configure both central jobs'); assertions += 1;
 assert.doesNotMatch(changesetsCaller, /packages\/[^\s]+|package_path:/,
   'caller must not configure independent package releases'); assertions += 1;
+const batchPin = /uses: aplicacoesBoilerplate\/\.github\/\.github\/workflows\/version-publish\.yml@([0-9a-f]{40})/
+  .exec(changesetsCaller)?.[1];
+assert.ok(batchPin, 'Changesets publisher must use a full central SHA'); assertions += 1;
+const pinnedPublisher = execFileSync('git', ['show', `${batchPin}:.github/workflows/version-publish.yml`],
+  { cwd: root, encoding: 'utf8' });
+assert.match(pinnedPublisher, /releases_json:/,
+  'pinned revision must already include Changesets batch output'); assertions += 1;
 docsMatch(/`milestoned` e `demilestoned`/, 'documentation must require milestone-change events');
 docsMatch(/`checks: read`/, 'documentation must state the caller check-run permission');
 docsMatch(/bloqueie force-push e exclusão[\s\S]*restrinja atualizações diretas/,
   'documentation must require direct-push protection');
 docsMatch(/exija o check de prévia central/, 'documentation must identify the required versioning check');
+docsMatch(/## Caller Changesets\/Turbo/, 'documentation must provide the monorepo caller');
+docsMatch(/updateInternalDependencies[\s\S]*privatePackages\.version[\s\S]*releases_json/,
+  'documentation must explain native configuration and downstream batch output');
 
 console.log(`Workflow contract: ${assertions} assertions passed`);

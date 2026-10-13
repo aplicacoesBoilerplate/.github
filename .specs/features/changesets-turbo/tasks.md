@@ -65,6 +65,7 @@ T1 → T2 → T3 → T4 → T5
 
 ### T5: Documentation and verification
 
+**Status**: Complete — adoption contract, configuration impacts and full local/real fixtures checked; independent validation follows this commit.
 **Depends on**: T4
 **What**: Document configuration, limitations and downstream output usage; run full gates and independent verifier.
 **Tests**: Local suite, real Changesets, shell/YAML checks and hosted CI.

@@ -50,7 +50,7 @@ One consumer caller coordinates every package in an npm-workspaces/Turborepo rel
 | CST-03 | AC 3 | Verified |
 | CST-04 | AC 4 | Verified |
 | CST-05 | AC 5 | Verified |
-| CST-06 | AC 6 | Implementing |
+| CST-06 | AC 6 | Verified |
 
 ## Implementation limits
 

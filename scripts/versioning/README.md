@@ -6,8 +6,9 @@ execução; os scripts calculam, coletam evidências, validam e publicam. Não s
 pipelines independentes: são componentes da mesma automação, versionados junto
 dos calleds e reutilizados por todos os consumidores.
 
-O contrato normalizado oferece **Go, standard-version e jgitver**; Changesets/Turbo
-permanece pendente. Leia também o
+O contrato normalizado oferece **Go, standard-version, jgitver e Changesets/Turbo**.
+O último coordena um lote de npm workspaces e ainda aguarda homologação em um
+consumidor. Leia também o
 [guia de adoção e contratos](../../docs/versioning.md), o
 [exemplo Go](../../examples/callers/go/README.md) e a
 [especificação TLC](../../.specs/features/centralized-versioning-pipeline/spec.md).
@@ -74,26 +75,28 @@ Não coloque PATs em YAML, documentação ou arquivos versionados.
 | --- | --- | --- |
 | [preview.sh](preview.sh) | Evento de PR e checkout do head | Selecionar a fase, calcular versão, coletar snapshot e gerar guia ou avaliar policy. |
 | [resolve-adapter.sh](resolve-adapter.sh) | Adaptador, caminho e workspace | Seleção permitida de ferramenta, confinamento do projeto e conversão de caminhos Windows/Node. Biblioteca carregada com `source`. |
-| [collect-version-report.sh](collect-version-report.sh) | Caminho de saída, adaptador, branch e SHA | Executar Go, standard-version ou jgitver nativo e produzir relatório normalizado. |
+| [collect-version-report.sh](collect-version-report.sh) | Caminho de saída, adaptador, branch e SHA | Executar Go, standard-version, jgitver ou Changesets nativo e produzir relatório normalizado. |
 | [version-report.mjs](version-report.mjs) | Saída nativa e Git local | Validar SemVer/SHA/prefixo, encontrar a maior tag estável alcançável e normalizar `VersionReport`. |
-| [collect-origin-report.sh](collect-origin-report.sh) | SHA funcional e caminho de saída | Recalcular standard-version no commit homologado, sem tocar na principal. |
+| [collect-origin-report.sh](collect-origin-report.sh) | SHA funcional e caminho de saída | Recalcular standard-version ou Changesets no commit homologado, sem tocar na principal. |
 | [validate-version-pr.sh](validate-version-pr.sh) | PR técnico Node | Conferir proveniência, versão nativa e manifests antes da tag. |
 | [version-pr.mjs](version-pr.mjs) | PR técnico e arquivos de versão | Validar metadados, diff e versões persistidas. |
+| [changesets-version-pr.mjs](changesets-version-pr.mjs) | Plano Changesets e checkout | Conferir digest do lote, manifests, dependências, changelogs e lockfile npm. |
 | [collect-pr-policy.sh](collect-pr-policy.sh) | Número do PR ou `--commit <SHA>` | Coletar PR, milestone, timeline, reviews e papéis atuais; produzir snapshot. |
 | [release-policy.mjs](release-policy.mjs) | Relatório, snapshot e fase | Avaliar milestone e override, sem chamadas externas ou publicação. |
 | [homologation-guide.mjs](homologation-guide.mjs) | Relatório, snapshot e diretório | Gerar Markdown/JSON distinguindo fatos de verificações ainda pendentes. |
 | [release-gates.sh](release-gates.sh) | Evento push, checkout e API | Validar branch padrão, SHA remoto, único PR integrado e policy antes de publicar. Biblioteca carregada com `source`. |
 | [publish.sh](publish.sh) | Gates validados e GitHub API | Reconciliar tag/Release, escrever apenas o necessário e retornar o resultado. |
+| [publish-changesets.mjs](publish-changesets.mjs) | Lote Changesets revisado | Pré-conferir todas as tags/Releases e publicar ou reconciliar por pacote. |
 
-### Auxiliares e perfil pendente
+### Auxiliares e legado
 
-Os arquivos abaixo complementam a implementação. A presença de Changesets não
-significa suporte normalizado a Turbo neste contrato.
+Os arquivos abaixo complementam a implementação; alguns pertencem ao fluxo
+anterior e não são os pontos de entrada dos calleds atuais.
 
 | Arquivo | Finalidade existente |
 | --- | --- |
 | [prepare-release.sh](prepare-release.sh) | Preparação anterior com seleção de perfis e avaliação de versão. |
-| [prepare-version-pr.sh](prepare-version-pr.sh) | Criar o PR técnico de standard-version após merge funcional; exige token de GitHub App. |
+| [prepare-version-pr.sh](prepare-version-pr.sh) | Criar PR técnico de standard-version ou Changesets após merge funcional; exige token de GitHub App. |
 | [validate-sprint.sh](validate-sprint.sh) | Validações anteriores de branch de release, issues e épica. |
 | [homologation-guide.sh](homologation-guide.sh) | Guia provisório anterior baseado no log; diferente do renderer `.mjs` ativo. |
 | [version.mjs](version.mjs) | Utilitários SemVer do fluxo anterior; não confundir com `version-report.mjs`. |
@@ -101,8 +104,10 @@ significa suporte normalizado a Turbo neste contrato.
 | [verify-version-files.mjs](verify-version-files.mjs) | Restrição dos arquivos alterados em um PR técnico de versão. |
 | [sync-npm-lock.mjs](sync-npm-lock.mjs) | Sincronização de versão no lockfile npm. |
 
-`resolve-adapter.sh` ainda reconhece Changesets, mas o coletor o recusa. Não
-troque apenas `adapter` no caller esperando suporte completo a Turbo.
+O caller Changesets fica em
+[examples/callers/changesets-turbo/](../../examples/callers/changesets-turbo/).
+Ele é único por monorepo, usa CI Turbo/Node do consumidor e exige npm workspaces
+com lockfile na raiz. Turbo executa a build; Changesets calcula as versões.
 
 ## 4. Fluxo de prévia e homologação
 
@@ -160,13 +165,16 @@ no consumidor, comentários automáticos ou tasks de LLM.
 ### VersionReport, schemaVersion 1
 
 Campos: `adapter`, `sha`, `branch`, `baseVersion`, `candidateVersion`, `tag`,
-`bump` e `native` (`format`, `result`, `explanation`).
+`bump` e `native` (`format`, `result`, `explanation`). Changesets também traz
+`releases[]` com todos os pacotes, versões antigas/novas, bumps e tags.
 
-`baseVersion` é a maior versão SemVer estável dentre tags alcançáveis pelo SHA
+Para Go/Node/Maven, `baseVersion` é a maior versão SemVer estável dentre tags alcançáveis pelo SHA
 avaliado; não é necessariamente a tag mais recente por data nem a última
 GitHub Release. O prefixo do caller delimita a família de tags. Sem tag estável,
 a base matemática é `0.0.0`; a exigência de primeiro artefato `v0.0.1` se
-aplica ao perfil Go. Node/Maven seguem a versão nativa estável.
+aplica ao perfil Go. Node/Maven seguem a versão nativa estável. Em Changesets,
+esses campos escalares são uma projeção interna do primeiro pacote ordenado;
+o contrato de lote é `releases[]` e a saída pública `releases_json`.
 Prereleases não fazem parte deste MVP.
 
 Em reexecução de um commit já tagueado, o adaptador pode retornar `Sha` vazio.
@@ -213,18 +221,19 @@ substitua essa autorização.
 ## 6. Fluxo de publicação após merge
 
 ```text
-push na branch alvo -> caller: go-ci -> version-publish.yml
+push na branch alvo -> caller: CI da aplicação -> version-publish.yml
   -> environment-gate, se informado
   -> publish.sh -> release-gates.sh
      -> conferir default branch, checkout e SHA remoto
      -> coletar único PR integrado e recalcular relatório
      -> release-policy.mjs, phase=publication
   -> Go/Maven: reconciliar tag/Release
-  -> Node: abrir PR técnico; após review/merge, recalcular origem e reconciliar tag/Release
+  -> standard-version: abrir PR técnico; após review/merge, reconciliar tag/Release
+  -> Changesets: abrir PR técnico do lote; após review/merge, publicar tag/Release por pacote
 ```
 
-O caller deve declarar `needs` para a CI do mesmo push (`go-ci`, `node-ci` ou
-`maven-ci`). Esse encadeamento é o gate de CI da
+O caller deve declarar `needs` para a CI do mesmo push (`go-ci`, `node-ci`,
+`maven-ci` ou `monorepo-ci`). Esse encadeamento é o gate de CI da
 aplicação; `release-gates.sh` não executa testes Go por conta própria.
 Proteção de branch/required checks é configuração do consumidor, não algo
 instalado por estes scripts.
@@ -267,7 +276,7 @@ de assets de distribuição neste MVP.
 
 | Variável | Uso |
 | --- | --- |
-| `ADAPTER` | `go-gitsemver`, `standard-version` ou `jgitver`. |
+| `ADAPTER` | `go-gitsemver`, `standard-version`, `jgitver` ou `changesets`. |
 | `TAG_PREFIX` | Prefixo literal; padrão `v`, Go exige `v`. |
 | `VERSIONING_TOKEN` | GitHub App token para abrir PR técnico Node; não usado por Go/Maven. |
 | `TARGET_BRANCH` | Branch de publicação; deve ser a default branch no pós-merge. |
@@ -286,15 +295,19 @@ de assets de distribuição neste MVP.
 
 Scripts exigem Bash, Git, Node compatível com os módulos `.mjs`, GitHub CLI
 (`gh`) e ferramentas GNU usadas pelo Bash. O called prepara Node 24 e instala
-as dependências do consumidor para standard-version; prepara Java 17 para
+as dependências do consumidor para standard-version e Changesets; prepara Java 17 para
 jgitver; e instala Go e o adaptador go-gitsemver na revisão
 `680c1c12d9a4f573a8da1b2e3ccebb3571b1cab6` para o perfil Go. Os calleds
 usam runner Ubuntu e não oferecem contrato de execução arbitrária em Windows
 ou self-hosted.
 
-Saídas da prévia: `phase`, `version`, `bump`, `policy_outcome`, `summary`.
+Saídas da prévia: `phase`, `version`, `bump`, `policy_outcome`, `summary` e `releases_json`.
 Na homologação, `policy_outcome` é `not-applicable`.
-Saídas de publicação: `version`, `tag`, `published_sha`, `release_url`, `version_pr_url`, `outcome`.
+Saídas de publicação: `version`, `tag`, `published_sha`, `release_url`, `version_pr_url`, `releases_json`, `outcome`.
+Em lote Changesets com vários pacotes, as saídas escalares de versão, tag e
+URL ficam vazias; use o array de releases. Os campos escalares do
+`VersionReport` são projeção interna para policy e guia, não o contrato público
+de saída de um lote.
 Erros prévios aos resultados podem terminar sem outputs completos; não trate
 output ausente como sucesso. O processo retornar zero é necessário, mas a
 proteção de merge depende de tornar o check obrigatório no consumidor.

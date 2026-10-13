@@ -27,6 +27,9 @@ function checkIdentity(tag, sha, tagSha, release) {
   if (release && (release.tag_name !== tag || release.target_commitish?.toLowerCase() !== sha.toLowerCase())) {
     throw Error(`Conflito: Release ${tag} diverge da tag/SHA`);
   }
+  if (release && (typeof release.html_url !== 'string' || !release.html_url.startsWith('https://'))) {
+    throw Error(`Conflito: Release ${tag} não possui URL verificável`);
+  }
 }
 
 function retryRead(read) {
@@ -67,8 +70,9 @@ export function publishChangesets({ report, sha, stale, api }) {
         const current = retryRead(() => api.getTag(item.tag));
         if (!current) throw Error(`Falha ao criar tag ${item.tag}: ${error.message}`);
       }
-      checkIdentity(item.tag, sha, api.getTag(item.tag), null);
-      if (!api.getTag(item.tag)) throw Error(`Tag ${item.tag} não ficou visível`);
+      const current = retryRead(() => api.getTag(item.tag));
+      if (!current) throw Error(`Tag ${item.tag} não ficou visível`);
+      checkIdentity(item.tag, sha, current, null);
     }
     let release = entry.release;
     if (!release) {
@@ -89,7 +93,9 @@ export function publishChangesets({ report, sha, stale, api }) {
 }
 
 function gh(args) {
-  return JSON.parse(execFileSync('gh', ['api', ...args], { encoding: 'utf8' }));
+  const mock = process.env.VERSIONING_GH_BIN;
+  return JSON.parse(execFileSync(mock ? process.execPath : 'gh',
+    mock ? [mock, 'api', ...args] : ['api', ...args], { encoding: 'utf8' }));
 }
 
 function optionalGh(path) {

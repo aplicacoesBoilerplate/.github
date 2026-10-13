@@ -33,6 +33,7 @@ try {
     $schema: 'https://unpkg.com/@changesets/config@2.3.1/schema.json',
     changelog: '@changesets/changelog-git', commit: false, fixed: [], linked: [],
     access: 'restricted', baseBranch: 'main', updateInternalDependencies: 'patch', ignore: [],
+    privatePackages: { version: true, tag: true },
   }) + '\n');
   writeFileSync(join(cwd, '.changeset', 'two-features.md'), '---\n"@lab/core": major\n---\n\nHomologação de mudança incompatível.\n');
   git('add', '.gitignore', 'package.json', 'package-lock.json', '.changeset', 'packages');

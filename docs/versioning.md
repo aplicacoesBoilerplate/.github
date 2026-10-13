@@ -5,8 +5,11 @@ regras para os consumidores. O caller informa o adaptador, o projeto e a branch
 principal. O workflow central é carregado na mesma revisão imutável declarada
 em `uses`.
 
-O perfil Go está homologado; esta revisão acrescenta coleta normalizada para
-`standard-version` e `jgitver`. Changesets/Turbo continua em preparação. Os artefatos OpenSpec existentes
+O perfil Go está homologado; esta revisão mantém `standard-version` e
+`jgitver` e acrescenta a preparação/publicação coordenada de Changesets/Turbo
+para npm workspaces. Os novos perfis têm testes locais e CI central, mas ainda
+exigem ensaio hospedado em um consumidor antes de receberem o status de
+homologados. Os artefatos OpenSpec existentes
 continuam como histórico; a especificação ativa está em
 `.specs/features/centralized-versioning-pipeline/`.
 
@@ -32,6 +35,11 @@ continuam como histórico; a especificação ativa está em
    funcional homologado e publica no **novo SHA integrado**, que contém os
    manifests. `Origin-SHA` e `Origin-PR` preservam a proveniência. O PR técnico
    nunca é substituído por um commit direto na principal.
+7. Com `changesets`, o merge funcional cria **um** PR técnico com todos os
+   manifests, versões de dependências internas, changelogs e `package-lock.json`
+   calculados por `changeset version`. Depois de revisão humana e merge, o
+   publicador cria uma tag e GitHub Release por pacote do plano nativo no SHA
+   técnico integrado. O publicador não executa `npm publish`.
 
 O relatório nativo do `go-gitsemver`, inclusive `--explain`, é preservado no
 `VersionReport` e serve de base para o guia e para as notas da release. O central
@@ -71,12 +79,14 @@ Não existem inputs `approved`, `force` ou `skip_validation`.
 
 | Entrada | Obrigatória | Padrão | Uso |
 | --- | --- | --- | --- |
-| `adapter` | sim | - | `go-gitsemver`, `standard-version` ou `jgitver`. |
+| `adapter` | sim | - | `go-gitsemver`, `standard-version`, `jgitver` ou `changesets`. |
 | `target_branch` | sim | - | Branch principal protegida. |
-| `project_path` | não | `.` | Diretório do projeto dentro do checkout. |
-| `tag_prefix` | não | `v` | Prefixo **literal** da tag; Go exige `v`; Node/Maven podem usar `infra/v` quando a ferramenta nativa estiver alinhada. |
+| `project_path` | não | `.` | Diretório do projeto dentro do checkout; Changesets exige a raiz `.`. |
+| `tag_prefix` | não | `v` | Prefixo **literal** da tag; Go exige `v`; standard-version/jgitver podem usar `infra/v`. Changesets exige `v` apenas por compatibilidade do input e emite tags nativas `<package>@<version>`. |
 
-Saídas: `phase`, `version`, `bump`, `policy_outcome` e `summary`. O job possui
+Saídas: `phase`, `version`, `bump`, `policy_outcome`, `summary` e
+`releases_json`. No lote Changesets com vários pacotes, `version` e `bump`
+ficam vazios e `releases_json` enumera os pacotes planejados. O job possui
 somente permissões de leitura: `contents`, `pull-requests`, `issues` e `checks`.
 
 ### `version-publish.yml`
@@ -85,19 +95,33 @@ somente permissões de leitura: `contents`, `pull-requests`, `issues` e `checks`
 | --- | --- | --- | --- |
 | `adapter` | sim | - | Adaptador calculador. |
 | `target_branch` | sim | - | Branch principal protegida. |
-| `project_path` | não | `.` | Diretório do projeto dentro do checkout. |
-| `tag_prefix` | não | `v` | Mesmo prefixo usado na prévia e pela ferramenta nativa. |
+| `project_path` | não | `.` | Diretório do projeto dentro do checkout; Changesets exige `.`. |
+| `tag_prefix` | não | `v` | Mesmo prefixo usado na prévia; Changesets usa tags nativas `<package>@<version>` e mantém `v` neste input. |
 | `publication_environment` | não | `''` | Gate adicional do consumidor. |
 | `changelog_path` | não | `''` | Complemento opcional às notas nativas. |
-| secrets `versioning_app_id` / `versioning_app_private_key` | só Node | - | GitHub App instalada no consumidor, com `Contents: write` e `Pull requests: write`; o job emite token efêmero para abrir o PR técnico. |
+| secrets `versioning_app_id` / `versioning_app_private_key` | standard-version e Changesets | - | GitHub App instalada no consumidor, com `Contents: write` e `Pull requests: write`; o job emite token efêmero para abrir o PR técnico. |
 
-Saídas: `version`, `tag`, `published_sha`, `release_url`, `version_pr_url` e `outcome`.
+Saídas: `version`, `tag`, `published_sha`, `release_url`, `version_pr_url`,
+`releases_json` e `outcome`.
 `outcome` é `pending-version-pr`, `published`, `already-published` ou `conflict`.
-`published_sha` só é preenchido depois de publicação/reconciliação; no Node ele
-é o SHA do merge técnico, enquanto `Origin-SHA` identifica o merge funcional
-homologado. Somente o job de publicação
+`published_sha` só é preenchido depois de publicação/reconciliação; em
+standard-version/Changesets ele é o SHA do merge técnico, enquanto `Origin-SHA`
+identifica o merge funcional homologado. Somente o job de publicação
 recebe `contents: write`; as demais permissões são leitura. A concorrência é
 serializada por repositório e branch, sem cancelar uma publicação em andamento.
+
+Em Changesets, `releases_json` é um array de objetos
+`{name, version, tag, release_url, published_sha}` depois da publicação. Durante
+`pending-version-pr`, ele contém o plano `{name, oldVersion, version, tag,
+bump}`, ainda sem URLs. Para vários pacotes, `version`, `tag` e `release_url`
+ficam vazios; um job posterior deve consumir o array e depender diretamente
+do job `publish`, pois não há novo evento de tag garantido para acionar esse
+job. Para um único pacote, as saídas escalares também são preenchidas.
+Esse job deve executar somente quando `outcome` for `published` ou
+`already-published`; `pending-version-pr` ainda não criou tags. Um job de
+artifacts por pacote pode usar `strategy.matrix.release` com
+`fromJSON(needs.publish.outputs.releases_json)` e verificar que cada
+`release.published_sha` coincide com `needs.publish.outputs.published_sha`.
 
 Se `publication_environment` estiver vazio, o gate de environment é ignorado e
 a publicação segue automaticamente após CI e checks. Com um nome, o job espera
@@ -110,7 +134,7 @@ de proteção via GitHub App. Consulte a documentação de
 Substitua `homologation_environment` por `publication_environment`. O input
 antigo era obrigatório; o novo é opcional. Remova `release_branch` e qualquer
 lógica de épica ou texto `Homologação: aprovada` do caller. Go/jgitver não usam
-`versioning_token` antigo do caller. Para standard-version, forneça App ID e
+`versioning_token` antigo do caller. Para standard-version e Changesets, forneça App ID e
 chave privada; o called emite uma credencial efêmera na execução de publicação.
 
 ## Caller Go
@@ -200,10 +224,54 @@ e `policy` afetam o cálculo, e `useSnapshot` pode produzir uma versão que o
 publicador estável rejeita. Essas escolhas ficam no consumidor e devem ser
 validadas no ensaio real antes de fixar um novo SHA de caller.
 
-Changesets/Turbo continua fora da liberação: a preparação precisa coordenar
-pacotes dependentes, seus manifests, changelogs e lockfile como uma unidade.
-Não use callers independentes por pacote nem selecione `changesets` apenas por
-ele ainda aparecer em scripts auxiliares.
+## Caller Changesets/Turbo
+
+Copie [o caller de monorepo](../examples/callers/changesets-turbo/) como **um
+único par** de workflows no consumidor. O root precisa declarar `workspaces`
+em `package.json`, ter `package-lock.json` commitado e fixar `@changesets/cli`
+nas `devDependencies` e no lockfile. O called executa `npm ci --ignore-scripts`
+e usa `changeset status --output` para obter o plano com todos os pacotes e
+dependentes; não recalcula SemVer. Na preparação, executa `changeset version`
+uma vez na raiz e `npm install --package-lock-only --ignore-scripts` para
+persistir o grafo npm completo. O PR técnico preserva `Origin-PR`,
+`Origin-SHA` e o SHA-256 do plano. Revisão humana, CI e verificação de cada
+manifest/changelog/lockfile são obrigatórias antes das tags.
+
+O Turbo permanece responsável pelos comandos da CI e build; o script `build`
+do root pode chamar `turbo run build`. Ele não calcula a versão. Ajuste
+`monorepo-ci.yml` para lint, testes e build reais da aplicação; o `publish`
+depende da CI do **mesmo push**. Instale a GitHub App no consumidor e cadastre
+`VERSIONING_APP_ID` e `VERSIONING_APP_PRIVATE_KEY`. Configure rulesets para
+exigir CI, prévia e revisão humana nos PRs funcionais e técnicos. Se optar por
+`publication_environment`, configure revisores/regras nele no consumidor.
+
+As [opções nativas do Changesets](https://github.com/changesets/changesets/blob/main/docs/config-file-options.md)
+ficam em `.changeset/config.json` do consumidor:
+
+| Opção | Efeito na entrega |
+| --- | --- |
+| `baseBranch` | Define a base usada pelo Changesets para detectar alterações; alinhe à principal do caller. |
+| `updateInternalDependencies` | Controla quando faixas de dependências internas são atualizadas e pacotes dependentes entram no plano; revise o PR técnico completo. |
+| `fixed` | Versiona grupos juntos na mesma versão, mesmo que só um pacote tenha mudança. |
+| `linked` | Sincroniza versões dos pacotes ligados, sem impor publicação conjunta. |
+| `ignore` | Exclui pacotes do plano; não use para ocultar dependentes que precisam ser atualizados. |
+| `privatePackages.version` / `privatePackages.tag` | Controlam se pacotes privados entram no versionamento/tagueamento nativo. O central publica tags GitHub para **todos os pacotes do plano retornado**; confira esse plano antes de ativar o caller. |
+| `changelog` | Seleciona o gerador de changelog; o central exige um `CHANGELOG.md` com cada nova versão. |
+| `access` | Altera a visibilidade quando houver publicação npm posterior; não concede permissão nem executa `npm publish` aqui. |
+
+O perfil inicial suporta apenas **npm workspaces com lockfile npm na raiz**.
+`pnpm-lock.yaml`, `yarn.lock`, `project_path` por pacote e `tag_prefix`
+personalizado são recusados. Pacotes do plano recebem tags nativas
+`<nome>@<versão>` (exemplo: `@scope/core@3.0.0`), sem o `v` do input
+compatível. Uma milestone `vX.Y.Z` representa uma versão única; omita-a em
+lotes com vários pacotes. O PR técnico e o plano registrado tornam todas as
+versões visíveis para revisão. Para gerar artifacts em jobs posteriores, use
+`fromJSON(needs.publish.outputs.releases_json)` e o `published_sha`; a
+integração com registry npm, assets e GoReleaser é trabalho separado.
+
+Esse perfil passou nos testes locais com Changesets real e foi incluído na CI
+deste repositório; ainda não há publicação hospedada comprovada em um consumidor.
+Adote o SHA do caller somente após revisar e integrar este PR empilhado.
 
 ## Proteção de branches
 
@@ -231,6 +299,12 @@ release cria somente a release. Tag em outro SHA, release sem tag verificável
 ou release divergente retorna conflito sem force-push nem sobrescrita. Corridas
 de criação são consultadas novamente por até dez tentativas.
 
+Em Changesets, **todas** as tags e Releases do plano são consultadas antes da
+primeira escrita. Um conflito em qualquer pacote impede iniciar o lote. Se a
+API falhar depois de publicar parte dele, uma reexecução no push atual conclui
+apenas os recursos ausentes; tags já publicadas não se movem. Um push antigo só
+retorna `already-published` quando o lote inteiro já está completo e íntegro.
+
 Erros de API, associação ausente ou ambígua, branch/SHA remoto divergente para
 publicação nova,
 saída nativa inválida e prerelease falham fechados antes da escrita.
@@ -256,6 +330,6 @@ node tests/versioning/run.mjs --real-go
 ```
 
 A CI central executa as fixtures locais, standard-version real, jgitver real
-com Maven e o adaptador Go fixado. Os fixtures locais simulam a API do GitHub,
+com Maven, Changesets real e o adaptador Go fixado. Os fixtures locais simulam a API do GitHub,
 falhas parciais, dez reexecuções, colisões e corridas. Esses testes não
 substituem um ensaio hospedado de publicação em um consumidor Node ou Maven.
