@@ -159,8 +159,8 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 | LLM-19 | Resultado | Execute | Implemented: T7/T8; final verification pending | T7, T8 |
 | LLM-20 | Resultado | Execute | Implemented: T7; final verification pending | T7 |
 | LLM-21 | Resultado | Execute | Implemented: T8/T9; final verification pending | T8, T9 |
-| LLM-22 | Adoção | Execute | Partial: T10 complete; extensive manual deferred | T10, T11; T12 deferred |
-| LLM-23 | Adoção | Design | In Tasks | T11 |
+| LLM-22 | Adoção | Execute | Implemented: T10/T11; final verification pending; extensive manual deferred | T10, T11; T12 deferred |
+| LLM-23 | Adoção | Execute | Implemented: T11 locally; publication and pilot pending | T11 |
 | LLM-24 | Piloto | Design | In Tasks | T13 |
 
 **Coverage:** 24 total, 24 mapped to tasks, 0 unmapped. Verificação final depende das evidências do piloto e do Verifier independente.

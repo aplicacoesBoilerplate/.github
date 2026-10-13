@@ -1,5 +1,9 @@
 # Evidências de implementação
 
+## T11: caller copiável e consumo validado
+
+Gate de contratos, sintaxe e YAML passou, incluindo Node 22.23.3. `caller.test.mjs:21–32` verifica interface, modalidades, referências imutáveis e credenciais explícitas; :47–51 executa o inspector real contra um pacote válido e recusa SHA divergente. Inspector também reconstitui hashes de configuração/diretrizes e confere allowlist/tamanho/patch. README revisado manualmente, sem testes de texto, cobre configuração/autenticação/modelos/prompts/resultados/recuperação. Referência local 4301c87e422bee521e2dbe0ccd1283b40c76e499 contém o central; publicação e autenticação real permanecem pendentes, sem alegação de execução remota.
+
 ## T10: gate explícito da feature na CI
 
 Gate de contratos, sintaxe e YAML passou. `ci.test.mjs:12–17` verifica instalação pela feature/lock, teste/check/lint e runtime sem condição de package raiz; :18–20 preserva as condições Maven/Node existentes e permissões de leitura. O helper Linux baixa actionlint 1.7.12 e verifica o SHA-256 fixado antes de executar; na máquina Windows o mesmo YAML foi validado pelo binário fixado com checksum conferido. A execução remota desse job não foi iniciada.

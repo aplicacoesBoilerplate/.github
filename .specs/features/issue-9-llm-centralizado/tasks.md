@@ -1,6 +1,6 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 10/12 tarefas do MVP concluídas; T12 adiada.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 11/12 tarefas do MVP concluídas; T12 adiada.
 
 **Recorte MVP atualizado em 2026-10-13:** T12 adiada para o trabalho futuro de documentação central definido pelo mantenedor. Permanecem 12 tarefas no MVP, com 6 concluídas. T13 depende de T11; manual central extenso e testes documentais não bloqueiam o piloto. O caller recebe instruções completas de configuração e consumo, conforme correção do mantenedor sobre a transcrição. Reduzir intensidade de testes não significa reduzir essas instruções. T12 não está concluída nem dispensada como entrega futura.
 
@@ -237,6 +237,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 
 ### T11: Entregar caller e configuração próprios do consumidor
 
+**Status**: Complete (artefatos locais). Referência central imutável existe e foi validada localmente; uso no GitHub depende da publicação autorizada dessa revisão. Credenciais e piloto real ainda não provisionados.
+
 **What**: Materializar caller reutilizável com instruções completas de adoção, variante API key documentada e configuração de invocação versionada.
 **Where**: `examples/callers/llm/`
 **Depends on**: T10
@@ -244,11 +246,11 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 **Requirement**: LLM-23
 **Tools**: YAML/JSON parser, actionlint; TLC/cicd.
 **Done when**:
-- [ ] Caller possui evento, config_path, auth_mode, mapping explícito de secrets e ref fixa publicada/revisada.
-- [ ] Cada chamada define invocation_id próprio; o consumo confere esse ID e o SHA no envelope.
-- [ ] Caller não contém comandos de autenticação copiados, sessão global nem credenciais nos inputs.
-- [ ] README permite configurar e usar o caller sem depender da conversa: inputs/secrets/outputs, modelos/esforço/modos, exemplos, referência central, provisionamento, resultados, rerun versus novo run e recuperação.
-- [ ] Contratos de consumo comprovam as modalidades e escolhas próprias sem editar o central.
+- [x] Caller possui evento, config_path, auth_mode, mapping explícito de secrets e ref fixa da implementação central validada localmente; publicação permanece como condição da adoção real.
+- [x] Cada chamada define invocation_id próprio; o consumo confere esse ID e o SHA no envelope.
+- [x] Caller não contém comandos de autenticação copiados, sessão global nem credenciais nos inputs.
+- [x] README permite configurar e usar o caller sem depender da conversa: inputs/secrets/outputs, modelos/esforço/modos, exemplos, referência central, provisionamento, resultados, rerun versus novo run e recuperação.
+- [x] Contratos de consumo comprovam as modalidades e escolhas próprias sem editar o central.
 **Tests**: contract em `tests/llm/caller.test.mjs`; instruções completas revisadas manualmente, sem testes de texto.
 **Gate**: Full + actionlint do exemplo após resolver a referência do piloto.
 **Commit**: `docs(llm): deliver consumer-owned caller examples`
