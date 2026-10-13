@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "decision", "artifact_name", "source_sha", "automation_sha", "request_id", "error_code", "repository", "run_id", "run_attempt", "invocation_id", "config_sha256", "instructions_sha256", "summary", "patch_file"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "status": { "enum": ["succeeded", "skipped", "needs-human"] },
+    "decision": { "enum": ["proceed", "skip", "needs-human", "none"] },
+    "artifact_name": { "type": "string", "pattern": "^llm-[1-9][0-9]*-[1-9][0-9]*-[a-z][a-z0-9-]{0,47}$" },
+    "source_sha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "automation_sha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "request_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "error_code": { "const": "" },
+    "repository": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]*/[a-zA-Z0-9_.-]+$" },
+    "run_id": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+    "run_attempt": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+    "invocation_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,47}$" },
+    "config_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "instructions_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "summary": { "type": "string", "maxLength": 4000 },
+    "patch_file": { "enum": ["proposal.patch", null] }
+  }
+}

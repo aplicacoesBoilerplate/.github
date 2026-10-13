@@ -1,5 +1,9 @@
 # Evidências de implementação
 
+## T8: resultados vinculados à origem
+
+Gate Full e sintaxe passaram. `result.test.mjs:16–33` confere conteúdo do pacote, todos os campos de proveniência e patch literal; :39–43 confere isolamento por chamada/tentativa e recusa de overwrite; :50–53 exige ausência de pacote para campo forjado/segredo/tamanho; :66–67 recusa paths perigosos, configuração de execução, symlink e binário; :75–79 confere skip sem patch e consumo contra SHA esperado. Schema fechado rejeita autoridade fornecida pelo modelo. O pacote não aplica a proposta; caller mantém validação/ação de domínio.
+
 ## T7: execução controlada e prompt do caller
 
 Gate Full e sintaxe passaram. `execution.test.mjs:28–41` confere resultado, modelo/esforço, dados literais, flags e fonte preservada; :47–49 exige exatamente as etapas decididas; :54–67 cobre provider/JSON/timeout sem retry; :75–77 confere prompt próprio e modelo do caller. `request.test.mjs:102–108` comprova carregamento de template versionado e recusa de excesso/ambiguidade/traversal. CLI 0.162.1 conferido por help e features list sem login; as flags usadas existem. Sandbox/inferência reais permanecem como evidência do piloto. O código é fornecido como dados, ferramentas de execução desativadas e prompt customizado não altera schema de resposta.

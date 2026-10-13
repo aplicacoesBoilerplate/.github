@@ -1,6 +1,6 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 7/12 tarefas do MVP concluídas; T12 adiada.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 8/12 tarefas do MVP concluídas; T12 adiada.
 
 **Recorte MVP atualizado em 2026-10-13:** T12 adiada para o trabalho futuro de documentação central definido pelo mantenedor. Permanecem 12 tarefas no MVP, com 6 concluídas. T13 depende de T11; manual central extenso e testes documentais não bloqueiam o piloto. O caller recebe instruções completas de configuração e consumo, conforme correção do mantenedor sobre a transcrição. Reduzir intensidade de testes não significa reduzir essas instruções. T12 não está concluída nem dispensada como entrega futura.
 
@@ -180,6 +180,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 
 ### T8: Validar e empacotar resultados
 
+**Status**: Complete. Proveniência, identidades, allowlist e patches inválidos verificados em `tests/llm/result.test.mjs`.
+
 **What**: Implementar envelope v1 e pacote de arquivos explicitamente permitidos.
 **Where**: `scripts/llm/result.mjs`
 **Depends on**: T7
@@ -187,10 +189,10 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 **Requirement**: LLM-17, LLM-18, LLM-19, LLM-21
 **Tools**: Node, fixtures de respostas e patches; TLC.
 **Done when**:
-- [ ] Modelo não pode falsificar repositório, SHA ou run_id do envelope.
-- [ ] Duas chamadas do mesmo workflow no mesmo run/attempt geram nomes distintos com seus invocation_id; colisão não habilita overwrite.
-- [ ] Patch é somente dado; paths perigosos, arquivos de auth e excesso de bytes são recusados.
-- [ ] Testes comprovam identidade do resultado, limites, paths permitidos e ausência de credenciais no pacote.
+- [x] Modelo não pode falsificar repositório, SHA ou run_id do envelope.
+- [x] Duas chamadas do mesmo workflow no mesmo run/attempt geram nomes distintos com seus invocation_id; colisão não habilita overwrite.
+- [x] Patch é somente dado; paths perigosos, arquivos de auth e excesso de bytes são recusados.
+- [x] Testes comprovam identidade do resultado, limites, paths permitidos e ausência de credenciais no pacote.
 **Tests**: unit/integration em `tests/llm/result.test.mjs`.
 **Gate**: Full + Build da fase.
 **Commit**: `feat(llm): validate result and patch artifacts`

@@ -154,11 +154,11 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 | LLM-14 | Segurança | Execute | Partial: T7 complete | T7, T9 |
 | LLM-15 | Diretrizes | Execute | Implemented: T3; final verification pending | T3 |
 | LLM-16 | Diretrizes | Execute | Implemented: T3; final verification pending | T3 |
-| LLM-17 | Resultado | Design | In Tasks | T8, T9 |
-| LLM-18 | Resultado | Design | In Tasks | T8 |
-| LLM-19 | Resultado | Execute | Partial: T7 complete | T7, T8 |
+| LLM-17 | Resultado | Execute | Partial: T8 complete | T8, T9 |
+| LLM-18 | Resultado | Execute | Implemented: T8; final verification pending | T8 |
+| LLM-19 | Resultado | Execute | Implemented: T7/T8; final verification pending | T7, T8 |
 | LLM-20 | Resultado | Execute | Implemented: T7; final verification pending | T7 |
-| LLM-21 | Resultado | Design | In Tasks | T8, T9 |
+| LLM-21 | Resultado | Execute | Partial: T8 complete | T8, T9 |
 | LLM-22 | Adoção | Design | In Tasks; extensive manual deferred | T10, T11; T12 deferred |
 | LLM-23 | Adoção | Design | In Tasks | T11 |
 | LLM-24 | Piloto | Design | In Tasks | T13 |
