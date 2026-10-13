@@ -1,0 +1,1 @@
+Proponha uma correção MVP para o pedido com base nos arquivos fornecidos. Retorne summary e um patch unificado textual, ou patch=null se não houver proposta suficiente. Não aplique o patch nem execute código. O consumidor validará a proposta contra o SHA original antes de qualquer alteração.

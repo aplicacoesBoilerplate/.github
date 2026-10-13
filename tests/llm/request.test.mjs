@@ -91,3 +91,19 @@ test('LLM-01/02: loads only a regular JSON file inside the trusted checkout', as
   await symlink(root, join(root, 'alias'), 'junction');
   await assert.rejects(loadRequest(root, { ...inputs(), config_path: 'alias/config.json' }), { code: 'INVALID_CONFIG' });
 });
+test('LLM-01/02: consumer template is loaded as text and rejects ambiguous/outside/missing paths', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'llm-prompt-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(join(root, '.github', 'llm'), { recursive: true });
+  const c = config(); delete c.execution.template; c.execution.template_path = '.github/llm/custom.md';
+  const text = 'Meu prompt para a LLM: $(isso é texto)';
+  await writeFile(join(root, '.github', 'llm', 'custom.md'), text);
+  await writeFile(join(root, '.github', 'llm', 'analyze.json'), JSON.stringify(c));
+  assert.equal((await loadRequest(root, inputs())).prompts.execution, text);
+  await writeFile(join(root, '.github', 'llm', 'custom.md'), 'x'.repeat(32769));
+  await assert.rejects(loadRequest(root, inputs()), { code: 'INVALID_CONFIG' });
+  invalid(() => validateRequest({ ...c, execution: { ...c.execution, template: 'analyze' } }, inputs()));
+  invalid(() => validateRequest({ ...c, execution: { ...c.execution, template_path: '../prompt.md' } }, inputs()));
+  await rm(join(root, '.github', 'llm', 'custom.md'));
+  await assert.rejects(loadRequest(root, inputs()), { code: 'INVALID_CONFIG' });
+});

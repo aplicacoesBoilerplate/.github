@@ -17,20 +17,30 @@
     "model": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._:-]*$" },
     "execution": {
       "type": "object", "additionalProperties": false,
-      "required": ["model", "effort", "template"],
+      "required": ["model", "effort"],
+      "oneOf": [
+        { "required": ["template"], "properties": { "template": {}, "template_path": false } },
+        { "required": ["template_path"], "properties": { "template_path": {}, "template": false } }
+      ],
       "properties": {
         "model": { "$ref": "#/definitions/model" },
         "effort": { "enum": ["low", "medium", "high"] },
-        "template": { "enum": ["analyze", "propose-patch"] }
+        "template": { "enum": ["analyze", "propose-patch"] },
+        "template_path": { "type": "string", "minLength": 1, "maxLength": 240 }
       }
     },
     "decision": {
       "type": "object", "additionalProperties": false,
-      "required": ["model", "effort", "template"],
+      "required": ["model", "effort"],
+      "oneOf": [
+        { "required": ["template"], "properties": { "template": {}, "template_path": false } },
+        { "required": ["template_path"], "properties": { "template_path": {}, "template": false } }
+      ],
       "properties": {
         "model": { "$ref": "#/definitions/model" },
         "effort": { "enum": ["low", "medium", "high"] },
-        "template": { "const": "decision" }
+        "template": { "const": "decision" },
+        "template_path": { "type": "string", "minLength": 1, "maxLength": 240 }
       }
     }
   }

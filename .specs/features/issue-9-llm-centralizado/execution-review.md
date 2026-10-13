@@ -1,5 +1,9 @@
 # Evidências de implementação
 
+## T7: execução controlada e prompt do caller
+
+Gate Full e sintaxe passaram. `execution.test.mjs:28–41` confere resultado, modelo/esforço, dados literais, flags e fonte preservada; :47–49 exige exatamente as etapas decididas; :54–67 cobre provider/JSON/timeout sem retry; :75–77 confere prompt próprio e modelo do caller. `request.test.mjs:102–108` comprova carregamento de template versionado e recusa de excesso/ambiguidade/traversal. CLI 0.162.1 conferido por help e features list sem login; as flags usadas existem. Sandbox/inferência reais permanecem como evidência do piloto. O código é fornecido como dados, ferramentas de execução desativadas e prompt customizado não altera schema de resposta.
+
 ## T6: persistência criptografada
 
 Gate passou. LLM-10/11: `persistence.test.mjs:43–50` verifica repo/secret/key_id e descriptografa sealed box para exigir conteúdo renovado; :55–56 verifica ausência de request quando inalterado; :60–68 recusa arquivo inválido, destino cruzado e escrita externa; :74–75 exige falha e um único PUT em 403/timeout, sem PUT para chave inválida. O cenário final preserva refresh mesmo após erro de provedor (:79–87). Metadata é conferida imediatamente antes do PUT; a ausência de CAS do GitHub permanece como limite operacional documentado. Nenhuma secret real foi alterada.

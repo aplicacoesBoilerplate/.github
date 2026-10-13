@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-9-llm-centralizado/`
-- **Phase / Task**: Execute; T6 concluída. 6/12 tarefas do MVP; T12 adiada fora desse total.
-- **Completed**: Planejamento aprovado e persistido; T1 contrato/dependências, T2 origem/SHA, T3 diretrizes integrais/proveniência implementadas com commits por tarefa.
-- **In-progress**: Auth, freshness e writeback criptografado implementados; gates passaram com fixtures, sem credenciais reais.
-- **Next step**: T7 executor, T8 resultados, T9 workflow, T10 CI, T11 caller e T13 piloto reutilizando o caller. Documentação extensa não bloqueia essa sequência.
+- **Phase / Task**: Execute; T7 concluída. 7/12 tarefas do MVP; T12 adiada fora desse total.
+- **Completed**: T1–T7 implementadas: contrato, origem/SHA, diretrizes, auth/freshness/persistência e executor. Modelo/esforço/template próprios do caller preservados; harness registrado como evolução futura.
+- **In-progress**: Nenhuma tarefa parcial após commit. Gates de contrato/execução passaram com fixtures; inferência real ainda requer piloto.
+- **Next step**: T8 resultados, T9 workflow, T10 CI, T11 caller e T13 piloto reutilizando o caller.
 - **Blockers**: Nenhum para implementação offline. T13 requer repositório privado piloto e credenciais provisionadas pelo mantenedor; publicação não autorizada nesta iteração.
 - **Uncommitted files**: Nenhum após registrar o recorte atualizado em commit local.
 - **Branch**: `feature/issue-9-llm-centralizado`

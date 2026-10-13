@@ -1,6 +1,6 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 6/12 tarefas do MVP concluídas; T12 adiada.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 7/12 tarefas do MVP concluídas; T12 adiada.
 
 **Recorte MVP atualizado em 2026-10-13:** T12 adiada para o trabalho futuro de documentação central definido pelo mantenedor. Permanecem 12 tarefas no MVP, com 6 concluídas. T13 depende de T11; manual central extenso e testes documentais não bloqueiam o piloto. O caller recebe instruções completas de configuração e consumo, conforme correção do mantenedor sobre a transcrição. Reduzir intensidade de testes não significa reduzir essas instruções. T12 não está concluída nem dispensada como entrega futura.
 
@@ -160,17 +160,20 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 
 ### T7: Executar modos de invocação limitados
 
+**Status**: Complete. Executor e template próprio do consumidor verificados com processo Codex falso; inferência real no piloto.
+
 **What**: Implementar executor Codex single ou decisão seguida de prompt com ambiente mínimo.
 **Where**: `scripts/llm/execute.mjs`
 **Depends on**: T6
 **Reuses**: Contrato normalizado, instruções e auth temporária; catálogo de três templates da mesma feature.
-**Requirement**: LLM-03, LLM-04, LLM-05, LLM-14, LLM-19, LLM-20
+**Requirement**: LLM-01, LLM-03, LLM-04, LLM-05, LLM-14, LLM-19, LLM-20
 **Tools**: Node child_process, Codex falso e smoke test do binário sem segredo; TLC.
 **Done when**:
-- [ ] CLI falso confirma número de invocações, modelo/esforço selecionados e zero interpolação de shell.
-- [ ] Processo não recebe tokens GitHub; checkout não muda; config/MCP/hooks do consumidor não são herdados.
-- [ ] Timeout agregado encerra subprocessos e retorna erro, sem retry automático de inferência.
-- [ ] Testes comprovam decisões e resultados, encerramento por timeout e isolamento frente à configuração do consumidor.
+- [x] CLI falso confirma número de invocações, modelo/esforço selecionados e zero interpolação de shell.
+- [x] Processo não recebe tokens GitHub; checkout não muda; config/MCP/hooks do consumidor não são herdados.
+- [x] Timeout agregado encerra subprocessos e retorna erro, sem retry automático de inferência.
+- [x] Testes comprovam decisões e resultados, encerramento por timeout e isolamento frente à configuração do consumidor.
+- [x] Template próprio versionado do consumidor é carregado antes de auth e enviado literalmente à LLM; opções ambíguas e arquivos inválidos são recusados.
 **Tests**: integration em `tests/llm/execution.test.mjs`.
 **Gate**: Full; smoke de flags/sandbox com versão fixada, sem LLM real nesta tarefa.
 **Commit**: `feat(llm): execute caller-selected Codex requests`

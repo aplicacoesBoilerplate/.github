@@ -38,7 +38,7 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 | API key | Opção explícita adicional, sem uso automático | Permite consumidor independente que já a possua | Proposta |
 | Sessão antiga na fila | Recusar antes do CLI e exigir nova execução, sem prometer refresh de secrets pela API | REST não devolve plaintext e snapshots são antecipados | Proposta |
 | Eventos do primeiro piloto | `workflow_dispatch` na branch padrão | Primeiro contrato verificável, triggers de domínio pertencem a #7/#8 | Proposta |
-| Limites | 32 KiB de contexto, 64 KiB de instruções, 1 MiB de resposta, 10 minutos de CLI | Limites iniciais explícitos e testáveis | Proposta |
+| Limites | 32 KiB de contexto, 64 KiB de instruções, 1 MiB de snapshot de arquivos, 1 MiB de resposta, 10 minutos de CLI | Dados de código substituem execução de ferramentas do consumidor; excesso falha sem truncamento | Confirmado para MVP; compatibilidade real no piloto |
 | Dependências | Node 22, um adaptador Codex, versões exatas resolvidas e fixadas na implementação | Reutiliza stack de testes existente sem adotar latest | Proposta |
 | Novos ciclos TLC | Todos os artefatos Draft entregues juntos para revisão | Usuário solicitou especificação completa nesta iteração | Sim |
 
@@ -51,7 +51,7 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 **User Story:** Como mantenedor, quero escolher como minha aplicação chama Codex sem editar a automação compartilhada.
 
 **Acceptance Criteria**:
-1. WHEN um caller válido fornecer `config_path` e `context_json` THEN o workflow SHALL carregar a configuração de invocação da revisão confiável desse consumidor. (LLM-01)
+1. WHEN um caller válido fornecer `config_path` e `context_json` THEN o workflow SHALL carregar a configuração e, se definido, o arquivo `template_path` da revisão confiável desse consumidor e enviar o prompt escolhido à LLM. (LLM-01)
 2. IF modo, modelo, esforço, template, caminho ou limite forem inválidos THEN o workflow SHALL falhar com `INVALID_CONFIG` antes de disponibilizar credenciais ao CLI. (LLM-02)
 3. WHEN `single` for selecionado THEN o executor SHALL realizar exatamente uma invocação de prompt. (LLM-03)
 4. WHEN `decision-then-prompt` produzir decisão `proceed` válida THEN o executor SHALL realizar uma segunda invocação com o prompt configurado pelo caller. (LLM-04)
@@ -138,11 +138,11 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 
 | Requirement ID | Story | Phase | Status | Tasks |
 | --- | --- | --- | --- | --- |
-| LLM-01 | Caller | Execute | Partial: T1 complete | T1, T9 |
+| LLM-01 | Caller | Execute | Partial: T1/T7 complete | T1, T7, T9 |
 | LLM-02 | Caller | Execute | Implemented: T1/T2; final verification pending | T1, T2 |
-| LLM-03 | Caller | Design | In Tasks | T7 |
-| LLM-04 | Caller | Design | In Tasks | T7 |
-| LLM-05 | Caller | Design | In Tasks | T7 |
+| LLM-03 | Caller | Execute | Implemented: T7; final verification pending | T7 |
+| LLM-04 | Caller | Execute | Implemented: T7; final verification pending | T7 |
+| LLM-05 | Caller | Execute | Implemented: T7; final verification pending | T7 |
 | LLM-06 | Auth | Execute | Partial: T4 complete | T4, T9 |
 | LLM-07 | Auth | Execute | Implemented: T4; final verification pending | T4 |
 | LLM-08 | Auth | Design | In Tasks | T9 |
@@ -151,13 +151,13 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 | LLM-11 | Auth | Execute | Partial: T6 complete | T6, T9 |
 | LLM-12 | Auth | Execute | Partial: T4 complete | T4, T9 |
 | LLM-13 | Segurança | Execute | Partial: T2 complete | T2, T9 |
-| LLM-14 | Segurança | Design | In Tasks | T7, T9 |
+| LLM-14 | Segurança | Execute | Partial: T7 complete | T7, T9 |
 | LLM-15 | Diretrizes | Execute | Implemented: T3; final verification pending | T3 |
 | LLM-16 | Diretrizes | Execute | Implemented: T3; final verification pending | T3 |
 | LLM-17 | Resultado | Design | In Tasks | T8, T9 |
 | LLM-18 | Resultado | Design | In Tasks | T8 |
-| LLM-19 | Resultado | Design | In Tasks | T7, T8 |
-| LLM-20 | Resultado | Design | In Tasks | T7 |
+| LLM-19 | Resultado | Execute | Partial: T7 complete | T7, T8 |
+| LLM-20 | Resultado | Execute | Implemented: T7; final verification pending | T7 |
 | LLM-21 | Resultado | Design | In Tasks | T8, T9 |
 | LLM-22 | Adoção | Design | In Tasks; extensive manual deferred | T10, T11; T12 deferred |
 | LLM-23 | Adoção | Design | In Tasks | T11 |

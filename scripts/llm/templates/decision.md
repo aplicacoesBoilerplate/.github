@@ -1,0 +1,1 @@
+Decida se o pedido deve prosseguir como proposta de análise/correção. Use proceed quando o contexto for suficiente, skip quando não houver trabalho aplicável e needs-human quando faltar decisão ou informação necessária. Retorne somente decision e reason conforme o schema. Não execute código nem escolha outra configuração.

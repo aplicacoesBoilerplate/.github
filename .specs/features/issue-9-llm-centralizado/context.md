@@ -49,4 +49,6 @@ SDD completo é necessário mesmo com tipo remoto `Task`: há API pública de re
 
 ## Deferred Ideas
 
+Harness dentro da pipeline: sugestão do mantenedor em 2026-10-13, para extensão posterior ao MVP. Não habilitar execução de ferramentas/scripts arbitrários nesta entrega; preservar contrato e propriedade das credenciais ao discutir a evolução.
+
 Outros provedores, autenticação global, broker de sessões, runners persistentes, invocação arbitrária de shell, edição de código no job com credenciais, serviços HTTP adicionais e implementação de #7/#8 não fazem parte desta entrega.

@@ -31,6 +31,9 @@ export function validateRelativePath(path) {
 export function validateRequest(config, inputs) {
   if (!checkInputs(inputs) || !checkConfig(config)) throw contractError('INVALID_CONFIG');
   validateRelativePath(inputs.config_path);
+  for (const stage of [config.execution, config.decision].filter(Boolean)) {
+    if (stage.template_path !== undefined) validateRelativePath(stage.template_path);
+  }
   const ref = inputs.source_ref;
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/.test(ref) || ref.startsWith('refs/') || ref.includes('..')
     || ref.split('/').some(part => !part || part.startsWith('.') || part.endsWith('.lock')) || ref.endsWith('.')) throw contractError('INVALID_CONFIG');
@@ -69,6 +72,16 @@ export async function readTrustedFile(root, path, maxBytes, errorCode = 'INVALID
 export async function loadRequest(root, inputs) {
   try {
     const bytes = await readTrustedFile(root, inputs.config_path, 32768);
-    return validateRequest(JSON.parse(bytes.toString('utf8')), inputs);
+    const request = validateRequest(JSON.parse(bytes.toString('utf8')), inputs);
+    request.prompts = {};
+    for (const kind of ['decision', 'execution']) {
+      const stage = request.config[kind];
+      if (!stage?.template_path) continue;
+      const content = await readTrustedFile(root, stage.template_path, 32768);
+      const text = new TextDecoder('utf-8', { fatal: true }).decode(content);
+      if (!text.trim()) throw contractError('INVALID_CONFIG');
+      request.prompts[kind] = text;
+    }
+    return request;
   } catch { throw contractError('INVALID_CONFIG'); }
 }
