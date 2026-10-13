@@ -6,9 +6,6 @@ on:
       adapter:
         required: true
         type: string
-      release_branch:
-        required: true
-        type: string
       project_path:
         required: false
         default: .
@@ -16,18 +13,15 @@ on:
       target_branch:
         required: true
         type: string
-      homologation_environment:
-        description: Ambiente protegido com aprovação humana no consumidor
-        required: true
+      publication_environment:
+        description: Environment protegido opcional no repositório consumidor
+        required: false
+        default: ''
         type: string
       changelog_path:
         required: false
         default: ''
         type: string
-    secrets:
-      versioning_token:
-        description: Token de automação capaz de disparar checks/review do PR de versionamento Node
-        required: false
     outputs:
       version:
         value: ${{ jobs.publish.outputs.version }}
@@ -39,14 +33,25 @@ on:
         value: ${{ jobs.publish.outputs.release_url }}
       outcome:
         value: ${{ jobs.publish.outputs.outcome }}
-      version_pr_url:
-        value: ${{ jobs.publish.outputs.version_pr_url }}
 
 jobs:
-  publish:
-    if: github.event_name == 'push' && github.ref_name == inputs.target_branch
+  environment-gate:
+    if: inputs.publication_environment != ''
     runs-on: ubuntu-latest
-    environment: ${{ inputs.homologation_environment }}
+    environment:
+      name: ${{ inputs.publication_environment }}
+    permissions:
+      contents: read
+    steps:
+      - name: Confirmar liberação do environment
+        run: echo "Environment autorizado para publicação"
+
+  publish:
+    needs: environment-gate
+    if: >-
+      ${{ always() && github.event_name == 'push' && github.ref_name == inputs.target_branch &&
+      (needs.environment-gate.result == 'success' || needs.environment-gate.result == 'skipped') }}
+    runs-on: ubuntu-latest
     concurrency:
       group: version-publish-${{ github.repository }}-${{ inputs.target_branch }}
       cancel-in-progress: false
@@ -60,7 +65,6 @@ jobs:
       published_sha: ${{ steps.publish.outputs.published_sha }}
       release_url: ${{ steps.publish.outputs.release_url }}
       outcome: ${{ steps.publish.outputs.outcome }}
-      version_pr_url: ${{ steps.publish.outputs.version_pr_url }}
     steps:
       - name: Checkout do commit integrado no consumidor
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -74,22 +78,6 @@ jobs:
           ref: ${{ job.workflow_sha }}
           path: .shared-versioning
           persist-credentials: false
-      - name: Preparar Node para projetos npm e Changesets
-        if: inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '22'
-      - name: Instalar ferramentas Node do consumidor sem scripts de instalação
-        if: inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'
-        env:
-          PROJECT_PATH: ${{ inputs.project_path }}
-        run: bash .shared-versioning/scripts/versioning/install-node.sh
-      - name: Preparar Java para jgitver
-        if: inputs.adapter == 'jgitver'
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
-        with:
-          distribution: temurin
-          java-version: '17'
       - name: Preparar Go para go-gitsemver
         if: inputs.adapter == 'go-gitsemver'
         uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
@@ -105,9 +93,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           ADAPTER: ${{ inputs.adapter }}
-          RELEASE_BRANCH: ${{ inputs.release_branch }}
           PROJECT_PATH: ${{ inputs.project_path }}
           TARGET_BRANCH: ${{ inputs.target_branch }}
           CHANGELOG_PATH: ${{ inputs.changelog_path }}
-          VERSIONING_TOKEN: ${{ secrets.versioning_token }}
         run: bash .shared-versioning/scripts/versioning/publish.sh

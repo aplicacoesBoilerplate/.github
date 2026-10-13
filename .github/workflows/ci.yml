@@ -19,11 +19,11 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up Java
         if: ${{ hashFiles('pom.xml') != '' }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
           java-version: '21'
@@ -35,7 +35,7 @@ jobs:
 
       - name: Set up Node.js
         if: ${{ hashFiles('package-lock.json', 'npm-shrinkwrap.json') != '' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: npm
@@ -53,3 +53,28 @@ jobs:
         if: ${{ hashFiles('package.json') != '' }}
         shell: bash
         run: npm run build --if-present
+
+  versioning:
+    name: Validate centralized versioning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+      - name: Run deterministic versioning fixtures
+        run: node tests/versioning/run.mjs --local
+      - name: Set up Go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version: '1.27.0'
+      - name: Install pinned go-gitsemver
+        run: |
+          go install github.com/MyCarrier-DevOps/go-gitsemver@680c1c12d9a4f573a8da1b2e3ccebb3571b1cab6
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Run real Go adapter fixture
+        run: node tests/versioning/run.mjs --real-go

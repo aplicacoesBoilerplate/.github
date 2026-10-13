@@ -4,220 +4,228 @@ import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync 
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-const shared = resolve(import.meta.dirname, '../..');
-const changesets = process.argv.includes('--changesets');
-const adapterName = changesets ? 'changesets' : 'standard-version';
-const projectPath = changesets ? 'packages/core' : '.';
-const expectedVersion = changesets ? '2.1.0' : '1.0.1';
-const expectedTag = changesets ? '@lab/core@2.1.0' : 'v1.0.1';
+const root = resolve(import.meta.dirname, '../..');
 const temp = mkdtempSync(join(tmpdir(), 'version-post-merge-'));
 const workspace = join(temp, 'consumer');
 const bare = join(temp, 'origin.git');
 const bin = join(temp, 'bin');
+const apiWrites = join(temp, 'api-writes.log');
 const stateFile = join(temp, 'state.json');
+const adapterCalls = join(temp, 'adapter-calls.log');
 const output = join(temp, 'output.txt');
-const git = (...args) => execFileSync('git', args, { cwd: workspace, encoding: 'utf8' }).trim();
-const state = () => JSON.parse(readFileSync(stateFile, 'utf8'));
-const save = value => writeFileSync(stateFile, JSON.stringify(value));
-const run = (sha, overrides = {}) => {
-  writeFileSync(output, '');
-  return spawnSync('bash', [join(shared, 'scripts/versioning/publish.sh')], {
-    cwd: workspace, encoding: 'utf8', env: { ...process.env,
-      PATH: `${bin}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH}`,
-      MOCK_STATE: stateFile, MOCK_BARE: bare, GH_TOKEN: 'mock', VERSIONING_TOKEN: 'mock-app',
-      GITHUB_REPOSITORY: 'acme/consumer', GITHUB_WORKSPACE: workspace,
-      GITHUB_EVENT_NAME: 'push', GITHUB_REF_NAME: 'main', GITHUB_SHA: sha,
-      ADAPTER: adapterName, RELEASE_BRANCH: 'release/v1.2.3',
-      TARGET_BRANCH: 'main', PROJECT_PATH: projectPath, GITHUB_OUTPUT: output, ...overrides },
-  });
-};
+const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
 
 try {
-  mkdirSync(workspace);
-  mkdirSync(bin);
-  git('init', '-b', 'main');
-  git('config', 'user.name', 'Fixture');
-  git('config', 'user.email', 'fixture@example.test');
-  if (changesets) {
-    mkdirSync(join(workspace, 'packages', 'core'), { recursive: true });
-    mkdirSync(join(workspace, '.changeset'));
-    writeFileSync(join(workspace, 'package.json'), '{"name":"lab","private":true,"workspaces":["packages/*"]}\n');
-    writeFileSync(join(workspace, 'package-lock.json'), JSON.stringify({name:'lab',lockfileVersion:3,
-      packages:{'':{name:'lab',workspaces:['packages/*']},'packages/core':{name:'@lab/core',version:'2.0.0'}}})+'\n');
-    writeFileSync(join(workspace, 'packages', 'core', 'package.json'), '{"name":"@lab/core","version":"2.0.0"}\n');
-    writeFileSync(join(workspace, '.changeset', 'config.json'), '{"baseBranch":"main"}\n');
-    writeFileSync(join(workspace, '.changeset', 'two-features.md'), '---\n"@lab/core": minor\n---\n\nDuas entregas.\n');
-  } else {
-    writeFileSync(join(workspace, 'package.json'), '{"name":"test","version":"1.0.0"}\n');
-  }
-  writeFileSync(join(workspace, '.gitignore'), 'node_modules/\n');
-  mkdirSync(join(workspace, 'node_modules', '.bin'), { recursive: true });
-  const adapter = join(workspace, 'node_modules', '.bin', changesets ? 'changeset' : 'standard-version');
-  writeFileSync(adapter, changesets ? `#!/usr/bin/env node
-const fs=require('node:fs');const p='packages/core/package.json';
-const data=JSON.parse(fs.readFileSync(p,'utf8'));data.version='2.1.0';
-fs.writeFileSync(p,JSON.stringify(data)+'\\n');
-fs.writeFileSync('packages/core/CHANGELOG.md','# 2.1.0\\n');
-fs.rmSync('.changeset/two-features.md');
-` : `#!/usr/bin/env node
-const fs=require('node:fs'); const p=JSON.parse(fs.readFileSync('package.json','utf8'));
-p.version='1.0.1'; fs.writeFileSync('package.json',JSON.stringify(p)+'\\n');
-fs.writeFileSync('CHANGELOG.md','# 1.0.1\\n');
-`);
-  chmodSync(adapter, 0o755);
-  git('add', 'package.json', '.gitignore');
-  if (changesets) git('add', 'package-lock.json', 'packages', '.changeset');
-  git('commit', '-m', 'feat: add sample');
-  const originalSha = git('rev-parse', 'HEAD');
+  mkdirSync(workspace); mkdirSync(bin);
+  const git = (...args) => execFileSync('git', args, { cwd: workspace, encoding: 'utf8' }).trim();
+  git('init', '-b', 'master');
+  git('config', 'user.name', 'Fixture'); git('config', 'user.email', 'fixture@example.test');
+  writeFileSync(join(workspace, 'go.mod'), 'module example.test/release\n\ngo 1.24\n');
+  git('add', 'go.mod'); git('commit', '-m', 'feat: initial release');
+  git('checkout', '-b', 'develop');
+  writeFileSync(join(workspace, 'README.md'), 'Initial feature\n');
+  git('add', 'README.md'); git('commit', '-m', 'feat: application');
+  const headSha = git('rev-parse', 'HEAD');
+  git('branch', 'hotfix/correct-production', headSha);
+  git('checkout', 'master');
+  git('merge', '--no-ff', 'develop', '-m', 'Merge develop');
+  const sha = git('rev-parse', 'HEAD');
+  assert.notEqual(headSha, sha, 'reviewed head and integrated merge are distinct real commits');
   execFileSync('git', ['clone', '--bare', workspace, bare]);
   git('remote', 'add', 'origin', bare);
-  save({ originalSha, tagSha: null, release: null, pr: null });
+  writeFileSync(stateFile, JSON.stringify({ tagSha: null, release: null }));
+
+  const adapter = join(bin, 'go-gitsemver');
+  writeFileSync(adapter, `#!/usr/bin/env node
+console.error('native release explanation');
+require('node:fs').appendFileSync(process.env.ADAPTER_CALLS,'called\\n');
+console.log(JSON.stringify({SemVer:'0.0.1',Sha:process.env.GITHUB_SHA}));
+`);
+  chmodSync(adapter, 0o755);
   const gh = join(bin, 'gh');
   writeFileSync(gh, `#!/usr/bin/env node
-const fs=require('node:fs'); const cp=require('node:child_process');
-const args=process.argv.slice(2), file=process.env.MOCK_STATE, s=JSON.parse(fs.readFileSync(file,'utf8'));
-const url=args.find(a=>a.startsWith('repos/'))??'';
-const save=()=>fs.writeFileSync(file,JSON.stringify(s));
-const git=(...a)=>cp.execFileSync('git',['--git-dir='+process.env.MOCK_BARE,...a],{encoding:'utf8'}).trim();
-const versionPr=()=>({number:5,merged_at:s.versionMergeSha?'2026-09-24T12:00:00Z':null,
-  merge_commit_sha:s.versionMergeSha,head:{ref:s.pr?.branch},base:{ref:'main'},body:s.pr?.body});
-if(args[0]==='auth') process.exit(0);
-if(args[0]==='pr'&&args[1]==='view'){console.log(process.env.MOCK_APPROVED?'REVIEW_REQUIRED':'APPROVED');process.exit(0)}
-if(args[0]==='pr'&&args[1]==='list'){console.log(JSON.stringify(s.pr?[{number:5,url:s.pr.url,state:s.versionMergeSha?'MERGED':'OPEN'}]:[]));process.exit(0)}
-if(args[0]==='pr'&&args[1]==='create'){
- const body=args[args.indexOf('--body')+1],branch=args[args.indexOf('--head')+1];
- s.pr={body,branch,url:'https://github.com/acme/consumer/pull/5'};save();console.log(s.pr.url);process.exit(0);
-}
-if(url==='repos/acme/consumer'){console.log('main');process.exit(0)}
-if(url.endsWith('/milestones')){console.log(JSON.stringify([{number:2,title:'v1.2.3',state:'closed',open_issues:0}]));process.exit(0)}
-if(url.endsWith('/issues/10')){console.log(JSON.stringify({number:10,title:'v1.2.3',state:'closed',milestone:{title:'v1.2.3',state:'closed',open_issues:0}}));process.exit(0)}
-if(url.endsWith('/issues')){console.log(JSON.stringify([{number:10,title:'v1.2.3',state:'closed'}]));process.exit(0)}
-if(url.includes('/commits/')&&url.endsWith('/pulls')){
-  if(process.env.MOCK_NO_PR){console.log('[]');process.exit(0)}
-  const sha=url.split('/')[4];console.log(JSON.stringify(sha===s.originalSha?
-    [{number:4,merged_at:'2026-09-24T12:00:00Z',merge_commit_sha:s.originalSha,
-      base:{ref:'main'},head:{ref:process.env.MOCK_RELEASE_HEAD?'release/v1.2.3':'develop'}}]:sha===s.versionMergeSha?[versionPr()]:[]));process.exit(0);
-}
-if(url.endsWith('/pulls/4')){
-  const pr={number:4,merged_at:'2026-09-24T12:00:00Z',merge_commit_sha:s.originalSha,
-    base:{ref:'main'},head:{ref:'develop'},body:process.env.MOCK_HOMOLOGATION?'Epic: #10':'Epic: #10\\nHomologação: aprovada'};
-  console.log(args.includes('--jq')?pr.body:JSON.stringify(pr));process.exit(0);
-}
-if(url.endsWith('/pulls/5')){console.log(args.includes('--jq')?s.pr.body:JSON.stringify(versionPr()));process.exit(0)}
-if(url.endsWith('/pulls')){console.log(JSON.stringify([{number:3,merged_at:'2026-09-24T11:00:00Z',
-  merge_commit_sha:s.originalSha,base:{ref:'develop'},head:{ref:'release/v1.2.3'},body:'Epic: #10'}]));process.exit(0)}
-if(url.endsWith('/git/ref/heads/main')){console.log(process.env.MOCK_REMOTE_SHA??git('rev-parse','refs/heads/main'));process.exit(0)}
-if(url.includes('/git/ref/tags/')){
-  if(process.env.MOCK_TAG_ERROR){console.error('gh: Forbidden (HTTP 403)');process.exit(1)}
-  if(!s.tagSha){console.error('gh: Not Found (HTTP 404)');process.exit(1)}
-  console.log(JSON.stringify({object:{type:'commit',sha:s.tagSha}}));process.exit(0);
-}
-if(url.includes('/releases/tags/')){
-  if(!s.release){console.error('gh: Not Found (HTTP 404)');process.exit(1)}console.log(JSON.stringify(s.release));process.exit(0);
-}
-if(args.includes('POST')&&url.endsWith('/git/refs')){
-  if(s.tagSha)process.exit(1);s.tagSha=args.find(a=>a.startsWith('sha=')).slice(4);save();console.log('{}');process.exit(0);
-}
-if(args.includes('POST')&&url.endsWith('/releases')){
-  if(s.release)process.exit(1);
-  s.release={tag_name:args.find(a=>a.startsWith('tag_name=')).slice(9),
-    target_commitish:args.find(a=>a.startsWith('target_commitish=')).slice(18),
-    html_url:'https://github.com/acme/consumer/releases/tag/'+args.find(a=>a.startsWith('tag_name=')).slice(9)};
-  save();console.log(JSON.stringify(s.release));process.exit(0);
-}
-console.error('Comando gh inesperado: '+args.join(' '));process.exit(1);
+const fs=require('node:fs'), cp=require('node:child_process');
+const a=process.argv.slice(2), path=a.find(v=>v.startsWith('repos/'))??'';
+const mode=process.env.FIXTURE_MODE, sha=process.env.GITHUB_SHA, headSha=process.env.TEST_PR_HEAD_SHA??'${headSha}';
+const state=JSON.parse(fs.readFileSync(process.env.STATE_FILE,'utf8'));
+const save=()=>fs.writeFileSync(process.env.STATE_FILE,JSON.stringify(state));
+const git=(...args)=>cp.execFileSync('git',['--git-dir='+process.env.MOCK_BARE,...args],{encoding:'utf8'}).trim();
+const pr={number:42,head:{ref:mode==='wrong-head'?'feature/x':process.env.TEST_HEAD_BRANCH??'develop',sha:headSha},base:{ref:'master'},
+  merged_at:'2026-10-01T10:02:00Z',merge_commit_sha:sha,
+  milestone:mode==='no-milestone'?null:{title:mode==='invalid-title'?'invalid':['override','merge-review','bad-milestone','stale-review','dismissed-review','unauthorized'].includes(mode)?'v2.0.0':'v0.0.1'}};
+if(mode==='api-error'){console.error('simulated API failure');process.exit(1)}
+if(path==='repos/acme/consumer'){console.log('master');process.exit(0)}
+if(path.endsWith('/git/ref/heads/master')){console.log(mode==='remote-stale'?'f'.repeat(40):git('rev-parse','refs/heads/master'));process.exit(0)}
+if(path.includes('/commits/')&&path.includes('/pulls')){console.log(JSON.stringify([mode==='ambiguous'?[pr,{...pr,number:43}]:[pr]]));process.exit(0)}
+if(path.endsWith('/pulls/42')){console.log(JSON.stringify(pr));process.exit(0)}
+if(path.includes('/timeline')){console.log(JSON.stringify(mode==='bad-milestone'?[[]]:[[{event:'labeled',label:{name:'versioning:override'},actor:{login:'alice'},created_at:'2026-10-01T10:00:00Z'}]]));process.exit(0)}
+if(path.includes('/reviews')){const reviews=[{state:'APPROVED',user:{login:'bob'},submitted_at:'2026-10-01T10:01:00Z',commit_id:mode==='stale-review'?'e'.repeat(40):mode==='merge-review'?sha:headSha}];if(mode==='dismissed-review')reviews.push({state:'DISMISSED',user:{login:'bob'},submitted_at:'2026-10-01T10:02:00Z',commit_id:headSha});console.log(JSON.stringify([reviews]));process.exit(0)}
+if(path.includes('/collaborators/')){console.log(JSON.stringify({role_name:mode==='unauthorized'?'triage':path.includes('/alice/')?'maintain':'admin'}));process.exit(0)}
+if(path.includes('/git/ref/tags/')){
+  if(!state.tagSha){console.error('gh: Not Found (HTTP 404)');process.exit(1)}
+  console.log(JSON.stringify({object:{type:'commit',sha:state.tagSha}}));process.exit(0)}
+if(path.includes('/releases/tags/')){
+  if(!state.release){console.error('gh: Not Found (HTTP 404)');process.exit(1)}
+  console.log(JSON.stringify(state.release));process.exit(0)}
+if(a.includes('POST')&&path.endsWith('/git/refs')){
+  fs.appendFileSync(process.env.API_WRITES,a.join(' ')+'\\n');
+  const value=a.find(v=>v.startsWith('sha=' )).slice(4);
+  if(mode==='race-tag'&&!state.tagSha){state.tagSha=value;save();process.exit(1)}
+  if(state.tagSha)process.exit(1); state.tagSha=value;save();console.log('{}');process.exit(0)}
+if(a.includes('POST')&&path.endsWith('/releases')){
+  fs.appendFileSync(process.env.API_WRITES,a.join(' ')+'\\n');
+  const release={tag_name:a.find(v=>v.startsWith('tag_name=')).slice(9),
+    target_commitish:a.find(v=>v.startsWith('target_commitish=')).slice(17),
+    body:a.find(v=>v.startsWith('body=')).slice(5),html_url:'https://example.test/releases/v0.0.1'};
+  if(mode==='race-release'&&!state.release){state.release=release;save();process.exit(1)}
+  if(state.release)process.exit(1);state.release=release;save();console.log(JSON.stringify(release));process.exit(0)}
+console.error('unexpected '+a.join(' '));process.exit(2);
 `);
   chmodSync(gh, 0o755);
 
-  let result = run(originalSha);
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(readFileSync(output, 'utf8'), /outcome=pending-version-pr/);
-  assert.equal(state().tagSha, null);
-  assert.equal(JSON.parse(readFileSync(join(workspace, projectPath, 'package.json'), 'utf8')).version, expectedVersion);
-  if (changesets) {
-    const lock = JSON.parse(readFileSync(join(workspace, 'package-lock.json'), 'utf8'));
-    assert.equal(lock.packages['packages/core'].version, expectedVersion);
-  }
-  const branch = state().pr.branch;
-  git('switch', 'main');
-  result = run(originalSha);
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /já existente/);
-  assert.equal(state().tagSha, null);
-  result = run(originalSha, { MOCK_REMOTE_SHA: '0000000000000000000000000000000000000000' });
-  assert.notEqual(result.status, 0);
-  for (const overrides of [{ MOCK_NO_PR: '1' }, { MOCK_RELEASE_HEAD: '1' },
-    { MOCK_APPROVED: '1' }, { MOCK_HOMOLOGATION: '1' }]) {
-    assert.notEqual(run(originalSha, overrides).status, 0, 'publication requires an approved develop merge');
-    assert.equal(state().tagSha, null);
-  }
-  for (const overrides of [{ GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF_NAME: 'develop' },
-    { GITHUB_SHA: '0000000000000000000000000000000000000000' }]) {
-    assert.notEqual(run(originalSha, overrides).status, 0);
-  }
-
-  git('switch', branch);
-  git('fetch', 'origin', 'main');
-  const versionCommit = git('rev-parse', 'HEAD');
-  const prEvent = join(temp, 'version-pr.json');
-  writeFileSync(prEvent, JSON.stringify({ pull_request: { number: 5, body: state().pr.body,
-    base: { ref: 'main' }, head: { ref: branch, sha: versionCommit } } }));
-  result = spawnSync('bash', [join(shared, 'scripts/versioning/preview.sh')], {
+  const runGate = (overrides = {}) => spawnSync(bash, ['-c',
+    `source '${join(root, 'scripts/versioning/release-gates.sh').replaceAll('\\', '/')}' && validate_release_gates && ` +
+    `node -e "const fs=require('fs');const r=JSON.parse(fs.readFileSync(process.env.VERSION_REPORT_PATH));` +
+    `const p=JSON.parse(fs.readFileSync(process.env.RELEASE_POLICY_PATH));` +
+    `if(r.sha!==process.env.GITHUB_SHA||!['matched','adapter-authoritative','overridden'].includes(p.outcome))process.exit(1)"`], {
     cwd: workspace, encoding: 'utf8', env: { ...process.env,
       PATH: `${bin}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH}`,
-      MOCK_STATE: stateFile, MOCK_BARE: bare, GH_TOKEN: 'mock',
-      GITHUB_EVENT_PATH: prEvent, GITHUB_REPOSITORY: 'acme/consumer', GITHUB_WORKSPACE: workspace,
-      ADAPTER: adapterName, RELEASE_BRANCH: 'release/v1.2.3',
-      TARGET_BRANCH: 'main', PROJECT_PATH: projectPath, GITHUB_OUTPUT: output },
+      MOCK_BARE: bare, API_WRITES: apiWrites, STATE_FILE: stateFile, ADAPTER_CALLS: adapterCalls,
+      GH_TOKEN: 'fixture', GITHUB_REPOSITORY: 'acme/consumer',
+      GITHUB_WORKSPACE: workspace, GITHUB_EVENT_NAME: 'push', GITHUB_REF_NAME: 'master',
+      GITHUB_SHA: sha, ADAPTER: 'go-gitsemver', TARGET_BRANCH: 'master', PROJECT_PATH: '.', ...overrides },
   });
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(readFileSync(output, 'utf8'), /phase=version-pr/);
 
-  git('switch', 'main');
-  git('merge', '--no-ff', branch, '-m', 'Merge PR #5');
-  const versionMergeSha = git('rev-parse', 'HEAD');
-  git('push', 'origin', 'main');
-  save({ ...state(), versionMergeSha });
-  const pristine = state();
-  save({ ...pristine, pr: { ...pristine.pr, body: 'Epic: #10\nHomologação: aprovada' } });
-  assert.notEqual(run(versionMergeSha).status, 0);
-  save(pristine);
-  result = run(versionMergeSha);
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(readFileSync(output, 'utf8'), /outcome=published/);
-  assert.match(readFileSync(output, 'utf8'), new RegExp(`published_sha=${versionMergeSha}`));
-  assert.equal(state().tagSha, versionMergeSha);
-  assert.equal(state().release.tag_name, expectedTag);
-  for (let i = 0; i < 10; i++) {
-    result = run(versionMergeSha);
-    assert.equal(result.status, 0, result.stderr);
+  const valid = runGate();
+  assert.equal(valid.status, 0, valid.stderr);
+  assert.throws(() => readFileSync(apiWrites), /ENOENT/, 'gate must not perform API writes');
+  const withoutMilestone = runGate({ FIXTURE_MODE: 'no-milestone' });
+  assert.equal(withoutMilestone.status, 0, withoutMilestone.stderr);
+  const authorizedOverride = runGate({ FIXTURE_MODE: 'override' });
+  assert.equal(authorizedOverride.status, 0, authorizedOverride.stderr);
+  for (const mode of ['no-milestone', '', 'override']) {
+    const hotfixGate = runGate({ TEST_HEAD_BRANCH: 'hotfix/correct-production', FIXTURE_MODE: mode });
+    assert.equal(hotfixGate.status, 0, hotfixGate.stderr);
+    assert.throws(() => readFileSync(apiWrites), /ENOENT/);
+  }
+  for (const overrides of [
+    ...['invalid-title', 'bad-milestone', 'stale-review', 'merge-review', 'dismissed-review', 'unauthorized', 'ambiguous', 'api-error'].map(FIXTURE_MODE =>
+      ({ TEST_HEAD_BRANCH: 'hotfix/correct-production', FIXTURE_MODE })),
+    { TEST_HEAD_BRANCH: 'hotfix' }, { TEST_HEAD_BRANCH: 'hotfix/' }, { TEST_HEAD_BRANCH: 'hotfixes/fix' },
+  ]) {
+    assert.notEqual(runGate(overrides).status, 0, `reject hotfix gate ${JSON.stringify(overrides)}`);
+    assert.throws(() => readFileSync(apiWrites), /ENOENT/);
+  }
+  for (const overrides of [
+    { GITHUB_EVENT_NAME: 'pull_request' }, { GITHUB_REF_NAME: 'develop' },
+    { GITHUB_SHA: 'd'.repeat(40) }, { FIXTURE_MODE: 'remote-stale' },
+    { FIXTURE_MODE: 'wrong-head' }, { FIXTURE_MODE: 'ambiguous' },
+    { FIXTURE_MODE: 'bad-milestone' }, { FIXTURE_MODE: 'stale-review' },
+    { FIXTURE_MODE: 'dismissed-review' },
+    { FIXTURE_MODE: 'merge-review' },
+    { FIXTURE_MODE: 'unauthorized' }, { FIXTURE_MODE: 'api-error' },
+  ]) {
+    const failed = runGate(overrides);
+    assert.notEqual(failed.status, 0, `gate must fail for ${JSON.stringify(overrides)}`);
+    assert.throws(() => readFileSync(apiWrites), /ENOENT/, 'failure must happen before API writes');
+  }
+
+  const setState = value => writeFileSync(stateFile, JSON.stringify(value));
+  const getState = () => JSON.parse(readFileSync(stateFile, 'utf8'));
+  const runPublish = (overrides = {}) => {
+    writeFileSync(output, '');
+    return spawnSync(bash, [join(root, 'scripts/versioning/publish.sh')], {
+      cwd: workspace, encoding: 'utf8', env: { ...process.env,
+        PATH: `${bin}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH}`,
+        MOCK_BARE: bare, API_WRITES: apiWrites, STATE_FILE: stateFile, ADAPTER_CALLS: adapterCalls,
+        GH_TOKEN: 'fixture', GITHUB_REPOSITORY: 'acme/consumer', GITHUB_WORKSPACE: workspace,
+        GITHUB_EVENT_NAME: 'push', GITHUB_REF_NAME: 'master', GITHUB_SHA: sha,
+        ADAPTER: 'go-gitsemver', TARGET_BRANCH: 'master', PROJECT_PATH: '.', GITHUB_OUTPUT: output,
+        ...overrides },
+    });
+  };
+  rmSync(adapterCalls, { force: true }); rmSync(apiWrites, { force: true });
+  setState({ tagSha: null, release: null });
+  let published = runPublish();
+  assert.equal(published.status, 0, published.stderr);
+  const firstOutput = readFileSync(output, 'utf8');
+  assert.match(firstOutput, /outcome=published/);
+  assert.match(firstOutput, /version=0\.0\.1/);
+  assert.match(firstOutput, /tag=v0\.0\.1/);
+  assert.equal(getState().tagSha, sha);
+  assert.equal(getState().release.target_commitish, sha);
+  assert.match(getState().release.body, /native release explanation/);
+  assert.equal(readFileSync(adapterCalls, 'utf8').trim().split(/\r?\n/).length, 1,
+    'one publication recalculates the integrated SHA exactly once');
+  const writesAfterFirst = readFileSync(apiWrites, 'utf8');
+  for (let index = 0; index < 10; index += 1) {
+    published = runPublish();
+    assert.equal(published.status, 0, published.stderr);
     assert.match(readFileSync(output, 'utf8'), /outcome=already-published/);
   }
-  git('tag', 'v99.0.0', versionMergeSha);
-  result = run(versionMergeSha);
-  assert.equal(result.status, 0, 'an older valid rerun must reconcile before latest-tag validation');
-  assert.match(readFileSync(output, 'utf8'), /outcome=already-published/);
-  result = run(versionMergeSha, { MOCK_TAG_ERROR: '1' });
-  assert.notEqual(result.status, 0, 'API authorization errors must never look like missing tags');
-  git('switch', '--detach', originalSha);
-  result = run(originalSha);
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(readFileSync(output, 'utf8'), /outcome=already-published/);
-  git('switch', 'main');
-  save({ ...state(), release: null });
-  result = run(versionMergeSha);
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(state().tagSha, versionMergeSha);
+  assert.equal(readFileSync(apiWrites, 'utf8'), writesAfterFirst, 'reruns must not duplicate writes');
+
+  setState({ tagSha: sha, release: null });
+  published = runPublish();
+  assert.equal(published.status, 0, published.stderr);
   assert.match(readFileSync(output, 'utf8'), /outcome=published/);
-  save({ ...state(), tagSha: null });
-  result = run(versionMergeSha);
-  assert.notEqual(result.status, 0);
-  assert.equal(state().tagSha, null);
-  save({ ...state(), tagSha: originalSha });
-  result = run(versionMergeSha);
-  assert.notEqual(result.status, 0);
-  assert.equal(state().tagSha, originalSha);
-  console.log(`Pós-merge ${adapterName}: PR, tag ${expectedTag} no SHA versionado, reexecução e conflito aprovados`);
+  assert.equal(getState().tagSha, sha, 'partial recovery preserves the existing tag');
+
+  setState({ tagSha: 'c'.repeat(40), release: null });
+  assert.notEqual(runPublish().status, 0, 'a conflicting tag must fail');
+  assert.equal(getState().tagSha, 'c'.repeat(40), 'a conflicting tag is never moved');
+  setState({ tagSha: null, release: { tag_name: 'v0.0.1', target_commitish: sha,
+    html_url: 'https://example.test/releases/v0.0.1', body: 'existing' } });
+  assert.notEqual(runPublish().status, 0, 'a release without a verifiable tag must fail');
+  assert.equal(getState().tagSha, null, 'a release conflict must not create a tag');
+  setState({ tagSha: sha, release: { tag_name: 'v0.0.1', target_commitish: 'c'.repeat(40),
+    html_url: 'https://example.test/releases/v0.0.1', body: 'divergent' } });
+  assert.notEqual(runPublish().status, 0, 'a release with a divergent target SHA must fail');
+  assert.equal(getState().tagSha, sha, 'a divergent release must not move the correct tag');
+  const wrongTagState = { tagSha: sha, release: { tag_name: 'v9.9.9', target_commitish: sha,
+    html_url: 'https://example.test/releases/v9.9.9', body: 'wrong version' } };
+  setState(wrongTagState);
+  const stateBeforeWrongTag = readFileSync(stateFile, 'utf8');
+  const writesBeforeWrongTag = readFileSync(apiWrites, 'utf8');
+  assert.notEqual(runPublish().status, 0,
+    'a release with the integrated SHA but a different tag_name must fail');
+  assert.equal(readFileSync(stateFile, 'utf8'), stateBeforeWrongTag,
+    'a release tag identity conflict must leave remote state byte-for-byte unchanged');
+  assert.equal(readFileSync(apiWrites, 'utf8'), writesBeforeWrongTag,
+    'a release tag identity conflict must not perform writes');
+
+  setState({ tagSha: null, release: null });
+  published = runPublish({ FIXTURE_MODE: 'race-tag' });
+  assert.equal(published.status, 0, published.stderr);
+  assert.equal(getState().tagSha, sha, 'tag race reconciles to the integrated SHA');
+  setState({ tagSha: sha, release: null });
+  published = runPublish({ FIXTURE_MODE: 'race-release' });
+  assert.equal(published.status, 0, published.stderr);
+  assert.match(readFileSync(output, 'utf8'), /outcome=already-published/);
+  git('checkout', '-b', 'hotfix/publish-real', 'master');
+  writeFileSync(join(workspace, 'fix.txt'), 'Production correction\n');
+  git('add', 'fix.txt'); git('commit', '-m', 'fix: production correction');
+  const hotfixHead = git('rev-parse', 'HEAD');
+  git('checkout', 'master');
+  git('merge', '--no-ff', 'hotfix/publish-real', '-m', 'Merge hotfix');
+  const hotfixMerge = git('rev-parse', 'HEAD');
+  assert.notEqual(hotfixHead, hotfixMerge);
+  git('push', 'origin', 'master');
+  for (const FIXTURE_MODE of ['no-milestone', '', 'override']) {
+    setState({ tagSha: null, release: null });
+    const config = { TEST_HEAD_BRANCH: 'hotfix/publish-real', TEST_PR_HEAD_SHA: hotfixHead,
+      GITHUB_SHA: hotfixMerge, FIXTURE_MODE };
+    const hotfixPublished = runPublish(config);
+    assert.equal(hotfixPublished.status, 0, hotfixPublished.stderr);
+    assert.match(readFileSync(output, 'utf8'), /outcome=published/);
+    assert.equal(getState().tagSha, hotfixMerge);
+    assert.equal(getState().release.target_commitish, hotfixMerge);
+    const beforeRetry = readFileSync(apiWrites, 'utf8');
+    assert.equal(runPublish(config).status, 0);
+    assert.match(readFileSync(output, 'utf8'), /outcome=already-published/);
+    assert.equal(readFileSync(apiWrites, 'utf8'), beforeRetry);
+  }
+  console.log('Pós-merge: proveniência, policy e publicação idempotente aprovadas');
 } finally {
   rmSync(temp, { recursive: true, force: true });
 }
