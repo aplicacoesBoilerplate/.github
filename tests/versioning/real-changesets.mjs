@@ -85,5 +85,5 @@ try {
   assert.equal(git('tag', '--list'), '');
   console.log('Changesets real: @lab/core 3.0.0, @lab/cli dependente 1.0.1, sem commit/tag');
 } finally {
-  rmSync(cwd, { recursive: true, force: true });
+  rmSync(cwd, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 }
