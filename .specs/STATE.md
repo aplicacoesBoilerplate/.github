@@ -28,13 +28,12 @@
 
 ## Handoff
 
-- **Feature**: Pipeline centralizada de versionamento
-- **Phase / Task**: Governed hotfix extension complete; independent local MVP validation PASS
-- **Completed**: T1-T26; 43/43 ACs, 7/7 edges, 9/9 local fixtures, pinned real Go, 5/5 mutants killed; OpenSpec preserved
-- **In-progress** (file:line): none
-- **Next step**: review PR #10 (codex/issue-4-versioning-mvp -> master), inspect hosted checks, and await separate pilot authorization
-- **Blockers**: previous PR creation denial resolved after user-requested authentication switch to agentegersonfribeiro-AI; PR #10 created successfully. Hosted check results and boilerplate-cli integration are not claimed
-- **Uncommitted files**: none after documentation delivery commit; no merge/release or pilot changes
-- **Branch**: codex/issue-4-versioning-mvp
-- **Hotfix decision**: develop -> master and hotfix/<name> -> master share every gate; hotfix starts from master and does not force PATCH. Caller pinned to 07bd5372f7fc4a34a1b04134a84a0b9f4aba3b45. Pilot go-ci consolidation remains deferred.
-- **Documentation / PR**: workflows and scripts READMEs independently reviewed, 32 relative links and 50 workflow assertions PASS; docs commit c79429f. PR https://github.com/aplicacoesBoilerplate/.github/pull/10 authored by agentegersonfribeiro-AI; review requested from gersonfribeiro, milestone v1.0.0, issue #4 linked.
+- **Feature**: Pipeline centralizada de versionamento, extensão standard-version e jgitver.
+- **Phase / Task**: T27-T35 concluídas; validação independente VER-07/08/09 PASS.
+- **Completed**: CI hospedada `37967754943` verde em `8466045` (fixtures, standard-version real, jgitver real e Go real); 7/7 mutações comportamentais mortas na revisão independente.
+- **In-progress** (file:line): none.
+- **Next step**: revisão humana e decisão de merge do PR #12; ensaio real em um consumidor Node/Maven é adoção posterior. Changesets/Turbo permanece pendente.
+- **Blockers**: nenhum para revisão do PR; não há alegação de publicação real Node/Maven.
+- **Uncommitted files**: nenhum após o commit de validação.
+- **Branch**: codex/versioning-profiles, baseada em `6255ec333f13adb879dd70162d9aaae0a4735657`.
+- **Documentation / PR**: https://github.com/aplicacoesBoilerplate/.github/pull/12, autoria `agentegersonfribeiro-AI`, revisão solicitada de `gersonfribeiro`; calleds Node/Maven fixados em `b41582e2a6535fc3f9b4a8059c3d4e8971160aae`. Nenhuma alteração no `boilerplate-cli` ou LocalLabs.

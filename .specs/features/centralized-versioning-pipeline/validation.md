@@ -127,3 +127,7 @@ Hotfix production changes are confined to three existing source guards and calle
 All six requirement groups are independently verified for this local MVP scope. No hosted GitHub Actions/environment execution, pilot integration or remote publication was executed. Static workflow contracts and mocked API behavior do not claim deployment proof. No push or pilot/OpenSpec edit occurred.
 
 **Completion gate**: `python C:/Users/gerso/.codex/skills/tlc-spec-driven/scripts/validate_state.py centralized-versioning-pipeline` passes with zero errors on the persisted PASS report.
+
+## Extensão Node/Maven (2026-10-13)
+
+VER-07/08/09: **PASS** na revisão `84660459a3e3c606ef17dd3855dafde2567fa1f7`, com CI hospedada verde para as fixtures reais Node, jgitver e Go. Evidência, matriz de critérios e limites de publicação em consumidor: [native-profiles-validation.md](native-profiles-validation.md).

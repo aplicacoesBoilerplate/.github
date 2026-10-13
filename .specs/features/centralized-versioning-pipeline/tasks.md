@@ -929,10 +929,11 @@ callers no histórico remoto.
 
 ### T29: Confirmar execução hospedada e revisão independente
 
-**Status**: Pending
+**Status**: Complete
 **What**: Observar a CI real com Maven/Node e registrar as evidências e limites
 do novo contrato após uma revisão independente.
-**Where**: `.specs/features/centralized-versioning-pipeline/validation.md`.
+**Where**: `.specs/features/centralized-versioning-pipeline/validation.md`,
+`native-profiles-validation.md`.
 **Depends on**: T35
 **Requirement**: VER-09.3
 **Tests**: GitHub Actions versioning job e auditoria independente das asserções.
