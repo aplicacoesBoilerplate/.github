@@ -39,6 +39,15 @@ try {
     { targetBranch: 'master', projectPath: '.', tagPrefix: 'infra/v' }), /Branch do PR/);
   assert.throws(() => parseVersionPr(pr, { targetBranch: 'master', projectPath: '.', tagPrefix: 'v' }),
     /Metadados/);
+  const changesetsPr = { ...pr,
+    head: { ref: `versioning/changesets/${originSha.slice(0, 12)}` },
+    body: `Origin-PR: #12\nOrigin-SHA: ${originSha}\nAdapter: changesets\nProject: .\nTag-Prefix: v\nVersion: 0.2.0\nPlan-SHA256: ${'a'.repeat(64)}\n` };
+  assert.deepEqual(parseVersionPr(changesetsPr, { targetBranch: 'master', projectPath: '.',
+    tagPrefix: 'v', adapter: 'changesets' }),
+  { originPr: 12, originSha, version: '0.2.0', planSha256: 'a'.repeat(64) });
+  assert.throws(() => parseVersionPr({ ...changesetsPr,
+    body: changesetsPr.body.replace('a'.repeat(64), 'b') },
+  { targetBranch: 'master', projectPath: '.', tagPrefix: 'v', adapter: 'changesets' }), /Digest/);
   const reviewedPr = { ...pr, head: { ...pr.head, sha: head },
     user: { login: 'version-app[bot]' } };
   const approval = { state: 'APPROVED', commit_id: head,

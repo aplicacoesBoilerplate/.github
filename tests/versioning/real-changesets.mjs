@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { verifyChangesetsFiles } from '../../scripts/versioning/changesets-version-pr.mjs';
 
 const cwd = mkdtempSync(join(tmpdir(), 'real-changesets-'));
 const git = (...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
@@ -14,7 +15,7 @@ try {
   git('init', '-b', 'main');
   git('config', 'user.email', 'fixture@example.test');
   git('config', 'user.name', 'Fixture');
-  writeFileSync(join(cwd, '.gitignore'), 'node_modules/\n');
+  writeFileSync(join(cwd, '.gitignore'), 'node_modules/\nreport.json\n');
   writeFileSync(join(cwd, 'package.json'), JSON.stringify({ name: 'lab', private: true,
     workspaces: ['packages/*'] }) + '\n');
   writeFileSync(join(cwd, 'package-lock.json'), JSON.stringify({ name: 'lab', lockfileVersion: 3,
@@ -65,8 +66,20 @@ try {
   assert.equal(cli.dependencies['@lab/core'], '^3.0.0');
   const lock = JSON.parse(readFileSync(join(cwd, 'package-lock.json'), 'utf8'));
   assert.equal(lock.packages['packages/core'].version, '3.0.0');
+  assert.equal(lock.packages['packages/cli'].version, '1.0.1');
+  assert.equal(lock.packages['packages/cli'].dependencies['@lab/core'], '^3.0.0');
   assert.match(readFileSync(join(cwd, 'packages', 'core', 'CHANGELOG.md'), 'utf8'), /3\.0\.0/);
+  assert.match(readFileSync(join(cwd, 'packages', 'cli', 'CHANGELOG.md'), 'utf8'), /1\.0\.1/);
   assert.equal(existsSync(join(cwd, '.changeset', 'two-features.md')), false);
+  verifyChangesetsFiles({ repository: cwd, report, working: true });
+  writeFileSync(join(cwd, 'unrelated.txt'), 'must fail\n');
+  assert.throws(() => verifyChangesetsFiles({ repository: cwd, report, working: true }), /não permitido/);
+  rmSync(join(cwd, 'unrelated.txt'));
+  const savedLock = readFileSync(join(cwd, 'package-lock.json'), 'utf8');
+  lock.packages['packages/cli'].version = '1.0.0';
+  writeFileSync(join(cwd, 'package-lock.json'), JSON.stringify(lock));
+  assert.throws(() => verifyChangesetsFiles({ repository: cwd, report, working: true }), /lockfile/);
+  writeFileSync(join(cwd, 'package-lock.json'), savedLock);
   assert.equal(git('rev-parse', 'HEAD'), sha);
   assert.equal(git('tag', '--list'), '');
   console.log('Changesets real: @lab/core 3.0.0, @lab/cli dependente 1.0.1, sem commit/tag');

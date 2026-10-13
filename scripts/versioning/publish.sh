@@ -5,7 +5,7 @@ source "$script_dir/resolve-adapter.sh"
 source "$script_dir/release-gates.sh"
 
 validate_release_gates
-if [[ "$ADAPTER" == standard-version && "$PUBLISH_PHASE" == functional ]]; then
+if [[ ( "$ADAPTER" == standard-version || "$ADAPTER" == changesets ) && "$PUBLISH_PHASE" == functional ]]; then
   [[ "$STALE_PUSH" == 0 ]] || { echo 'Push funcional antigo não pode abrir PR técnico' >&2; exit 1; }
   exec bash "$script_dir/prepare-version-pr.sh"
 fi

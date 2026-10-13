@@ -17,7 +17,7 @@ event_json=$(node -e '
   if(pr.base.ref==="develop"&&pr.head.ref!=="develop") phase="release-to-develop";
   else if(pr.head.ref==="develop"&&pr.base.ref===target) phase="develop-to-main";
   else if(/^hotfix\/.+$/.test(pr.head.ref)&&pr.base.ref===target) phase="hotfix-to-main";
-  else if(/^versioning\/standard-version\//.test(pr.head.ref)&&pr.base.ref===target) phase="versioning-to-main";
+  else if(/^versioning\/(standard-version|changesets)\//.test(pr.head.ref)&&pr.base.ref===target) phase="versioning-to-main";
   else {console.error(`Transição de PR não suportada: ${pr.head.ref} -> ${pr.base.ref}`);process.exit(1)}
   process.stdout.write(JSON.stringify({number:pr.number,headSha:pr.head.sha,baseSha:pr.base.sha,phase}));
 ' "$(as_node_path "$GITHUB_EVENT_PATH")" "$TARGET_BRANCH")

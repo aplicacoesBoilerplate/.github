@@ -38,6 +38,7 @@ T1 → T2 → T3 → T4 → T5
 
 ### T2: Coordinated technical PR
 
+**Status**: Complete — preparation fixture confirms a single PR with both manifests, dependent range and lockfile; real CLI fixture validates allowed files.
 **Depends on**: T1
 **What**: Prepare and verify manifests, dependency ranges, changelogs and npm lockfile in one PR.
 **Tests**: Local integration flow and invalid-file/version cases.
