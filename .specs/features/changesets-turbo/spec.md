@@ -49,11 +49,11 @@ One consumer caller coordinates every package in an npm-workspaces/Turborepo rel
 | CST-02 | AC 2 | Verified |
 | CST-03 | AC 3 | Verified |
 | CST-04 | AC 4 | Verified |
-| CST-05 | AC 5 | Implementing |
-| CST-06 | AC 6 | Pending |
+| CST-05 | AC 5 | Verified |
+| CST-06 | AC 6 | Implementing |
 
 ## Implementation limits
 
 - First Changesets profile supports npm workspaces with a committed root `package-lock.json`, Changesets CLI pinned by that lockfile, and stable package SemVer. pnpm/Yarn and npm registry publishing require later work.
 - No Changesets package or pilot repository is modified by this central PR. Consumer example files are templates only.
-- A milestone names a single version. For a multi-package batch with differing versions, the milestone is omitted; per-package versions are governed by Changesets and human review of the technical PR.
+- A milestone names a single version. For a multi-package batch, the milestone is omitted; per-package versions are governed by Changesets and human review of the technical PR.

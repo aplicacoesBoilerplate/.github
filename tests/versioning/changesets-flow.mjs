@@ -93,6 +93,12 @@ console.error('unexpected gh '+a.join(' '));process.exit(1);
   assert.equal(state.pr.branch, `versioning/changesets/${originSha.slice(0, 12)}`);
   assert.match(state.pr.body, new RegExp(`Plan-SHA256: ${planDigest(report)}`));
   assert.match(readFileSync(outputPath, 'utf8'), /outcome=pending-version-pr/);
+  const outputs = Object.fromEntries(readFileSync(outputPath, 'utf8').trim().split(/\r?\n/)
+    .map(line => line.split(/=(.*)/s).slice(0, 2)));
+  assert.equal(outputs.version, '');
+  assert.equal(outputs.tag, '');
+  assert.deepEqual(JSON.parse(outputs.releases_json).map(item => item.tag),
+    ['@lab/cli@1.0.1', '@lab/core@3.0.0']);
   assert.equal(git('rev-parse', 'master'), originSha);
   assert.equal(git('tag', '--list'), '');
   assert.equal(JSON.parse(readFileSync(join(workspace, 'packages/core/package.json'))).version, '3.0.0');

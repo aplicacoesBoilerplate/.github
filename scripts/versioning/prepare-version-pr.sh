@@ -11,6 +11,14 @@ node_script=$(as_node_path "$script_dir/version-pr.mjs")
 report_path=$(as_node_path "$VERSION_REPORT_PATH")
 version=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).candidateVersion' "$report_path")
 tag=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).tag' "$report_path")
+releases_json='[]'
+output_version="$version"
+output_tag="$tag"
+if [[ "$ADAPTER" == changesets ]]; then
+  releases_json=$(node -p 'JSON.stringify(JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).releases)' "$report_path")
+  release_count=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).releases.length' "$report_path")
+  if [[ "$release_count" -gt 1 ]]; then output_version=''; output_tag=''; fi
+fi
 origin_pr=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).number' \
   "$(as_node_path "$PR_POLICY_PATH")")
 branch="versioning/$ADAPTER/${ORIGIN_SHA:0:12}"
@@ -20,8 +28,8 @@ if [[ -n "$existing" ]]; then
   state=$(node -p 'JSON.parse(process.argv[1]).state' "$existing")
   [[ "$state" == OPEN ]] || { echo "PR técnico existente está $state; reexecute o push do merge técnico" >&2; exit 1; }
   url=$(node -p 'JSON.parse(process.argv[1]).url' "$existing")
-  [[ -z "${GITHUB_OUTPUT:-}" ]] || printf 'version=%s\ntag=%s\nversion_pr_url=%s\noutcome=pending-version-pr\n' \
-    "$version" "$tag" "$url" >>"$GITHUB_OUTPUT"
+  [[ -z "${GITHUB_OUTPUT:-}" ]] || printf 'version=%s\ntag=%s\nversion_pr_url=%s\noutcome=pending-version-pr\nreleases_json=%s\n' \
+    "$output_version" "$output_tag" "$url" "$releases_json" >>"$GITHUB_OUTPUT"
   printf 'PR técnico já aberto: %s\n' "$url"
   exit 0
 fi
@@ -71,6 +79,6 @@ Arquivos de versão calculados pelo standard-version no SHA homologado. Revise C
 fi
 url=$(gh pr create -R "$GITHUB_REPOSITORY" --base "$TARGET_BRANCH" --head "$branch" \
   --title "chore(release): $ADAPTER $version" --body "$body")
-[[ -z "${GITHUB_OUTPUT:-}" ]] || printf 'version=%s\ntag=%s\nversion_pr_url=%s\noutcome=pending-version-pr\n' \
-  "$version" "$tag" "$url" >>"$GITHUB_OUTPUT"
+[[ -z "${GITHUB_OUTPUT:-}" ]] || printf 'version=%s\ntag=%s\nversion_pr_url=%s\noutcome=pending-version-pr\nreleases_json=%s\n' \
+  "$output_version" "$output_tag" "$url" "$releases_json" >>"$GITHUB_OUTPUT"
 printf 'PR técnico aguardando revisão: %s\n' "$url"

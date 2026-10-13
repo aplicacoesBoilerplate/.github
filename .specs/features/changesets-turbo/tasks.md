@@ -56,6 +56,7 @@ T1 → T2 → T3 → T4 → T5
 
 ### T4: Called and caller
 
+**Status**: Complete — both calleds expose the batch output and prepare Node/App credentials; one consumer caller gates publication on monorepo CI.
 **Depends on**: T3
 **What**: Wire Node setup and outputs, and provide one copyable monorepo caller.
 **Tests**: Workflow contract assertions and YAML parse.

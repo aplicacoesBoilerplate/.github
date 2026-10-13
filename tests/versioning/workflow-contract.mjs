@@ -9,6 +9,7 @@ const ci = readFileSync(resolve(root, '.github/workflows/ci.yml'), 'utf8');
 const goCaller = readFileSync(resolve(root, 'examples/callers/go/.github/workflows/go-publish.yml'), 'utf8');
 const nodeCaller = readFileSync(resolve(root, 'examples/callers/standard-version/.github/workflows/node-publish.yml'), 'utf8');
 const mavenCaller = readFileSync(resolve(root, 'examples/callers/jgitver/.github/workflows/maven-publish.yml'), 'utf8');
+const changesetsCaller = readFileSync(resolve(root, 'examples/callers/changesets-turbo/.github/workflows/monorepo-publish.yml'), 'utf8');
 const documentation = readFileSync(resolve(root, 'docs/versioning.md'), 'utf8');
 let assertions = 0;
 const matches = (pattern, message) => { assertions += 1; assert.match(preview, pattern, message); };
@@ -26,6 +27,14 @@ for (const output of ['phase', 'version', 'bump', 'policy_outcome', 'summary']) 
   matches(new RegExp(`^      ${output}: ` + '\\$\\{\\{ steps\\.preview\\.outputs\\.' + output + ' \\}\\}', 'm'),
     `missing job output ${output}`);
 }
+matches(/^      releases_json:/m, 'preview must expose all package releases');
+publishMatches(/^      releases_json:/m, 'publisher must expose all package releases');
+matches(/inputs\.adapter == 'standard-version' \|\| inputs\.adapter == 'changesets'/,
+  'preview must install Node for Changesets');
+publishMatches(/inputs\.adapter == 'standard-version' \|\| inputs\.adapter == 'changesets'/,
+  'publisher must install Node and mint app token for Changesets');
+ciMatches(/node tests\/versioning\/real-changesets\.mjs/,
+  'central CI must run the real Changesets fixture');
 matches(/permissions:\s*\n\s+contents: read\s*\n\s+pull-requests: read\s*\n\s+issues: read\s*\n\s+checks: read/,
   'preview permissions must be read-only and sufficient for evidence');
 excludes(/contents: write|pull-requests: write|issues: write|checks: write/,
@@ -99,6 +108,7 @@ callerExcludes(/release_branch:|homologation_environment:|approved:|force:|skip_
 for (const [name, caller, adapter, ci] of [
   ['Node', nodeCaller, 'standard-version', 'node-ci'],
   ['Maven', mavenCaller, 'jgitver', 'maven-ci'],
+  ['Changesets', changesetsCaller, 'changesets', 'monorepo-ci'],
 ]) {
   assert.match(caller, new RegExp(`adapter: ${adapter}`), `${name} caller must use its native adapter`); assertions += 1;
   assert.match(caller, new RegExp(`needs: ${ci}`), `${name} publisher must depend on CI`); assertions += 1;
@@ -106,6 +116,10 @@ for (const [name, caller, adapter, ci] of [
   assert.equal(refs.length, 2, `${name} caller must pin both workflows`); assertions += 1;
   assert.equal(new Set(refs.map(match => match[1])).size, 1, `${name} caller must use one shared SHA`); assertions += 1;
 }
+assert.equal((changesetsCaller.match(/adapter: changesets/g) ?? []).length, 2,
+  'one monorepo caller must configure both central jobs'); assertions += 1;
+assert.doesNotMatch(changesetsCaller, /packages\/[^\s]+|package_path:/,
+  'caller must not configure independent package releases'); assertions += 1;
 docsMatch(/`milestoned` e `demilestoned`/, 'documentation must require milestone-change events');
 docsMatch(/`checks: read`/, 'documentation must state the caller check-run permission');
 docsMatch(/bloqueie force-push e exclusão[\s\S]*restrinja atualizações diretas/,

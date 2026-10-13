@@ -89,8 +89,24 @@ else
   summary="Política de release $policy_outcome para a versão $version"
 fi
 
+releases_json='[]'
+if [[ "$ADAPTER" == changesets ]]; then
+  releases_json=$(node -p 'JSON.stringify(JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).releases)' \
+    "$(as_node_path "$report_path")")
+  release_count=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).releases.length' \
+    "$(as_node_path "$report_path")")
+  if [[ "$release_count" -gt 1 ]]; then
+    version=''
+    bump=''
+    if [[ "$phase" == release-to-develop ]]; then
+      summary="Lote Changesets com $release_count pacotes; guia de homologação gerado"
+    else
+      summary="Política de release $policy_outcome para lote Changesets com $release_count pacotes"
+    fi
+  fi
+fi
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-  printf 'phase=%s\nversion=%s\nbump=%s\npolicy_outcome=%s\nsummary=%s\n' \
-    "$phase" "$version" "$bump" "$policy_outcome" "$summary" >>"$GITHUB_OUTPUT"
+  printf 'phase=%s\nversion=%s\nbump=%s\npolicy_outcome=%s\nsummary=%s\nreleases_json=%s\n' \
+    "$phase" "$version" "$bump" "$policy_outcome" "$summary" "$releases_json" >>"$GITHUB_OUTPUT"
 fi
 printf '%s\n' "$summary"
