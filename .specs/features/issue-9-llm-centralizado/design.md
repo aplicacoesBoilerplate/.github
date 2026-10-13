@@ -2,7 +2,7 @@
 
 **Spec:** [spec.md](spec.md). **Status:** Aprovado para implementação local. **Data:** 2026-10-12.
 
-**Recorte atualizado em 2026-10-13:** prioridade para executor, resultados, workflow central, CI, caller reutilizável e piloto usando esse mesmo caller. Manual extenso e testes documentais ficam para trabalho posterior; configuração e recuperação mínimas acompanham a entrega. Testes protegem contratos e efeitos relevantes, sem metas de contagem.
+**Recorte atualizado em 2026-10-13:** prioridade para executor, resultados, workflow central, CI, caller reutilizável e piloto usando esse mesmo caller. O caller acompanha instruções completas de configuração, autenticação, modelos/modos, consumo de resultados e recuperação. Manual central extenso e testes documentais ficam para trabalho posterior. A redução de intensidade aplica-se aos testes de baixo valor, sem reduzir a clareza das instruções do caller. Testes protegem contratos e efeitos relevantes, sem metas de contagem.
 
 ## Architecture Overview
 

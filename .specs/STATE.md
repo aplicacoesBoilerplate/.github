@@ -26,7 +26,7 @@
 - **Status**: active
 
 ### AD-004
-- **Decision**: Concluir a primeira versão reutilizável com caller compartilhável por triagem/code review; adiar manual extenso e testes documentais. Manter instruções mínimas e piloto sobre o mesmo caller.
+- **Decision**: Concluir a primeira versão reutilizável com caller compartilhável por triagem/code review e instruções completas de configuração/consumo. Adiar manual central extenso e testes documentais; piloto usa o mesmo caller. Mantenedor corrigiu a transcrição: reduzir intensidade dos testes, não qualidade das instruções do caller.
 - **Reason**: Mantenedor definirá outra abordagem de documentação depois das issues atuais e priorizou entrega funcional. Testes adicionais serão escolhidos pelo impacto contratual/operacional.
 - **Scope**: Issue #9, T7–T13; T12 fora do MVP.
 - **Date**: 2026-10-13

@@ -1,7 +1,7 @@
 # Pipeline reutilizável de LLM Specification
 
 **Status:** Aprovado; implementação autorizada pelo mantenedor. **Issue:** #9. **Data:** 2026-10-12.
-**Escopo desta iteração:** MVP local sequencial, com verificações contratuais e por impacto. Documentação extensa e testes documentais adiados pelo mantenedor em 2026-10-13; caller/piloto recebem instruções mínimas. Piloto e publicação dependem de provisionamento do consumidor.
+**Escopo desta iteração:** MVP local sequencial, com verificações contratuais e por impacto. Manual central extenso e testes documentais adiados pelo mantenedor em 2026-10-13; caller recebe instruções completas de configuração e consumo. Piloto e publicação dependem de provisionamento do consumidor.
 
 ## Problem Statement
 
@@ -22,7 +22,7 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 | Aplicar patch, criar PR, fazer merge, comentar ou alterar Project | Responsabilidade de #7/#8 e dos callers |
 | Login humano automático ou OAuth refresh implementado à mão | Renovação pertence ao Codex; recuperação pode exigir mantenedor |
 | Provedores além de Codex e endpoints livres | MVP de um adaptador; evita framework sem consumidor validado |
-| Manual extenso e testes documentais | Mantenedor definirá formato após as issues atuais; orientação mínima do caller permanece no MVP |
+| Manual central extenso e testes documentais | Mantenedor definirá formato após as issues atuais; instruções completas do caller permanecem no MVP |
 | Faturamento API imposto ou fallback entre contas | O piloto usa a assinatura existente |
 | Execução de scripts do repo com tokens presentes | Fora da fronteira de confiança do MVP |
 | Garantia de exatamente uma cobrança por rerun | O provedor não oferece essa garantia neste contrato |
@@ -104,7 +104,7 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 **User Story:** Como consumidor, quero exemplos, dependências e recuperação documentados para configurar minha própria execução.
 
 **Acceptance Criteria**:
-1. The entrega SHALL incluir workflow central, scripts auxiliares, dependências fixadas e orientação mínima do caller sobre configuração, credenciais, outputs e recuperação; o manual extenso será entregue posteriormente. (LLM-22)
+1. The entrega SHALL incluir workflow central, scripts auxiliares, dependências fixadas e instruções completas do caller sobre configuração, credenciais, modelos/modos, consumo de resultados e recuperação; o manual central extenso será entregue posteriormente. (LLM-22)
 2. The entrega SHALL incluir caller de exemplo para sessão ChatGPT e variação opt-in de API key com configuração pertencente ao consumidor. (LLM-23)
 3. WHEN validar o piloto privado THEN a homologação SHALL registrar duas execuções sequenciais e cenários de snapshot antigo e persistência recusada, sem registrar valores de secrets. (LLM-24)
 

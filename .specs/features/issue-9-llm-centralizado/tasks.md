@@ -2,7 +2,7 @@
 
 **Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 6/12 tarefas do MVP concluídas; T12 adiada.
 
-**Recorte MVP atualizado em 2026-10-13:** T12 adiada para o trabalho futuro de documentação definido pelo mantenedor. Permanecem 12 tarefas no MVP, com 6 concluídas. T13 depende de T11; documentação extensa e testes documentais não bloqueiam o piloto. Caller e piloto recebem orientação mínima de configuração/recuperação. T12 não está concluída nem dispensada como entrega futura.
+**Recorte MVP atualizado em 2026-10-13:** T12 adiada para o trabalho futuro de documentação central definido pelo mantenedor. Permanecem 12 tarefas no MVP, com 6 concluídas. T13 depende de T11; manual central extenso e testes documentais não bloqueiam o piloto. O caller recebe instruções completas de configuração e consumo, conforme correção do mantenedor sobre a transcrição. Reduzir intensidade de testes não significa reduzir essas instruções. T12 não está concluída nem dispensada como entrega futura.
 
 ## Execution Protocol
 
@@ -17,7 +17,7 @@ Implementação local autorizada pelo mantenedor em 2026-10-12. Usar `tlc-spec-d
 | Validação, contexto, instruções e auth | unit | Caminho válido e todos os limites/erros descritos | `tests/llm/*.test.mjs` | `npm --prefix scripts/llm test` |
 | Processos Codex e REST Secrets | integration com fakes | Chamadas/saídas, timeout, restauração, persistência e limpeza, sem tokens reais | `tests/llm/*.test.mjs` | `npm --prefix scripts/llm test` |
 | Workflow e callers | contract | Parsing YAML e correspondência de inputs/secrets/outputs, locks e permissões | `tests/llm/workflow.test.mjs` | `npm --prefix scripts/llm test` |
-| Provenance e adoção | contract / revisão manual | Hashes protegidos por teste; instruções mínimas e configuração de exemplos conferidas na entrega | `tests/llm/instructions.test.mjs`, `tests/llm/caller.test.mjs` | `npm --prefix scripts/llm test` |
+| Provenance e adoção | contract / revisão manual | Hashes protegidos por teste; instruções completas do caller e configuração de exemplos conferidas na entrega | `tests/llm/instructions.test.mjs`, `tests/llm/caller.test.mjs` | `npm --prefix scripts/llm test` |
 | Piloto | e2e privado | Execução real e recuperação, com evidência sanitizada | `docs/llm-pilot.md` | Caller manual em repo privado |
 
 ## Gate Check Commands
@@ -228,7 +228,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 
 ### T11: Entregar caller e configuração próprios do consumidor
 
-**What**: Materializar um caller mínimo com variante API key documentada e configuração de invocação versionada.
+**What**: Materializar caller reutilizável com instruções completas de adoção, variante API key documentada e configuração de invocação versionada.
 **Where**: `examples/callers/llm/`
 **Depends on**: T10
 **Reuses**: Protótipos não executáveis desta especificação.
@@ -238,9 +238,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 - [ ] Caller possui evento, config_path, auth_mode, mapping explícito de secrets e ref fixa publicada/revisada.
 - [ ] Cada chamada define invocation_id próprio; o consumo confere esse ID e o SHA no envelope.
 - [ ] Caller não contém comandos de autenticação copiados, sessão global nem credenciais nos inputs.
-- [ ] README cobre valores, alternativas, provisionamento, rerun versus novo run e leitura dos outputs.
+- [ ] README permite configurar e usar o caller sem depender da conversa: inputs/secrets/outputs, modelos/esforço/modos, exemplos, referência central, provisionamento, resultados, rerun versus novo run e recuperação.
 - [ ] Contratos de consumo comprovam as modalidades e escolhas próprias sem editar o central.
-**Tests**: contract em `tests/llm/caller.test.mjs`; instruções mínimas revisadas manualmente, sem testes de texto.
+**Tests**: contract em `tests/llm/caller.test.mjs`; instruções completas revisadas manualmente, sem testes de texto.
 **Gate**: Full + actionlint do exemplo após resolver a referência do piloto.
 **Commit**: `docs(llm): deliver consumer-owned caller examples`
 
@@ -269,7 +269,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 **Depends on**: T11
 **Reuses**: Caller e matriz de aceitação; credenciais provisionadas pelo proprietário.
 
-O piloto usa o mesmo caller reutilizável entregue em T11 e configurações próprias do consumidor, evitando um workflow exclusivo que precise ser refeito para #7/#8. Seu registro contém somente setup mínimo, recuperação e evidência sanitizada, não o manual extenso adiado em T12.
+O piloto usa o mesmo caller reutilizável entregue em T11 e configurações próprias do consumidor, evitando um workflow exclusivo que precise ser refeito para #7/#8. Seu registro referencia as instruções completas do caller e acrescenta configuração do cenário, recuperação e evidência sanitizada; não duplica o manual central extenso adiado em T12.
 **Requirement**: LLM-24
 **Tools**: GitHub Actions/REST e Codex real; TLC/cicd.
 **Done when**:
