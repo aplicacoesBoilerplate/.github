@@ -41,6 +41,15 @@ case "$ADAPTER" in
     fi
     normalize=normalize-jgitver
     ;;
+  changesets)
+    [[ "$tag_prefix" == v ]] || { echo 'changesets usa tags nativas name@version; TAG_PREFIX deve permanecer v' >&2; exit 1; }
+    rm -f -- "$native_file"
+    native_file=$(mktemp "$PROJECT_DIR/.changesets-status.XXXXXX")
+    (cd "$PROJECT_DIR" && "$ADAPTER_BIN" status "--output=$(basename "$native_file")" >"$explanation_file" 2>&1) || {
+      cat "$explanation_file" >&2; exit 1;
+    }
+    normalize=normalize-changesets
+    ;;
   *) echo "Adapter ainda não normalizado: $ADAPTER" >&2; exit 1 ;;
 esac
 

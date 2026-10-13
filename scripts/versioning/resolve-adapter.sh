@@ -36,8 +36,14 @@ select_adapter() {
         echo "Instale $binary nas dependências do consumidor antes da análise" >&2; return 1
       fi
       if [[ "$adapter" == changesets ]]; then
+        [[ "$PROJECT_DIR" == "$root" ]] || {
+          echo 'Changesets coordena o monorepo a partir da raiz; use project_path: .' >&2; return 1;
+        }
         [[ -f "$root/.changeset/config.json" ]] || {
           echo 'Falta .changeset/config.json no repositório consumidor' >&2; return 1;
+        }
+        [[ -f "$root/package-lock.json" && ! -f "$root/pnpm-lock.yaml" && ! -f "$root/yarn.lock" ]] || {
+          echo 'Perfil Changesets requer package-lock.json npm na raiz' >&2; return 1;
         }
       fi
       ;;
