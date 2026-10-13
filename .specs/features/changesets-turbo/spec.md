@@ -47,9 +47,9 @@ One consumer caller coordinates every package in an npm-workspaces/Turborepo rel
 | --- | --- | --- |
 | CST-01 | AC 1 | Verified |
 | CST-02 | AC 2 | Verified |
-| CST-03 | AC 3 | Implementing |
-| CST-04 | AC 4 | Pending |
-| CST-05 | AC 5 | Pending |
+| CST-03 | AC 3 | Verified |
+| CST-04 | AC 4 | Verified |
+| CST-05 | AC 5 | Implementing |
 | CST-06 | AC 6 | Pending |
 
 ## Implementation limits

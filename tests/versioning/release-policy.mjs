@@ -31,6 +31,15 @@ const matched = outcome({ title: 'v2.0.0' }, 'matched');
 assertions += 2;
 assert.equal(matched.plannedVersion, '2.0.0');
 assert.equal(matched.plannedBump, 'major');
+const batchReport = { ...report, adapter: 'changesets', releases: [
+  { name: '@lab/cli', version: '1.0.1' }, { name: '@lab/core', version: '3.0.0' }] };
+assert.equal(evaluateReleasePolicy({ report: batchReport, snapshot: snapshot(null) }).outcome,
+  'adapter-authoritative');
+const batchMilestone = evaluateReleasePolicy({ report: batchReport,
+  snapshot: snapshot({ title: 'v3.0.0' }) });
+assert.equal(batchMilestone.outcome, 'blocked');
+assert.match(batchMilestone.reasons.join(' '), /milestone.*lote|lote.*milestone/);
+assertions += 3;
 
 const invalid = outcome({ title: 'release-2' }, 'blocked');
 assertions += 1; assert.match(invalid.reasons.join(' '), /vMAJOR\.MINOR\.PATCH/);

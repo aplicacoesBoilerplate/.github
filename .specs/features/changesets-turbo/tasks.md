@@ -47,6 +47,7 @@ T1 → T2 → T3 → T4 → T5
 
 ### T3: Package publication
 
+**Status**: Complete — batch preflight, per-package immutable tag/Release, partial recovery and ten write-free reruns pass.
 **Depends on**: T2
 **What**: Reconcile package tags/releases on the reviewed technical SHA, with partial recovery.
 **Tests**: Fake GitHub API batch publication and conflict/idempotency cases.
