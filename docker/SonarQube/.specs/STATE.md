@@ -24,15 +24,23 @@
 - **Trade-off**: As entradas globais legadas continuam fixas e o header Context7 literal ainda precisa de uma decisao para migracao global.
 - **Scope**: Codex CLI e MCPs SonarQube, Docker, GitHub e Context7.
 - **Date**: 2026-10-02
+- **Status**: superseded
+
+### AD-004
+- **Decision**: Remover o lancador Bash do Codex e invocar diretamente o executavel `codex` do PATH; manter o hook do direnv no Git Bash.
+- **Reason**: A copia instalada do perfil divergiu da versao do repositorio e o lancador passou a causar falhas de configuracao.
+- **Trade-off**: A ativacao automatica dos MCPs por projeto fica suspensa ate haver uma configuracao direta validada.
+- **Scope**: Codex CLI no Git Bash; `config.toml` global, `opencode.json` e `.envrc` nao foram alterados.
+- **Date**: 2026-10-02
 - **Status**: active
 
 ## Handoff
 
 - **Feature**: `.specs/features/codex-direnv-sonarqube/`
 - **Phase / Task**: Piloto local implementado; verificacao visual final da IDE fica para o teste interativo do usuario.
-- **Completed**: Codex CLI npm no PATH, perfil `direnv` instalado, lancador Git Bash ativo, k6 `.envrc` com perfil Docker, scanner k6 concluido, MCP SonarQube consultou quality gate `OK`, GitHub e Context7 responderam HTTP 200, Docker MCP dry-run carregou o perfil.
-- **In-progress**: Verificacao final dos arquivos e documentacao.
+- **Completed**: Codex CLI npm no PATH, lancador Bash removido do repositorio e da instalacao local, funcao `codex` removida do `~/.bashrc`; o comando `codex` resolve diretamente para a CLI npm. Scanner k6 e integracoes MCP foram testados em iteracoes anteriores.
+- **In-progress**: Reavaliar a configuracao de MCPs por projeto sem lancador; a copia local do perfil difere da versao do repositorio.
 - **Next step**: Usuario testa o codigo temporario no VS Code; decidir separadamente se o `config.toml` global do Desktop deve perder as entradas legadas e o header Context7 literal.
 - **Blockers**: Esta pasta nao e repositorio Git, entao o gate de commits por tarefa do plano TLC nao pode ser executado aqui; a extensao SonarQube for IDE nao le tokens do `.envrc` automaticamente.
-- **Uncommitted files**: Artefatos de planejamento em `.specs/`, perfil, lancador, smoke e README.
+- **Uncommitted files**: Artefatos de planejamento em `.specs/`, perfil e README; este workspace nao tem repositorio Git.
 - **Branch**: N/A, sem repositório Git nesta pasta.

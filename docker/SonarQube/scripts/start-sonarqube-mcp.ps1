@@ -2,8 +2,7 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$ProjectPath,
 
-  [Parameter(Mandatory = $true)]
-  [string]$UserTokenVariable,
+  [string]$UserTokenVariable = 'SONARQUBE_TOKEN',
 
   [switch]$Check
 )
@@ -23,6 +22,15 @@ if ([string]::IsNullOrEmpty($token)) {
 }
 
 [Environment]::SetEnvironmentVariable($UserTokenVariable, $token, 'Process')
+
+$serverUrl = [Environment]::GetEnvironmentVariable('SQB_URL', 'Process')
+if ([string]::IsNullOrEmpty($serverUrl)) {
+  $serverUrl = [Environment]::GetEnvironmentVariable('SQB_URL', 'User')
+}
+if ([string]::IsNullOrEmpty($serverUrl)) {
+  throw 'SQB_URL is not available'
+}
+[Environment]::SetEnvironmentVariable('SONARQUBE_URL', $serverUrl, 'Process')
 
 $gitBash = 'C:\Program Files\Git\bin\bash.exe'
 if (-not (Test-Path -LiteralPath $gitBash -PathType Leaf)) {

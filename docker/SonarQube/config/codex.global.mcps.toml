@@ -1,0 +1,46 @@
+# Entradas portateis para ~/.codex/config.toml; nao duplique tabelas existentes.
+# node_repl/env e pencil dependem do runtime/IDE instalado nesta maquina.
+# Tokens sao lidos do ambiente do processo; nao inclua valores literais.
+
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+env_http_headers = { CONTEXT7_API_KEY = "API_KEY_CONTEXT7" }
+enabled = true
+
+[mcp_servers.MCP_DOCKER_env]
+command = "C:\\Program Files\\Git\\bin\\bash.exe"
+args = ["-lc", 'exec docker mcp gateway run --profile "$PROFILE_TOOLKIT"']
+env_vars = ["PROFILE_TOOLKIT"]
+enabled = true
+
+[mcp_servers.github_env]
+url = "https://api.githubcopilot.com/mcp/"
+bearer_token_env_var = "GITHUB_PERSONAL_ACCESS_TOKEN"
+http_headers = { "X-MCP-Toolsets" = "all", "X-MCP-Insiders" = "true" }
+enabled = true
+
+[mcp_servers.sonarqube_env]
+command = "docker.exe"
+args = ["run", "--init", "--rm", "-i", "-e", "SONARQUBE_TOKEN", "-e", "SONARQUBE_URL", "-e", "SONARQUBE_PROJECT_KEY", "-e", "SONARQUBE_READ_ONLY=true", "sonarsource/sonarqube-mcp"]
+env_vars = ["SONARQUBE_TOKEN", "SONARQUBE_URL", "SONARQUBE_PROJECT_KEY"]
+enabled = true
+
+[mcp_servers.agent-skills]
+command = "npx"
+args = ["-y", "@tech-leads-club/agent-skills-mcp@0.1.6"]
+startup_timeout_sec = 30
+tool_timeout_sec = 60
+
+[mcp_servers.agent-skills.tools.prepare_skill_files]
+approval_mode = "approve"
+
+# A entrada local de pencil fica entre agent-skills e apexcharts no config real.
+[mcp_servers.apexcharts]
+command = "npx"
+args = ["-y", "apexcharts-mcp"]
+enabled = true
+
+[mcp_servers.gitkraken]
+command = "gk.exe"
+args = ["mcp"]
+enabled = true

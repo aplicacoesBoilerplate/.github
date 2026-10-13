@@ -6,19 +6,17 @@ export SONAR_PROJECT_PATH="$(pwd -W)"
 # SQP_K6 e apenas um exemplo de nome; o valor do token nao fica no .envrc.
 export SONAR_TOKEN="$SQP_K6"
 
-# Caminho do compose central neste computador. Use / no caminho do Windows.
-export SONAR_STACK_COMPOSE='C:/caminho/SonarQubeAnalyzer/docker-compose.yml'
+# SQB_STACK_COMPOSE pertence ao ambiente de usuario do Windows; o Git Bash
+# cria o alias SONAR_STACK_COMPOSE para o scanner.
 
 # Opcional: apenas se usar SonarQube CLI ou MCP. Use um User Token externo,
 # distinto do Project Analysis token acima. Ajuste o nome da variavel externa.
-# export SONARQUBE_CLI_SERVER='http://localhost:9000'
-# export SONARQUBE_CLI_TOKEN="$SONAR_USER_TOKEN"
-# export SONARQUBE_URL='http://host.docker.internal:9000'
-# export SONARQUBE_TOKEN="$SONAR_USER_TOKEN"
+# SONARQUBE_TOKEN, SQB_URL e SQB_CLI_SERVER pertencem ao Windows.
+# SONARQUBE_CLI_TOKEN, SONARQUBE_URL e SONARQUBE_CLI_SERVER sao aliases do Git Bash.
 # export SONARQUBE_PROJECT_KEY='minha-chave-de-projeto'
 
-# MCPs opcionais do Codex CLI. O perfil Docker e escolhido pelo consumidor;
-# os outros valores sao referencias a variaveis externas, sem copiar segredos.
+# MCPs ativos globalmente no Codex. O perfil Docker e escolhido pelo consumidor;
+# o PAT de GitHub vem de uma variavel externa especifica do projeto.
+# API_KEY_CONTEXT7 e global; nao precisa ser repetida aqui.
 # export PROFILE_TOOLKIT='perfil-deste-projeto'
 # export GITHUB_PERSONAL_ACCESS_TOKEN="$PAT_DESTE_PROJETO"
-# export API_KEY_CONTEXT7="$CONTEXT7_KEY_EXTERNA"

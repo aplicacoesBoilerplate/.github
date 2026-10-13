@@ -110,26 +110,27 @@ O **SonarQube CLI** (`sonar`, atualmente em beta) é outra ferramenta: oferece c
 
 O login pelo navegador (`sonar auth login --server http://localhost:9000`) usa uma porta local da faixa `64120–64130`. Nesta máquina o Windows reservou `64067–64166`, então o comando falha com `No available port in SonarLint range 64120-64130` e código 1. A página genérica de ajuda do terminal do VS Code não identifica essa causa: o terminal iniciou e foi a CLI que terminou com erro. Consulte `netsh interface ipv4 show excludedportrange protocol=tcp` para conferir a reserva.
 
-Para usar a CLI sem esse retorno pelo navegador, gere um **User Token** (não o token de análise do projeto) e associe uma variável externa a ele. No `.envrc` de cada consumidor, se desejar usar também a CLI, faça o mapeamento sem copiar o token literal:
+Para usar a CLI sem o login pelo navegador, mantenha um **User Token** na variável de usuário `SONARQUBE_TOKEN` do Windows. Mantenha `SQB_CLI_SERVER=http://localhost:9000` e `SQB_URL=http://host.docker.internal:9000` como endereços da máquina. O `~/.bashrc` deriva, apenas para o Git Bash, os nomes exigidos por cada cliente:
 
 ```bash
-export SONARQUBE_CLI_SERVER='http://localhost:9000'
-export SONARQUBE_CLI_TOKEN="$SONAR_USER_TOKEN"
+export SONARQUBE_CLI_TOKEN="$SONARQUBE_TOKEN"
+export SONARQUBE_CLI_SERVER="$SQB_CLI_SERVER"
+export SONARQUBE_URL="$SQB_URL"
 ```
 
-Depois de `direnv allow`, rode `sonar auth status` ou um comando de leitura, como `sonar list issues -p K6-Runner`, no Git Bash. Neste computador, a CLI instalada pela extensão ainda não está no `PATH`; use `"$(cygpath -u "$LOCALAPPDATA/sonarqube-cli/bin/sonar.exe")" auth status` (e substitua `auth status` pelo comando desejado). A autenticação por variáveis evita o fluxo de navegador e não precisa gravar o token no chaveiro. O `--with-token` também lê um User Token da entrada padrão se preferir salvar a conexão no chaveiro. [Referência de variáveis da CLI](https://docs.sonarsource.com/sonarqube-cli/using-sonarqube-cli/environment-variables/).
+Depois de abrir um Git Bash novo e executar `direnv allow` no consumidor, rode `sonar auth status` ou `sonar list issues -p K6-Runner`. A autenticação por variáveis evita o fluxo de navegador e não grava o token no chaveiro. `SONARQUBE_CLI_TOKEN` é um alias de processo: não precisa existir como outra variável de usuário no Windows nem no `.envrc`. [Referência de variáveis da CLI](https://docs.sonarsource.com/sonarqube-cli/using-sonarqube-cli/environment-variables/).
 
 O **SonarQube MCP Server** agrega valor quando um cliente de IA compatível precisa consultar issues, quality gates e contexto do projeto para ajudar na correção. Ele é uma integração **do cliente de IA**, não um substituto do scanner nem um serviço necessário para o servidor local. Primeiro conecte e vincule o SonarQube for IDE. Depois, em **SONARQUBE SETUP > AI AGENTS CONFIGURATION > Configure SonarQube MCP Server** no VS Code compatível, use o fluxo da extensão para aproveitar as credenciais do modo conectado. Mantenha o token de usuário nas credenciais locais do cliente. Se configurar o MCP manualmente em Docker, o servidor SonarQube exposto no host em `localhost:9000` deve ser endereçado a partir do contêiner via `host.docker.internal:9000` no Docker Desktop; use modo somente leitura quando o agente só precisar consultar dados. Consulte [MCP Server](https://docs.sonarsource.com/sonarqube-mcp-server/) e [integração na IDE](https://docs.sonarsource.com/sonarqube-for-vs-code/using/investigating-issues/).
 
-O VS Code e o Codex desktop são **clientes MCP separados**: configurar um não registra automaticamente o servidor no outro. Ambos podem iniciar a mesma imagem oficial `sonarsource/sonarqube-mcp` sob demanda. Para reutilizar o `.envrc`, mapeie também `SONARQUBE_TOKEN` a uma variável externa de **User Token** (por exemplo, `export SONARQUBE_TOKEN="$SONAR_USER_TOKEN"`) e `SONARQUBE_URL='http://host.docker.internal:9000'`; inicie o cliente a partir de um ambiente que carregue essas variáveis ou faça o comando MCP carregar o `.envrc` com direnv na pasta consumidora. O `SONAR_TOKEN` existente continua exclusivo do scanner. Em clientes iniciados pelo menu do Windows, confirme a herança da variável externa antes de esperar que o direnv a encontre. [Configuração do MCP da SonarSource](https://github.com/SonarSource/sonarqube-mcp-server/blob/master/README.md), [MCP no VS Code](https://code.visualstudio.com/docs/agent-customization/mcp-servers/).
+O VS Code e o Codex são clientes MCP separados. O MCP da SonarSource lê `SONARQUBE_TOKEN` diretamente; `SONARQUBE_URL` é o endereço visto pelo contêiner e deriva de `SQB_URL`. O `.envrc` do consumidor fornece apenas `SONARQUBE_PROJECT_KEY` para selecionar o projeto. `SONAR_TOKEN` continua exclusivo do scanner. Reinicie o VS Code e o Codex Desktop depois de alterar variáveis de usuário do Windows. [Configuração do MCP da SonarSource](https://docs.sonarsource.com/sonarqube-mcp-server/reference/environment-variables), [MCP no VS Code](https://code.visualstudio.com/docs/agent-customization/mcp-servers/).
 
 Neste computador, [`scripts/start-sonarqube-mcp.ps1`](scripts/start-sonarqube-mcp.ps1) inicia o contêiner MCP para um consumidor. Ele lê a variável externa do User Token do ambiente de usuário do Windows quando o VS Code ou o Codex foram abertos antes dela existir, chama o Git Bash, carrega o `.envrc` aprovado pelo direnv e repassa `SONARQUBE_TOKEN`, `SONARQUBE_URL` e `SONARQUBE_PROJECT_KEY` ao contêiner em modo somente leitura. Use `-Check` para validar as entradas sem iniciar o MCP. Exemplo para o k6 Runner:
 
 ```powershell
-./scripts/start-sonarqube-mcp.ps1 -ProjectPath 'C:/Users/Gerson Ribeiro/Documents/TEK/ProjetosTek/Testes/k6' -UserTokenVariable SQU_FOR_ANALYZER_IN_IDE -Check
+./scripts/start-sonarqube-mcp.ps1 -ProjectPath 'C:/Users/Gerson Ribeiro/Documents/TEK/ProjetosTek/Testes/k6' -Check
 ```
 
-O k6 Runner possui `.mcp.json` local para o VS Code e uma entrada global `sonarqube-k6-local` no Codex, ambas apontando para esse inicializador. O `.mcp.json` é ignorado apenas pelo Git local do k6, porque contém caminhos específicos deste computador. No VS Code, use **MCP: List Servers** para iniciar/verificar `sonarqube-k6-local`; no Codex, confira `codex mcp get sonarqube-k6-local` e reinicie a sessão para carregar a nova entrada. O registro do MCP dispensa o SonarQube CLI; o scanner do Compose continua responsável por publicar as análises completas.
+O k6 Runner possui `.mcp.json` local para o VS Code apontando para esse inicializador. O `.mcp.json` é ignorado apenas pelo Git local do k6, porque contém caminhos específicos deste computador. No VS Code, use **MCP: List Servers** para iniciar/verificar `sonarqube-k6-local`. No Codex CLI, a entrada genérica `sonarqube_env` executa o contêiner diretamente com `SONARQUBE_TOKEN`, `SONARQUBE_URL` e `SONARQUBE_PROJECT_KEY` do processo. Para consultar issues e quality gates, o MCP não precisa de `SONAR_PROJECT_PATH`; essa variável monta o código para o scanner. Uma montagem do código só seria necessária para ferramentas do MCP que acessam arquivos locais. O registro do MCP dispensa o SonarQube CLI; o scanner do Compose continua responsável por publicar as análises completas.
 
 ## Codex CLI com MCPs do projeto ativo
 
@@ -145,40 +146,23 @@ O Codex Desktop inclui um executável em uma pasta versionada própria. Esse cam
 
 Nesta máquina, o prefixo do npm já estava no `PATH`; instalar o pacote criou o comando que faltava, sem edição manual do `PATH`. Abra um terminal Git Bash **novo** após a instalação para herdar o ambiente atualizado. Se `type -a codex` continuar vazio, confira se a saída de `npm config get prefix` está no `PATH` desse terminal antes de prosseguir. Consulte a [instalação oficial da CLI](https://learn.chatgpt.com/docs/codex/cli).
 
-O [perfil versionável](config/codex.direnv.config.toml) é instalado como `~/.codex/direnv.config.toml`. O Codex carrega esse arquivo quando recebe `--profile direnv`; ele se sobrepõe ao `~/.codex/config.toml` global apenas nessa sessão. O [lançador](scripts/codex-project.sh) carrega o `.envrc` aprovado, ativa os MCPs cujas variáveis estão presentes e inicia o Codex. Na pasta do consumidor, com `SONAR_STACK_COMPOSE` já definido pelo `.envrc`, instale o perfil:
+O comando `codex` chama diretamente a CLI instalada no `PATH`. O `~/.bashrc` ativa o hook do direnv e deriva os nomes de variáveis exigidos pela SonarQube CLI, pelo MCP e pelo Compose a partir das variáveis globais do Windows. O direnv carrega as variáveis do `.envrc` aprovado ao entrar na pasta do consumidor. Em um Git Bash novo, na pasta do k6:
 
 ```bash
-mkdir -p ~/.codex
-cp "$(dirname "$SONAR_STACK_COMPOSE")/config/codex.direnv.config.toml" ~/.codex/direnv.config.toml
+direnv allow       # necessário após criar ou alterar o .envrc
+type -P codex      # deve apontar para o executável da CLI, não para uma função
+codex --version
+codex mcp list  # confere os servidores configurados; não testa a conexão
+codex --no-daemon  # abre a CLI com o ambiente deste terminal
 ```
 
-O primeiro comando cria a pasta de configuração, caso ainda não exista; o segundo copia o perfil genérico sem alterar `~/.codex/config.toml`. Para que o comando simples `codex` use esse fluxo no Git Bash, acrescente ao `~/.bashrc` (ajuste o caminho do stack):
+O Git Bash carrega o `.envrc` pelo hook do direnv e o Codex herda as variáveis do projeto. Use `--no-daemon` ao abrir a TUI para manter essa sessão separada do servidor compartilhado do Desktop. Todos os servidores estão no `~/.codex/config.toml`; as [entradas portáteis versionadas](config/codex.global.mcps.toml) mostram como reproduzir os MCPs externos sem copiar tokens. `node_repl` e `node_repl.env` são os primeiros registros no arquivo global; `pencil` usa o executável da IDE instalado nesta máquina. Não há mais perfil `direnv` do Codex. No k6, que usa os MCPs globais, não é necessário `.codex/config.toml`. Dentro da CLI, use `/mcp` para conferir a inicialização e as ferramentas de cada servidor; `mcp list` mostra apenas a configuração. [Precedência de configuração do Codex](https://learn.chatgpt.com/docs/config-file/config-basic).
 
-```bash
-codex() {
-  bash '/c/caminho/SonarQubeAnalyzer/scripts/codex-project.sh' "$@"
-}
-```
+As entradas globais leem `PROFILE_TOOLKIT`, `API_KEY_CONTEXT7`, `GITHUB_PERSONAL_ACCESS_TOKEN`, `SONARQUBE_TOKEN`, `SONARQUBE_URL` e `SONARQUBE_PROJECT_KEY` do ambiente do processo. O consumidor define `PROFILE_TOOLKIT`, `GITHUB_PERSONAL_ACCESS_TOKEN` e `SONARQUBE_PROJECT_KEY` no seu `.envrc`, como no [exemplo](examples/consumer.envrc.example). O User Token do SonarQube e a chave do Context7 são globais. Se `PROFILE_TOOLKIT` não for definido no projeto, o Codex herda o valor global do Windows; para um projeto sem Docker Toolkit, desative o MCP na configuração local do projeto.
 
-Depois de salvar o `~/.bashrc`, abra um Git Bash novo na pasta do k6 e execute, nesta ordem:
+O Codex não desativa um MCP só porque uma variável de ambiente está ausente: `enabled` é uma opção do TOML. O `TestesAutomatizadosERP` usa sua configuração local para desativar Docker Toolkit, Context7 e SonarQube; os demais registros globais continuam ativos. Copie [o exemplo de desativação](examples/project-mcp-optouts.codex.config.toml) para `<consumidor>/.codex/config.toml` apenas quando quiser exceções. O Codex lê a configuração do projeto depois que você confia no repositório. Cada entrada declarada, inclusive uma desativada, precisa de `command` ou `url` para passar pela validação. [Configuração por projeto](https://learn.chatgpt.com/docs/config-file/config-advanced#project-config-files-codexconfigtoml), [MCP no Codex](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
 
-```bash
-direnv allow      # aprova o .envrc do consumidor e carrega seus mapeamentos
-codex --check     # confere o perfil e os nomes dos MCPs ativos, sem mostrar tokens
-codex mcp list    # confere os servidores registrados na configuração efetiva
-codex             # abre a interface interativa da CLI no terminal
-```
-
-Ao entrar em outro consumidor com seu próprio `.envrc`, execute `direnv allow` nele e **inicie uma nova sessão `codex`**; conexões MCP de uma sessão já aberta não trocam de projeto automaticamente. O `SONAR_TOKEN` continua sendo o Project Analysis token do scanner; o MCP lê `SONARQUBE_TOKEN`, que referencia o User Token externo.
-
-| MCP da CLI | Variáveis lidas no `.envrc` do consumidor | Comportamento |
-| --- | --- | --- |
-| SonarQube | `SONARQUBE_TOKEN`, `SONARQUBE_URL`, `SONARQUBE_PROJECT_KEY` | Exige as três variáveis; inicia o contêiner oficial em modo somente leitura. `SONARQUBE_TOKEN` referencia o **User Token** externo, enquanto `SONAR_TOKEN` continua reservado ao scanner. |
-| Docker MCP Gateway | `PROFILE_TOOLKIT` | Seleciona o perfil Docker do consumidor; não usa um nome de perfil fixo no TOML. |
-| GitHub | `GITHUB_PERSONAL_ACCESS_TOKEN` | Codex lê o bearer token da variável do processo, sem gravá-lo no TOML. |
-| Context7 | `API_KEY_CONTEXT7` | Codex lê o header da variável do processo, sem gravá-lo no perfil. |
-
-Todas são opcionais, exceto que as três variáveis do SonarQube devem vir juntas. Os MCPs ausentes ficam desabilitados. O perfil também desabilita, **somente na CLI**, as entradas globais `sonarqube-k6-local`, `MCP_DOCKER` e `context7` que hoje contêm configuração fixa. Ele preserva `opencode.json`, `.envrc` existentes e as configurações do Desktop. O `config.toml` global ainda contém um header Context7 literal: removê-lo ou migrar a conexão global afetaria o Desktop e é uma decisão separada. [Perfis e precedência de configuração do Codex](https://github.com/openai/codex/blob/main/codex-rs/config/src/loader/mod.rs).
+O `SONAR_TOKEN` continua reservado ao Project Analysis token do scanner. `SONARQUBE_TOKEN` é a única variável persistente com o User Token; o `~/.bashrc` deriva `SONARQUBE_CLI_TOKEN` no ambiente do Git Bash. O Context7 usa `env_http_headers` para ler `API_KEY_CONTEXT7`, e GitHub usa `bearer_token_env_var`; nenhum token literal fica no TOML. ApexCharts e agent-skills não exigem token nessa configuração. GitKraken usa a autenticação própria do `gk` (`gk auth login`), não um token de ambiente do Codex. Para Codex, sua entrada executa `gk mcp`; os argumentos `--host=opencode` do `opencode.json` não são usados. [GitKraken MCP](https://help.gitkraken.com/mcp/mcp-getting-started/).
 
 ### Voz na CLI
 
@@ -222,11 +206,11 @@ A definição que pode ser compartilhada está em [`config/quality-profiles/p-pa
 Para reproduzir do zero em outro SonarQube local:
 
 1. Copie este diretório do stack para a máquina ou obtenha seus arquivos de um repositório. Configure o `.env` local e inicie `docker compose up -d db sonarqube`; aguarde `http://localhost:9000/api/system/status` retornar `UP`.
-2. Crie o projeto consumidor no SonarQube, com chave `K6-Runner` neste exemplo. Gere um **User Token** com permissão **Administer Quality Profiles** e disponibilize o valor em uma variável de ambiente externa, como `SQU_FOR_ANALYZER_IN_IDE`. O arquivo JSON e o script não contêm o valor do token.
+2. Crie o projeto consumidor no SonarQube, com chave `K6-Runner` neste exemplo. Gere um **User Token** com permissão **Administer Quality Profiles** e disponibilize seu valor em `SONARQUBE_TOKEN` no ambiente de usuário do Windows. O arquivo JSON e o script não contêm o valor do token.
 3. Na pasta deste stack, execute no PowerShell:
 
 ```powershell
-./scripts/configure-ppascal-quality-profiles.ps1 -ProjectKey K6-Runner -TokenVariable SQU_FOR_ANALYZER_IN_IDE
+./scripts/configure-ppascal-quality-profiles.ps1 -ProjectKey K6-Runner -TokenVariable SONARQUBE_TOKEN
 ```
 
 4. Abra **Quality profiles** no SonarQube para conferir os dois perfis e a associação ao `K6-Runner`. Depois, a partir da pasta do k6 com o `.envrc` carregado, execute `docker compose -f "$SONAR_STACK_COMPOSE" run --rm scanner` para atualizar as issues do servidor.
