@@ -1,5 +1,9 @@
 # Evidências de implementação
 
+## T10: gate explícito da feature na CI
+
+Gate de contratos, sintaxe e YAML passou. `ci.test.mjs:12–17` verifica instalação pela feature/lock, teste/check/lint e runtime sem condição de package raiz; :18–20 preserva as condições Maven/Node existentes e permissões de leitura. O helper Linux baixa actionlint 1.7.12 e verifica o SHA-256 fixado antes de executar; na máquina Windows o mesmo YAML foi validado pelo binário fixado com checksum conferido. A execução remota desse job não foi iniciada.
+
 ## T9: workflow e caller simulado
 
 Gate Full, sintaxe e actionlint passaram. `workflow.test.mjs:39–47` valida dois consumidores atravessando a orquestração até seus envelopes, com modelo/esforço/prompt próprios; :58–74 preserva refresh/cleanup após erro e impede pacote após falha de persistência; cenários posteriores recusam credencial ausente e token renovado no resultado. Contrato YAML verifica referências fixadas, sessão por repo/secret, retenção e status liberado só após upload/cleanup. O subprocesso real de finalização escreve falha quando upload falha (:124–126). Actionlint tem somente os ignores de compatibilidade documentados no design. Nenhuma execução remota ou credencial pessoal foi usada.

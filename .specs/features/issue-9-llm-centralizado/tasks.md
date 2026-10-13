@@ -1,6 +1,6 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 9/12 tarefas do MVP concluídas; T12 adiada.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 10/12 tarefas do MVP concluídas; T12 adiada.
 
 **Recorte MVP atualizado em 2026-10-13:** T12 adiada para o trabalho futuro de documentação central definido pelo mantenedor. Permanecem 12 tarefas no MVP, com 6 concluídas. T13 depende de T11; manual central extenso e testes documentais não bloqueiam o piloto. O caller recebe instruções completas de configuração e consumo, conforme correção do mantenedor sobre a transcrição. Reduzir intensidade de testes não significa reduzir essas instruções. T12 não está concluída nem dispensada como entrega futura.
 
@@ -220,6 +220,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 
 ### T10: Incluir verificações da feature na CI
 
+**Status**: Complete. Gate independente do package raiz, versão de runtime e caminhos anteriores conferidos em `tests/llm/ci.test.mjs`.
+
 **What**: Adicionar gate explícito da feature à CI, independentemente de package.json na raiz.
 **Where**: `.github/workflows/ci.yml`
 **Depends on**: T9
@@ -227,8 +229,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 **Requirement**: LLM-22
 **Tools**: Node, actionlint; TLC/cicd.
 **Done when**:
-- [ ] CI instala somente dependências fixadas da feature, roda todos seus testes e check de sintaxe.
-- [ ] Contrato da CI comprova que o gate da feature roda sem package raiz, preservando os caminhos anteriores.
+- [x] CI instala somente dependências fixadas da feature, roda todos seus testes e check de sintaxe.
+- [x] Contrato da CI comprova que o gate da feature roda sem package raiz, preservando os caminhos anteriores.
 **Tests**: contract em `tests/llm/ci.test.mjs`.
 **Gate**: Build.
 **Commit**: `ci(llm): enforce feature contract checks`
