@@ -25,13 +25,20 @@
 - **Date**: 2026-10-12
 - **Status**: active
 
+### AD-004
+- **Decision**: Concluir a primeira versão reutilizável com caller compartilhável por triagem/code review; adiar manual extenso e testes documentais. Manter instruções mínimas e piloto sobre o mesmo caller.
+- **Reason**: Mantenedor definirá outra abordagem de documentação depois das issues atuais e priorizou entrega funcional. Testes adicionais serão escolhidos pelo impacto contratual/operacional.
+- **Scope**: Issue #9, T7–T13; T12 fora do MVP.
+- **Date**: 2026-10-13
+- **Status**: active
+
 ## Handoff
 
 - **Feature**: `.specs/features/issue-9-llm-centralizado/`
-- **Phase / Task**: Execute; T6 concluída. 6/13 tarefas.
+- **Phase / Task**: Execute; T6 concluída. 6/12 tarefas do MVP; T12 adiada fora desse total.
 - **Completed**: Planejamento aprovado e persistido; T1 contrato/dependências, T2 origem/SHA, T3 diretrizes integrais/proveniência implementadas com commits por tarefa.
 - **In-progress**: Auth, freshness e writeback criptografado implementados; gates passaram com fixtures, sem credenciais reais.
-- **Next step**: Executar T7 (invocação Codex limitada), depois T8 (resultados).
+- **Next step**: T7 executor, T8 resultados, T9 workflow, T10 CI, T11 caller e T13 piloto reutilizando o caller. Documentação extensa não bloqueia essa sequência.
 - **Blockers**: Nenhum para implementação offline. T13 requer repositório privado piloto e credenciais provisionadas pelo mantenedor; publicação não autorizada nesta iteração.
-- **Uncommitted files**: Nenhum após o commit de T6.
+- **Uncommitted files**: Nenhum após registrar o recorte atualizado em commit local.
 - **Branch**: `feature/issue-9-llm-centralizado`

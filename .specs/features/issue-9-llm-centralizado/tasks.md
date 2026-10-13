@@ -1,6 +1,8 @@
 # Pipeline reutilizável de LLM Tasks
 
-**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 6/13 tarefas concluídas.
+**Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 6/12 tarefas do MVP concluídas; T12 adiada.
+
+**Recorte MVP atualizado em 2026-10-13:** T12 adiada para o trabalho futuro de documentação definido pelo mantenedor. Permanecem 12 tarefas no MVP, com 6 concluídas. T13 depende de T11; documentação extensa e testes documentais não bloqueiam o piloto. Caller e piloto recebem orientação mínima de configuração/recuperação. T12 não está concluída nem dispensada como entrega futura.
 
 ## Execution Protocol
 
@@ -15,7 +17,7 @@ Implementação local autorizada pelo mantenedor em 2026-10-12. Usar `tlc-spec-d
 | Validação, contexto, instruções e auth | unit | Caminho válido e todos os limites/erros descritos | `tests/llm/*.test.mjs` | `npm --prefix scripts/llm test` |
 | Processos Codex e REST Secrets | integration com fakes | Chamadas/saídas, timeout, restauração, persistência e limpeza, sem tokens reais | `tests/llm/*.test.mjs` | `npm --prefix scripts/llm test` |
 | Workflow e callers | contract | Parsing YAML e correspondência de inputs/secrets/outputs, locks e permissões | `tests/llm/workflow.test.mjs` | `npm --prefix scripts/llm test` |
-| Docs e provenance | documental | Campos cobertos, exemplos coerentes e links locais existentes | `tests/llm/docs.test.mjs` | `npm --prefix scripts/llm test` |
+| Provenance e adoção | contract / revisão manual | Hashes protegidos por teste; instruções mínimas e configuração de exemplos conferidas na entrega | `tests/llm/instructions.test.mjs`, `tests/llm/caller.test.mjs` | `npm --prefix scripts/llm test` |
 | Piloto | e2e privado | Execução real e recuperação, com evidência sanitizada | `docs/llm-pilot.md` | Caller manual em repo privado |
 
 ## Gate Check Commands
@@ -31,12 +33,15 @@ Implementação local autorizada pelo mantenedor em 2026-10-12. Usar `tlc-spec-d
 
 Os testes são escolhidos pelo valor: detectar falhas relevantes e proteger contratos/efeitos da entrega. A contagem não é um gate. Priorizar assertions de estado, isolamento e conteúdo persistido; não duplicar casos apenas para cumprir um piso. Esta orientação foi corrigida pelo mantenedor após T3.
 
+Prioridade atual: testes contratuais e cenários que possam produzir credencial cruzada/perdida, execução indevida ou resultado incorreto. Não criar testes de texto de documentação, de comportamento de dependências ou de detalhes internos sem impacto no contrato. Verificações adicionais só entram quando protegem um efeito relevante. Os gates continuam executando os testes existentes; não desabilitar casos para mascarar regressões.
+
 ## Execution Plan
 
 Execução sequencial; cada fase depende da anterior. Diagrama lista somente dependências reais, não paralelismo autorizado.
 
 ```text
-T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
+T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
+                                                                T11 -> T12 (documentação futura)
 ```
 
 ## Task Breakdown
@@ -235,11 +240,13 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 - [ ] Caller não contém comandos de autenticação copiados, sessão global nem credenciais nos inputs.
 - [ ] README cobre valores, alternativas, provisionamento, rerun versus novo run e leitura dos outputs.
 - [ ] Contratos de consumo comprovam as modalidades e escolhas próprias sem editar o central.
-**Tests**: contract/documental em `tests/llm/caller.test.mjs`.
+**Tests**: contract em `tests/llm/caller.test.mjs`; instruções mínimas revisadas manualmente, sem testes de texto.
 **Gate**: Full + actionlint do exemplo após resolver a referência do piloto.
 **Commit**: `docs(llm): deliver consumer-owned caller examples`
 
 ### T12: Documentar o contrato operacional central
+
+**Status**: Deferred. Fora do MVP por decisão do mantenedor em 2026-10-13. Reavaliar após as issues atuais; formato de documentação será definido em trabalho próprio.
 
 **What**: Entregar manual da pipeline, dependências, limites, resultados e recuperação.
 **Where**: `docs/llm.md`
@@ -251,16 +258,18 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 - [ ] Cada entrada/secret/saída e código de erro aparece no manual com efeito e configuração.
 - [ ] Limites da sessão Plus, snapshot antigo, PAT por repo e ausência de atomicidade externa estão documentados.
 - [ ] Revisão documental confere contrato, caminhos e exemplos sem credenciais; automatizar somente verificações que detectem divergência relevante.
-**Tests**: documental em `tests/llm/docs.test.mjs`.
-**Gate**: Full + Build da fase antes da publicação.
+**Tests**: A definir quando retomada; não criar testes documentais nesta versão.
+**Gate**: Revisão do formato e da cobertura operacional quando retomada; não bloqueia o MVP.
 **Commit**: `docs(llm): document invocation and recovery contract`
 
 ### T13: Homologar o piloto privado e registrar evidências
 
 **What**: Executar caller real no piloto fornecido pelo mantenedor e registrar os resultados sanitizados.
 **Where**: `docs/llm-pilot.md`
-**Depends on**: T12
+**Depends on**: T11
 **Reuses**: Caller e matriz de aceitação; credenciais provisionadas pelo proprietário.
+
+O piloto usa o mesmo caller reutilizável entregue em T11 e configurações próprias do consumidor, evitando um workflow exclusivo que precise ser refeito para #7/#8. Seu registro contém somente setup mínimo, recuperação e evidência sanitizada, não o manual extenso adiado em T12.
 **Requirement**: LLM-24
 **Tools**: GitHub Actions/REST e Codex real; TLC/cicd.
 **Done when**:
@@ -288,7 +297,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 | T10 | T9 | T9 → T10 | Match |
 | T11 | T10 | T10 → T11 | Match |
 | T12 | T11 | T11 → T12 | Match |
-| T13 | T12 | T12 → T13 | Match |
+| T13 | T11 | T11 → T13 | Match |
 
 ## Test Co-location Validation
 
@@ -297,7 +306,7 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12 -> T13
 | T1–T5 | Contrato/contexto/instruções/auth | unit e integrações necessárias | Mesmo componente e testes na mesma tarefa | Match |
 | T6–T8 | API/processos/resultado | integration | Fixtures de comportamento e casos negativos | Match |
 | T9–T11 | Workflow/CI/caller | contract | Parsing e execução simulada onde pertinente | Match |
-| T12 | Docs | documental | Verificação de contrato e links | Match |
+| T12 | Docs | Deferred | Sem execução/testes documentais no MVP | Deferred |
 | T13 | Piloto | e2e | Evidência de execução real | Match |
 
 Cada tarefa produz um componente coeso e seus testes; manifests, schemas e fixtures necessários ao componente não são entregas independentes. A execução permanece sequencial. O Verifier independente é obrigatório ao concluir a implementação e homologação.

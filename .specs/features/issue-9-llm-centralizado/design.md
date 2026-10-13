@@ -2,6 +2,8 @@
 
 **Spec:** [spec.md](spec.md). **Status:** Aprovado para implementação local. **Data:** 2026-10-12.
 
+**Recorte atualizado em 2026-10-13:** prioridade para executor, resultados, workflow central, CI, caller reutilizável e piloto usando esse mesmo caller. Manual extenso e testes documentais ficam para trabalho posterior; configuração e recuperação mínimas acompanham a entrega. Testes protegem contratos e efeitos relevantes, sem metas de contagem.
+
 ## Architecture Overview
 
 Um workflow `workflow_call` executa um adaptador Codex no contexto do repositório consumidor. O caller escolhe a política de invocação e mapeia seus secrets; o central valida o contrato, prepara o runtime, executa e entrega dados. Nenhuma conta, sessão ou PAT do repositório central é usado para atender consumidores.
