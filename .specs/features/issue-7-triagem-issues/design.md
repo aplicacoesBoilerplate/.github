@@ -1,6 +1,6 @@
 # Triagem Design
 
-**Spec:** [spec.md](spec.md). **Status:** Proposta técnica para revisão; escopo aprovado em 2026-10-14.
+**Spec:** [spec.md](spec.md). **Status:** Aprovado pelo mantenedor em 2026-10-14; gerar tarefas sequenciais antes de executar.
 
 ## Architecture Overview
 

@@ -1,12 +1,14 @@
 # Triagem Context
 
-**Gathered:** 2026-10-13. **Status:** Especificação aprovada e implementação autorizada em 2026-10-14; design detalhado em revisão, sem código de triagem iniciado.
+**Gathered:** 2026-10-13. **Status:** Especificação e design aprovados em 2026-10-14; implementação autorizada, plano de tarefas em revisão antes de código.
 
 ## Feature Boundary
 
 Triagem reutilizável de issues, planejamento SDD ou proposta simples por PR, usando a central da #9. Primeiro consumidor/piloto real; code review e harness ficam fora.
 
 ## Implementation Decisions
+
+- Mantenedor aprovou o design com autorização para seguir em 2026-10-14. Execução permanece sequencial, sem desenvolvimento paralelo de branches. Verificação independente ao final permanece obrigatória.
 
 - Em 2026-10-14, mantenedor aprovou a especificação e autorizou implementar; solicitou In progress no Project e entrega empilhada, sem aceitar ou integrar o PR da central.
 
