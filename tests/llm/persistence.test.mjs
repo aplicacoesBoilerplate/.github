@@ -50,10 +50,21 @@ test('LLM-10: encrypted PUT contains refreshed session, fixed consumer destinati
     assert.equal(writes[0].body.includes('new-refresh'), false);
   }
 });
-test('LLM-10: unchanged session causes no request, avoiding unnecessary secret rotation', async t => {
+test('LLM-10/11: unchanged session revalidates metadata without rotating the secret', async t => {
   const auth = await authFixture(t, initial); const transport = api();
   assert.deepEqual(await persistIfChanged(auth, context, boundary, 'pat-fixture', transport), { persisted: false });
-  assert.deepEqual(transport.requests, []);
+  assert.equal(transport.requests.some(r => r.method === 'PUT'), false);
+  assert.deepEqual(transport.requests.map(r => r.url), ['https://api.github.com/repos/owner/app/actions/secrets/MY_CODEX_AUTH']);
+});
+
+test('LLM-11: unchanged session fails closed on external rotation or unavailable metadata', async t => {
+  const auth = await authFixture(t, initial);
+  const transport = api({ updated_at: '2026-10-12T12:00:02Z' });
+  await assert.rejects(persistIfChanged(auth, context, boundary, 'pat-fixture', transport), { code: 'AUTH_STATE_CONFLICT' });
+  assert.equal(transport.requests.some(r => r.method === 'PUT'), false);
+  await assert.rejects(persistIfChanged(auth, context, boundary, 'pat-fixture', {
+    fetchImpl: async () => ({ ok: false, status: 403 }),
+  }), { code: 'AUTH_PERSIST_FAILED' });
 });
 test('LLM-11: invalid refreshed file and cross-repository boundary cannot overwrite a secret', async t => {
   const auth = await authFixture(t, 'malformed-session-sentinel'); const transport = api();

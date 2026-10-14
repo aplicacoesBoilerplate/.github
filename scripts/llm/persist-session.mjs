@@ -13,9 +13,13 @@ export async function persistIfChanged(auth, context, boundary, pat, { fetchImpl
     githubTimestamp(boundary.updated_at, code);
     const current = await readTrustedFile(auth.dir, 'auth.json', 49152, code);
     validateManagedSession(current.toString('utf8'), code);
-    if (sessionHash(current) === auth.seedHash) return { persisted: false };
-
     const options = { fetchImpl, ...(delay ? { delay } : {}), errorCode: code };
+    if (sessionHash(current) === auth.seedHash) {
+      const metadata = await githubGet(target, pat, options);
+      if (metadata.name !== context.session_secret_name || metadata.updated_at !== boundary.updated_at) throw contractError('AUTH_STATE_CONFLICT');
+      return { persisted: false };
+    }
+
     const publicKey = await githubGet(`/repos/${context.repository}/actions/secrets/public-key`, pat, options);
     await sodium.ready;
     const key = sodium.from_base64(publicKey.key, sodium.base64_variants.ORIGINAL);

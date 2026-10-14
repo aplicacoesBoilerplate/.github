@@ -37,8 +37,8 @@
 - **Feature**: `.specs/features/issue-9-llm-centralizado/`
 - **Phase / Task**: Execute; T1–T11 concluídas localmente. 11/12 tarefas do MVP; T12 adiada fora desse total.
 - **Completed**: Workflow central, scripts, CI, callers ChatGPT/API opt-in, configuração/prompt do consumidor, inspector de resultado e instruções completas. Commits locais por tarefa e contratos verificados.
-- **In-progress**: Nenhuma tarefa parcial após commit. Gates de contrato/execução passaram com fixtures; inferência real ainda requer piloto.
-- **Next step**: Verificação independente da entrega local. T13 real aguarda publicação autorizada da revisão central, consumidor privado escolhido e sessão dedicada/secrets fornecidas pelo mantenedor na futura adoção.
+- **In-progress**: Correção de LLM-11 autorizada: metadata revalidada mesmo sem refresh, zero PUT sem mudança. Suite e sintaxe aprovadas com fixtures; nova verificação independente pendente.
+- **Next step**: Registrar correção em commit local, atualizar referência fixa do caller e reverificar. Triagem terá especificação TLC própria depois deste MVP, conforme mantenedor; nenhuma implementação dependente iniciada.
 - **Blockers**: Homologação real não pode ser substituída por fixtures. Provisionamento de sessão/secrets e adoção foram deixados para planos futuros pelo mantenedor; nenhum login pessoal ou publicação foi realizado.
-- **Uncommitted files**: Nenhum após registrar o recorte atualizado em commit local.
+- **Uncommitted files**: Correção de persistência, seus testes e progresso; relatório independente e lições da primeira revisão.
 - **Branch**: `feature/issue-9-llm-centralizado`

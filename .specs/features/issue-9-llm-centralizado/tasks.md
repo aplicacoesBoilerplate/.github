@@ -294,6 +294,14 @@ O piloto usa o mesmo caller reutilizável entregue em T11 e configurações pró
 
 ## Diagram-Definition Cross-Check
 
+### Correção da verificação independente: conflito sem refresh
+
+- [x] Revalidar metadata também quando a sessão local não mudou; nenhuma escrita nesse ramo.
+- [x] Recusar rotação externa e consulta indisponível, sem artefato utilizável; limpar autenticação temporária.
+- [x] Expectativa incorreta de zero requests corrigida com autorização explícita do mantenedor em 2026-10-13.
+- **Requirements**: LLM-10, LLM-11, LLM-12; correção de T6/T9, não nova funcionalidade.
+- **Gate**: suite completa e sintaxe aprovadas; revisão independente da correção pendente.
+
 | Task | Depends On | Diagram Shows | Status |
 | --- | --- | --- | --- |
 | T1 | None | Origem | Match |

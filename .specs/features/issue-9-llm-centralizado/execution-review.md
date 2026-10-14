@@ -1,5 +1,19 @@
 # Evidências de implementação
 
+## Correção de T6/T9: conflito sem refresh (LLM-10/11/12)
+
+Premissa: rotação externa invalida resultado mesmo sem refresh, conforme LLM-11. Arquivos: persist-session.mjs, persistence.test.mjs, workflow.test.mjs e progresso TLC. Mantenedor autorizou corrigir a expectativa incorreta de zero requests. Critério: metadata revalidada, zero PUT sem mudança, conflito/consulta indisponível falham e temporários são removidos.
+
+Antes da correção, os três cenários afetados falharam. Após a correção, suite completa e sintaxe passaram, sem skips ou credenciais reais.
+
+| Critério | Evidência e assertion | Resultado |
+| --- | --- | --- |
+| Sem refresh não grava, mas verifica metadata | `tests/llm/persistence.test.mjs:56–57`: `assert.equal(...some(r => r.method === 'PUT'), false)` e URLs exatas | LLM-10/11 conforme |
+| Rotação externa ou metadata indisponível falham | `tests/llm/persistence.test.mjs:63–67`: `assert.rejects` com AUTH_STATE_CONFLICT / AUTH_PERSIST_FAILED | LLM-11 conforme |
+| Integração real simulada bloqueia artefato e limpa auth | `tests/llm/workflow.test.mjs:86–88`: rejeição AUTH_STATE_CONFLICT, output vazio, ENOENT no diretório | LLM-11/12 conforme |
+
+Mapeamento reverso: todos os novos asserts atendem LLM-10/11/12; nenhum teste documental ou requisito novo. Assertions verificam estado e resultado, não apenas chamadas. Revalidação independente pendente; relatório inicial FAIL preservado até nova revisão. Piloto real continua sem evidência.
+
 ## T11: caller copiável e consumo validado
 
 Gate de contratos, sintaxe e YAML passou, incluindo Node 22.23.3. `caller.test.mjs:21–32` verifica interface, modalidades, referências imutáveis e credenciais explícitas; :47–51 executa o inspector real contra um pacote válido e recusa SHA divergente. Inspector também reconstitui hashes de configuração/diretrizes e confere allowlist/tamanho/patch. README revisado manualmente, sem testes de texto, cobre configuração/autenticação/modelos/prompts/resultados/recuperação. Referência local 4301c87e422bee521e2dbe0ccd1283b40c76e499 contém o central; publicação e autenticação real permanecem pendentes, sem alegação de execução remota.

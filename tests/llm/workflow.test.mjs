@@ -68,6 +68,26 @@ test('T9/LLM-11/21: session persistence failure cannot release an otherwise succ
   await assert.rejects(runInvocation(c, options), { code: 'AUTH_PERSIST_FAILED' });
   assert.deepEqual(await readdir(c.outputRoot), []);
 });
+test('T9/LLM-11/12: external rotation without CLI refresh blocks artifacts and cleans authentication', async t => {
+  const c = await caller(t, 'rotation', 'chatgpt-session');
+  let metadataReads = 0; let authDirectory;
+  const options = { ...c.options,
+    fetchImpl: async (url, options) => {
+      assert.notEqual(options.method, 'PUT');
+      if (url.includes('/runs/')) return { ok: true, json: async () => ({ id: 42, created_at: '2026-10-13T12:00:01Z', repository: { full_name: c.event.repository } }) };
+      metadataReads++;
+      return { ok: true, json: async () => ({ name: 'MY_CODEX_AUTH', updated_at: metadataReads === 1 ? '2026-10-13T12:00:00Z' : '2026-10-13T12:00:02Z' }) };
+    },
+    execute: async (_request, { auth }) => {
+      authDirectory = auth.dir;
+      return { status: 'succeeded', decision: 'none', summary: 'valid result', patch: null };
+    },
+  };
+  await assert.rejects(runInvocation(c, options), { code: 'AUTH_STATE_CONFLICT' });
+  assert.deepEqual(await readdir(c.outputRoot), []);
+  await assert.rejects(readdir(authDirectory), { code: 'ENOENT' });
+});
+
 test('T9/LLM-07: public reusable code grants no authentication when caller supplies no credentials', async t => {
   for (const mode of ['api-key', 'chatgpt-session']) {
     const c = await caller(t, 'no-auth', mode); c.secrets = {};
