@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-9-llm-centralizado/`
-- **Phase / Task**: Execute; T1–T11 concluídas localmente. 11/12 tarefas do MVP; T12 adiada fora desse total.
+- **Phase / Task**: Meta de entrega local encerrada por solicitação explícita do mantenedor; T1–T11 concluídas e verificadas, T12 adiada, T13 transferida para triagem #7, não executada.
 - **Completed**: Workflow central, scripts, CI, callers ChatGPT/API opt-in, configuração/prompt do consumidor, inspector de resultado e instruções completas. Commits locais por tarefa e contratos verificados.
 - **In-progress**: Nenhuma implementação parcial. Correção de LLM-11 e caller atualizado passaram na reverificação independente; aprovação pendente do teste foi concedida e resolvida.
-- **Next step**: T13 aguarda publicação autorizada e consumidor privado com credenciais próprias. Triagem terá especificação TLC própria depois deste MVP, conforme mantenedor; nenhuma implementação dependente iniciada.
-- **Blockers**: Homologação real não pode ser substituída por fixtures. Provisionamento de sessão/secrets e adoção foram deixados para planos futuros pelo mantenedor; nenhum login pessoal ou publicação foi realizado.
+- **Next step**: Especificação TLC da triagem #7, primeiro consumidor e responsável pelo piloto real compartilhado. PR draft da central publicado para release/v1.0.0 e revisão humana solicitada; não houve merge.
+- **Blockers**: Nenhum para a meta local revista. Homologação real transferida exige consumidor privado e credenciais próprias; fixtures não a comprovam. Nenhum login pessoal ou inferência real realizado.
 - **Uncommitted files**: Nenhum após commit do relatório e deste handoff. Dois scratches de auditoria restaurados/inativos permanecem no Temp, conforme validation.md; remoção rejeitada pela política automática, sem credenciais reais.
 - **Branch**: `feature/issue-9-llm-centralizado`
