@@ -7,7 +7,7 @@ permissions:
 jobs:
   llm:
     if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-    uses: aplicacoesBoilerplate/.github/.github/workflows/llm-execute.yml@4301c87e422bee521e2dbe0ccd1283b40c76e499
+    uses: aplicacoesBoilerplate/.github/.github/workflows/llm-execute.yml@4d635f25e1f41f179d1dece8c20d77be21cb62b2
     with:
       invocation_id: analyze-main
       config_path: .github/llm/analyze.json
@@ -37,7 +37,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: aplicacoesBoilerplate/.github
-          ref: 4301c87e422bee521e2dbe0ccd1283b40c76e499
+          ref: 4d635f25e1f41f179d1dece8c20d77be21cb62b2
           path: automation
           persist-credentials: false
       - name: Set up runtime

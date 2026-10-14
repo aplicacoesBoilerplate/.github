@@ -2,7 +2,7 @@
 
 Este exemplo configura uma chamada ao central e verifica o resultado em outro job. Modelo, esforço, prompts e credenciais pertencem ao consumidor. O central não fornece uma conta ChatGPT global.
 
-A referência fixa `4301c87e422bee521e2dbe0ccd1283b40c76e499` contém o workflow e os scripts validados localmente. **Publicação dessa revisão ainda está pendente:** o exemplo só pode rodar no GitHub depois que o mantenedor autorizar e publicar esse commit. Não substituir por uma branch móvel para contornar essa pendência. Esta entrega não comprova login/inferência reais.
+A referência fixa `4d635f25e1f41f179d1dece8c20d77be21cb62b2` contém o workflow e os scripts, incluindo a correção de conflito de sessão sem refresh, com gates locais aprovados. **Publicação dessa revisão ainda está pendente:** o exemplo só pode rodar no GitHub depois que o mantenedor autorizar e publicar esse commit. Não substituir por uma branch móvel para contornar essa pendência. Esta entrega não comprova login/inferência reais.
 
 ## Instalação no consumidor
 

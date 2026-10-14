@@ -301,6 +301,7 @@ O piloto usa o mesmo caller reutilizável entregue em T11 e configurações pró
 - [x] Expectativa incorreta de zero requests corrigida com autorização explícita do mantenedor em 2026-10-13.
 - **Requirements**: LLM-10, LLM-11, LLM-12; correção de T6/T9, não nova funcionalidade.
 - **Gate**: suite completa e sintaxe aprovadas; revisão independente da correção pendente.
+- [x] Callers ChatGPT/API e inspector fixam a mesma revisão imutável contendo a correção; publicação continua pendente.
 
 | Task | Depends On | Diagram Shows | Status |
 | --- | --- | --- | --- |
