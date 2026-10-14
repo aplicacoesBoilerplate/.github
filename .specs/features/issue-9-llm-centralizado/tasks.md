@@ -275,6 +275,8 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T13
 
 ### T13: Homologar o piloto privado e registrar evidências
 
+**Status**: Transferred para a entrega da triagem #7 por solicitação explícita do mantenedor em 2026-10-13. Não executada. Não bloqueia o encerramento da meta de entrega local da central; LLM-24 permanece requisito de homologação compartilhada e deve ser comprovado pelo piloto da triagem, sem substituir evidência real por fixtures.
+
 **What**: Executar caller real no piloto fornecido pelo mantenedor e registrar os resultados sanitizados.
 **Where**: `docs/llm-pilot.md`
 **Depends on**: T11

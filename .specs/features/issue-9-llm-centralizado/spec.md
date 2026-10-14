@@ -167,6 +167,8 @@ Triagem e code review precisam acionar LLMs sem duplicar instalação, validaç�
 
 ## Success Criteria
 
+**Decisão de encerramento da meta (2026-10-13):** mantenedor solicitou encerrar a meta de entrega local aprovada e publicada em PR, transferindo o piloto LLM-24/T13 para a próxima meta, triagem #7. Essa transferência não afirma homologação, merge ou cumprimento do piloto. Os critérios de homologação abaixo continuam pendentes até evidência real do consumidor.
+
 - [ ] Dois consumidores usam a mesma revisão central com configuração e credenciais próprias.
 - [ ] Testes negativos impedem invocação indevida, resultado inválido e escrita cruzada de secrets.
 - [ ] Piloto comprova funcionamento e recuperação; testes simulados não substituem essa evidência.
