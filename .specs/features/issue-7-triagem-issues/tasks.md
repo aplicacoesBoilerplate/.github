@@ -1,6 +1,6 @@
 # Triagem reutilizável de issues Implementation Plan
 
-**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T7 implementadas e commitadas localmente, 7/8 tarefas de código. Gate independente do grupo local ainda pendente; piloto T8 não executado. Documentação adiada por decisão explícita do mantenedor.
+**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** T1–T7 implementadas localmente, 7/8 tarefas de código. Verifier apontou gap de teste da identidade do run; F1 reforça o contrato já aprovado, sem mudar lógica ou enfraquecer assertions. Re-verificação pendente; T8 não executado.
 **Goal:** Entregar triagem reutilizável com rotas SDD/patch, publicação por PR e piloto real da central.
 **Architecture:** caller → triagem → central LLM; configuração confiável separada da base analisada; publicar somente após validação.
 **Tech Stack:** Node 22.23.3, ESM, node:test, Ajv/dependências fixadas da central, GitHub Actions/REST/GraphQL e Git.
@@ -207,6 +207,16 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 **Tests:** e2e real; evidências sanitizadas distinguem execução de preparação e falhas de provider de teste simulado.
 **Gate:** Pilot + Verifier independente final; feature não concluída sem evidência exigida
 **Commit:** `docs(triage): record shared real pilot evidence refs #7`
+
+## Validation fix F1: identidade da invocação no inspector
+
+**What:** Cobrir recusa de artefato de outro run/attempt/repo/invocation, preservando o guard correto e todas as assertions existentes.
+**Where:** `tests/triage/caller.test.mjs`
+**Requirement:** TRI-07, TRI-13; contrato T7 já aprovado.
+**Tests:** integration; subprocesso real do inspector com identidade divergente deve terminar exit1/INVALID_RESULT.
+**Gate:** Full + Verifier independente reexecuta M5 no scratch.
+**Done when:** Casos negativos passam no inspector correto e falham se ele confiar no run_id do próprio envelope. Sem mudança de comportamento ou autorização remota.
+**Commit:** `test(triage): reject mismatched caller run identities refs #7`
 
 ## Diagram-Definition Cross-Check
 

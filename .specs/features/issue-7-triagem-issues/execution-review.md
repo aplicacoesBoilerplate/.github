@@ -1,5 +1,13 @@
 # Execution ledger: triagem
 
+## Validation fix F1: identidade do run
+
+Verifier independente confirmou gates verdes, mas M5 sobreviveu: testes não distinguiam inspector correto de inspector que obtém run_id do envelope. Guard atual é correto; fix é cobertura TRI-07/13 já aprovada, sem alterar runtime, apagar testes ou modificar expectativas existentes.
+
+Arquivos: caller.test.mjs, plano/STATE e relatório/lessons persistidos pelo Verifier. Casos negativos novos usam GITHUB_RUN_ID, GITHUB_RUN_ATTEMPT, repository e envelope de invocation distinta com request_id/artifact_name coerentes, exigindo exit1/INVALID_RESULT. Full gate e sensor independente precisam confirmar o ajuste antes de aprovar a entrega local. T8 permanece obrigatório, sem inferência/auth real.
+
+GREEN: Full gate em Node 22.23.3 e validate_tasks passaram. Evidência: `tests/triage/caller.test.mjs:60–62` preserva recusas antigas e acrescenta run/attempt/repo; `:64–68` constrói invocation diferente coerente e exige exit1/INVALID_RESULT antes de restaurar o fixture. Todos casos mapeiam TRI-07/13; nenhuma assertion enfraquecida. Re-verificação M5 pendente.
+
 ## T7: caller e inspector
 
 Premissa: caller copiável precisa de configuração da conta, Project e imagem offline pelo consumidor; não prover identidade ou modelo habilitado fictício. Arquivos: examples/callers/triage/.github (workflow, config, prompts e inspector), caller.test.mjs, lint e progresso TLC. Documentação de adoção continua adiada.

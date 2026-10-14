@@ -57,9 +57,15 @@ test('TRI-07/13: copied inspector accepts bound v2 and rejects changed issue, so
     EXPECTED_FINGERPRINT: fingerprint, RESULT_DIRECTORY: result.directory };
   const run = overrides => spawnSync(process.execPath, [join(consumer, '.github/triage/inspect-result.mjs')], { encoding: 'utf8', env: { ...env, ...overrides } });
   const valid = run(); assert.equal(valid.status, 0, valid.stderr); assert.equal(valid.stdout, 'Verified triage result: succeeded\n');
-  for (const override of [{ EXPECTED_ISSUE_NUMBER: '8' }, { EXPECTED_SOURCE_SHA: 'f'.repeat(40) }, { EXPECTED_CONFIG_SOURCE_SHA: 'f'.repeat(40) }, { EXPECTED_FINGERPRINT: 'f'.repeat(64) }]) {
+  for (const override of [{ EXPECTED_ISSUE_NUMBER: '8' }, { EXPECTED_SOURCE_SHA: 'f'.repeat(40) }, { EXPECTED_CONFIG_SOURCE_SHA: 'f'.repeat(40) },
+    { EXPECTED_FINGERPRINT: 'f'.repeat(64) }, { GITHUB_RUN_ID: '43' }, { GITHUB_RUN_ATTEMPT: '2' }, { GITHUB_REPOSITORY: 'owner/other' }]) {
     const failed = run(override); assert.equal(failed.status, 1); assert.equal(failed.stderr, 'INVALID_RESULT\n');
   }
+  const wrongInvocation = { ...result.envelope, invocation_id: 'triage-8', artifact_name: 'llm-42-1-triage-8',
+    request_id: digest(JSON.stringify(['owner/app', '42', '1', 'triage-8', sourceSha])) };
+  await writeFile(join(result.directory, 'result.json'), JSON.stringify(wrongInvocation));
+  const refusedInvocation = run(); assert.equal(refusedInvocation.status, 1); assert.equal(refusedInvocation.stderr, 'INVALID_RESULT\n');
+  await writeFile(join(result.directory, 'result.json'), JSON.stringify(result.envelope));
   await writeFile(join(consumer, 'AGENTS.md'), 'modified directives'); assert.equal(run().status, 1); await rm(join(consumer, 'AGENTS.md'));
   await writeFile(join(result.directory, 'unexpected'), 'not permitted'); assert.equal(run().status, 1);
 });
