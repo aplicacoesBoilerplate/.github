@@ -1,6 +1,6 @@
 # Triagem reutilizável de issues Implementation Plan
 
-**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1 concluída, 1/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
+**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T2 concluídas, 2/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
 **Goal:** Entregar triagem reutilizável com rotas SDD/patch, publicação por PR e piloto real da central.
 **Architecture:** caller → triagem → central LLM; configuração confiável separada da base analisada; publicar somente após validação.
 **Tech Stack:** Node 22.23.3, ESM, node:test, Ajv/dependências fixadas da central, GitHub Actions/REST/GraphQL e Git.
@@ -88,16 +88,16 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 
 **What:** Buscar dados reais, validar autorização e construir snapshot limitado/fingerprint sem materializar secrets LLM.
 **Where:** `scripts/triage/collect.mjs`
-**Supporting files:** `tests/triage/collect.test.mjs` e fixtures de API.
+**Supporting files:** `scripts/triage/api.mjs`, schema da policy para field_sources opcionais e `tests/triage/collect.test.mjs` com fixtures de API.
 **Depends on:** T1
 **Reuses:** githubGet/metadata API da central e política T1.
 **Requirement:** TRI-01, TRI-02, TRI-03, TRI-05, TRI-08, TRI-20, TRI-22
 **Tools:** TLC/cicd; Node e consultas oficiais GitHub; sem escrita externa.
 **Interfaces:** `collectIssue({event, config}, api)` → snapshot com repo/issue, metadata, base SHA, config SHA, route, fingerprint e contexto JSON limitado.
 **Done when:**
-- [ ] Issue aberta ou número de dispatch é reconsultado no repo corrente; issue/ator inelegíveis recusados antes de LLM.
-- [ ] Metadata inclui proveniência; campos não encontrados não são inventados; paginação não ignora dependências/Projects.
-- [ ] Limites em bytes recusam excesso; entrada fechada/alterada é detectável por fingerprint.
+- [x] Issue aberta ou número de dispatch é reconsultado no repo corrente; issue/ator inelegíveis recusados antes de LLM.
+- [x] Metadata inclui proveniência; campos não encontrados não são inventados; paginação não ignora dependências/Projects. field_sources permite escolher issue ou Project explicitamente; padrão Project preservado.
+- [x] Limites em bytes recusam excesso; entrada fechada/alterada é detectável por fingerprint.
 **Tests:** integration; assertions no snapshot/fingerprint e rejeições para fork/público/ator read/evento proibido/403/excesso; tipo/milestone/épica/blockers/campos corretos.
 **Gate:** Full
 **Commit:** `feat(triage): collect trusted issue context refs #7`

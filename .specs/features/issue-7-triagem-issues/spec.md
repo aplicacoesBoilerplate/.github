@@ -128,13 +128,13 @@ Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | TRI-01 | Origem | Specify | Pending review |
-| TRI-02 | Origem | Specify | Pending review |
-| TRI-03 | Origem | Specify | Pending review |
+| TRI-02 | Origem | Execute | Coleta implementada T2; integração workflow pendente |
+| TRI-03 | Origem | Execute | Guard de coleta T2; integração central pendente |
 | TRI-04 | Reuso | Specify | Pending review |
-| TRI-05 | Contexto | Specify | Pending review |
+| TRI-05 | Contexto | Execute | Config/coleta T1/T2 implementadas; integração pendente |
 | TRI-06 | Contrato central | Specify | Pending review |
 | TRI-07 | Contrato central | Specify | Pending review |
-| TRI-08 | Metadados | Specify | Pending review |
+| TRI-08 | Metadados | Execute | Coleta/proveniência/paginação T2; validação final pendente |
 | TRI-09 | SDD | Execute | Política implementada T1; integração pendente |
 | TRI-10 | Rota simples | Execute | Política implementada T1; integração pendente |
 | TRI-11 | Intervenção humana | Execute | Política implementada T1; publicação pendente |

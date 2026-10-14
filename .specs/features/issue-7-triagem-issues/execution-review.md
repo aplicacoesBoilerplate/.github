@@ -1,5 +1,26 @@
 # Execution ledger: triagem
 
+## T2: coleta
+
+Premissa: configuração confiável escolhe fonte dos campos; metadata não vem do body. Arquivos: collect.mjs, api.mjs, config.schema.json/field_sources, collect.test.mjs e progresso TLC. Sucesso: consulta issue real, autor/ator autorizados, origem privada/default, metadata paginada, SHA de base/config separados e limites sem truncamento.
+
+RED observado antes de collect.mjs existir. GREEN: testes do componente, suite completa em Node 22.23.3 e sintaxe passaram. Credenciais de LLM não foram utilizadas; transportes dos testes são fixtures.
+
+Ruling: field_sources opcional por campo, default Project, permite usar Issue Fields sem confundi-los com Project — consulta real da issue mostrou Effort distinto nos dois lugares; fontes explícitas evitam downgrade silencioso; custo: consumidor precisa escolher fonte se preferir a organização.
+Ruling: adapter read-only dedicado suporta queries paginadas/GraphQL que githubGet central não aceita — preserva endpoint fixo/prazo/erros sanitizados, sem retry automático de POST; custo: manter adapter testado em vez de ampliar implicitamente o helper de auth.
+
+| AC / critério | Evidência e assertion | Resultado |
+| --- | --- | --- |
+| Origem/ator/issue fechada | `tests/triage/collect.test.mjs:74` assert.rejects UNTRUSTED_CONTEXT / STALE_TRIAGE_INPUT | Sem snapshot autorizado |
+| Snapshot e duas revisões | `tests/triage/collect.test.mjs:40–49` issue/base/source/config SHA/route/proveniência/body exatos | Contexto da API e hashes separados |
+| Entrada antiga | `tests/triage/collect.test.mjs:57,58,61` fingerprint muda com body/base | Nova análise distinguível |
+| Insuficiência/ambiguidades | `tests/triage/collect.test.mjs:85–87` needs-human, complete false, erro privado ausente | Ausência não concede patch |
+| Fonte issue explícita | `tests/triage/collect.test.mjs:94–96` Team + field_id/source/value exatos + plan | Fonte selecionada preservada |
+| Limites bytes | `tests/triage/collect.test.mjs:101,104,105` tamanho íntegro / INVALID_TRIAGE_INPUT | Sem truncamento |
+| Paginação e erros reais do adapter | `tests/triage/collect.test.mjs:117–123,130–133,154–157` blocker da segunda página, endpoint/auth/read-only, erro sanitizado, fields/values completos | Não ignorar segunda página nem dados GraphQL parciais |
+
+Mapeamento reverso: esses asserts atendem TRI-01/02/03/05/08/09/11/14/20/22 e critérios T2; nenhum teste de documentação. Efeitos/snapshots são assertados, não somente contagem de requests. Task 2: complete; integração do coletor com auth/workflow ainda depende de T3/T6.
+
 Plan: `.specs/features/issue-7-triagem-issues/tasks.md`. Spec/design/tasks aprovados em 2026-10-14; execução inline sequencial.
 
 ## Pre-flight

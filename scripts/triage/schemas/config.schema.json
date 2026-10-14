@@ -16,6 +16,13 @@
       "type": "object", "additionalProperties": false, "required": ["effort", "size", "estimate", "release"],
       "properties": { "effort": { "$ref": "#/definitions/field" }, "size": { "$ref": "#/definitions/field" }, "estimate": { "$ref": "#/definitions/field" }, "release": { "$ref": "#/definitions/field" } }
     },
+    "field_sources": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "effort": { "enum": ["project", "issue"] }, "size": { "enum": ["project", "issue"] },
+        "estimate": { "enum": ["project", "issue"] }, "release": { "enum": ["project", "issue"] }
+      }
+    },
     "llm_configs": {
       "type": "object", "additionalProperties": false, "required": ["plan", "patch"],
       "properties": { "plan": { "$ref": "#/definitions/path" }, "patch": { "$ref": "#/definitions/path" } }
