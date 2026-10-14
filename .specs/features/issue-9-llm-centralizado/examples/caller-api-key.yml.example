@@ -1,0 +1,20 @@
+# VARIANTE OPT-IN: exige API key/faturamento próprios do consumidor.
+# Não é requisito para o piloto ChatGPT; não habilitar como fallback.
+name: Análise LLM com API key do consumidor
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  llm:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    uses: aplicacoesBoilerplate/.github/.github/workflows/llm-execute.yml@PINNED_CENTRAL_SHA
+    with:
+      invocation_id: analyze-main
+      config_path: .github/llm/analyze.json
+      source_ref: ${{ github.event.repository.default_branch }}
+      context_json: '{"request":"Analisar o projeto sem editar arquivos."}'
+      auth_mode: api-key
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.CLI_OPENAI_API_KEY }}

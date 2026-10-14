@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "invocation_mode": "decision-then-prompt",
+  "decision": {
+    "model": "MODELO_HABILITADO_NA_CONTA",
+    "effort": "low",
+    "template": "decision"
+  },
+  "execution": {
+    "model": "MODELO_HABILITADO_NA_CONTA",
+    "effort": "medium",
+    "template": "propose-patch"
+  }
+}
