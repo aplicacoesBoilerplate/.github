@@ -2,7 +2,7 @@
 
 **Design:** [design.md](design.md). **Status:** Aprovado; execução sequencial. **Execução:** 11/12 tarefas do MVP concluídas; T12 adiada.
 
-**Recorte MVP atualizado em 2026-10-13:** T12 adiada para o trabalho futuro de documentação central definido pelo mantenedor. Permanecem 12 tarefas no MVP, com 6 concluídas. T13 depende de T11; manual central extenso e testes documentais não bloqueiam o piloto. O caller recebe instruções completas de configuração e consumo, conforme correção do mantenedor sobre a transcrição. Reduzir intensidade de testes não significa reduzir essas instruções. T12 não está concluída nem dispensada como entrega futura.
+**Recorte MVP atualizado em 2026-10-13:** T12 adiada para o trabalho futuro de documentação central definido pelo mantenedor. Permanecem 12 tarefas no MVP, com 11 concluídas. T13 depende de T11; manual central extenso e testes documentais não bloqueiam o piloto. O caller recebe instruções completas de configuração e consumo, conforme correção do mantenedor sobre a transcrição. Reduzir intensidade de testes não significa reduzir essas instruções. T12 não está concluída nem dispensada como entrega futura.
 
 ## Execution Protocol
 
@@ -300,7 +300,7 @@ O piloto usa o mesmo caller reutilizável entregue em T11 e configurações pró
 - [x] Recusar rotação externa e consulta indisponível, sem artefato utilizável; limpar autenticação temporária.
 - [x] Expectativa incorreta de zero requests corrigida com autorização explícita do mantenedor em 2026-10-13.
 - **Requirements**: LLM-10, LLM-11, LLM-12; correção de T6/T9, não nova funcionalidade.
-- **Gate**: suite completa e sintaxe aprovadas; revisão independente da correção pendente.
+- **Gate**: suite completa, sintaxe, Node da CI e actionlint aprovados; reverificação independente PASS local, sensor detectou reintrodução da falha. Piloto real continua pendente.
 - [x] Callers ChatGPT/API e inspector fixam a mesma revisão imutável contendo a correção; publicação continua pendente.
 
 | Task | Depends On | Diagram Shows | Status |
