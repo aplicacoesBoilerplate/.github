@@ -135,12 +135,12 @@ Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), 
 | TRI-06 | Contrato central | Specify | Pending review |
 | TRI-07 | Contrato central | Specify | Pending review |
 | TRI-08 | Metadados | Specify | Pending review |
-| TRI-09 | SDD | Specify | Pending review |
-| TRI-10 | Rota simples | Specify | Pending review |
-| TRI-11 | Intervenção humana | Specify | Pending review |
+| TRI-09 | SDD | Execute | Política implementada T1; integração pendente |
+| TRI-10 | Rota simples | Execute | Política implementada T1; integração pendente |
+| TRI-11 | Intervenção humana | Execute | Política implementada T1; publicação pendente |
 | TRI-12 | Planejamento | Specify | Pending review |
 | TRI-13 | Patch | Specify | Pending review |
-| TRI-14 | Base | Specify | Pending review |
+| TRI-14 | Base | Execute | Candidato resolvido T1; consulta remota/publicação pendentes |
 | TRI-15 | PR | Specify | Pending review |
 | TRI-16 | Recusa | Specify | Pending review |
 | TRI-17 | Verificações | Specify | Pending review |

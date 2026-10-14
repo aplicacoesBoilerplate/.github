@@ -1,6 +1,6 @@
 # Triagem reutilizável de issues Implementation Plan
 
-**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Plano para revisão; spec/design aprovados em 2026-10-14. Nenhuma tarefa de código executada.
+**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1 concluída, 1/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
 **Goal:** Entregar triagem reutilizável com rotas SDD/patch, publicação por PR e piloto real da central.
 **Architecture:** caller → triagem → central LLM; configuração confiável separada da base analisada; publicar somente após validação.
 **Tech Stack:** Node 22.23.3, ESM, node:test, Ajv/dependências fixadas da central, GitHub Actions/REST/GraphQL e Git.
@@ -19,7 +19,7 @@ O plano preserva as aprovações existentes; sua revisão fecha o último gate d
 - Nenhum harness, comandos da LLM, merge/fechamento/aprovação automática, force-push ou alteração do fluxo SonarQube.
 - Caller escolhe modalidade, secrets, modelos/esforço/prompts. Tokens de coleta/publicação nunca entram no processo da LLM.
 - Dispatch/envelope v1 existentes permanecem compatíveis. Perfil triage usa origem explícita e envelope v2 com config_source_sha.
-- Cada componente inclui seus testes comportamentais. Não existe piso de casos nem teste de texto/documentação.
+- Cada componente inclui seus testes comportamentais. Não existe piso de casos nem teste de texto/documentação. Documentação de adoção/manual adiada em 2026-10-14; T7 entrega somente o caller executável, configuração, prompts e inspector.
 
 ## Review Focus
 
@@ -77,9 +77,9 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 **Tools:** TLC/cicd; apply_patch, Node e Git local.
 **Interfaces:** `validateTriageConfig(config)` → configuração v1 normalizada; `selectRoute(metadata)` → `{route, reasons}`; `resolveBase(metadata, config)` → base de release ou empilhamento autorizado.
 **Done when:**
-- [ ] Config schema fechado com project owner/number, mapeamento de campos, configs plan/patch, bases empilhadas, reviewer e verificações; paths/branches inválidos recusados.
-- [ ] Rotas completas obedecem à política aprovada e não usam labels/body para autorizar correção.
-- [ ] Metadados ausentes/inconsistentes retornam needs-human; ausência de base não produz patch.
+- [x] Config schema fechado com project owner/number, mapeamento de campos, configs plan/patch, bases empilhadas, reviewer e verificações; paths/branches inválidos recusados.
+- [x] Rotas completas obedecem à política aprovada e não usam labels/body para autorizar correção.
+- [x] Metadados ausentes/inconsistentes retornam needs-human; ausência de base não produz patch. Sinal SDD conhecido continua planejamento, sem autorizar código.
 **Tests:** unit; `route === 'plan'` para High/Team/MAJOR; `route === 'propose-patch'` somente combinações simples válidas; `route === 'needs-human'` para insuficiência/contradição; base do body ignorada.
 **Gate:** Quick
 **Commit:** `feat(triage): validate policy and route issue metadata refs #7`
@@ -187,7 +187,7 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 **Done when:**
 - [ ] Exemplo suporta issues.opened e dispatch; inputs/config/secret/modelo/prompt próprios e ref fixa real, sem conta central.
 - [ ] Inspector confere repo/run/issue/base/config SHAs e hashes, recusando outra revisão antes de aplicar artefato.
-- [ ] Instruções cobrem configuração/permissões/Project/branches/modelos/prompts/resultados/fila/recuperação e ativação após autorização.
+- [ ] Caller executável/configuração mantêm configuração explícita de permissões/Project/branches/modelos/prompts/resultados; documentação de adoção adiada, sem bloquear o componente funcional.
 **Tests:** integration/contract; consumo real de envelope v2 válido/forjado e propagação de modelo/prompt; documentação somente revisão manual.
 **Gate:** Build + Verifier independente local T1–T7
 **Commit:** `docs(triage): deliver configured reusable caller refs #7`

@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-7-triagem-issues/`
-- **Phase / Task**: Tasks; spec/design aprovados e execução autorizada em 2026-10-14. Plano escrito para revisão antes de Execute.
+- **Phase / Task**: Execute; plano aprovado em 2026-10-14, T1 concluída, 1/8 tarefas. Documentação adiada por pedido explícito; caller funcional permanece.
 - **Completed**: In progress aplicado no Project GitHub Features por pedido explícito e verificado via API. Empilhamento sobre #9 preservado; nenhum merge/aceite do PR da central. Aprovação de spec/context registrada.
-- **In-progress**: tasks.md com oito componentes sequenciais, gates e cobertura por requisito; nenhum código de triagem iniciado.
-- **Next step**: Revisar o plano escrito e preservar execução pelo agente principal; depois implementar T1 com teste antes de código e commit atômico.
-- **Blockers**: Gate de revisão do plano antes de Execute; blocked-by #5/#9 preservados conforme entrega empilhada. Piloto real exige consumidor e credenciais do mantenedor.
+- **In-progress**: Política/configuração/base de T1 verificadas; nenhum código de T2 parcial.
+- **Next step**: T2, coleta de origem/metadata via API antes de autenticação, continuando pelo agente principal neste worktree.
+- **Blockers**: Nenhum para implementação local autorizada; blocked-by #5/#9 preservados conforme entrega empilhada. Piloto real exige consumidor e credenciais do mantenedor.
 - **Uncommitted files**: Nenhum após commit da proposta. Planejamento OpenSpec anterior preservado como histórico.
 - **Branch**: `feature/issue-7-triagem-issues`
