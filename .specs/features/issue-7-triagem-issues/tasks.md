@@ -1,6 +1,6 @@
 # Triagem reutilizável de issues Implementation Plan
 
-**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** T1–T7 implementadas localmente, 7/8 tarefas de código. Verifier apontou gap de teste da identidade do run; F1 reforça o contrato já aprovado, sem mudar lógica ou enfraquecer assertions. Re-verificação pendente; T8 não executado.
+**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** T1–T7 concluídas localmente, 7/8 tarefas. Revisão independente local PASS na rodada 2; F1 resolveu o gap de identidade e eliminou M5 sem alterar runtime ou enfraquecer assertions. T8 real não executado; feature não concluída.
 **Goal:** Entregar triagem reutilizável com rotas SDD/patch, publicação por PR e piloto real da central.
 **Architecture:** caller → triagem → central LLM; configuração confiável separada da base analisada; publicar somente após validação.
 **Tech Stack:** Node 22.23.3, ESM, node:test, Ajv/dependências fixadas da central, GitHub Actions/REST/GraphQL e Git.
@@ -216,6 +216,7 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 **Tests:** integration; subprocesso real do inspector com identidade divergente deve terminar exit1/INVALID_RESULT.
 **Gate:** Full + Verifier independente reexecuta M5 no scratch.
 **Done when:** Casos negativos passam no inspector correto e falham se ele confiar no run_id do próprio envelope. Sem mudança de comportamento ou autorização remota.
+**Status:** Complete localmente; rodada 2 de validation.md confirmou gates verdes e M5 killed no HEAD f56a3e5.
 **Commit:** `test(triage): reject mismatched caller run identities refs #7`
 
 ## Diagram-Definition Cross-Check

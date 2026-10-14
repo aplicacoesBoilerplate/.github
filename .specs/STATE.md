@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-7-triagem-issues/`
-- **Phase / Task**: Execute; T1–T7 implementadas localmente, 7/8 tarefas de código; gate independente local pendente. Documentação adiada por pedido explícito.
+- **Phase / Task**: Execute; T1–T7 concluídas localmente, 7/8 tarefas; revisão independente local PASS na rodada 2. T8 real pendente. Documentação adiada por pedido explícito.
 - **Completed**: In progress aplicado no Project GitHub Features por pedido explícito e verificado via API. Empilhamento sobre #9 preservado; nenhum merge/aceite do PR da central. Aprovação de spec/context registrada.
-- **In-progress**: Verifier local FAIL por M5 sobrevivente: teste do inspector não detectava perda de vinculação ao run atual. F1 acrescenta casos de run/attempt/repo/invocation divergentes sem alterar código ou expectativas. Caller mantém pin 3f7ec89a9e2457e1e839a22d6db6f9dc1c4784f6; nenhum push/auth real.
-- **Next step**: Re-verificar F1/M5 e grupo local. T8 exige consumidor privado e autorização/provisionamento: consulta API mostrou boilerplate-cli público e demo-repository privado (HTML); seleção solicitada ao mantenedor, nenhuma ativação realizada.
+- **In-progress**: F1 aprovado independentemente no HEAD f56a3e5; M5 eliminado pelo teste de run divergente. Gates Node 22.23.3, sintaxe e actionlint passaram. validation.md preserva FAIL de conclusão total exclusivamente pela ausência de T8; nenhum defeito local pendente. Caller mantém pin 3f7ec89a9e2457e1e839a22d6db6f9dc1c4784f6, ainda local; nenhum push/auth real.
+- **Next step**: Selecionar consumidor privado e provisionar o piloto T8 com autorização específica para publicação/ativação. Consulta API mostrou boilerplate-cli público e demo-repository privado (HTML); seleção solicitada ao mantenedor, nenhuma ativação realizada.
 - **Blockers**: Nenhum para implementação local autorizada; blocked-by #5/#9 preservados conforme entrega empilhada. Piloto real exige consumidor e credenciais do mantenedor.
 - **Uncommitted files**: Nenhum após commit da proposta. Planejamento OpenSpec anterior preservado como histórico.
 - **Branch**: `feature/issue-7-triagem-issues`

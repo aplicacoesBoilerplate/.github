@@ -6,7 +6,7 @@ Verifier independente confirmou gates verdes, mas M5 sobreviveu: testes não dis
 
 Arquivos: caller.test.mjs, plano/STATE e relatório/lessons persistidos pelo Verifier. Casos negativos novos usam GITHUB_RUN_ID, GITHUB_RUN_ATTEMPT, repository e envelope de invocation distinta com request_id/artifact_name coerentes, exigindo exit1/INVALID_RESULT. Full gate e sensor independente precisam confirmar o ajuste antes de aprovar a entrega local. T8 permanece obrigatório, sem inferência/auth real.
 
-GREEN: Full gate em Node 22.23.3 e validate_tasks passaram. Evidência: `tests/triage/caller.test.mjs:60–62` preserva recusas antigas e acrescenta run/attempt/repo; `:64–68` constrói invocation diferente coerente e exige exit1/INVALID_RESULT antes de restaurar o fixture. Todos casos mapeiam TRI-07/13; nenhuma assertion enfraquecida. Re-verificação M5 pendente.
+GREEN: Full gate em Node 22.23.3 e validate_tasks passaram. Evidência: `tests/triage/caller.test.mjs:60–62` preserva recusas antigas e acrescenta run/attempt/repo; `:64–68` constrói invocation diferente coerente e exige exit1/INVALID_RESULT antes de restaurar o fixture. Todos casos mapeiam TRI-07/13; nenhuma assertion enfraquecida. Rodada 2 independente no HEAD f56a3e5 confirmou PASS local e M5 killed por assertion de status divergente; sintaxe e actionlint também passaram. Nenhum gap local restante. T8 real e gate de conclusão total permanecem pendentes, conforme validation.md.
 
 ## T7: caller e inspector
 

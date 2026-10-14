@@ -153,7 +153,7 @@ Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), 
 | TRI-24 | Piloto | Specify | Pending review |
 | TRI-25 | Piloto | Specify | Pending review |
 
-**Coverage:** 25 requisitos aprovados e mapeados nas tasks; T1–T7 implementadas localmente. Revisão independente e piloto real ainda pendentes. Testes simulados não são homologação.
+**Coverage:** 25 requisitos aprovados e mapeados nas tasks; T1–T7 e F1 aprovados na revisão independente local, rodada 2 no HEAD f56a3e5. Esse resultado substitui as pendências locais históricas da tabela acima; nenhum requisito é declarado homologado em produção. T8/TRI-24/25 continuam pendentes obrigatórios, sem execução real. Testes simulados não são homologação; a conclusão total permanece bloqueada no relatório validation.md.
 
 ## Success Criteria
 

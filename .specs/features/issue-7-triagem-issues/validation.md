@@ -1,4 +1,32 @@
-# Validation: Triagem reutilizável de issues — FAIL
+# Validation: Triagem reutilizável de issues — FAIL de conclusão total
+
+**Veredicto local vigente:** PASS, T1–T7 + F1 verificados na rodada 2.
+**Conclusão total:** pendente, T8/TRI-24/25 obrigatórios sem homologação real. O FAIL de conclusão total impede usar este relatório para declarar a feature completa.
+
+## Rodada 2: F1 revalidado, PASS local
+
+**Date:** 2026-10-14. **HEAD:** `f56a3e550068d61fc37cc24365301ba770d5b1bd`. **Diff completo:** `5332bd2..f56a3e5`. **Fix revisado:** `f3448a1..f56a3e5`.
+
+Revisão independente confirmou que F1 só acrescenta casos negativos pertinentes ao teste do caller; nenhum runtime, workflow, inspector, teste central ou assertion anterior foi alterado. O envelope de invocation divergente preserva request_id/artifact_name coerentes entre si, exercitando o vínculo com a identidade esperada.
+
+| Critério reavaliado | Evidência nova no HEAD fixo | Veredicto local |
+| --- | --- | --- |
+| TRI-07: identidade de repo/run/attempt e SHAs | `tests/triage/caller.test.mjs:61`: GITHUB_RUN_ID='43', GITHUB_RUN_ATTEMPT='2', GITHUB_REPOSITORY='owner/other'; `:62`: cada caso exige status1 e stderr INVALID_RESULT; mantém casos source/config/fingerprint. `inspect-result.mjs:28` continua usando identidades esperadas | PASS |
+| TRI-13/T7: envelope/identidade independente do artefato | `tests/triage/caller.test.mjs:64`: invocation_id='triage-8' com artifact_name coerente; `:65`: request_id coerente com o envelope forjado; `:67`: status1/INVALID_RESULT. `:69`: hash de instructions alterado recusado; `:70`: arquivos extras recusados | PASS |
+| Demais TRI-01–23 | Evidências da rodada 1 preservadas; superfícies executáveis correspondentes não mudaram e o gate completo passou novamente | Conforme local |
+| TRI-24/25 | Nenhuma execução remota nova ou evidência real foi produzida | Pendente obrigatório |
+
+**Gates da rodada 2:** full `npx --yes --package=node@22.23.3 node --test tests/llm/*.test.mjs tests/triage/*.test.mjs` na árvore real: exit0, 141 pass/0 fail/0 skipped. Mesmo gate como baseline no clone scratch: exit0, 141 pass/0 fail/0 skipped. `npm --prefix scripts/llm run check`: exit0. Actionlint Windows 1.7.12 nos mesmos seis workflows e somente exceções da rodada 1: exit0. Script Linux continua não executado no Windows.
+
+**Sensor M5 repetido:** após baseline verde no scratch, `examples/callers/triage/.github/triage/inspect-result.mjs:28` passou temporariamente a usar envelope.run_id como run esperado. `npx --yes --package=node@22.23.3 node --test tests/triage/caller.test.mjs`: exit1, 1 pass/1 fail, `caller.test.mjs:62` observou status0 onde exige status1. **Killed** por falha de assertion, sem erro sintático/infraestrutura. A mutação foi revertida por patch; scratch porcelain vazio. M1–M4/M6 da primeira rodada continuam válidos para runtime imutável; a única sobrevivente original foi eliminada pela cobertura F1. Nenhum novo defeito relevante encontrado na superfície da correção.
+
+**Isolamento:** clone detached anterior avançado por fetch local/checkout ao commit fixo, preservando histórico e pin dos callers; nenhuma branch nova. Porcelain real antes/depois do sensor vazio, HEAD f56a3e5 preservado; após este relatório, somente validation.md modificado. Scratch limpo permanece em `C:/Users/gerso/AppData/Local/Temp/triage-verifier-55dfc5863faa4f66933770955d694a00`, clone independente sem registro no worktree list do projeto. Nenhuma nova tentativa de remoção. Nenhuma alteração em código/testes/tasks/STATE/commits, nenhuma auth pessoal/API real/Docker real.
+
+**Gaps vigentes:** nenhum gap local pendente. O gap P2 da rodada 1 está resolvido. Resta T8: selecionar/provisionar consumidor, publicar/ativar somente com autorização, comprovar duas execuções reais e conflito/falha/fila/recuperação com evidência sanitizada. Refresh/Docker/Actions reais continuam não homologados. Não promover fixtures a homologação.
+
+**Lessons:** nenhuma nova lesson, pois F1 não produziu novo sinal grounded. L-003 da rodada anterior permanece como candidate e registra o sinal histórico; não recebeu nova recorrência nem penalização. Gate TLC de conclusão permanece FAIL intencional pela pendência total, sem modificar o veredicto local PASS.
+
+## Rodada 1 preservada: FAIL local antes de F1
 
 **Date:** 2026-10-14  
 **Diff range:** `5332bd2..f3448a197c92ce728ecf5487b13ff559f8e46acc`  
