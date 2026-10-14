@@ -111,8 +111,8 @@ test('T9/LLM-21: freshly rotated credentials cannot escape in the result artifac
 });
 test('T9: workflow contract preserves caller ownership, pinned code, serialization and publication failure', async () => {
   const workflow = parse(await readFile(new URL('../../.github/workflows/llm-execute.yml', import.meta.url), 'utf8'));
-  assert.deepEqual(Object.keys(workflow.on.workflow_call.inputs).sort(), ['auth_mode', 'config_path', 'context_json', 'invocation_id', 'session_secret_name', 'source_ref']);
-  assert.deepEqual(Object.keys(workflow.on.workflow_call.secrets).sort(), ['CODEX_AUTH_JSON', 'CODEX_AUTH_WRITE_PAT', 'OPENAI_API_KEY']);
+  assert.deepEqual(Object.keys(workflow.on.workflow_call.inputs).sort(), ['auth_mode', 'caller_profile', 'config_path', 'context_json', 'expected_source_sha', 'invocation_id', 'issue_number', 'session_secret_name', 'source_ref', 'triage_config_path']);
+  assert.deepEqual(Object.keys(workflow.on.workflow_call.secrets).sort(), ['CODEX_AUTH_JSON', 'CODEX_AUTH_WRITE_PAT', 'OPENAI_API_KEY', 'TRIAGE_READ_TOKEN']);
   assert.deepEqual(workflow.permissions, { contents: 'read', actions: 'read' });
   const job = workflow.jobs.invoke;
   assert.equal(job.concurrency['cancel-in-progress'], false);

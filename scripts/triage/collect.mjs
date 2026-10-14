@@ -23,9 +23,8 @@ function fieldValue(key, config, project, issueFields) {
   return { source, field_id: field.id, name, available: true, value: values[0]?.value ?? null };
 }
 
-/** Collect only API-backed state; the caller body is never authority for routing. */
-export async function collectIssue({ event, config }, api) {
-  const policy = validateTriageConfig(config);
+/** Validate platform origin independently of policy or LLM authentication. */
+export async function verifyTriageOrigin(event, api) {
   try {
     if (!event || event.server_url !== 'https://github.com'
       || !/^[a-zA-Z0-9][a-zA-Z0-9-]*\/[a-zA-Z0-9_.-]+$/.test(event.repository ?? '')
@@ -50,10 +49,21 @@ export async function collectIssue({ event, config }, api) {
       if (!['write', 'maintain', 'admin'].includes(permission.permission)
         || permission.user?.login?.toLowerCase() !== actor.toLowerCase()) fail('UNTRUSTED_CONTEXT');
     }
-    const body = issue.body ?? '';
-    if (typeof body !== 'string' || Buffer.byteLength(body, 'utf8') > 16384) fail('INVALID_TRIAGE_INPUT');
     const defaultBranch = await api.getBranch(event.repository, repo.default_branch);
     if (defaultBranch?.name !== repo.default_branch || !sha.test(defaultBranch.commit?.sha ?? '')) fail('UNTRUSTED_CONTEXT');
+    return { repo, issue, config_source_sha: defaultBranch.commit.sha };
+  } catch (error) {
+    throw contractError(['UNTRUSTED_CONTEXT', 'STALE_TRIAGE_INPUT', 'TRIAGE_METADATA_UNAVAILABLE'].includes(error.code) ? error.code : 'TRIAGE_METADATA_UNAVAILABLE');
+  }
+}
+
+/** Collect only API-backed state; the caller body is never authority for routing. */
+export async function collectIssue({ event, config }, api) {
+  const policy = validateTriageConfig(config);
+  try {
+    const { repo, issue, config_source_sha } = await verifyTriageOrigin(event, api);
+    const body = issue.body ?? '';
+    if (typeof body !== 'string' || Buffer.byteLength(body, 'utf8') > 16384) fail('INVALID_TRIAGE_INPUT');
     const missing = [];
     async function optional(name, action) {
       try { return await action(); }
@@ -75,15 +85,15 @@ export async function collectIssue({ event, config }, api) {
     const branch = candidate ? await optional('BASE_UNAVAILABLE', () => api.getBranch(event.repository, candidate)) : null;
     metadata.base_ref = branch?.name === candidate && sha.test(branch?.commit?.sha ?? '') ? candidate : null;
     metadata.base_sha = metadata.base_ref ? branch.commit.sha : null;
-    const sourceSha = metadata.base_sha ?? defaultBranch.commit.sha;
+    const sourceSha = metadata.base_sha ?? config_source_sha;
     const issueData = { number: issue.number, node_id: issue.node_id, title: issue.title, body, updated_at: issue.updated_at, state: issue.state };
     const route = selectRoute(metadata);
-    const context = { issue: issueData, metadata, missing, route, source_sha: sourceSha, config_source_sha: defaultBranch.commit.sha };
+    const context = { issue: issueData, metadata, missing, route, source_sha: sourceSha, config_source_sha };
     const contextJson = JSON.stringify(context);
     if (Buffer.byteLength(contextJson, 'utf8') > 32768) fail('INVALID_TRIAGE_INPUT');
     const fingerprint = createHash('sha256').update(contextJson).digest('hex');
     return { repository: event.repository, default_branch: repo.default_branch, issue: issueData, metadata, route, fingerprint,
-      base_ref: metadata.base_ref, source_sha: sourceSha, config_source_sha: defaultBranch.commit.sha, context_json: contextJson };
+      base_ref: metadata.base_ref, source_sha: sourceSha, config_source_sha, context_json: contextJson };
   } catch (error) {
     const code = ['UNTRUSTED_CONTEXT', 'STALE_TRIAGE_INPUT', 'INVALID_TRIAGE_INPUT', 'TRIAGE_METADATA_UNAVAILABLE'].includes(error.code) ? error.code : 'TRIAGE_METADATA_UNAVAILABLE';
     throw contractError(code);

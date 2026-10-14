@@ -130,10 +130,10 @@ Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), 
 | TRI-01 | Origem | Specify | Pending review |
 | TRI-02 | Origem | Execute | Coleta implementada T2; integração workflow pendente |
 | TRI-03 | Origem | Execute | Guard de coleta T2; integração central pendente |
-| TRI-04 | Reuso | Specify | Pending review |
+| TRI-04 | Reuso | Execute | Central/configuração própria T3; caller de triagem pendente |
 | TRI-05 | Contexto | Execute | Config/coleta T1/T2 implementadas; integração pendente |
-| TRI-06 | Contrato central | Specify | Pending review |
-| TRI-07 | Contrato central | Specify | Pending review |
+| TRI-06 | Contrato central | Execute | Origem de issue/runner T3; workflow de domínio pendente |
+| TRI-07 | Contrato central | Execute | SHAs separados/envelope v2 T3; inspector de consumidor pendente |
 | TRI-08 | Metadados | Execute | Coleta/proveniência/paginação T2; validação final pendente |
 | TRI-09 | SDD | Execute | Política implementada T1; integração pendente |
 | TRI-10 | Rota simples | Execute | Política implementada T1; integração pendente |

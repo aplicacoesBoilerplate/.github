@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-7-triagem-issues/`
-- **Phase / Task**: Execute; plano aprovado em 2026-10-14, T1–T2 concluídas, 2/8 tarefas. Documentação adiada por pedido explícito; caller funcional permanece.
+- **Phase / Task**: Execute; plano aprovado em 2026-10-14, T1–T3 concluídas, 3/8 tarefas. Documentação adiada por pedido explícito; caller funcional permanece.
 - **Completed**: In progress aplicado no Project GitHub Features por pedido explícito e verificado via API. Empilhamento sobre #9 preservado; nenhum merge/aceite do PR da central. Aprovação de spec/context registrada.
-- **In-progress**: Coleta T2 verificada com origem/ator, metadata/proveniência, paginação e limites; nenhum código parcial da integração central.
-- **Next step**: T3, adaptar origem e checkouts config/source na central com envelope v2, preservando o dispatch v1 e o ciclo de auth.
+- **In-progress**: Integração T3 verificada com perfil triage, origem de plataforma, config/source SHA distintos, envelope v2 e regressões v1; nenhum código parcial de preparo de patch.
+- **Next step**: T4, preparar e validar patches em workspace isolado, sem executar código do produto ou publicar com credenciais.
 - **Blockers**: Nenhum para implementação local autorizada; blocked-by #5/#9 preservados conforme entrega empilhada. Piloto real exige consumidor e credenciais do mantenedor.
 - **Uncommitted files**: Nenhum após commit da proposta. Planejamento OpenSpec anterior preservado como histórico.
 - **Branch**: `feature/issue-7-triagem-issues`

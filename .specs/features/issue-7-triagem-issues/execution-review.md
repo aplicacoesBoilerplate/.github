@@ -1,5 +1,27 @@
 # Execution ledger: triagem
 
+## T3: central compatível
+
+Premissa: configuração/default Git SHA separado do SHA analisado; perfil triage explícito sem abrir origens legadas indiscriminadamente. Arquivos: preflight/request/orchestrate/result/run, workflow central, origem extraída em collect, adaptador de domínio invocation, testes centrais/triage e progresso TLC.
+
+RED: nova integração falhou UNTRUSTED_CONTEXT no código legado; comportamento ausente confirmado antes da implementação. GREEN: suite completa em Node 22.23.3, syntax e actionlint 1.7.12 Windows passaram. Binário reacquirido e checksum zip validado porque scratch antigo foi removido externamente; exceções precisas pré-existentes mantidas. Nenhuma inferência/autenticação real.
+
+Ruling: adapter de domínio em scripts/triage autoriza rota/contexto/base e não duplica o ciclo de auth; central mantém executor genérico — evita trazer regras SDD para o executor; custo: perfil precisa manter compatibilidade de adapter junto da revisão central.
+Ruling: schemas v1/v2 discriminados, v2 derivado do schema fechado v1 com campo config_source_sha obrigatório — preserva callers existentes sem duplicar todos campos; custo: revisão deve avaliar alterações comuns para ambos formatos.
+Ruling: assertion de interface fechada do workflow atualizada somente com os inputs/secret aprovados; guards legados de evento/SHA e v1 não foram enfraquecidos — evolução de contrato, não remoção de teste; custo: consumidores v2 precisam passar token de leitura próprio.
+
+| AC / critério | Evidência e assertion | Resultado |
+| --- | --- | --- |
+| Modelo/prompt/diretrizes e fonte corretos | `tests/triage/central.test.mjs:59–69`: schema/source/config SHA, modelo/esforço/template/source_files e env/instruções exatos | V2 vinculado à fonte e configuração próprias |
+| Forja/base/issue/config/token ausente | `tests/triage/central.test.mjs:83–85`: código/mensagem exatos, authUsed false, output vazio | Recusa antes de auth |
+| SDD não retorna código | `tests/triage/central.test.mjs:93–94`: INVALID_RESULT/output vazio | Patch em plan recusado |
+| Inspector/config SHA e legado | `tests/triage/central.test.mjs:99–107`: valida/recusa v2 spoof/downgrade, manual schema 1 sem campo novo | V1 preservado e v2 fechado |
+| Persistência e token de leitura | `tests/triage/central.test.mjs:131–141`: AUTH_PERSIST_FAILED após PUT real simulado, output vazio/ENOENT; token em summary recusado | Sem resultado utilizável ou vazamento |
+| Runner real e evento da plataforma | `tests/triage/central.test.mjs:170–179`: subprocesso bootstrap/source exit0, SHAs emitidos, somente state.json; payload diferente exit1 UNTRUSTED_CONTEXT | SHA Git/config e issue validados antes do checkout de análise |
+| Workflow de checkouts e credenciais | `tests/triage/central.test.mjs:185–194`: manual default, refs exatas e zero sessão/PAT nas fases de metadata | Separação preservada |
+
+Mapeamento reverso: asserts novos cobrem TRI-03/04/06/07/09/13/20/22 e critérios T3. Suite anterior continua no gate; sem testes de texto ou metas de contagem. Preload de rede é test-only e nunca faz fallback externo. Task 3: complete; integração local não substitui piloto GitHub/Codex real.
+
 ## T2: coleta
 
 Premissa: configuração confiável escolhe fonte dos campos; metadata não vem do body. Arquivos: collect.mjs, api.mjs, config.schema.json/field_sources, collect.test.mjs e progresso TLC. Sucesso: consulta issue real, autor/ator autorizados, origem privada/default, metadata paginada, SHA de base/config separados e limites sem truncamento.

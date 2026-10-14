@@ -15,6 +15,10 @@ const checkInputs = ajv.compile({
     context_json: { type: 'string' },
     auth_mode: { enum: ['chatgpt-session', 'api-key'] },
     session_secret_name: { type: 'string' },
+    caller_profile: { enum: ['manual', 'triage'] },
+    issue_number: { type: 'integer', minimum: 0 },
+    triage_config_path: { type: 'string', maxLength: 240 },
+    expected_source_sha: { type: 'string' },
   },
 });
 
@@ -30,6 +34,11 @@ export function validateRelativePath(path) {
 
 export function validateRequest(config, inputs) {
   if (!checkInputs(inputs) || !checkConfig(config)) throw contractError('INVALID_CONFIG');
+  const profile = inputs.caller_profile ?? 'manual';
+  if (profile === 'triage') {
+    if (!Number.isSafeInteger(inputs.issue_number) || inputs.issue_number < 1 || !/^[a-f0-9]{40}$/.test(inputs.expected_source_sha ?? '')) throw contractError('INVALID_CONFIG');
+    validateRelativePath(inputs.triage_config_path);
+  } else if ((inputs.issue_number ?? 0) !== 0 || (inputs.triage_config_path ?? '') !== '' || (inputs.expected_source_sha ?? '') !== '') throw contractError('INVALID_CONFIG');
   validateRelativePath(inputs.config_path);
   for (const stage of [config.execution, config.decision].filter(Boolean)) {
     if (stage.template_path !== undefined) validateRelativePath(stage.template_path);

@@ -1,5 +1,6 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { contractError, validateRelativePath } from './validate-request.mjs';
+import { verifyTriageOrigin } from '../triage/collect.mjs';
 
 const shaPattern = /^[a-f0-9]{40}$/;
 const repoPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]*\/[a-zA-Z0-9_.-]+$/;
@@ -31,6 +32,13 @@ export function githubMetadataApi(token, options = {}) {
 
 export async function verifyContext(event, inputs, api) {
   try {
+    if (inputs.caller_profile === 'triage') {
+      if (event.issue_number !== inputs.issue_number) throw contractError('UNTRUSTED_CONTEXT');
+      const origin = await verifyTriageOrigin(event, api);
+      return { repository: event.repository, default_branch: origin.repo.default_branch,
+        source_sha: origin.config_source_sha, config_source_sha: origin.config_source_sha, private: true };
+    }
+    if (inputs.caller_profile !== undefined && inputs.caller_profile !== 'manual') throw contractError('UNTRUSTED_CONTEXT');
     if (event.event_name !== 'workflow_dispatch' || event.server_url !== 'https://github.com'
       || !repoPattern.test(event.repository) || !shaPattern.test(event.sha) || event.workflow_sha !== event.sha) throw contractError('UNTRUSTED_CONTEXT');
     const repo = await api.getRepository(event.repository);

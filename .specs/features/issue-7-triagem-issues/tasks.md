@@ -1,6 +1,6 @@
 # Triagem reutilizável de issues Implementation Plan
 
-**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T2 concluídas, 2/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
+**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T3 concluídas, 3/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
 **Goal:** Entregar triagem reutilizável com rotas SDD/patch, publicação por PR e piloto real da central.
 **Architecture:** caller → triagem → central LLM; configuração confiável separada da base analisada; publicar somente após validação.
 **Tech Stack:** Node 22.23.3, ESM, node:test, Ajv/dependências fixadas da central, GitHub Actions/REST/GraphQL e Git.
@@ -106,16 +106,16 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 
 **What:** Integrar origem de issue e SHAs separados ao ciclo central existente, preservando dispatch v1.
 **Where:** `scripts/llm/`
-**Supporting files:** workflow `llm-execute.yml`, schemas/request/result, testes centrais afetados e `tests/triage/central.test.mjs`.
+**Supporting files:** workflow `llm-execute.yml`, adaptador `scripts/triage/invocation.mjs`, extração coesa de origem em collect.mjs, schemas/request/result, testes centrais afetados e `tests/triage/central.test.mjs` com preload de API somente para teste.
 **Depends on:** T2
 **Reuses:** Executor/auth/instructions/freshness/persistência/limpeza existentes, sem segundo login/runtime.
 **Requirement:** TRI-03, TRI-04, TRI-06, TRI-07, TRI-13, TRI-22
 **Tools:** TLC/cicd; Node, API fixtures e actionlint.
 **Interfaces:** Perfil opcional `caller_profile: manual|triage`, `issue_number`, `triage_config_path` e `expected_source_sha`; defaults preservam chamada manual atual. Orquestração recebe `configRoot` confiável separado de `sourceRoot`. Envelope triage v2 adiciona `config_source_sha` com schema discriminado; v1 permanece fechado e inalterado.
 **Done when:**
-- [ ] Origem real/ator/base são validados independentemente de context_json; configuração vem da branch padrão e código do SHA permitido.
-- [ ] Modelo, esforço e prompt do caller são usados; proveniência v2 não vem da LLM.
-- [ ] Callers antigos e falhas de sessão continuam cobertos; não trocar assertions para ignorar segurança de evento ou SHA.
+- [x] Origem real/ator/base são validados independentemente de context_json; configuração vem da branch padrão e código do SHA permitido.
+- [x] Modelo, esforço e prompt do caller são usados; proveniência v2 não vem da LLM.
+- [x] Callers antigos e falhas de sessão continuam cobertos; assertions de segurança de evento/SHA preservadas. Interface fechada do workflow foi estendida explicitamente ao perfil aprovado.
 **Tests:** integration; dispatch continua v1, triage produz v2 correto, configuração/SHA/base/origem divergentes rejeitados, sem artefato após erro de persistência e sem fallback de auth.
 **Gate:** Full + lint do workflow modificado
 **Commit:** `feat(llm): support trusted triage sources refs #7`

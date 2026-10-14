@@ -7,11 +7,14 @@ import { contractError, validateRelativePath } from './validate-request.mjs';
 const schema = JSON.parse(await readFile(new URL('./schemas/result.schema.json', import.meta.url), 'utf8'));
 const ajv = new Ajv({ strict: true });
 const check = ajv.compile(schema);
+const checkV2 = ajv.compile({ ...schema, required: [...schema.required, 'config_source_sha'],
+  properties: { ...schema.properties, schema_version: { const: 2 }, config_source_sha: { type: 'string', pattern: '^[a-f0-9]{40}$' } } });
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const fields = ['repository', 'run_id', 'run_attempt', 'invocation_id', 'source_sha', 'automation_sha', 'config_sha256', 'instructions_sha256'];
 
 function identity(provenance) {
   const p = Object.fromEntries(fields.map(key => [key, provenance[key]]));
+  if (provenance.config_source_sha !== undefined) p.config_source_sha = provenance.config_source_sha;
   p.run_id = String(p.run_id); p.run_attempt = String(p.run_attempt);
   return { ...p, artifact_name: `llm-${p.run_id}-${p.run_attempt}-${p.invocation_id}`, request_id: sha256(JSON.stringify([p.repository, p.run_id, p.run_attempt, p.invocation_id, p.source_sha])) };
 }
@@ -49,7 +52,8 @@ export function validatePatch(patch) {
 }
 
 export function validateEnvelope(envelope, expected) {
-  if (!check(envelope)) throw contractError('INVALID_RESULT');
+  const version = expected.config_source_sha === undefined ? 1 : 2;
+  if (envelope.schema_version !== version || !(version === 1 ? check(envelope) : checkV2(envelope))) throw contractError('INVALID_RESULT');
   const consistent = envelope.status === 'succeeded' ? ['none', 'proceed'].includes(envelope.decision)
     : envelope.status === 'skipped' ? envelope.decision === 'skip' && envelope.patch_file === null
       : envelope.decision === 'needs-human' && envelope.patch_file === null;
@@ -64,12 +68,13 @@ export async function validateAndPackage(result, provenance, outputRoot, { sensi
     || !(result.patch === null || typeof result.patch === 'string')) throw contractError('INVALID_RESULT');
   if (result.patch !== null) validatePatch(result.patch);
   const trusted = identity(provenance);
-  const envelope = { schema_version: 1, ...trusted, status: result.status, decision: result.decision, summary: result.summary, patch_file: result.patch === null ? null : 'proposal.patch', error_code: '' };
+  const envelope = { schema_version: provenance.config_source_sha === undefined ? 1 : 2, ...trusted, status: result.status, decision: result.decision, summary: result.summary, patch_file: result.patch === null ? null : 'proposal.patch', error_code: '' };
   validateEnvelope(envelope, provenance);
   const json = JSON.stringify(envelope, null, 2) + '\n';
   const payload = json + (result.patch ?? '');
   if (Buffer.byteLength(payload) > 1048576 || sensitiveValues.some(value => typeof value === 'string' && value.length > 0 && payload.includes(value))) throw contractError('INVALID_RESULT');
   const outputs = Object.fromEntries(['status', 'decision', 'artifact_name', 'source_sha', 'automation_sha', 'request_id', 'error_code'].map(key => [key, envelope[key]]));
+  if (envelope.schema_version === 2) outputs.config_source_sha = envelope.config_source_sha;
   if (Buffer.byteLength(JSON.stringify(outputs)) > 8192) throw contractError('INVALID_RESULT');
   const directory = join(outputRoot, trusted.artifact_name);
   let created = false;

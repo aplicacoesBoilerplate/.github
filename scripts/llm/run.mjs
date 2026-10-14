@@ -4,12 +4,21 @@ import { spawnSync } from 'node:child_process';
 import { verifyContext, githubMetadataApi } from './preflight.mjs';
 import { validateRequest, contractError } from './validate-request.mjs';
 import { runInvocation, publicationStatus } from './orchestrate.mjs';
+import { createTriageApi } from '../triage/api.mjs';
+import { resolveTriageInvocation } from '../triage/invocation.mjs';
 
 const env = process.env;
 let inputs;
 const event = { repository: env.GITHUB_REPOSITORY, event_name: env.GITHUB_EVENT_NAME, ref: env.GITHUB_REF, sha: env.GITHUB_SHA, workflow_sha: env.GITHUB_WORKFLOW_SHA, workflow_ref: env.GITHUB_WORKFLOW_REF, server_url: env.GITHUB_SERVER_URL, run_id: env.GITHUB_RUN_ID, run_attempt: env.GITHUB_RUN_ATTEMPT };
 const phase = process.argv[2];
-const safeCodes = new Set(['INVALID_CONFIG', 'INSTRUCTIONS_INVALID', 'UNTRUSTED_CONTEXT', 'AUTH_CONFIG_ERROR', 'AUTH_REQUIRED', 'AUTH_SNAPSHOT_STALE', 'AUTH_STATE_CONFLICT', 'AUTH_PERSIST_FAILED', 'PROVIDER_ERROR', 'TIMEOUT', 'INVALID_RESULT', 'ARTIFACT_FAILED']);
+const safeCodes = new Set(['INVALID_CONFIG', 'INSTRUCTIONS_INVALID', 'UNTRUSTED_CONTEXT', 'AUTH_CONFIG_ERROR', 'AUTH_REQUIRED', 'AUTH_SNAPSHOT_STALE', 'AUTH_STATE_CONFLICT', 'AUTH_PERSIST_FAILED', 'PROVIDER_ERROR', 'TIMEOUT', 'INVALID_RESULT', 'ARTIFACT_FAILED', 'INVALID_TRIAGE_CONFIG', 'INVALID_TRIAGE_INPUT', 'TRIAGE_METADATA_UNAVAILABLE', 'STALE_TRIAGE_INPUT']);
+
+function head(path) {
+  const git = spawnSync('git', ['-C', path, 'rev-parse', 'HEAD'], { encoding: 'utf8', windowsHide: true,
+    env: { PATH: env.PATH, ...(env.SystemRoot ? { SystemRoot: env.SystemRoot } : {}), GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null' } });
+  if (git.status !== 0 || !/^[a-f0-9]{40}$/.test(git.stdout?.trim() ?? '')) throw contractError('UNTRUSTED_CONTEXT');
+  return git.stdout.trim();
+}
 
 async function emit(values) {
   const text = Object.entries(values).map(([key, value]) => {
@@ -27,22 +36,45 @@ function stateRoot() {
 
 try {
   inputs = JSON.parse(env.INPUTS_JSON ?? '{}');
+  if (inputs.caller_profile === 'triage' && ['preflight', 'source', 'invoke'].includes(phase)) {
+    let payload;
+    try { payload = JSON.parse(await readFile(env.GITHUB_EVENT_PATH, 'utf8')); }
+    catch { throw contractError('UNTRUSTED_CONTEXT'); }
+    event.action = payload.action;
+    event.actor = env.GITHUB_ACTOR;
+    event.issue_number = event.event_name === 'issues' ? payload.issue?.number : inputs.issue_number;
+    if (event.event_name === 'workflow_dispatch' && payload.inputs?.issue_number !== undefined && Number(payload.inputs.issue_number) !== inputs.issue_number) throw contractError('UNTRUSTED_CONTEXT');
+  }
   const root = stateRoot();
   const stateFile = join(root, 'state.json');
   if (phase === 'preflight') {
-    const metadata = await verifyContext(event, inputs, githubMetadataApi(env.GITHUB_TOKEN));
+    const api = inputs.caller_profile === 'triage' ? createTriageApi(env.TRIAGE_READ_TOKEN) : githubMetadataApi(env.GITHUB_TOKEN);
+    const metadata = await verifyContext(event, inputs, api);
     await mkdir(root, { mode: 0o700 });
     await writeFile(stateFile, JSON.stringify(metadata), { mode: 0o600, flag: 'wx' });
-    await emit({ source_sha: metadata.source_sha });
+    await emit({ source_sha: metadata.source_sha, ...(metadata.config_source_sha ? { config_source_sha: metadata.config_source_sha } : {}) });
+  } else if (phase === 'source') {
+    if (inputs.caller_profile !== 'triage') throw contractError('INVALID_CONFIG');
+    const state = JSON.parse(await readFile(stateFile, 'utf8'));
+    const configRoot = resolve(env.GITHUB_WORKSPACE, 'consumer');
+    const checkedConfigSha = head(configRoot);
+    if (checkedConfigSha !== state.config_source_sha) throw contractError('UNTRUSTED_CONTEXT');
+    const snapshot = await resolveTriageInvocation({ configRoot, event, inputs, checkedConfigSha }, createTriageApi(env.TRIAGE_READ_TOKEN));
+    await writeFile(stateFile, JSON.stringify({ ...state, snapshot }), { mode: 0o600 });
+    await emit({ source_sha: snapshot.source_sha, config_source_sha: snapshot.config_source_sha });
   } else if (phase === 'invoke') {
     const state = JSON.parse(await readFile(stateFile, 'utf8'));
-    const sourceRoot = resolve(env.GITHUB_WORKSPACE, 'consumer');
-    const git = spawnSync('git', ['-C', sourceRoot, 'rev-parse', 'HEAD'], { encoding: 'utf8', windowsHide: true });
-    if (git.status !== 0 || git.stdout.trim() !== state.source_sha || !/^[a-f0-9]{40}$/.test(env.AUTOMATION_SHA ?? '')) throw contractError('UNTRUSTED_CONTEXT');
+    const triage = inputs.caller_profile === 'triage';
+    const configRoot = resolve(env.GITHUB_WORKSPACE, 'consumer');
+    const sourceRoot = triage ? resolve(env.GITHUB_WORKSPACE, 'consumer-source') : configRoot;
+    const checkedConfigSha = head(configRoot); const checkedOutSha = head(sourceRoot);
+    if (checkedConfigSha !== (triage ? state.config_source_sha : state.source_sha)
+      || checkedOutSha !== (triage ? state.snapshot?.source_sha : state.source_sha)
+      || !/^[a-f0-9]{40}$/.test(env.AUTOMATION_SHA ?? '')) throw contractError('UNTRUSTED_CONTEXT');
     const outputRoot = join(root, 'artifacts'); await mkdir(outputRoot);
-    const result = await runInvocation({ sourceRoot, outputRoot, inputs, event, automation_sha: env.AUTOMATION_SHA,
-      secrets: { CODEX_AUTH_JSON: env.CODEX_AUTH_JSON, CODEX_AUTH_WRITE_PAT: env.CODEX_AUTH_WRITE_PAT, OPENAI_API_KEY: env.OPENAI_API_KEY, GITHUB_TOKEN: env.GITHUB_TOKEN } },
-      { checkedOutSha: state.source_sha, auth: { tempRoot: root } });
+    const result = await runInvocation({ sourceRoot, configRoot, outputRoot, inputs, event, automation_sha: env.AUTOMATION_SHA,
+      secrets: { CODEX_AUTH_JSON: env.CODEX_AUTH_JSON, CODEX_AUTH_WRITE_PAT: env.CODEX_AUTH_WRITE_PAT, OPENAI_API_KEY: env.OPENAI_API_KEY, GITHUB_TOKEN: env.GITHUB_TOKEN, TRIAGE_READ_TOKEN: env.TRIAGE_READ_TOKEN } },
+      { checkedOutSha, checkedConfigSha, auth: { tempRoot: root } });
     await emit({ ...result.outputs, result_directory: result.directory });
   } else if (phase === 'cleanup') {
     try {

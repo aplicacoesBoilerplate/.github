@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       source_ref:
-        description: Trusted consumer default branch
+        description: Consumer default branch or triage-authorized analysis base
         required: true
         type: string
       context_json:
@@ -29,12 +29,30 @@ on:
         required: false
         default: ''
         type: string
+      caller_profile:
+        required: false
+        default: manual
+        type: string
+      issue_number:
+        required: false
+        default: 0
+        type: number
+      triage_config_path:
+        required: false
+        default: ''
+        type: string
+      expected_source_sha:
+        required: false
+        default: ''
+        type: string
     secrets:
       CODEX_AUTH_JSON:
         required: false
       CODEX_AUTH_WRITE_PAT:
         required: false
       OPENAI_API_KEY:
+        required: false
+      TRIAGE_READ_TOKEN:
         required: false
     outputs:
       status:
@@ -45,6 +63,8 @@ on:
         value: ${{ jobs.invoke.outputs.artifact_name }}
       source_sha:
         value: ${{ jobs.invoke.outputs.source_sha }}
+      config_source_sha:
+        value: ${{ jobs.invoke.outputs.config_source_sha }}
       automation_sha:
         value: ${{ jobs.invoke.outputs.automation_sha }}
       request_id:
@@ -71,6 +91,7 @@ jobs:
       decision: ${{ steps.invoke.outputs.decision }}
       artifact_name: ${{ steps.invoke.outputs.artifact_name }}
       source_sha: ${{ steps.invoke.outputs.source_sha }}
+      config_source_sha: ${{ steps.invoke.outputs.config_source_sha }}
       automation_sha: ${{ steps.invoke.outputs.automation_sha }}
       request_id: ${{ steps.invoke.outputs.request_id }}
       error_code: ${{ steps.invoke.outputs.error_code || steps.finish.outputs.error_code }}
@@ -92,12 +113,26 @@ jobs:
         id: preflight
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          TRIAGE_READ_TOKEN: ${{ secrets.TRIAGE_READ_TOKEN }}
         run: node automation/scripts/llm/run.mjs preflight
       - name: Checkout trusted consumer commit
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ steps.preflight.outputs.source_sha }}
           path: consumer
+          persist-credentials: false
+      - name: Resolve permitted triage source from trusted consumer configuration
+        id: source
+        if: inputs.caller_profile == 'triage'
+        env:
+          TRIAGE_READ_TOKEN: ${{ secrets.TRIAGE_READ_TOKEN }}
+        run: node automation/scripts/llm/run.mjs source
+      - name: Checkout separately authorized triage analysis source
+        if: inputs.caller_profile == 'triage'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ steps.source.outputs.source_sha }}
+          path: consumer-source
           persist-credentials: false
       - name: Execute caller configuration and preserve refreshed session
         id: invoke
@@ -107,6 +142,7 @@ jobs:
           CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
           CODEX_AUTH_WRITE_PAT: ${{ secrets.CODEX_AUTH_WRITE_PAT }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TRIAGE_READ_TOKEN: ${{ secrets.TRIAGE_READ_TOKEN }}
         run: node automation/scripts/llm/run.mjs invoke
       - name: Upload this invocation result only
         id: upload
