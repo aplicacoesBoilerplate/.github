@@ -34,11 +34,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/issue-9-llm-centralizado/`
-- **Phase / Task**: Meta de entrega local encerrada por solicitação explícita do mantenedor; T1–T11 concluídas e verificadas, T12 adiada, T13 transferida para triagem #7, não executada.
-- **Completed**: Workflow central, scripts, CI, callers ChatGPT/API opt-in, configuração/prompt do consumidor, inspector de resultado e instruções completas. Commits locais por tarefa e contratos verificados.
-- **In-progress**: Nenhuma implementação parcial. Correção de LLM-11 e caller atualizado passaram na reverificação independente; aprovação pendente do teste foi concedida e resolvida.
-- **Next step**: Especificação TLC da triagem #7, primeiro consumidor e responsável pelo piloto real compartilhado. PR draft da central publicado para release/v1.0.0 e revisão humana solicitada; não houve merge.
-- **Blockers**: Nenhum para a meta local revista. Homologação real transferida exige consumidor privado e credenciais próprias; fixtures não a comprovam. Nenhum login pessoal ou inferência real realizado.
-- **Uncommitted files**: Nenhum após commit do relatório e deste handoff. Dois scratches de auditoria restaurados/inativos permanecem no Temp, conforme validation.md; remoção rejeitada pela política automática, sem credenciais reais.
-- **Branch**: `feature/issue-9-llm-centralizado`
+- **Feature**: `.specs/features/issue-7-triagem-issues/`
+- **Phase / Task**: Specify; proposta TLC para revisão, sem implementação.
+- **Completed**: Branch existente empilhada sobre #9 sem reescrita de histórico; spec EARS e contexto, necessidade SDD e requisito de piloto transferido registrados.
+- **In-progress**: Nenhum código de triagem; defaults e limites aguardam revisão do mantenedor.
+- **Next step**: Revisar spec/context antes de Design e Tasks; pré-requisitos explícitos de origem issues e base SHA no contrato da central.
+- **Blockers**: #7 ainda tem blocked-by #5/#9 no GitHub; não remover vínculos nem status manualmente. Piloto real exige consumidor e credenciais provisionados pelo mantenedor.
+- **Uncommitted files**: Nenhum após commit da proposta. Planejamento OpenSpec anterior preservado como histórico.
+- **Branch**: `feature/issue-7-triagem-issues`
