@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "version": "1.0.0",
+  "source": "maintainer-global-agents",
+  "source_sha256": "38ebd29a0c12506b5e53459d9a1add7734b19c56cca5fcc500302904d4cacf81",
+  "source_bytes": 25298,
+  "sha256": "5e5d5640dcb6827ff8df7a01e745c7027893483091791b7f01ac163166a3c40a",
+  "bytes": 24980,
+  "transformation": "CRLF to LF; full text preserved",
+  "reviewed_at": "2026-10-12",
+  "distributed_skills": [],
+  "note": "Skills referenced in the global guidance are not installed by this automation."
+}

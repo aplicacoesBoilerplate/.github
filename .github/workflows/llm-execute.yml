@@ -1,0 +1,133 @@
+name: Reusable LLM invocation
+
+on:
+  workflow_call:
+    inputs:
+      invocation_id:
+        description: Unique caller-defined identity within this run
+        required: true
+        type: string
+      config_path:
+        description: Invocation JSON in the trusted consumer checkout
+        required: true
+        type: string
+      source_ref:
+        description: Trusted consumer default branch
+        required: true
+        type: string
+      context_json:
+        description: JSON object passed as data to the model
+        required: false
+        default: '{}'
+        type: string
+      auth_mode:
+        description: chatgpt-session or api-key, explicitly selected by the caller
+        required: true
+        type: string
+      session_secret_name:
+        description: Consumer repository secret updated after session refresh
+        required: false
+        default: ''
+        type: string
+    secrets:
+      CODEX_AUTH_JSON:
+        required: false
+      CODEX_AUTH_WRITE_PAT:
+        required: false
+      OPENAI_API_KEY:
+        required: false
+    outputs:
+      status:
+        value: ${{ jobs.invoke.outputs.status }}
+      decision:
+        value: ${{ jobs.invoke.outputs.decision }}
+      artifact_name:
+        value: ${{ jobs.invoke.outputs.artifact_name }}
+      source_sha:
+        value: ${{ jobs.invoke.outputs.source_sha }}
+      automation_sha:
+        value: ${{ jobs.invoke.outputs.automation_sha }}
+      request_id:
+        value: ${{ jobs.invoke.outputs.request_id }}
+      error_code:
+        value: ${{ jobs.invoke.outputs.error_code }}
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  invoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: ${{ inputs.auth_mode == 'chatgpt-session' && format('llm-session-{0}-{1}', github.repository, inputs.session_secret_name) || format('llm-api-{0}-{1}-{2}-{3}', github.repository, github.run_id, github.run_attempt, inputs.invocation_id) }}
+      cancel-in-progress: false
+      queue: max
+    env:
+      INPUTS_JSON: ${{ toJSON(inputs) }}
+    outputs:
+      status: ${{ steps.finish.outputs.status }}
+      decision: ${{ steps.invoke.outputs.decision }}
+      artifact_name: ${{ steps.invoke.outputs.artifact_name }}
+      source_sha: ${{ steps.invoke.outputs.source_sha }}
+      automation_sha: ${{ steps.invoke.outputs.automation_sha }}
+      request_id: ${{ steps.invoke.outputs.request_id }}
+      error_code: ${{ steps.invoke.outputs.error_code || steps.finish.outputs.error_code }}
+    steps:
+      - name: Checkout automation at the called workflow revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: automation
+          persist-credentials: false
+      - name: Set up pinned runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+      - name: Install only central locked dependencies before credentials
+        run: npm ci --prefix automation/scripts/llm --ignore-scripts --no-fund --no-audit
+      - name: Validate caller origin and resolve consumer commit
+        id: preflight
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node automation/scripts/llm/run.mjs preflight
+      - name: Checkout trusted consumer commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ steps.preflight.outputs.source_sha }}
+          path: consumer
+          persist-credentials: false
+      - name: Execute caller configuration and preserve refreshed session
+        id: invoke
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AUTOMATION_SHA: ${{ job.workflow_sha }}
+          CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
+          CODEX_AUTH_WRITE_PAT: ${{ secrets.CODEX_AUTH_WRITE_PAT }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: node automation/scripts/llm/run.mjs invoke
+      - name: Upload this invocation result only
+        id: upload
+        if: steps.invoke.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ steps.invoke.outputs.artifact_name }}
+          path: ${{ steps.invoke.outputs.result_directory }}/*
+          retention-days: 1
+          if-no-files-found: error
+          overwrite: false
+      - name: Remove invocation temporary state
+        id: cleanup
+        if: always()
+        run: node automation/scripts/llm/run.mjs cleanup
+      - name: Release status only after upload and cleanup
+        id: finish
+        if: always()
+        env:
+          INVOCATION_OUTCOME: ${{ steps.invoke.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+          CLEANUP_OUTCOME: ${{ steps.cleanup.outcome }}
+          RESULT_STATUS: ${{ steps.invoke.outputs.status }}
+        run: node automation/scripts/llm/run.mjs finish
