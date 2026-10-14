@@ -1,12 +1,14 @@
 # Triagem Context
 
-**Gathered:** 2026-10-13. **Status:** Proposta para revisão, sem implementação.
+**Gathered:** 2026-10-13. **Status:** Especificação aprovada e implementação autorizada em 2026-10-14; design detalhado em revisão, sem código de triagem iniciado.
 
 ## Feature Boundary
 
 Triagem reutilizável de issues, planejamento SDD ou proposta simples por PR, usando a central da #9. Primeiro consumidor/piloto real; code review e harness ficam fora.
 
 ## Implementation Decisions
+
+- Em 2026-10-14, mantenedor aprovou a especificação e autorizou implementar; solicitou In progress no Project e entrega empilhada, sem aceitar ou integrar o PR da central.
 
 - Mantenedor solicitou publicar progresso da #9 via PR e iniciar TLC da triagem.
 - Mantenedor explicitamente transferiu LLM-24/T13 para a próxima entrega: encerrar meta de entrega local não afirma homologação real.

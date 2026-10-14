@@ -1,6 +1,6 @@
 # Triagem reutilizável de issues Specification
 
-**Issue:** #7, `[PIPELINE] - Triagem das Issues`. **Status:** Proposta para revisão; implementação não autorizada nesta fase.
+**Issue:** #7, `[PIPELINE] - Triagem das Issues`. **Status:** Especificação aprovada e implementação autorizada pelo mantenedor em 2026-10-14; design/tarefas devem cumprir seus gates TLC antes da execução.
 **Base:** branch da issue #9, PR da central para `release/v1.0.0`. **Milestone:** v1.0.0; épica #3.
 
 ## Problem Statement
@@ -29,7 +29,7 @@ A triagem será o primeiro consumidor real e responsável pelo piloto compartilh
 
 ## Necessidade de SDD
 
-Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), Priority High, Size XL, Estimate 5 e Effort High; status Prevented. Bloqueios reais: #9 e #5. SDD é necessário: integração entre workflows, autenticação persistente, escrita GitHub e decisões sobre patches. Size/Estimate medem valor, não complexidade isolada. A dependência #5 não será removida por inferência; seu papel na habilitação do piloto será revisto no planejamento sem alterar o fluxo SonarQube.
+Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), Priority High, Size XL, Estimate 5 e Effort High. Status alterado de Prevented para In progress em 2026-10-14 por solicitação explícita do mantenedor, com leitura posterior confirmando a alteração. Bloqueios #9 e #5 preservados; entrega empilhada sem merge do PR da central. SDD é necessário: integração entre workflows, autenticação persistente, escrita GitHub e decisões sobre patches. Size/Estimate medem valor, não complexidade isolada. A dependência #5 não será removida por inferência; seu papel na habilitação do piloto será revisto no planejamento sem alterar o fluxo SonarQube.
 
 ## Assumptions & Open Questions
 
