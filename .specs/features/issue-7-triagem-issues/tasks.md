@@ -1,6 +1,6 @@
 # Triagem reutilizável de issues Implementation Plan
 
-**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T6 concluídas, 6/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
+**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T7 implementadas e commitadas localmente, 7/8 tarefas de código. Gate independente do grupo local ainda pendente; piloto T8 não executado. Documentação adiada por decisão explícita do mantenedor.
 **Goal:** Entregar triagem reutilizável com rotas SDD/patch, publicação por PR e piloto real da central.
 **Architecture:** caller → triagem → central LLM; configuração confiável separada da base analisada; publicar somente após validação.
 **Tech Stack:** Node 22.23.3, ESM, node:test, Ajv/dependências fixadas da central, GitHub Actions/REST/GraphQL e Git.
@@ -179,18 +179,18 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 
 **What:** Adaptar o caller entregue pela #9 como modelo utilizável da triagem, com identidade própria do consumidor.
 **Where:** `examples/callers/triage/`
-**Supporting files:** `tests/triage/caller.test.mjs`, link README e inspector/config/prompts do modelo.
+**Supporting files:** `tests/triage/caller.test.mjs`, inspector/config/prompts do modelo e descoberta do caller no lint existente. Nenhum README/manual de adoção nesta entrega.
 **Depends on:** T6
 **Reuses:** Caller/inspector da #9 e nova interface T6; referência imutável de commit real contendo implementação local.
 **Requirement:** TRI-04, TRI-07, TRI-13, TRI-23
 **Tools:** TLC/cicd; Node, parsing YAML, revisão manual das instruções.
 **Done when:**
-- [ ] Exemplo suporta issues.opened e dispatch; inputs/config/secret/modelo/prompt próprios e ref fixa real, sem conta central.
-- [ ] Inspector confere repo/run/issue/base/config SHAs e hashes, recusando outra revisão antes de aplicar artefato.
-- [ ] Caller executável/configuração mantêm configuração explícita de permissões/Project/branches/modelos/prompts/resultados; documentação de adoção adiada, sem bloquear o componente funcional.
+- [x] Exemplo suporta issues.opened e dispatch; inputs/config/secret/modelo/prompt próprios e ref fixa real, sem conta central. Commit referenciado existe localmente; uso remoto exige publicação autorizada e configuração pelo consumidor.
+- [x] Inspector confere repo/run/issue/base/config SHAs e hashes, recusando outra revisão antes de aplicar artefato. Inspector permanece somente leitura.
+- [x] Caller executável/configuração mantêm configuração explícita de permissões/Project/branches/modelos/prompts/resultados; documentação de adoção adiada, sem bloquear o componente funcional.
 **Tests:** integration/contract; consumo real de envelope v2 válido/forjado e propagação de modelo/prompt; documentação somente revisão manual.
 **Gate:** Build + Verifier independente local T1–T7
-**Commit:** `docs(triage): deliver configured reusable caller refs #7`
+**Commit:** `feat(triage): deliver configured reusable caller refs #7`
 
 ### T8: Piloto real compartilhado com a central
 

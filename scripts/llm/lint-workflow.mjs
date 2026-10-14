@@ -19,7 +19,8 @@ try {
   const unpack = spawnSync('tar', ['-xzf', archive, '-C', work, 'actionlint'], { stdio: 'inherit' });
   if (unpack.status !== 0) throw new Error('Actionlint extraction failed');
   const paths = [join(root, '.github/workflows/llm-execute.yml'), join(root, '.github/workflows/issue-triage.yml'), join(root, '.github/workflows/ci.yml'),
-    join(root, 'examples/callers/llm/.github/workflows/llm.yml'), join(root, 'examples/callers/llm/variants/llm-api-key.yml')];
+    join(root, 'examples/callers/llm/.github/workflows/llm.yml'), join(root, 'examples/callers/llm/variants/llm-api-key.yml'),
+    join(root, 'examples/callers/triage/.github/workflows/triage.yml')];
   // GitHub.com fields documented in design.md, not yet known to actionlint 1.7.12.
   const exceptions = ['-ignore', 'unexpected key "queue" for "concurrency" section', '-ignore', 'property "workflow_(repository|sha)" is not defined'];
   const result = spawnSync(join(work, 'actionlint'), ['-shellcheck=', '-pyflakes=', ...exceptions, ...paths], { stdio: 'inherit', cwd: root });

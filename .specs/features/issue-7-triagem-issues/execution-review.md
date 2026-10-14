@@ -1,5 +1,27 @@
 # Execution ledger: triagem
 
+## T7: caller e inspector
+
+Premissa: caller copiável precisa de configuração da conta, Project e imagem offline pelo consumidor; não prover identidade ou modelo habilitado fictício. Arquivos: examples/callers/triage/.github (workflow, config, prompts e inspector), caller.test.mjs, lint e progresso TLC. Documentação de adoção continua adiada.
+
+RED: exemplo/inspector inexistentes. GREEN: gate completo em Node 22.23.3, syntax e actionlint 1.7.12 Windows passaram. Referência fixa 3f7ec89a9e2457e1e839a22d6db6f9dc1c4784f6 contém called T6 real local; não afirmar disponibilidade remota antes do push autorizado.
+
+Ruling: copiar o inspector no consumidor e conferir configuração no seu SHA confiável separado da fonte — reusa validadores/AGENTS/proveniência do central fixado, sem executar patch ou credenciais. Defaults Project/Go são exemplo adaptável; modelo habilitado, imagem por digest e secrets precisam de configuração explícita pelo mantenedor.
+Ruling: comentários operacionais no YAML documentam entradas e recuperação mínima de adoção; nenhum README/manual nem teste de prosa. Commit usa feat porque entrega caller e inspector executáveis, não apenas documentação.
+
+| Critério / AC | Evidência e assertion | Resultado |
+| --- | --- | --- |
+| Gatilhos e identidade própria | `tests/triage/caller.test.mjs:23–30`: opened/dispatch number, guards private/default, auth/secret name/image, secret bindings e permissões exatos | Caller não compartilha conta central |
+| Ref fixa utilizável | `tests/triage/caller.test.mjs:25,31–35`: uses pin, git show contém workflow_call, checkout/inspector pinned e refs config/source separados | Mesma revisão real para execução/validação |
+| Consumo v2 e recusas | `tests/triage/caller.test.mjs:59–64`: inspector subprocesso exit0/stdout exatos; issue/source/config/fingerprint/instruções/arquivos divergentes exit1 INVALID_RESULT | Artefato só é reconhecido com identidade correta; nunca aplicado |
+
+| Teste / assertions | Requisito / critério | Necessário |
+| --- | --- | --- |
+| caller:23–35 | TRI-04/07/23: identidade/configuração e reuso fixado | Sim |
+| caller:59–64 | TRI-07/13: consumo real do envelope e arquivos, recusas de revisão | Sim |
+
+Adequação: inspector copiado e executado sobre envelope real empacotado, não apenas regex de schema; modelo/prompt próprios também comprovados em central/workflow.test. Nenhuma credencial real, output de segredo ou ativação. Task 7: código/gates locais concluídos; Verifier independente do grupo T1–T7 obrigatório a seguir. T8 permanece pendente e feature não concluída.
+
 ## T6: workflow, isolamento e CI
 
 Premissa: usar o workflow central, não duplicar auth; produto só executa em container no job de checks. Arquivos: issue-triage.yml, run/workflow/verify-product.mjs, fingerprint opcional na central, intervenção no publisher, scripts test/check/lint e CI, testes co-localizados e progresso TLC.

@@ -130,10 +130,10 @@ Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), 
 | TRI-01 | Origem | Execute | Gatilho/serialização/runner integrados T6; caller/piloto pendentes |
 | TRI-02 | Origem | Execute | Dispatch reconsulta API T2/T6; piloto pendente |
 | TRI-03 | Origem | Execute | Guards de origem/ator antes de auth T2/T3/T6; piloto pendente |
-| TRI-04 | Reuso | Execute | Central/configuração própria T3; caller de triagem pendente |
+| TRI-04 | Reuso | Execute | Configuração/credenciais/prompt próprios T3/T7; Verifier e piloto pendentes |
 | TRI-05 | Contexto | Execute | Limites e fingerprint sem body nos outputs T1/T2/T6; piloto pendente |
 | TRI-06 | Contrato central | Execute | Perfil/runner T3 e chamada aninhada T6; v1 preservado nos gates |
-| TRI-07 | Contrato central | Execute | SHAs separados/envelope v2 T3; inspector de consumidor pendente |
+| TRI-07 | Contrato central | Execute | SHAs separados/envelope v2 T3 e inspector T7; Verifier/piloto pendentes |
 | TRI-08 | Metadados | Execute | Coleta/proveniência/paginação T2; validação final pendente |
 | TRI-09 | SDD | Execute | Política implementada T1; integração pendente |
 | TRI-10 | Rota simples | Execute | Política implementada T1; integração pendente |
@@ -149,11 +149,11 @@ Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), 
 | TRI-20 | Entrada atual | Execute | Recoleta/fingerprint/base/config antes da publicação T5; piloto pendente |
 | TRI-21 | Recuperação | Execute | Reconsulta após escrita ambígua T5; integração/piloto pendentes |
 | TRI-22 | Falhas | Execute | Erros/finalização/limpeza e intervenção central T3/T5/T6; piloto pendente |
-| TRI-23 | Caller | Specify | Pending review |
+| TRI-23 | Caller | Execute | Caller/configs/prompts/inspector T7 entregues localmente; configuração/ativação real e Verifier pendentes |
 | TRI-24 | Piloto | Specify | Pending review |
 | TRI-25 | Piloto | Specify | Pending review |
 
-**Coverage:** 25 requisitos aprovados e mapeados nas tasks; T1–T6 implementadas localmente. Caller, revisão independente e piloto real ainda pendentes. Testes simulados não são homologação.
+**Coverage:** 25 requisitos aprovados e mapeados nas tasks; T1–T7 implementadas localmente. Revisão independente e piloto real ainda pendentes. Testes simulados não são homologação.
 
 ## Success Criteria
 
