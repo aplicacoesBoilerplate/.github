@@ -22,7 +22,7 @@ globalThis.fetch = async (url, options) => {
   else if (path.endsWith('/parent')) response = { number: 3, state: 'open' };
   else if (path.includes('/branches/')) {
     const ref = decodeURIComponent(path.split('/branches/')[1]);
-    response = { name: ref, commit: { sha: ref === 'master' ? data.config_sha : 'b'.repeat(40) } };
+    response = { name: ref, commit: { sha: ref === 'master' ? data.config_sha : data.source_sha ?? 'b'.repeat(40) } };
   } else throw new Error('fixture route missing');
   return { ok: true, json: async () => response };
 };

@@ -31,10 +31,10 @@ async function publish({ snapshot, result, prepared, verification, config }, api
     if (!result?.envelope || !result.expected) fail('INVALID_RESULT');
     validateEnvelope(result.envelope, result.expected);
     if (result.envelope.schema_version !== 2 || result.envelope.repository !== repo || result.envelope.source_sha !== snapshot.source_sha
-      || result.envelope.config_source_sha !== snapshot.config_source_sha || result.envelope.status !== 'succeeded') fail('INVALID_RESULT');
+      || result.envelope.config_source_sha !== snapshot.config_source_sha) fail('INVALID_RESULT');
     if (route === 'plan' && (result.patch !== null || result.envelope.patch_file !== null)) fail('INVALID_RESULT');
   }
-  const patch = route === 'propose-patch' && prepared && result.patch && result.envelope.patch_file === 'proposal.patch';
+  const patch = route === 'propose-patch' && prepared && result.patch && result.envelope.status === 'succeeded' && result.envelope.patch_file === 'proposal.patch';
   let proposal;
   if (patch) {
     validatePatch(result.patch);
@@ -93,8 +93,9 @@ async function publish({ snapshot, result, prepared, verification, config }, api
   }
 
   if (!patch) {
-    const status = route === 'plan' ? 'planned' : 'needs-human';
-    const text = route === 'plan'
+    const modelIntervention = result?.envelope.status && result.envelope.status !== 'succeeded';
+    const status = modelIntervention ? result.envelope.status : route === 'plan' ? 'planned' : 'needs-human';
+    const text = modelIntervention ? `## Intervenção necessária: rascunho não aprovado\n\nDecisão da central: ${result.envelope.decision}.\n${safeSummary(result.envelope.summary)}\nRevisão humana obrigatória; nenhum patch será publicado.` : route === 'plan'
       ? `## Planejamento: rascunho não aprovado\n\n### Contexto\nIssue #${issue}; base ${snapshot.base_ref ?? 'não resolvida'}.\n\n### Necessidade de SDD\n${snapshot.route.reasons.join(', ')}\n\n### Proposta\n${safeSummary(result.envelope.summary)}\n\n### Riscos\nValidar premissas e metadados antes de implementar; esta análise não é aprovação.\n\n### Próximos passos\nRevisar especificação e definir tarefas com o mantenedor.`
       : `## Intervenção necessária: rascunho não aprovado\n\n${snapshot.route.reasons.join(', ')}\n${route === 'propose-patch' ? 'Não há patch aplicável preparado; solicitar nova análise.' : 'Completar ou corrigir os metadados antes de analisar.'}`;
     return { status, route, issue, comment_id: await comment(text), pr_number: null };

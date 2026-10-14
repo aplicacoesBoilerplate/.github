@@ -19,6 +19,7 @@ const checkInputs = ajv.compile({
     issue_number: { type: 'integer', minimum: 0 },
     triage_config_path: { type: 'string', maxLength: 240 },
     expected_source_sha: { type: 'string' },
+    triage_fingerprint: { type: 'string', pattern: '^(?:[a-f0-9]{64})?$' },
   },
 });
 
@@ -38,7 +39,7 @@ export function validateRequest(config, inputs) {
   if (profile === 'triage') {
     if (!Number.isSafeInteger(inputs.issue_number) || inputs.issue_number < 1 || !/^[a-f0-9]{40}$/.test(inputs.expected_source_sha ?? '')) throw contractError('INVALID_CONFIG');
     validateRelativePath(inputs.triage_config_path);
-  } else if ((inputs.issue_number ?? 0) !== 0 || (inputs.triage_config_path ?? '') !== '' || (inputs.expected_source_sha ?? '') !== '') throw contractError('INVALID_CONFIG');
+  } else if ((inputs.issue_number ?? 0) !== 0 || (inputs.triage_config_path ?? '') !== '' || (inputs.expected_source_sha ?? '') !== '' || (inputs.triage_fingerprint ?? '') !== '') throw contractError('INVALID_CONFIG');
   validateRelativePath(inputs.config_path);
   for (const stage of [config.execution, config.decision].filter(Boolean)) {
     if (stage.template_path !== undefined) validateRelativePath(stage.template_path);

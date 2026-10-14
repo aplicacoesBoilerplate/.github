@@ -14,9 +14,12 @@ export async function resolveTriageInvocation({ configRoot, event, inputs, check
   const snapshot = await collectIssue({ event, config }, api);
   const sourceRef = snapshot.base_ref ?? snapshot.default_branch;
   if (sourceRef !== inputs.source_ref) throw contractError('UNTRUSTED_CONTEXT');
+  const contextMatches = inputs.triage_fingerprint
+    ? inputs.triage_fingerprint === snapshot.fingerprint && (inputs.context_json ?? '{}') === '{}'
+    : createHash('sha256').update(inputs.context_json ?? '{}').digest('hex') === snapshot.fingerprint;
   if (snapshot.source_sha !== inputs.expected_source_sha || snapshot.config_source_sha !== checkedConfigSha
     || (checkedOutSha !== undefined && snapshot.source_sha !== checkedOutSha)
-    || createHash('sha256').update(inputs.context_json ?? '{}').digest('hex') !== snapshot.fingerprint) throw contractError('STALE_TRIAGE_INPUT');
+    || !contextMatches) throw contractError('STALE_TRIAGE_INPUT');
   if (snapshot.route.route === 'needs-human') throw contractError('STALE_TRIAGE_INPUT');
   const route = snapshot.route.route === 'propose-patch' ? 'patch' : 'plan';
   if (inputs.config_path !== config.llm_configs[route]) throw contractError('UNTRUSTED_CONTEXT');

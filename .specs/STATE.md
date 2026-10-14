@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-7-triagem-issues/`
-- **Phase / Task**: Execute; plano aprovado em 2026-10-14, T1–T5 concluídas, 5/8 tarefas. Documentação adiada por pedido explícito; caller funcional permanece.
+- **Phase / Task**: Execute; plano aprovado em 2026-10-14, T1–T6 concluídas, 6/8 tarefas. Documentação adiada por pedido explícito; caller funcional permanece.
 - **Completed**: In progress aplicado no Project GitHub Features por pedido explícito e verificado via API. Empilhamento sobre #9 preservado; nenhum merge/aceite do PR da central. Aprovação de spec/context registrada.
-- **In-progress**: Gateway T5 validado com API stateful e transporte GitHub simulado: revalidação, draft/Refs/milestone/reviewer, recuperação parcial e proteção de recursos humanos. Nenhuma publicação real ou código parcial de workflow de triagem.
-- **Next step**: T6, conectar workflow reutilizável/runner/CI com jobs e artefatos separados; verificações de produto sem sessão ou credenciais de escrita.
+- **In-progress**: Workflow/runner/CI T6 validados com gates locais, Node 22.23.3, actionlint Windows e simulação até PR. Docker daemon local indisponível; execução real de container/Actions não foi alegada. Nenhum caller parcial ou uso de credenciais reais.
+- **Next step**: T7, caller funcional com referência imutável desta implementação, configs/prompts/inspector e Verifier independente do grupo local T1–T7.
 - **Blockers**: Nenhum para implementação local autorizada; blocked-by #5/#9 preservados conforme entrega empilhada. Piloto real exige consumidor e credenciais do mantenedor.
 - **Uncommitted files**: Nenhum após commit da proposta. Planejamento OpenSpec anterior preservado como histórico.
 - **Branch**: `feature/issue-7-triagem-issues`

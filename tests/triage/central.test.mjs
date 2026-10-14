@@ -69,6 +69,15 @@ test('TRI-04/06/07: triage uses trusted model/prompt/directives and release sour
   assert.equal(f.calls[0].env.GITHUB_TOKEN, undefined);
 });
 
+test('TRI-05/07: nested workflow may pass only the exact API fingerprint instead of exposing issue context in job outputs', async t => {
+  const f = await fixture(t); const fingerprint = (await collectIssue({ event: f.event, config: f.config }, f.options.triageApi)).fingerprint;
+  f.inputs.context_json = '{}'; f.inputs.triage_fingerprint = fingerprint;
+  const result = await runInvocation(f, f.options);
+  assert.equal(result.envelope.schema_version, 2); assert.equal(f.calls[0].prompt.context.issue.body, 'issue body');
+  const bad = await fixture(t); bad.inputs.context_json = '{}'; bad.inputs.triage_fingerprint = 'f'.repeat(64);
+  await assert.rejects(runInvocation(bad, bad.options), { code: 'STALE_TRIAGE_INPUT' }); assert.deepEqual(await readdir(bad.outputRoot), []);
+});
+
 test('TRI-03/07/20: forged context, base and config revisions cannot reach authentication or artifacts', async t => {
   for (const scenario of ['context', 'source', 'config', 'base', 'issue', 'read-token']) {
     const f = await fixture(t); let authUsed = false;

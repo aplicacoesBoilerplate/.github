@@ -1,6 +1,6 @@
 # Triagem reutilizável de issues Implementation Plan
 
-**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T5 concluídas, 5/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
+**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T6 concluídas, 6/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
 **Goal:** Entregar triagem reutilizável com rotas SDD/patch, publicação por PR e piloto real da central.
 **Architecture:** caller → triagem → central LLM; configuração confiável separada da base analisada; publicar somente após validação.
 **Tech Stack:** Node 22.23.3, ESM, node:test, Ajv/dependências fixadas da central, GitHub Actions/REST/GraphQL e Git.
@@ -161,16 +161,16 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 
 **What:** Entry point coordena coleta, LLM, preparo/verificação sem secrets e publicação com privilégios separados.
 **Where:** `.github/workflows/issue-triage.yml`
-**Supporting files:** `scripts/triage/run.mjs`, testes/workflow, ajustes coesos nos comandos test/check/lint e CI existentes.
+**Supporting files:** `scripts/triage/{run,workflow,verify-product}.mjs`, testes de workflow/isolamento, extensão compatível triage_fingerprint na central e tratamento de intervenção no publisher, ajustes coesos nos comandos test/check/lint e CI existentes.
 **Depends on:** T5
 **Reuses:** Jobs/pins/runtime central, T1–T5 e seu fluxo de artefatos; serialização por issue e sessão.
 **Requirement:** TRI-01, TRI-04, TRI-17, TRI-18, TRI-19, TRI-22, TRI-23
 **Tools:** TLC/cicd; Node, actionlint e parsing YAML.
-**Interfaces:** `workflow_call` com config_path, issue_number para dispatch, modalidade/secrets explícitos; outputs status/route/issue/PR; runner fases collect/prepare/publish/finalize.
+**Interfaces:** `workflow_call` com config_path, issue_number para dispatch, modalidade/secrets explícitos e verification_image fixada por digest pelo caller; outputs status/route/issue/PR e identidade do artefato; runner bootstrap/collect/prepare/publish/cleanup/finish. A central recebe triage_fingerprint opcional em vez do body nos outputs.
 **Done when:**
-- [ ] Workflow chama central por job aninhado, sem secrets: inherit; jobs de inferência e publicação não compartilham auth.
-- [ ] Testes configurados pelo consumidor rodam sem credencial de escrita/sessão; failure mantém draft e é rastreável.
-- [ ] CI descobre todos testes/scripts/YAML da triagem mesmo sem projeto Node na raiz e preserva gates anteriores.
+- [x] Workflow chama central por job aninhado, sem secrets: inherit; jobs de inferência e publicação não compartilham auth.
+- [x] Checks usam container sem credencial/rede/PID/socket do host, com imagem imutável do caller; failure mantém draft e é rastreável. Contrato simulado validado; execução Docker/Actions real permanece T8.
+- [x] CI descobre todos testes/scripts/YAML da triagem mesmo sem projeto Node na raiz e preserva gates anteriores.
 **Tests:** integration/contract; simulação caller → resultado/publicação stateful, secrets ausentes recusados, cenário plan/patch/needs-human e erro de upload/verificação/publicação, assertions nas permissões e status finais.
 **Gate:** Build
 **Commit:** `feat(triage): expose reusable workflow and contract gates refs #7`

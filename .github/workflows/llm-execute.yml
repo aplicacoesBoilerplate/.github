@@ -45,6 +45,11 @@ on:
         required: false
         default: ''
         type: string
+      triage_fingerprint:
+        description: API-backed context fingerprint for nested triage; never an issue body output
+        required: false
+        default: ''
+        type: string
     secrets:
       CODEX_AUTH_JSON:
         required: false

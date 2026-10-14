@@ -127,12 +127,12 @@ Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), 
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| TRI-01 | Origem | Specify | Pending review |
-| TRI-02 | Origem | Execute | Coleta implementada T2; integração workflow pendente |
-| TRI-03 | Origem | Execute | Guard de coleta T2; integração central pendente |
+| TRI-01 | Origem | Execute | Gatilho/serialização/runner integrados T6; caller/piloto pendentes |
+| TRI-02 | Origem | Execute | Dispatch reconsulta API T2/T6; piloto pendente |
+| TRI-03 | Origem | Execute | Guards de origem/ator antes de auth T2/T3/T6; piloto pendente |
 | TRI-04 | Reuso | Execute | Central/configuração própria T3; caller de triagem pendente |
-| TRI-05 | Contexto | Execute | Config/coleta T1/T2 implementadas; integração pendente |
-| TRI-06 | Contrato central | Execute | Origem de issue/runner T3; workflow de domínio pendente |
+| TRI-05 | Contexto | Execute | Limites e fingerprint sem body nos outputs T1/T2/T6; piloto pendente |
+| TRI-06 | Contrato central | Execute | Perfil/runner T3 e chamada aninhada T6; v1 preservado nos gates |
 | TRI-07 | Contrato central | Execute | SHAs separados/envelope v2 T3; inspector de consumidor pendente |
 | TRI-08 | Metadados | Execute | Coleta/proveniência/paginação T2; validação final pendente |
 | TRI-09 | SDD | Execute | Política implementada T1; integração pendente |
@@ -143,17 +143,17 @@ Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), 
 | TRI-14 | Base | Execute | Candidato resolvido T1; consulta remota/publicação pendentes |
 | TRI-15 | PR | Execute | Gateway draft/base/Refs/milestone/reviewer T5; integração/piloto pendentes |
 | TRI-16 | Recusa | Execute | Preparo T4 e intervenção sem PR T5; integração workflow pendente |
-| TRI-17 | Verificações | Execute | Git sem secrets/hooks e sem executar produto T4; job de checks pendente T6 |
-| TRI-18 | Verificações | Execute | Resultado failed mantém draft T5; execução real checks pendente T6 |
-| TRI-19 | Idempotência | Execute | Gateway reutiliza recursos próprios T5; serialização workflow pendente T6 |
+| TRI-17 | Verificações | Execute | Job/contrato Docker sem secrets/escrita/PID/socket/rede T6; execução Docker/Actions real pendente T8 |
+| TRI-18 | Verificações | Execute | Relatório vinculado e draft-checks-failed T5/T6; checks reais pendentes T8 |
+| TRI-19 | Idempotência | Execute | Recuperação T5 e serialização workflow por issue/sessão T6; execução real pendente |
 | TRI-20 | Entrada atual | Execute | Recoleta/fingerprint/base/config antes da publicação T5; piloto pendente |
 | TRI-21 | Recuperação | Execute | Reconsulta após escrita ambígua T5; integração/piloto pendentes |
-| TRI-22 | Falhas | Execute | Erros sanitizados/sem retry de inferência ou criação T3/T5; workflow/piloto pendentes |
+| TRI-22 | Falhas | Execute | Erros/finalização/limpeza e intervenção central T3/T5/T6; piloto pendente |
 | TRI-23 | Caller | Specify | Pending review |
 | TRI-24 | Piloto | Specify | Pending review |
 | TRI-25 | Piloto | Specify | Pending review |
 
-**Coverage:** 25 requisitos aprovados e mapeados nas tasks; T1–T5 implementadas localmente. Integração, revisão independente e piloto real ainda pendentes. Testes simulados não são homologação.
+**Coverage:** 25 requisitos aprovados e mapeados nas tasks; T1–T6 implementadas localmente. Caller, revisão independente e piloto real ainda pendentes. Testes simulados não são homologação.
 
 ## Success Criteria
 

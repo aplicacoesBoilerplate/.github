@@ -1,5 +1,35 @@
 # Execution ledger: triagem
 
+## T6: workflow, isolamento e CI
+
+Premissa: usar o workflow central, não duplicar auth; produto só executa em container no job de checks. Arquivos: issue-triage.yml, run/workflow/verify-product.mjs, fingerprint opcional na central, intervenção no publisher, scripts test/check/lint e CI, testes co-localizados e progresso TLC.
+
+RED: módulos/runner ausentes; fingerprint recusado pela interface antiga e decisão needs-human indevidamente recusada no publisher. GREEN: npm test descobre central+triagem; gate completo em Node 22.23.3, syntax e actionlint Windows 1.7.12 passaram. Nenhum segredo real/push/Actions real. Docker version confirmou daemon local indisponível; transporte Docker simulado não é homologação de isolamento em runtime.
+
+Ruling: triage_fingerprint opcional limita outputs a identidades; central reconstrói o contexto pela API e confere hash, conservando context_json/v1 legados — body não vira output de job. Custo: API reconsultada, sem inferência repetida.
+Ruling: imagem OCI imutável fornecida pelo caller, checks em container sem rede/capabilities/credenciais/PID/socket ou mounts da automação — stripping de env sozinho não isola produto do host. Custo: dependências offline precisam constar na imagem; registry privado e harness fora do MVP.
+Ruling: publisher reconstrói a proposta em processo/workspace próprio a partir do patch original validado; nunca usa árvore possivelmente alterada pelos testes. Relatório vinculado a source/config SHA e patch hash não substitui revalidação da entrada.
+Ruling: contexto job.workflow_sha é válido nos steps, não no env do job; lint detectou e a origem foi movida aos steps sem ampliar exceções. Preload Node usa URL em Windows; correção de fixture de execução, sem mudança de assertion/expectativa.
+
+| Critério / AC | Evidência e assertion | Resultado |
+| --- | --- | --- |
+| Coleta → central → checks → publicação | `tests/triage/workflow.test.mjs:46,52–54,67–69`: fingerprint/context '{}', modelo own-patch, SHAs/status bound, fonte old, draft/PR/milestone/reviewer/commit pai/link | Fluxo integrado real de código/Git com serviços simulados |
+| Rotas e identidade | `tests/triage/workflow.test.mjs:74–79,91–95,105–110`: needs-human sem PR, planned/summary, recusas SHA/config/automação e decisão central preservada | Informação insuficiente não vira sucesso/patch |
+| Workflow e falhas | `tests/triage/workflow.test.mjs:115–130,138`: concorrência/called relativo/secrets explícitos, env sem sessão/escrita nos checks, ausência de auth LLM no publisher, pins/cleanup, ARTIFACT_FAILED exato | Separação e finalização sem falso sucesso |
+| Runner coletor real | `tests/triage/workflow.test.mjs:156–161`: bootstrap/collect exit0, outputs <8KiB sem body/token, snapshot/body/SHAs corretos, cleanup ENOENT e HEAD fonte intacto | CLI e ciclo de artefatos demonstrados sem rede real |
+| Isolamento do produto | `tests/triage/verify.test.mjs:17–26`: report/identidade/checks exatos, flags/mount único/command/env fechado, nenhum socket/PID host/secret e remoção do container próprio | Contrato do subprocesso Docker verificado |
+| Falha/timeout/limpeza/imagem | `tests/triage/verify.test.mjs:34–41`: failed/error_code sem output privado, rm próprio, digest exigido, CHECK_CLEANUP_FAILED | Nenhum relatório válido após erro de limpeza |
+| Fingerprint sem body | `tests/triage/central.test.mjs:76–78`: v2/contexto da API correto; fingerprint divergente STALE e output vazio | Redução de outputs não enfraquece a origem |
+
+| Testes / assertions | Requisito / critério | Necessário |
+| --- | --- | --- |
+| workflow:46–110 | TRI-01/04/07/11/12/13/15/17/20/22: integração, payloads e rotas | Sim |
+| workflow:115–161 | TRI-01/04/05/17/19/22: workflow, runner e ciclo | Sim |
+| verify:17–41 | TRI-17/18/22: contenção, relatório e falhas | Sim |
+| central:76–78 e interface fechada | TRI-05/06/07: novo transporte bound, legados preservados | Sim |
+
+Adequação: produto/Docker e GitHub em fixtures; CLI/Git/payloads/limpeza exercitados de verdade. Gates legados preservados e npm/syntax/lint incluem triagem sem Node na raiz. Nenhum teste documental ou meta de quantidade. Task 6: complete localmente; homologação Docker/GitHub/Codex real continua T8.
+
 ## T5: publicação recuperável
 
 Premissa: publisher recebe snapshot recolhido, envelope/expected confiáveis e proposta recém-preparada no próprio processo; não recebe Git config nem executa produto. Arquivos: publish.mjs, publication-api.mjs, exportação read-only da proposta em prepare-patch.mjs, publish/publication-api.test.mjs e progresso TLC.
