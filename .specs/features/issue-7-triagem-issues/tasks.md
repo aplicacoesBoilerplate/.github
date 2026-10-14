@@ -1,6 +1,6 @@
 # Triagem reutilizável de issues Implementation Plan
 
-**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T3 concluídas, 3/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
+**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T4 concluídas, 4/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
 **Goal:** Entregar triagem reutilizável com rotas SDD/patch, publicação por PR e piloto real da central.
 **Architecture:** caller → triagem → central LLM; configuração confiável separada da base analisada; publicar somente após validação.
 **Tech Stack:** Node 22.23.3, ESM, node:test, Ajv/dependências fixadas da central, GitHub Actions/REST/GraphQL e Git.
@@ -131,9 +131,9 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 **Tools:** TLC/cicd; Node, Git local, sem credenciais reais.
 **Interfaces:** `preparePatch({envelope, expected, patch, sourceRoot, config})` → alteração real preparada ou erro sanitizado; caminhos permitidos vêm da configuração confiável.
 **Done when:**
-- [ ] Envelope/paths/base validados, `git apply --check` e aplicação exata sem symlinks/hooks/config externos.
-- [ ] Patch vazio, proibido/inaplicável e base divergente não produzem proposta publicável.
-- [ ] Execução de verificação do produto ocorre em job separado sem tokens de escrita/auth; preparação não executa scripts do produto.
+- [x] Envelope/paths/base validados, `git apply --check` e aplicação exata sem symlinks/hooks/config externos.
+- [x] Patch vazio, proibido/inaplicável e base divergente não produzem proposta publicável.
+- [x] Preparação não executa scripts do produto e não herda secrets. O job separado de verificação será conectado em T6, conforme sua dependência no plano.
 **Tests:** integration em repo temporário; conteúdo alterado correto, fonte original preservada, paths proibidos/inaplicável/empty recusados e nenhum segredo no subprocesso.
 **Gate:** Full
 **Commit:** `feat(triage): prepare validated patches in isolation refs #7`

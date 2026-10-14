@@ -139,11 +139,11 @@ Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), 
 | TRI-10 | Rota simples | Execute | Política implementada T1; integração pendente |
 | TRI-11 | Intervenção humana | Execute | Política implementada T1; publicação pendente |
 | TRI-12 | Planejamento | Specify | Pending review |
-| TRI-13 | Patch | Specify | Pending review |
+| TRI-13 | Patch | Execute | Envelope/base/caminhos/aplicabilidade T3/T4; consumo/publicação pendentes |
 | TRI-14 | Base | Execute | Candidato resolvido T1; consulta remota/publicação pendentes |
 | TRI-15 | PR | Specify | Pending review |
-| TRI-16 | Recusa | Specify | Pending review |
-| TRI-17 | Verificações | Specify | Pending review |
+| TRI-16 | Recusa | Execute | Preparação isolada recusa patch vazio/proibido/inaplicável T4; publicação pendente |
+| TRI-17 | Verificações | Execute | Git sem secrets/hooks e sem executar produto T4; job de checks pendente T6 |
 | TRI-18 | Verificações | Specify | Pending review |
 | TRI-19 | Idempotência | Specify | Pending review |
 | TRI-20 | Entrada atual | Specify | Pending review |

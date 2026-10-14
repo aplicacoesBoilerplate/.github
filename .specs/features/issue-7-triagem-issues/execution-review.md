@@ -1,5 +1,24 @@
 # Execution ledger: triagem
 
+## T4: preparação isolada
+
+Premissa: preparar um commit local não publica nem executa verificações do produto. Arquivos: prepare-patch.mjs, patch.test.mjs e progresso TLC. T6 conecta o job separado de checks sem credenciais; essa integração não é alegada como concluída em T4.
+
+RED observado por módulo inexistente antes da implementação; allowlist do ambiente também testada antes da extração do helper. GREEN: gate completo em Node 22.23.3 e sintaxe passaram. Nenhum teste removido/ignorado ou credencial real utilizada.
+
+Ruling: clone local sem checkout/hardlinks e template vazio; árvore aceita somente blobs regulares antes de checkout, hooks/global/system config desativados e ambiente fechado — preserva a fonte e evita execução de produto. Custo: bases com symlinks/submódulos exigem intervenção humana no MVP.
+Ruling: bundle diferencial de um commit com base como pré-requisito — entrega uma proposta transportável sem Git config ou história inteira. Publisher precisa validar identidade/hash novamente; checks não autorizam publicação por si só.
+
+| Critério / AC | Evidência e assertion | Resultado |
+| --- | --- | --- |
+| Aplicação exata e fonte intacta | `tests/triage/patch.test.mjs:35–40`: conteúdo new/old, HEAD fonte/base e HEAD^ da proposta iguais ao source_sha | Proposta na base exata, fonte preservada |
+| Bundle e limpeza | `tests/triage/patch.test.mjs:41–42`: bundle verify exit0, access(directory) rejeita ENOENT | Artefato Git verificável, temporários removidos |
+| Recusa sem proposta | `tests/triage/patch.test.mjs:51–53`: rejects códigos sanitizados para empty/out-of-policy/protected/inaplicável/SHA/envelope; fonte old | Sem patch publicável para entrada inválida |
+| Nenhuma execução de produto/credenciais | `tests/triage/patch.test.mjs:62–67`: chaves de env exatas, CODEX_AUTH_JSON undefined, texto literal e hook marker ENOENT | Env fechado e hooks ignorados; produto não executado |
+| Symlinks/submódulos | `tests/triage/patch.test.mjs:78`: rejects INVALID_TRIAGE_PATCH após base com modos 120000/160000 | Recusa antes do checkout |
+
+Mapeamento reverso: todos testes do componente protegem TRI-13/16/17, sem testes documentais. Adequação: efeitos reais de Git/conteúdo/ancestralidade/limpeza, não apenas número de comandos; integração do job de produto explicitamente pendente T6. Task 4: complete.
+
 ## T3: central compatível
 
 Premissa: configuração/default Git SHA separado do SHA analisado; perfil triage explícito sem abrir origens legadas indiscriminadamente. Arquivos: preflight/request/orchestrate/result/run, workflow central, origem extraída em collect, adaptador de domínio invocation, testes centrais/triage e progresso TLC.
