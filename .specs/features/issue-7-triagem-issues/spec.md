@@ -138,22 +138,22 @@ Consultar estado real: issue do tipo Feature no Project `GitHub Features` (12), 
 | TRI-09 | SDD | Execute | Política implementada T1; integração pendente |
 | TRI-10 | Rota simples | Execute | Política implementada T1; integração pendente |
 | TRI-11 | Intervenção humana | Execute | Política implementada T1; publicação pendente |
-| TRI-12 | Planejamento | Specify | Pending review |
-| TRI-13 | Patch | Execute | Envelope/base/caminhos/aplicabilidade T3/T4; consumo/publicação pendentes |
+| TRI-12 | Planejamento | Execute | Comentário SDD rastreável T5; workflow/piloto pendentes |
+| TRI-13 | Patch | Execute | Envelope/base/caminhos/aplicabilidade T3/T4 e publicação bound T5; integração/inspector pendentes |
 | TRI-14 | Base | Execute | Candidato resolvido T1; consulta remota/publicação pendentes |
-| TRI-15 | PR | Specify | Pending review |
-| TRI-16 | Recusa | Execute | Preparação isolada recusa patch vazio/proibido/inaplicável T4; publicação pendente |
+| TRI-15 | PR | Execute | Gateway draft/base/Refs/milestone/reviewer T5; integração/piloto pendentes |
+| TRI-16 | Recusa | Execute | Preparo T4 e intervenção sem PR T5; integração workflow pendente |
 | TRI-17 | Verificações | Execute | Git sem secrets/hooks e sem executar produto T4; job de checks pendente T6 |
-| TRI-18 | Verificações | Specify | Pending review |
-| TRI-19 | Idempotência | Specify | Pending review |
-| TRI-20 | Entrada atual | Specify | Pending review |
-| TRI-21 | Recuperação | Specify | Pending review |
-| TRI-22 | Falhas | Specify | Pending review |
+| TRI-18 | Verificações | Execute | Resultado failed mantém draft T5; execução real checks pendente T6 |
+| TRI-19 | Idempotência | Execute | Gateway reutiliza recursos próprios T5; serialização workflow pendente T6 |
+| TRI-20 | Entrada atual | Execute | Recoleta/fingerprint/base/config antes da publicação T5; piloto pendente |
+| TRI-21 | Recuperação | Execute | Reconsulta após escrita ambígua T5; integração/piloto pendentes |
+| TRI-22 | Falhas | Execute | Erros sanitizados/sem retry de inferência ou criação T3/T5; workflow/piloto pendentes |
 | TRI-23 | Caller | Specify | Pending review |
 | TRI-24 | Piloto | Specify | Pending review |
 | TRI-25 | Piloto | Specify | Pending review |
 
-**Coverage:** 25 requisitos definidos; design e tarefas dependem da revisão desta proposta. Nenhum requisito implementado ou homologado nesta fase.
+**Coverage:** 25 requisitos aprovados e mapeados nas tasks; T1–T5 implementadas localmente. Integração, revisão independente e piloto real ainda pendentes. Testes simulados não são homologação.
 
 ## Success Criteria
 

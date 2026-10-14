@@ -1,5 +1,36 @@
 # Execution ledger: triagem
 
+## T5: publicação recuperável
+
+Premissa: publisher recebe snapshot recolhido, envelope/expected confiáveis e proposta recém-preparada no próprio processo; não recebe Git config nem executa produto. Arquivos: publish.mjs, publication-api.mjs, exportação read-only da proposta em prepare-patch.mjs, publish/publication-api.test.mjs e progresso TLC.
+
+RED: módulo inexistente antes da implementação; testes adicionais reproduziram substituição do patch, keywords de fechamento e consulta filtrada que perderia PR com head editado. GREEN: gate Full em Node 22.23.3 e sintaxe passaram. API stateful e fetch simulado, sem token real/push/PR remoto.
+
+Ruling: identidade de escrita consultada por GraphQL viewer (id/login); marcador mais digest detectam edição, mas não são assinatura de segurança. Reconsultar autoria/body/ref/base antes de atualizar e reconciliar timeout, sem alegar transação CAS. Piloto deve confirmar permissões/identidade da credencial escolhida.
+Ruling: Git Data API envia blobs e árvore exatos da proposta própria; SHA da árvore remoto deve coincidir e commit tem um único pai da base. Nunca executar push/hooks/produto com a credencial de publicação. Base/ref divergente ou PR humano/editado falha, nunca force-push; uma proposta anterior incompatível exige intervenção.
+Ruling: lista paginada de todos PRs (não apenas head atual) encontra o marcador mesmo após edição humana de branch. Custo: limite explícito de paginação; indisponibilidade não é ausência.
+
+| Critério / AC | Evidência e assertion | Resultado |
+| --- | --- | --- |
+| Planejamento e recurso próprio | `tests/triage/publish.test.mjs:67–70`: planned/comment_id iguais, contexto/SDD/proposta/riscos/próximos passos/draft/summary/base presentes, writes somente comment e pulls vazio | Comentário útil sem PR duplicado |
+| Intervenção sem patch | `tests/triage/publish.test.mjs:75–77`: needs-human/METADATA_INCOMPLETE e pulls vazio | Sem PR para informação/proposta insuficiente |
+| PR e testes falhos | `tests/triage/publish.test.mjs:83–90`: draft-checks-failed, base/ref/SHA/draft/Refs/milestone/reviewer, link comentário e commit pai/fingerprint exatos | Falha rastreável, nunca aprovação/fechamento |
+| Entrada e identidade divergentes | `tests/triage/publish.test.mjs:97–102,126–127,141`: rejects STALE/INVALID_RESULT/INVALID_TRIAGE_VERIFICATION/INVALID_TRIAGE_PATCH e writes vazio | Recusa antes de publicação |
+| Recuperação parcial | `tests/triage/publish.test.mjs:108–110`: recursos únicos e criação uma vez após timeout de comment/ref/pull/milestone/review | Recuperação consulta estado, sem criação cega |
+| Recursos humanos e erros | `tests/triage/publish.test.mjs:116–121,129–133`: body/ref humanos intactos, recurso com mesmo marcador mas autor humano preservado, erro/mensagem sanitizados | Sem sobreposição humana ou falso sucesso |
+| Sem fechamento automático | `tests/triage/publish.test.mjs:138`: regex de fechamento #N false no body publicado | Summary não autoriza encerramento |
+| Transporte Git exato | `tests/triage/publication-api.test.mjs:20–33`: identidade, blobs/base_tree/tree/parents/date/ref/draft e endpoint/auth/redirect exatos | Alteração publicada deriva da árvore validada |
+| Paginação e falhas | `tests/triage/publication-api.test.mjs:44–63`: segunda página e PRs all sem head, ref ausente null, POST único, secrets/403 sanitizados, mismatch árvore sem commit | Ausência distinta de falha; sem retry de escrita |
+
+| Testes / assertions | Requisito / critério | Necessário |
+| --- | --- | --- |
+| publish:67–77 | TRI-11/12/16/19: comentário ou intervenção, sem patch/duplicata | Sim |
+| publish:83–110 | TRI-13/15/18/19/20/21: payload correto, bound e recuperação | Sim |
+| publish:116–141 | TRI-13/15/19/20/22: proteção humana, fechamento e erro sanitizado | Sim |
+| publication-api:20–63 | TRI-13/15/19/21/22: transporte real do contrato, paginação e falhas | Sim |
+
+Adequação: asserts inspecionam estado persistido e payload Git real simulado; contagens somente comprovam ausência de duplicatas/retry junto do conteúdo. Convenções node:test/ESM e AD-003 preservadas; nenhum teste de documentação. Task 5: complete. Serialização e isolamento dos jobs serão conectados em T6.
+
 ## T4: preparação isolada
 
 Premissa: preparar um commit local não publica nem executa verificações do produto. Arquivos: prepare-patch.mjs, patch.test.mjs e progresso TLC. T6 conecta o job separado de checks sem credenciais; essa integração não é alegada como concluída em T4.

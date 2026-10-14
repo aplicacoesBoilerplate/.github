@@ -1,6 +1,6 @@
 # Triagem reutilizável de issues Implementation Plan
 
-**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T4 concluídas, 4/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
+**Spec:** [spec.md](spec.md). **Design:** [design.md](design.md). **Status:** Execução autorizada em 2026-10-14; T1–T5 concluídas, 5/8 tarefas. Documentação adiada por decisão explícita do mantenedor; caller funcional e testes relevantes permanecem.
 **Goal:** Entregar triagem reutilizável com rotas SDD/patch, publicação por PR e piloto real da central.
 **Architecture:** caller → triagem → central LLM; configuração confiável separada da base analisada; publicar somente após validação.
 **Tech Stack:** Node 22.23.3, ESM, node:test, Ajv/dependências fixadas da central, GitHub Actions/REST/GraphQL e Git.
@@ -142,17 +142,17 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 
 **What:** Gateway publica comentário ou PR draft de proposta validada e recupera erros parciais sem duplicar recursos.
 **Where:** `scripts/triage/publish.mjs`
-**Supporting files:** `tests/triage/publish.test.mjs` e API simulada stateful.
+**Supporting files:** `scripts/triage/publication-api.mjs`, leitura de proposta própria em `prepare-patch.mjs`, `tests/triage/{publish,publication-api}.test.mjs` e API simulada stateful.
 **Depends on:** T4
 **Reuses:** Snapshot/fingerprint T2, validação T3/T4 e metadata GitHub; nenhum código da LLM executado no publisher.
 **Requirement:** TRI-12, TRI-14, TRI-15, TRI-16, TRI-18, TRI-19, TRI-20, TRI-21, TRI-22
 **Tools:** TLC/github-planning; API fixtures na implementação, nenhuma publicação real para testar.
 **Interfaces:** `publishTriage({snapshot, result, prepared, verification, config}, api)` → comentário/PR e status explícitos. `api` distingue GET com retry limitado de criação sem retry cego.
 **Done when:**
-- [ ] Reconsulta issue/base/fingerprint; entrada antiga falha STALE_TRIAGE_INPUT antes de publicar proposta.
-- [ ] Comentário de SDD tem contexto/proposta/riscos/próximo passo e rascunho; comentário humano não é sobrescrito.
-- [ ] PR draft na base correta contém Refs/milestone/reviewer; nunca merge, Closes intermediário ou force-push.
-- [ ] Reexecução e timeout após criação recuperam recursos próprios; divergência humana impede atualização destrutiva.
+- [x] Reconsulta issue/base/fingerprint; entrada antiga falha STALE_TRIAGE_INPUT antes de publicar proposta.
+- [x] Comentário de SDD tem contexto/proposta/riscos/próximo passo e rascunho; comentário humano não é sobrescrito.
+- [x] PR draft na base correta contém Refs/milestone/reviewer; nunca merge, Closes intermediário ou force-push.
+- [x] Reexecução e timeout após criação recuperam recursos próprios; divergência humana impede atualização destrutiva.
 **Tests:** integration stateful; inspeção de comentário/PR/ref reais simulados, base/SHA/reviewer/draft, duas execuções sem duplicatas, erro parcial/403/conflito e zero alterações em recurso humano.
 **Gate:** Full
 **Commit:** `feat(triage): publish recoverable review proposals refs #7`
