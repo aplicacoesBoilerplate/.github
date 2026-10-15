@@ -8,7 +8,9 @@ de issues/PRs e workflows chamados por pipelines menores nos consumidores.
 - [Caller Go copiável e configuração do consumidor](examples/callers/go/)
 - [Caller Node com standard-version](examples/callers/standard-version/)
 - [Caller Maven com jgitver](examples/callers/jgitver/)
-- [Especificação ativa da pipeline](.specs/features/centralized-versioning-pipeline/spec.md)
+- [Caller de monorepo com Changesets/Turbo](examples/callers/changesets-turbo/)
+- [Especificação da pipeline e do perfil Go/Node/Maven](.specs/features/centralized-versioning-pipeline/spec.md)
+- [Extensão Changesets/Turbo](.specs/features/changesets-turbo/spec.md)
 
 Os workflows compartilhados devem ser referenciados por revisão fixa ou tag
 estável já publicada. Testes e consumidores mínimos ficam no repositório

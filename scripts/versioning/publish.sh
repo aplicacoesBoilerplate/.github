@@ -5,11 +5,20 @@ source "$script_dir/resolve-adapter.sh"
 source "$script_dir/release-gates.sh"
 
 validate_release_gates
-if [[ "$ADAPTER" == standard-version && "$PUBLISH_PHASE" == functional ]]; then
+if [[ ( "$ADAPTER" == standard-version || "$ADAPTER" == changesets ) && "$PUBLISH_PHASE" == functional ]]; then
   [[ "$STALE_PUSH" == 0 ]] || { echo 'Push funcional antigo não pode abrir PR técnico' >&2; exit 1; }
   exec bash "$script_dir/prepare-version-pr.sh"
 fi
 report_path="$VERSION_REPORT_PATH"
+if [[ "$ADAPTER" == changesets ]]; then
+  [[ "$PUBLISH_PHASE" == version-pr ]] || { echo 'Changesets exige PR técnico integrado' >&2; exit 1; }
+  report_origin=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).sha' \
+    "$(as_node_path "$report_path")")
+  [[ "$report_origin" == "$ORIGIN_SHA" ]] || {
+    echo 'Plano Changesets diverge do SHA funcional homologado' >&2; exit 1;
+  }
+  exec node "$(as_node_path "$script_dir/publish-changesets.mjs")" "$(as_node_path "$report_path")"
+fi
 version=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).candidateVersion' "$(as_node_path "$report_path")")
 tag=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).tag' "$(as_node_path "$report_path")")
 origin_sha=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).sha' "$(as_node_path "$report_path")")

@@ -59,7 +59,7 @@ export function selectReachableStableTag(repository, sha, tagPrefix = 'v') {
 export function validateVersionReport(report) {
   if (!report || typeof report !== 'object' || Array.isArray(report)) throw new Error('VersionReport inválido');
   if (report.schemaVersion !== 1) throw new Error('VersionReport schemaVersion deve ser 1');
-  if (!['go-gitsemver', 'standard-version', 'jgitver'].includes(report.adapter)) {
+  if (!['go-gitsemver', 'standard-version', 'jgitver', 'changesets'].includes(report.adapter)) {
     throw new Error(`Adaptador não suportado: ${report.adapter}`);
   }
   if (!shaPattern.test(report.sha)) throw new Error('VersionReport sha inválido');
@@ -70,16 +70,62 @@ export function validateVersionReport(report) {
   if (report.adapter === 'go-gitsemver' && prefix !== 'v') {
     throw new Error('go-gitsemver usa prefixo v neste contrato');
   }
-  if (report.tag !== `${prefix}${report.candidateVersion}`) throw new Error('VersionReport tag diverge da versão candidata');
+  if (report.adapter === 'changesets') {
+    if (prefix !== 'v' || !Array.isArray(report.releases) || !report.releases.length) {
+      throw new Error('Changesets requer plano não vazio e TAG_PREFIX=v');
+    }
+    const names = new Set();
+    for (const release of report.releases) {
+      if (!/^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/.test(release.name) ||
+          names.has(release.name) || parseStableVersion(release.oldVersion).text !== release.oldVersion ||
+          parseStableVersion(release.version).text !== release.version ||
+          release.tag !== `${release.name}@${release.version}` ||
+          bumpBetween(release.oldVersion, release.version) === 'none') {
+        throw new Error('Release Changesets inválida, duplicada ou sem incremento');
+      }
+      names.add(release.name);
+    }
+    if (report.tag !== report.releases[0].tag ||
+        report.candidateVersion !== report.releases[0].version ||
+        report.baseVersion !== report.releases[0].oldVersion) {
+      throw new Error('Projeção Changesets diverge do plano');
+    }
+  } else if (report.tag !== `${prefix}${report.candidateVersion}`) {
+    throw new Error('VersionReport tag diverge da versão candidata');
+  }
   if (!bumps.has(report.bump)) throw new Error('VersionReport bump inválido');
   if (!report.native || !['json', 'text'].includes(report.native.format) ||
       typeof report.native.explanation !== 'string') {
     throw new Error('VersionReport native inválido');
   }
-  if (report.adapter === 'go-gitsemver' && report.native.format !== 'json') {
-    throw new Error('go-gitsemver exige JSON nativo');
+  if (['go-gitsemver', 'changesets'].includes(report.adapter) && report.native.format !== 'json') {
+    throw new Error(`${report.adapter} exige JSON nativo`);
   }
   return report;
+}
+
+export function normalizeChangesetsReport({ nativeJson, explanation, branch, sha }) {
+  if (!shaPattern.test(sha)) throw new Error(`SHA avaliado inválido: ${sha}`);
+  let result;
+  try { result = JSON.parse(nativeJson); }
+  catch (error) { throw new Error(`JSON Changesets inválido: ${error.message}`); }
+  if (!Array.isArray(result?.releases) || !result.releases.length ||
+      !Array.isArray(result?.changesets) || !result.changesets.length) {
+    throw new Error('Changesets não encontrou um plano de release com changesets');
+  }
+  const releases = result.releases.map(item => ({
+    name: item.name, oldVersion: item.oldVersion,
+    version: parseStableVersion(item.newVersion).text,
+    tag: `${item.name}@${item.newVersion}`,
+    bump: bumpBetween(item.oldVersion, item.newVersion),
+  })).sort((a, b) => a.name.localeCompare(b.name));
+  const first = releases[0];
+  return validateVersionReport({
+    schemaVersion: 1, adapter: 'changesets', sha: sha.toLowerCase(), branch,
+    tagPrefix: 'v', baseVersion: first.oldVersion, candidateVersion: first.version,
+    tag: first.tag, bump: first.bump, releases,
+    native: { format: 'json', result, explanation: explanation || 'Plano nativo do Changesets' },
+  });
 }
 
 function normalizeTextReport({ adapter, candidate, nativeOutput, branch, sha, repository, tagPrefix = 'v' }) {
@@ -170,6 +216,12 @@ if (process.argv[1] && import.meta.filename === process.argv[1]) {
         explanation: readFileSync(explanationPath, 'utf8'),
         branch, sha, repository,
       });
+      process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+    } else if (command === 'normalize-changesets') {
+      const [nativePath, branch, sha, , tagPrefix = 'v'] = args;
+      if (tagPrefix !== 'v') throw new Error('Changesets usa tags nativas name@version; TAG_PREFIX deve permanecer v');
+      const report = normalizeChangesetsReport({ nativeJson: readFileSync(nativePath, 'utf8'),
+        explanation: '', branch, sha });
       process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
     } else if (command === 'normalize-standard' || command === 'normalize-jgitver') {
       const [nativePath, branch, sha, repository, tagPrefix = 'v'] = args;

@@ -5,6 +5,8 @@ import { dirname, join } from 'node:path';
 const directory = dirname(fileURLToPath(import.meta.url));
 const localFixtures = [
   'adapter-report.mjs',
+  'changesets-flow.mjs',
+  'changesets-publish.mjs',
   'install-node.mjs',
   'version-report.mjs',
   'version-pr.mjs',

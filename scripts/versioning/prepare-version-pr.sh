@@ -4,40 +4,58 @@ script_dir=$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 source "$script_dir/resolve-adapter.sh"
 : "${VERSIONING_TOKEN:?versioning_token de GitHub App com Contents e Pull requests write é obrigatório}"
 [[ "${RELEASE_GATES_VALIDATED:-}" == 1 && "${PUBLISH_PHASE:-}" == functional && \
-   "$ADAPTER" == standard-version ]] || {
+   ( "$ADAPTER" == standard-version || "$ADAPTER" == changesets ) ]] || {
   echo 'Preparação Node exige merge funcional validado' >&2; exit 1;
 }
 node_script=$(as_node_path "$script_dir/version-pr.mjs")
 report_path=$(as_node_path "$VERSION_REPORT_PATH")
 version=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).candidateVersion' "$report_path")
 tag=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).tag' "$report_path")
+releases_json='[]'
+output_version="$version"
+output_tag="$tag"
+if [[ "$ADAPTER" == changesets ]]; then
+  releases_json=$(node -p 'JSON.stringify(JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).releases)' "$report_path")
+  release_count=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).releases.length' "$report_path")
+  if [[ "$release_count" -gt 1 ]]; then output_version=''; output_tag=''; fi
+fi
 origin_pr=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).number' \
   "$(as_node_path "$PR_POLICY_PATH")")
-branch="versioning/standard-version/${ORIGIN_SHA:0:12}"
+branch="versioning/$ADAPTER/${ORIGIN_SHA:0:12}"
 prs=$(gh pr list -R "$GITHUB_REPOSITORY" --head "$branch" --state all --limit 100 --json number,url,state)
 existing=$(node -e 'const a=JSON.parse(process.argv[1]);if(a.length>1)process.exit(1);if(a[0])process.stdout.write(JSON.stringify(a[0]))' "$prs")
 if [[ -n "$existing" ]]; then
   state=$(node -p 'JSON.parse(process.argv[1]).state' "$existing")
   [[ "$state" == OPEN ]] || { echo "PR técnico existente está $state; reexecute o push do merge técnico" >&2; exit 1; }
   url=$(node -p 'JSON.parse(process.argv[1]).url' "$existing")
-  [[ -z "${GITHUB_OUTPUT:-}" ]] || printf 'version=%s\ntag=%s\nversion_pr_url=%s\noutcome=pending-version-pr\n' \
-    "$version" "$tag" "$url" >>"$GITHUB_OUTPUT"
+  [[ -z "${GITHUB_OUTPUT:-}" ]] || printf 'version=%s\ntag=%s\nversion_pr_url=%s\noutcome=pending-version-pr\nreleases_json=%s\n' \
+    "$output_version" "$output_tag" "$url" "$releases_json" >>"$GITHUB_OUTPUT"
   printf 'PR técnico já aberto: %s\n' "$url"
   exit 0
 fi
 remote_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$TARGET_BRANCH" --jq .object.sha)
 [[ "$remote_sha" == "$GITHUB_SHA" ]] || { echo 'Branch principal avançou; recalcule antes de abrir PR técnico' >&2; exit 1; }
-select_adapter standard-version "${PROJECT_PATH:-.}"
+select_adapter "$ADAPTER" "${PROJECT_PATH:-.}"
 git switch -c "$branch" "$GITHUB_SHA"
 before=$(git rev-parse HEAD)
-(cd "$PROJECT_DIR" && "$ADAPTER_BIN" --skip.commit --skip.tag --tag-prefix "${TAG_PREFIX:-v}")
+if [[ "$ADAPTER" == changesets ]]; then
+  (cd "$PROJECT_DIR" && "$ADAPTER_BIN" version && npm install --package-lock-only --ignore-scripts --no-audit --no-fund)
+else
+  (cd "$PROJECT_DIR" && "$ADAPTER_BIN" --skip.commit --skip.tag --tag-prefix "${TAG_PREFIX:-v}")
+fi
 [[ "$(git rev-parse HEAD)" == "$before" ]] || { echo 'Adaptador criou commit inesperado' >&2; exit 1; }
-files=$(node "$(as_node_path "$script_dir/verify-version-files.mjs")" working standard-version "${PROJECT_PATH:-.}")
-node "$node_script" verify-manifests "$(as_node_path "${GITHUB_WORKSPACE:-$(pwd)}")" \
-  "${PROJECT_PATH:-.}" "$version"
+if [[ "$ADAPTER" == changesets ]]; then
+  files=$(node "$(as_node_path "$script_dir/changesets-version-pr.mjs")" working \
+    "$(as_node_path "${GITHUB_WORKSPACE:-$(pwd)}")" "$report_path")
+  plan_sha=$(node "$(as_node_path "$script_dir/changesets-version-pr.mjs")" digest '' "$report_path")
+else
+  files=$(node "$(as_node_path "$script_dir/verify-version-files.mjs")" working standard-version "${PROJECT_PATH:-.}")
+  node "$node_script" verify-manifests "$(as_node_path "${GITHUB_WORKSPACE:-$(pwd)}")" \
+    "${PROJECT_PATH:-.}" "$version"
+fi
 mapfile -t changed_files <<< "$files"
 git add -A -- "${changed_files[@]}"
-git diff --cached --quiet && { echo 'standard-version não atualizou manifests/changelog' >&2; exit 1; }
+git diff --cached --quiet && { echo "$ADAPTER não atualizou manifests/changelog" >&2; exit 1; }
 export GH_TOKEN="$VERSIONING_TOKEN"
 bot_slug="${VERSIONING_BOT_SLUG:?Slug da GitHub App obrigatório}"
 bot_id=$(gh api "users/${bot_slug}[bot]" --jq .id)
@@ -47,10 +65,20 @@ git -c user.name="${bot_slug}[bot]" \
   commit -m "chore(release): $version"
 gh auth setup-git
 git push origin "HEAD:refs/heads/$branch"
-body=$(printf 'Origin-PR: #%s\nOrigin-SHA: %s\nAdapter: standard-version\nProject: %s\nTag-Prefix: %s\nVersion: %s\n\nArquivos de versão calculados pelo standard-version no SHA homologado. Revise CI, manifests e changelog antes do merge.\n' \
-  "$origin_pr" "$ORIGIN_SHA" "${PROJECT_PATH:-.}" "${TAG_PREFIX:-v}" "$version")
+body=$(printf 'Origin-PR: #%s\nOrigin-SHA: %s\nAdapter: %s\nProject: %s\nTag-Prefix: %s\nVersion: %s\n' \
+  "$origin_pr" "$ORIGIN_SHA" "$ADAPTER" "${PROJECT_PATH:-.}" "${TAG_PREFIX:-v}" "$version")
+if [[ "$ADAPTER" == changesets ]]; then
+  body="$body
+Plan-SHA256: $plan_sha
+
+Changesets versionou todos os pacotes e dependentes em um lote. Revise manifests, changelogs, package-lock.json e CI antes do merge."
+else
+  body="$body
+
+Arquivos de versão calculados pelo standard-version no SHA homologado. Revise CI, manifests e changelog antes do merge."
+fi
 url=$(gh pr create -R "$GITHUB_REPOSITORY" --base "$TARGET_BRANCH" --head "$branch" \
-  --title "chore(release): standard-version $version" --body "$body")
-[[ -z "${GITHUB_OUTPUT:-}" ]] || printf 'version=%s\ntag=%s\nversion_pr_url=%s\noutcome=pending-version-pr\n' \
-  "$version" "$tag" "$url" >>"$GITHUB_OUTPUT"
+  --title "chore(release): $ADAPTER $version" --body "$body")
+[[ -z "${GITHUB_OUTPUT:-}" ]] || printf 'version=%s\ntag=%s\nversion_pr_url=%s\noutcome=pending-version-pr\nreleases_json=%s\n' \
+  "$output_version" "$output_tag" "$url" "$releases_json" >>"$GITHUB_OUTPUT"
 printf 'PR técnico aguardando revisão: %s\n' "$url"

@@ -64,6 +64,10 @@ export function evaluateReleasePolicy({ report, snapshot, phase = 'preview' }) {
     decision.reasons.push('milestone ausente; adaptador é autoritativo');
     return decision;
   }
+  if (report.adapter === 'changesets' && report.releases?.length > 1) {
+    decision.reasons.push('milestone única não representa o lote Changesets com múltiplos pacotes; remova a milestone e revise o PR técnico');
+    return decision;
+  }
 
   const title = String(snapshot.milestone.title ?? '');
   const match = strictMilestone.exec(title);
