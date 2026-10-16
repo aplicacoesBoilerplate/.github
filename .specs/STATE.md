@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-8-code-review/`
-- **Phase / Task**: Specify; proposta TLC/contexto escritos para review reutilizável e piloto conjunto #9/#7/#8.
+- **Phase / Task**: Design; spec/context aprovados pelo mantenedor em 2026-10-15; design escrito para revisão.
 - **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
-- **In-progress**: Spec explicita configuração apenas no consumidor, review dos drafts da triagem, correção complementar e encadeamento explícito sem depender de eventos implícitos do GITHUB_TOKEN. Nenhuma implementação #8 nesta etapa.
-- **Next step**: Revisar spec/context; após aprovação escrita produzir design/tasks com reuso dos componentes existentes, depois executar sequencialmente.
-- **Blockers**: Gate TLC de revisão da especificação. Piloto real continua exigindo credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global.
-- **Uncommitted files**: Proposta/contexto/STATE até o commit desta etapa; demais worktrees preservados.
+- **In-progress**: Design mantém configuração no consumidor, perfil review/envelope v3 compatíveis e dispatch para novo run após a triagem, evitando snapshot antigo da sessão. Nenhuma implementação #8 nesta etapa.
+- **Next step**: Aprovar design; então gerar tarefas sequenciais com gates contratuais e seguir à execução autorizada.
+- **Blockers**: Revisão TLC do design antes de tasks. Piloto real continua exigindo credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global. Ferramenta de goals ainda retorna blocked e não oferece transição para active; não marcar complete para contornar essa limitação.
+- **Uncommitted files**: Design e registro da aprovação até commit desta etapa; demais worktrees preservados.
 - **Branch**: `feature/issue-8-code-review`

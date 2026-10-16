@@ -1,6 +1,6 @@
 # Context: entrega integrada LLM, triagem e review
 
-**Gathered:** 2026-10-15. **Status:** Proposta aguardando revisão escrita. **Spec:** spec.md.
+**Gathered:** 2026-10-15. **Status:** Especificação/contexto aprovados pelo mantenedor; design em revisão. **Spec:** spec.md.
 
 ## Feature Boundary
 
@@ -17,7 +17,7 @@ Implementar code review da #8 sobre a central #9 e os componentes da triagem #7;
 ## Declined / Undiscussed Gray Areas → Assumptions
 
 - Propostos na spec: review com origem confiável na branch padrão; encadeamento explícito após triagem; aceitar seus drafts e bloquear recursão apenas dos complementares; achados estruturados com referências validadas; limites compatíveis com a central.
-- Esses defaults não foram apresentados como decisões já aprovadas. A revisão escrita antecede design/tasks e código, conforme TLC.
+- Esses defaults foram aprovados pelo mantenedor após a revisão escrita da especificação em 2026-10-15. Design e tasks ainda precisam dos respectivos gates, conforme TLC.
 - Criar/habilitar workflows no consumidor, publicar pins centrais e executar LLM real exigem autorização específica e provisionamento de sessão dedicada. Nenhuma credencial pessoal será descoberta ou reutilizada automaticamente.
 
 ## Deferred Ideas

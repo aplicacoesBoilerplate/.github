@@ -1,6 +1,6 @@
 # Code review reutilizável Specification
 
-**Status:** Proposta TLC para revisão do mantenedor. **Issue:** #8. **Data:** 2026-10-15.
+**Status:** Especificação aprovada pelo mantenedor em 2026-10-15; design em revisão. **Issue:** #8. **Data:** 2026-10-15.
 **Base local:** #9 → #7 → #8. O OpenSpec `pr-code-review-mvp` permanece histórico; esta proposta reconcilia seu contrato com a implementação da central e da triagem.
 
 ## Problem Statement
@@ -39,7 +39,7 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | Limites | Config 32 KiB; body 16 KiB; diff 16 KiB e até 100 arquivos; contexto total 32 KiB; envelope/payload total 1 MiB; outputs 8 KiB; retenção 1 dia | Limites compatíveis com a central atual e falha explícita para excesso | Proposto |
 | Provisionamento | Sem ler auth pessoal/global; credenciais dedicadas fornecidas pelo mantenedor no consumidor | Autorização de implementação não é autorização para usar a conta pessoal | Sim |
 
-**Open questions:** none — todas as ambiguidades estão resolvidas ou registradas na tabela. Os defaults propostos aguardam revisão desta especificação; não são aprovação de implementação ou ativação remota.
+**Open questions:** none — todas as ambiguidades estão resolvidas ou registradas na tabela. O mantenedor aprovou a especificação e seus defaults em 2026-10-15. O rótulo Proposto na tabela registra a origem desses defaults; aprovação não autoriza ativação remota.
 
 ## User Stories
 
@@ -153,7 +153,7 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-25 | Recuperação | Specify | Pending review |
 | REV-26 | Falhas | Specify | Pending review |
 
-**Coverage:** 26 requisitos explícitos, aguardando aprovação e design/tasks; nenhum implementado por esta proposta.
+**Coverage:** 26 requisitos aprovados, em design e ainda sem implementação da #8. Os estados Pending review da tabela registram a rodada original; a aprovação desta revisão os promove a In Design, não a Verified.
 
 ## Success Criteria
 
