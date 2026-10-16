@@ -176,7 +176,7 @@ T11 -> T12
 **Reuses**: PR12 e componentes locais validados, conforme matriz design.
 **Tools**: TLC, CI/CD, Entregas, Git/Node/Java/Maven e docs oficiais.
 **Done when**:
-- [ ] Caller por SHA revisado, limitações/depreciação, compatibilidade PR13 e relatórios locais documentados; pronto para Verifier.
+- [x] Caller por SHA revisado, limitações/depreciação, compatibilidade PR13 e relatórios locais documentados; pronto para Verifier.
 **Tests**: none
 **Gate**: Build
 

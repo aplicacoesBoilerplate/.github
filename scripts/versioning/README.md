@@ -41,19 +41,24 @@ converte em variáveis de ambiente para o script.
 O called obtém o checkout da aplicação e um segundo checkout da automação em
 `.shared-versioning`, usando `job.workflow_repository` e `job.workflow_sha`.
 Isso mantém scripts e workflow na mesma revisão selecionada pelo caller.
+O consumidor é obtido na pasta irmã `consumer`, não na raiz que contém a automação.
 
 Depois executa, por exemplo:
 
 ```yaml
+working-directory: consumer
 env:
   GH_TOKEN: ${{ github.token }}
   ADAPTER: ${{ inputs.adapter }}
   TARGET_BRANCH: ${{ inputs.target_branch }}
   PROJECT_PATH: ${{ inputs.project_path }}
-run: bash .shared-versioning/scripts/versioning/preview.sh
+run: |
+  export GITHUB_WORKSPACE="$PWD"
+  bash ../.shared-versioning/scripts/versioning/preview.sh
 ```
 
-O diretório de trabalho padrão é o workspace da aplicação. Os scripts localizam
+O diretório de trabalho é explicitamente `consumer`. `GITHUB_WORKSPACE` é
+redefinido só nessa etapa para a raiz Git da aplicação. Os scripts localizam
 seus auxiliares usando `BASH_SOURCE`, mas consultam o Git da aplicação, não o
 Git da pasta `.shared-versioning`. Portanto, estar localizado no checkout
 central não significa calcular a versão do repositório central.
@@ -75,6 +80,14 @@ Não coloque PATs em YAML, documentação ou arquivos versionados.
 | [preview.sh](preview.sh) | Evento de PR e checkout do head | Selecionar a fase, calcular versão, coletar snapshot e gerar guia ou avaliar policy. |
 | [resolve-adapter.sh](resolve-adapter.sh) | Adaptador, caminho e workspace | Seleção permitida de ferramenta, confinamento do projeto e conversão de caminhos Windows/Node. Biblioteca carregada com `source`. |
 | [collect-version-report.sh](collect-version-report.sh) | Caminho de saída, adaptador, branch e SHA | Executar Go, standard-version ou jgitver nativo e produzir relatório normalizado. |
+| [collect-version-report.mjs](collect-version-report.mjs) | Contexto explícito do cálculo | Compor o registro permitido e gravar o relatório; o Bash é um entrypoint fino. |
+| [adapter-registry.mjs](adapter-registry.mjs) | ID permitido | Descritores Go/Node/Maven com runtime, tipo de tag e implementação; sem carregar código arbitrário do caller. |
+| [adapters/](adapters/) | Contexto e process port injetável | Coletores nativos separados por ferramenta. |
+| [process-runner.mjs](process-runner.mjs) | command, argv, cwd, workspace, env | Executar processo com realpath, timeout120s, buffer1MiB e remoção de credenciais/opções de runtime. Não é sandbox. |
+| [java-properties.mjs](java-properties.mjs) | Bytes Properties | Parser com escapes, Unicode, continuação e rejeição de chaves ambíguas. |
+| [prepare-publication.sh](prepare-publication.sh) | Push e contexto somente leitura | Calcular relatório/policy, capturar refs, gerar bundle Node sem credenciais de escrita e materializar artifacts. |
+| [git-inputs.mjs](git-inputs.mjs) | Snapshot e refs atuais | Detectar alteração das entradas Git, tolerando apenas a própria tag nova no mesmo SHA. |
+| [version-bundle.mjs](version-bundle.mjs) | Relatório e manifests nativos | Capturar bundle no leitor e aplicar bytes validados no escritor sem executar standard-version. |
 | [version-report.mjs](version-report.mjs) | Saída nativa e Git local | Validar SemVer/SHA/prefixo, encontrar a maior tag estável alcançável e normalizar `VersionReport`. |
 | [collect-origin-report.sh](collect-origin-report.sh) | SHA funcional e caminho de saída | Recalcular standard-version no commit homologado, sem tocar na principal. |
 | [validate-version-pr.sh](validate-version-pr.sh) | PR técnico Node | Conferir proveniência, versão nativa e manifests antes da tag. |
@@ -166,7 +179,11 @@ Campos: `adapter`, `sha`, `branch`, `baseVersion`, `candidateVersion`, `tag`,
 avaliado; não é necessariamente a tag mais recente por data nem a última
 GitHub Release. O prefixo do caller delimita a família de tags. Sem tag estável,
 a base matemática é `0.0.0`; a exigência de primeiro artefato `v0.0.1` se
-aplica ao perfil Go. Node/Maven seguem a versão nativa estável.
+aplica a todos os perfis neste contrato; configuração nativa deve produzi-la.
+Maven acrescenta `tagKind: annotated` e `native.format: java-properties`;
+seu guia expõe Properties e marca `explanation.kind: derived`.
+`normalize-jgitver` no CLI lê um envelope JSON `{version,sha,properties,explanation}`,
+não a antiga última linha de stdout. `normalize-standard` continua lendo texto nativo.
 Prereleases não fazem parte deste MVP.
 
 Em reexecução de um commit já tagueado, o adaptador pode retornar `Sha` vazio.
@@ -214,13 +231,16 @@ substitua essa autorização.
 
 ```text
 push na branch alvo -> caller: go-ci -> version-publish.yml
+  -> validate-publication (somente leitura): prepare-publication.sh
+     -> adaptador -> relatório + snapshot de refs + bundle Node funcional
   -> environment-gate, se informado
-  -> publish.sh -> release-gates.sh
+  -> publish (checkout novo + download artifacts): publish.sh -> release-gates.sh
      -> conferir default branch, checkout e SHA remoto
-     -> coletar único PR integrado e recalcular relatório
+     -> coletar único PR integrado e validar relatório pré-calculado/refs
      -> release-policy.mjs, phase=publication
   -> Go/Maven: reconciliar tag/Release
-  -> Node: abrir PR técnico; após review/merge, recalcular origem e reconciliar tag/Release
+  -> Node: aplicar bundle e abrir PR técnico sem ferramenta nativa no escritor
+     -> após review/merge: leitor recalcula origem; escritor reconcilia tag/Release
 ```
 
 O caller deve declarar `needs` para a CI do mesmo push (`go-ci`, `node-ci` ou
@@ -286,8 +306,8 @@ de assets de distribuição neste MVP.
 
 Scripts exigem Bash, Git, Node compatível com os módulos `.mjs`, GitHub CLI
 (`gh`) e ferramentas GNU usadas pelo Bash. O called prepara Node 24 e instala
-as dependências do consumidor para standard-version; prepara Java 17 para
-jgitver; e instala Go e o adaptador go-gitsemver na revisão
+as dependências do consumidor para standard-version somente em leitura; prepara
+Java21/Maven3.9.9 para jgitver; e instala Go e o adaptador go-gitsemver na revisão
 `680c1c12d9a4f573a8da1b2e3ccebb3571b1cab6` para o perfil Go. Os calleds
 usam runner Ubuntu e não oferecem contrato de execução arbitrária em Windows
 ou self-hosted.
@@ -367,6 +387,14 @@ evidência nativa e ganhar testes próprios. Novos callers devem apenas selecion
 inputs, permissões, eventos e CI; não recalcular versão nem implementar override.
 Mudanças de schema, policy ou guards exigem testes negativos e revisão independente.
 Manter scripts e called na mesma revisão evita mistura de versões.
+
+O registro é o ponto de composição: um novo adaptador implementa coleta nativa
+e normalização via process port, sem duplicar policy, API, guia ou publicação.
+Adicione fixtures de contrato, negativos, ferramenta real e caminhos read/write.
+Se o perfil gerar arquivos (como Node), implemente uma materialização restrita
+antes de usar o escritor. Não basta acrescentar um case no Bash.
+Veja os guias [Maven](../../docs/versioning-jgitver.md) e
+[standard-version](../../docs/versioning-standard-version.md).
 
 A adoção no `boilerplate-cli`, a consolidação do arquivo `go-ci`, a revisão por
 LLM e a aprovação automática de environments são próximos trabalhos, não

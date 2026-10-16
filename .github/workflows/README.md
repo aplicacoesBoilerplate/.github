@@ -33,13 +33,16 @@ checkout, em vez de conter toda a lógica no YAML. Este trecho existe na prévia
 ```yaml
 - name: Calculate and validate preview
   id: preview
+  working-directory: consumer
   env:
     GH_TOKEN: ${{ github.token }}
     ADAPTER: ${{ inputs.adapter }}
     TARGET_BRANCH: ${{ inputs.target_branch }}
     PROJECT_PATH: ${{ inputs.project_path }}
     VERSIONING_OUTPUT_DIR: ${{ runner.temp }}/versioning
-  run: bash .shared-versioning/scripts/versioning/preview.sh
+  run: |
+    export GITHUB_WORKSPACE="$PWD"
+    bash ../.shared-versioning/scripts/versioning/preview.sh
 ```
 
 `env` fornece os parâmetros ao processo; `bash` interpreta o arquivo; um
@@ -51,6 +54,13 @@ O called faz dois checkouts: a aplicação consumidora e a automação central e
 `.shared-versioning`. A automação é obtida de `job.workflow_repository`, na
 revisão `job.workflow_sha`, preservando a mesma versão do called selecionada
 pelo caller. Portanto, o consumidor **não precisa copiar os scripts**.
+Os checkouts ficam em pastas irmãs, `consumer` e `.shared-versioning`.
+O contexto `job.workflow_*` utilizado aqui é do GitHub Cloud, não de GHES.
+
+Na publicação, `validate-publication` executa ferramentas nativas só com leitura.
+O environment opcional vem depois. `publish` recebe artifacts, revalida dados
+atuais e escreve sem executar ferramentas do consumidor. A App do Node só é
+emitida para criar o PR técnico; os outros perfis não exigem App secrets.
 
 ## Limites e segurança
 

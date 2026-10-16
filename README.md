@@ -8,6 +8,9 @@ de issues/PRs e workflows chamados por pipelines menores nos consumidores.
 - [Caller Go copiável e configuração do consumidor](examples/callers/go/)
 - [Caller Node com standard-version](examples/callers/standard-version/)
 - [Caller Maven com jgitver](examples/callers/jgitver/)
+- [Guia Maven: reactor, bootstrap e tags anotadas](docs/versioning-jgitver.md)
+- [Guia standard-version: PR técnico e limites de suporte](docs/versioning-standard-version.md)
+- [Especificação TLC da conciliação dos perfis](.specs/features/reconcile-native-profiles/spec.md)
 - [Especificação ativa da pipeline](.specs/features/centralized-versioning-pipeline/spec.md)
 
 Os workflows compartilhados devem ser referenciados por revisão fixa ou tag

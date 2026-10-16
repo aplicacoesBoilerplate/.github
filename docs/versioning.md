@@ -6,7 +6,10 @@ principal. O workflow central é carregado na mesma revisão imutável declarada
 em `uses`.
 
 O perfil Go está homologado; esta revisão acrescenta coleta normalizada para
-`standard-version` e `jgitver`. Changesets/Turbo continua em preparação. Os artefatos OpenSpec existentes
+`standard-version` e `jgitver`. A conciliação dos perfis está especificada em
+[TLC REC](../.specs/features/reconcile-native-profiles/spec.md).
+Changesets/Turbo está no PR #13 separado, dependente da integração do #12; não faz parte deste perfil.
+Os artefatos OpenSpec existentes
 continuam como histórico; a especificação ativa está em
 `.specs/features/centralized-versioning-pipeline/`.
 
@@ -25,13 +28,16 @@ continuam como histórico; a especificação ativa está em
    publicador encontra o único PR integrado de `develop` ou `hotfix/<nome>` para `master`, recalcula a
    versão e reavalia a policy com os dados atuais da API.
 5. Com Go ou jgitver, tag imutável e GitHub Release são criadas no SHA integrado.
-   Para Go sem tags estáveis anteriores, somente `v0.0.1` é aceita.
+   Para qualquer adaptador sem tags estáveis anteriores no namespace do caller,
+   somente a candidata nativa `0.0.1` é aceita, com o prefixo configurado.
 6. Com `standard-version`, o merge funcional cria um PR técnico com `package.json`,
    lockfile e `CHANGELOG.md`; o job retorna `pending-version-pr`. Esse PR precisa
    passar pela CI e por revisão humana. Seu merge recalcula a versão no SHA
    funcional homologado e publica no **novo SHA integrado**, que contém os
    manifests. `Origin-SHA` e `Origin-PR` preservam a proveniência. O PR técnico
-   nunca é substituído por um commit direto na principal.
+   nunca é substituído por um commit direto na principal. O SHA funcional deve
+   ser o pai imediato do merge técnico: suportam-se merge normal, squash e
+   rebase de commit único. Uma entrega interveniente exige novo cálculo e revisão.
 
 O relatório nativo do `go-gitsemver`, inclusive `--explain`, é preservado no
 `VersionReport` e serve de base para o guia e para as notas da release. O central
@@ -56,7 +62,7 @@ de versão/incremento bloqueia o check. A exceção exige toda esta sequência:
 1. Uma pessoa com papel efetivo `Maintain` ou `Admin` aplica o label
    `versioning:override`.
 2. Outra pessoa com papel efetivo `Maintain` ou `Admin` aprova o PR depois do
-   label e sobre o SHA atual.
+   label e sobre o SHA atual. Milestone com título inválido nunca aceita override.
 3. O check confirma timeline, papéis atuais, identidades distintas, horários e
    SHA. Falha ou resposta incompleta da API bloqueia.
 
@@ -160,6 +166,11 @@ App ID e a chave privada como secrets do consumidor; o called emite e revoga um
 token por execução. O `GITHUB_TOKEN` continua com leitura de PR e escrita em
 Contents no job de publicação. Não passe credenciais ao job de prévia.
 
+O [guia standard-version](versioning-standard-version.md) detalha bootstrap,
+artefatos, revisão e limites. A ferramenta está depreciada upstream; o perfil
+foi exercitado com `9.5.0`. Fixe essa versão no lockfile, sem range flutuante,
+e não confunda funcionalidade testada com manutenção futura da ferramenta.
+
 O PR técnico `versioning/standard-version/<Origin-SHA>` leva versão, projeto e
 prefixo no corpo. Se já estiver aberto, a reexecução retorna o mesmo URL. Se
 o PR for alterado, o check recusa arquivos fora de manifests/changelog, versão
@@ -168,12 +179,36 @@ o dry-run no SHA funcional anterior, revalida a policy original e publica no
 merge técnico. A tag nunca é movida. Caso a branch principal avance antes do
 PR técnico, recalcule e obtenha nova revisão; não force a publicação antiga.
 
-Para Maven, inclua no consumidor `pom.xml`, `.mvn/extensions.xml` com a versão
-fixada da extensão jgitver e, se necessário, `.mvn/jgitver.config.xml`. O
-coletor executa o Maven do consumidor para obter `project.version` no SHA
-avaliado com `JGITVER_BRANCH` da principal; versões `-SNAPSHOT` ou qualquer
-prerelease são recusadas. jgitver deriva a versão do Git e **não altera o POM**
-no fluxo de publicação. O caller deve executar testes/verify antes do called.
+Para Maven, siga o [guia jgitver](versioning-jgitver.md): `pom.xml`, extensão
+`jgitver-maven-plugin:1.9.0` e configuração nativa revisada. Node24, Java21 e
+Maven3.9.9 são preparados no cálculo. O coletor exporta Properties, compara
+`used_version`, `calculated_version`, SHA completo e plugin; não lê a última
+linha de stdout. SNAPSHOT e prerelease são recusadas. A versão é única para
+todo o reactor. O central não altera POM nem distribui pacotes; cria uma
+**tag anotada** no SHA integrado e uma Release. O caller Maven de exemplo
+exige Wrapper revisado em3.9.9 e executa verify antes do called.
+
+### Fronteira entre cálculo e publicação
+
+O job `validate-publication` possui somente leitura e executa o adaptador.
+Ele materializa `version-report.json`, `git-inputs.json` e, no push funcional
+Node, `version-bundle.json`, em artifacts da mesma execução/tentativa.
+O environment opcional só é alcançado após essa validação.
+
+O job `publish` usa Node24 para scripts confiáveis, sem Maven, Go, npm install
+ou execução de configuração do consumidor. Faz checkout novo do mesmo SHA,
+baixa os artifacts e reconsulta PR/milestone/reviews/papéis na API. Confere
+identidade, refs e, para Node, paths, hashes e conteúdo dos arquivos antes de
+qualquer alteração. A GitHub App só é emitida para preparar o PR técnico Node.
+Os três checkouts de consumidor/automação ficam em pastas irmãs (`consumer`
+e `.shared-versioning`), sem credenciais persistidas e com scripts no SHA do
+próprio workflow, não no master atual. Esse contexto exige GitHub Cloud.
+
+Mudança nas refs durante a espera bloqueia e exige nova leitura; apenas a
+própria tag adicionada no SHA esperado permite retomar falha parcial.
+Isso não é sandbox de código do consumidor: revise configurações nativas e
+dependências antes de integrá-las. Credenciais de escrita não são fornecidas
+ao processo calculador.
 
 ### Prefixos de artefatos de infraestrutura
 
@@ -245,6 +280,11 @@ Use Git Bash no Windows e inclua `C:\Program Files\Git\bin` no `PATH`.
 
 ```bash
 node tests/versioning/run.mjs --local
+node tests/versioning/real-standard-version.mjs
+node tests/versioning/real-jgitver.mjs
+node tests/versioning/real-maven-reactor.mjs
+node tests/versioning/real-jgitver-prefix.mjs
+node tests/versioning/maven-setup.mjs
 python -c "import glob,yaml; [yaml.safe_load(open(p,encoding='utf-8')) for p in glob.glob('.github/workflows/*.yml')]"
 ```
 
@@ -259,3 +299,8 @@ A CI central executa as fixtures locais, standard-version real, jgitver real
 com Maven e o adaptador Go fixado. Os fixtures locais simulam a API do GitHub,
 falhas parciais, dez reexecuções, colisões e corridas. Esses testes não
 substituem um ensaio hospedado de publicação em um consumidor Node ou Maven.
+
+PR #12 contém Go/Node/Maven. PR #13 (Changesets/Turbo) está empilhado sobre
+ele e precisa conciliar o novo registro, o bundle e o fluxo read/write antes
+de ser integrado. Um merge textual sem conflitos não certifica compatibilidade.
+Consulte a [avaliação de compatibilidade](../.specs/features/reconcile-native-profiles/pr13-compatibility.md).

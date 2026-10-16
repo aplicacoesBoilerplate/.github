@@ -104,11 +104,11 @@ PR #12 contém standard-version/jgitver, enquanto codex/jgitver-maven contém um
 ## Requirement Traceability
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| REC-01 | Modularidade | Execute | Pending |
-| REC-02 | Maven | Execute | Pending |
-| REC-03 | Node | Execute | Pending |
-| REC-04 | Read/write | Execute | Pending |
-| REC-05 | Governança | Execute | Pending |
+| REC-01 | Modularidade | Execute | Implemented; independent review pending |
+| REC-02 | Maven | Execute | Implemented; independent review pending |
+| REC-03 | Node | Execute | Implemented; independent review pending |
+| REC-04 | Read/write | Execute | Implemented; independent review pending |
+| REC-05 | Governança | Execute | Implemented; independent review pending |
 | REC-06 | Publicação existente | Execute | Pending |
 
 ## Success Criteria
