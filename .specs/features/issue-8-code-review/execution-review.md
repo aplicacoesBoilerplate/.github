@@ -2,6 +2,35 @@
 
 Spec, design e tarefas aprovados em 2026-10-15. Execução pelo principal, sequencial, na branch/worktree da #8 empilhada sobre #7/#9. Nenhuma autorização de uso de auth pessoal, push ou ativação externa foi inferida.
 
+## T8: caller integrado e consumo
+
+Assumptions: exemplos genéricos só são ativados depois de revisão/publicação e configuração privada no consumidor. O commit e2027dd contém workflow/helper necessários ao caller, evitando pin de código inexistente. Sessão e modelo são escolhas locais; testes usam sessões simuladas, nunca a conta pessoal/global.
+
+Files: examples/callers/review (três workflows, política/review/triage, quatro configs/prompts, dois inspectors e instruções completas), scripts/llm/lint-workflow.mjs, tests/review/{caller,caller-integration}.test.mjs e progresso TLC.
+
+Success: dispatch posterior à persistência/inspeção, novo run com sessão atual, origem comprovada e complementar sem recursão; instruções de configuração/credenciais/resultados/recuperação e pins reais; inspector read-only vinculado a identidades independentes. Sem documentação central extensa ou testes da prosa.
+
+RED: arquivos de caller/inspector ausentes. GREEN: Full Node 22.23.3 com 194 pass/0 fail/0 skipped; syntax/npm check e actionlint Windows sobre dez YAML verdes. validate_tasks/validate_spec e diff check verdes. Nenhuma assertion existente alterada; nenhum SPEC_DEVIATION. A simulação criptografa/descriptografa de fato o PUT, mas a renovação da sessão, API, checks e LLM são simulados; isso não é piloto real.
+
+| Critério / AC | Evidência/assertion | Resultado esperado |
+| --- | --- | --- |
+| Caller, auth e pins | `tests/review/caller.test.mjs:25–32`: inputs/run-name/pin/expected_head_sha/session mode/secrets exatos; `:51–55`: git show confirma helper/workflow no SHA e política genérica | REV-01/21 sem configuração particular do piloto |
+| Dispatch após entrega, sem herdar sessão | `:35–39`: needs triage/inspect success, status de draft, Actions write e ausência de concorrência aninhada; fingerprint e token explícitos | REV-17/20 |
+| Bridge confiável | `:41–49`: pull_request_target só own-repo, checkout default, token de dispatch específico, nenhum source checkout/secret de LLM | REV-02/19/21 |
+| Inspector independente | `:78–85`: exit 0/Verified succeeded, outro PR/run/attempt/repo/head/base/merge/config/automation/fingerprint → INVALID_RESULT; sidecar adulterado recusado, fonte e config intactas | REV-06/08/21 |
+| Sessão renovada na triagem | `tests/review/caller-integration.test.mjs:78–82`: modelo consumer-triage/prompt próprio, sessão initial e store renewed após PUT criptografado; writes 1 | REV-04/17, nenhuma sessão real |
+| PR e novo run | `:91/100/106/113`: árvore real igual à proposta, draft 30, payload fechado sem auth, run 200 captura sessão renewed | REV-17/20 |
+| Review próprio e resultado | `:123/130–132`: auth renewed, modelo consumer-review/prompt próprio; status reviewed/PR 30/sem segundo PR, comentário presente, auth dirs ENOENT | REV-04/17/21 |
+| Fila antiga e falta de credencial | `:134–137`: AUTH_CONFIG_ERROR e AUTH_SNAPSHOT_STALE, nenhum novo artefato | REV-20/26, caller não recebe autenticação global de fallback |
+
+| Testes/assertions | Mapeamento reverso | Manter |
+| --- | --- | --- |
+| caller:25–55 | REV-01/02/17/19/20/21 | Sim |
+| caller:78–85 | REV-06/08/21 | Sim |
+| caller-integration:78–82/91/100/106/113/123/130–137 | REV-04/17/20/21/26 e ciclo de sessão do consumidor | Sim |
+
+Adequação: três cenários coesos comprovam payloads, estado, Git, crypto, recusa e isolamento. Instruções completas de caller foram entregues sem testes de prosa, conforme AD-003/004. Código T8 pronto para revisão independente após seu commit local. Não declarar a feature ou a meta concluída: Verifier local e T9 real continuam pendentes.
+
 ## T10: dispatch antes do pin do caller
 
 Assumptions: o destino é o caller de review na default do mesmo consumidor privado. Dispatch pós-triagem prova o próprio finish já concluído; central continua exigindo outro run. Credenciais de metadata/Actions pertencem ao consumidor e não autenticam a LLM. Correlação identifica uma solicitação, não concede autoridade.

@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-8-code-review/`
-- **Phase / Task**: Execute; spec/context/design/tasks aprovados pelo mantenedor em 2026-10-15; T1–T7 e T10 concluídas localmente. T10 desmembra o helper de T8 para viabilizar pin real no caller.
+- **Phase / Task**: Execute; T1–T8 e T10 implementadas localmente com gates do autor verdes. Verifier do grupo de código pendente; T9 real permanece aberto.
 - **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
-- **In-progress**: Helper/runner de dispatch concluídos com API simulada: prova do finish/source-run, payload sem auth/modelo/body, recuperação por correlação e recusa de run antigo reprovado. Guard self-run da central preservado e expected_head_sha propagado/revalidado pelo called. Full Node 22.23.3: 191 pass/0 fail/0 skipped; npm check, actionlint Windows e gates estruturais verdes. Nenhum Docker/LLM/GitHub Actions real.
-- **Next step**: Executar T8: caller integrado e inspector fixando o commit T10; bridge pull_request_target sem checkout do head, credencial Actions-write com identidade de colaborador verificável, dispatch pós-triagem com prova de finish. Depois Verifier TLC independente local; piloto real T9 permanece obrigatório.
+- **In-progress**: Callers integrados/inspector entregues, pin e2027dd021a0dcfbb2f8fce08600d8aadb935284. Simulação completa usa configs copiadas, sessão renovada/persistida criptografada na triagem, dispatch posterior, review em novo run e bloqueio de run antigo/missing auth. Full Node 22.23.3: 194 pass/0 fail/0 skipped; npm check, actionlint Windows em dez YAML e gates estruturais verdes. Nenhum Docker/LLM/GitHub Actions real.
+- **Next step**: Após commit T8, disparar Verifier TLC fresco e independente para o grupo de código (base 745023c até HEAD), sensor em scratch sem tocar a árvore real. Separar PASS LOCAL de ausência do piloto real REV-22/23 e TRI-24/25. Não encerrar a meta enquanto T9 não for comprovada.
 - **Blockers**: Nenhum para implementação local já autorizada. Piloto real exige provisionamento de credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global.
-- **Uncommitted files**: T10 e registros de progresso até seu commit atômico; demais worktrees preservados. Actionlint temporário validado em C:/Users/gerso/AppData/Local/Temp/review-actionlint-9e482284f513447183c17c298e019f76/actionlint.exe.
+- **Uncommitted files**: T8/callers/testes/lint discovery e registros até seu commit atômico; demais worktrees preservados. Actionlint temporário validado em C:/Users/gerso/AppData/Local/Temp/review-actionlint-9e482284f513447183c17c298e019f76/actionlint.exe.
 - **Branch**: `feature/issue-8-code-review`

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "reviewer": "consumer-maintainer",
+  "automation_actors": [{ "id": 1, "login": "consumer-automation" }],
+  "llm_configs": { "review": ".github/llm/review.json", "correction": ".github/llm/review-correction.json" },
+  "protected_branches": ["master", "develop"],
+  "correctable_prefixes": ["feature/", "codex/", "hotfix/"],
+  "allowed_paths": ["main.go", "cmd", "internal", "pkg", "go.mod", "go.sum"],
+  "checks": [{ "command": "go", "args": ["test", "./..."] }],
+  "triage_handoff": { "workflow_path": ".github/workflows/triage.yml", "config_path": ".github/triage/config.json", "finish_job": "triage / finish" }
+}

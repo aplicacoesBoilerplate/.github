@@ -3,7 +3,7 @@
 **Goal:** Entregar review pela central e homologar #9/#7/#8 juntas no consumidor privado, sem configurações particulares na central.
 **Architecture:** caller confiável → coleta → central LLM → checks isolados → publicação recuperável. Triagem aciona review por dispatch de novo run após persistência da sessão.
 **Tech Stack:** Node 22.23.3, ESM/node:test, Git, Ajv e dependências fixadas existentes; GitHub Actions e container por digest do consumidor.
-**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T7 e T10 concluídas localmente; T8 fixa esse helper já commitado no caller. Refinamento de granularidade, sem novos requisitos.
+**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; T1–T8 e T10 implementadas e com gates do autor verdes, commits locais. T8 segue para Verifier independente do grupo de código; piloto real T9 ainda pendente. Refinamento T10 não acrescentou requisitos.
 
 ## Execution Protocol
 
@@ -215,13 +215,15 @@ Transição Phase 2 → Phase 3: T6 → T7
 **Requirement:** REV-01, REV-02, REV-06, REV-17, REV-18, REV-19, REV-20, REV-21, REV-26
 **Interfaces:** `dispatchReview({pull, expected_head_sha, handoff, target}, api)` → disparado/recuperado ou falha explícita; inspector read-only recebe identidades esperadas independentes do artefato.
 **Done when:**
-- [ ] Dispatch ocorre depois de triagem/persistência bem-sucedidas; novo run carrega sessão atual, sem passar auth ou body em inputs.
-- [ ] Bridge de PR e handoff conferem origem; PR da triagem é aceito e complementar do review não cria recursão.
-- [ ] Configurações de exemplo são genéricas; caller tem secrets explícitos, pins reais e instruções completas, sem valores particulares do demo.
-- [ ] Inspector recusa outro run/attempt/repo/PR/head/config/sidecar e nunca aplica patch ou aprova PR.
+- [x] Dispatch ocorre depois de triagem/persistência bem-sucedidas; novo run carrega sessão atual, sem passar auth ou body em inputs.
+- [x] Bridge de PR e handoff conferem origem; PR da triagem é aceito e complementar do review não cria recursão.
+- [x] Configurações de exemplo são genéricas; caller tem secrets explícitos, pins reais e instruções completas, sem valores particulares do demo.
+- [x] Inspector recusa outro run/attempt/repo/PR/head/config/sidecar e nunca aplica patch ou aprova PR.
 **Tests:** integration/contract; simular caller→triagem→dispatch→review com sessão alterada entre runs, argumentos/modelo/prompt próprios, falta de auth, dispatch ambíguo e consumo de resultado correto/divergente.
 **Gate:** Full + Build + Verifier TLC independente local
 **Commit:** `feat(review): deliver integrated consumer caller refs #8`
+
+Gate do autor: Full Node 22.23.3 (194 pass/0 fail/0 skipped), syntax/npm check, actionlint Windows com dez YAML e gates estruturais verdes. Verifier TLC do grupo de código será executado após o commit T8; não declarar homologação completa antes de T9.
 
 ### T9: Piloto real do conjunto
 

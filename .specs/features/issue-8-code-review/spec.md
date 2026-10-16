@@ -126,7 +126,7 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| REV-01 | Origem | Execute | Bootstrap/coleta T2 e workflow/runner T7 validados localmente; caller T8 pendente |
+| REV-01 | Origem | Execute | Bootstrap/coleta T2, workflow/runner T7 e callers/bridge T8 validados localmente; Verifier/piloto pendentes |
 | REV-02 | Confiança | Execute | Guards e handoff API T2 validados; ligação com auth T4 pendente |
 | REV-03 | Configuração | Execute | SHA default/config e fonte separados em T2; integração T4 pendente |
 | REV-04 | Central | Execute | T4/T7 propagam modelo/esforço/prompt e consomem v3 no workflow de domínio |
@@ -142,18 +142,18 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-14 | PR complementar | Execute | T5/T6 validam pai/árvore e draft complementar com base no head_ref original; simulação, não publicação real |
 | REV-15 | Falha dos checks | Execute | T6/T7 mantêm draft-checks-failed após checks simulados falhos, sem sucesso artificial |
 | REV-16 | Integração | Execute | T1/T5/T6 recusam correções fora da rota corrigível e publicam somente comentário nas integrações |
-| REV-17 | Encadeamento | Execute | Prova API/run/job/commit T2 e dispatch T10 validados; caller integrado T8 pendente |
+| REV-17 | Encadeamento | Execute | T8 simula issue→triagem→draft→dispatch→review usando configurações copiadas e sessão renovada entre runs |
 | REV-18 | Idempotência | Execute | T6/T10 recuperam recursos/run exatos, sem duplicar; run antigo reprovado exige tentativa nova |
-| REV-19 | Recursão | Execute | T1/T2/T6/T10 comprovam origem e interrompem dispatch de complementar; caller T8 pendente |
-| REV-20 | Concorrência | Execute | Central T4 e domínio T7 usam filas distintas sem cancelar; caller/piloto pendentes |
-| REV-21 | Caller | Specify | Pending review |
+| REV-19 | Recursão | Execute | T1/T2/T6/T10 comprovam origem; caller T8 conecta o guard sem ignorar drafts/bots genericamente |
+| REV-20 | Concorrência | Execute | Filas distintas T4/T7 e dispatch pós-persistência T8; simulação recusa run antigo após rotação; piloto real pendente |
+| REV-21 | Caller | Execute | T8 entrega três workflows, configs/prompts genéricos, instruções completas e inspector read-only com identidades independentes |
 | REV-22 | Piloto conjunto | Specify | Pending review |
 | REV-23 | Piloto transferido | Specify | Pending review |
 | REV-24 | Entrada antiga | Execute | T2/T5/T6 recusam PR/config/head/base/entrada alterados antes das escritas |
 | REV-25 | Recuperação | Execute | T6/T10 simulam timeout após escrita/dispatch, correlacionam recurso/run exato e preservam recursos humanos |
 | REV-26 | Falhas | Execute | T6/T7 sanitizam API/escrita/runner e recusam sucesso após falhas dos jobs/upload/cleanup |
 
-**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T7 e T10 implementadas e validadas localmente; caller/Verifier T8 e piloto T9 ainda pendentes. T10 foi separado de T8 para que o caller fixe um SHA já contendo o helper. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
+**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T8 e T10 implementadas com gates locais verdes; Verifier do código e piloto T9 ainda pendentes. T10 foi separado de T8 para que o caller fixe um SHA já contendo o helper. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
 
 ## Success Criteria
 

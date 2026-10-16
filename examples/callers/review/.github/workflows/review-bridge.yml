@@ -1,0 +1,38 @@
+name: Dispatch review for a trusted pull request
+
+# Runs only reviewed code/config from the default branch, never the PR head.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  dispatch:
+    if: github.event.repository.private && !github.event.repository.fork && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: consumer
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: aplicacoesBoilerplate/.github
+          ref: e2027dd021a0dcfbb2f8fce08600d8aadb935284
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+      - run: npm ci --prefix automation/scripts/llm --ignore-scripts --no-fund --no-audit
+      - name: Validate author and dispatch without LLM or publication credentials
+        env:
+          AUTOMATION_SHA: e2027dd021a0dcfbb2f8fce08600d8aadb935284
+          REVIEW_READ_TOKEN: ${{ secrets.AUTOMATION_METADATA_READ_TOKEN }}
+          REVIEW_DISPATCH_TOKEN: ${{ secrets.REVIEW_DISPATCH_TOKEN }}
+        run: node automation/scripts/review/dispatch-run.mjs
