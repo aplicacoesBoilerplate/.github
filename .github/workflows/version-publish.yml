@@ -10,6 +10,11 @@ on:
         required: false
         default: .
         type: string
+      tag_prefix:
+        description: Prefixo literal da tag (v por padrão; alinhar à ferramenta nativa)
+        required: false
+        default: v
+        type: string
       target_branch:
         required: true
         type: string
@@ -22,6 +27,13 @@ on:
         required: false
         default: ''
         type: string
+    secrets:
+      versioning_app_id:
+        description: App ID da GitHub App de automação instalada no consumidor
+        required: false
+      versioning_app_private_key:
+        description: Chave privada da GitHub App para emitir token efêmero no job Node
+        required: false
     outputs:
       version:
         value: ${{ jobs.publish.outputs.version }}
@@ -33,10 +45,89 @@ on:
         value: ${{ jobs.publish.outputs.release_url }}
       outcome:
         value: ${{ jobs.publish.outputs.outcome }}
+      version_pr_url:
+        value: ${{ jobs.publish.outputs.version_pr_url }}
 
 jobs:
+  validate-publication:
+    if: ${{ github.event_name == 'push' && github.ref_name == inputs.target_branch }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    outputs:
+      phase: ${{ steps.report.outputs.phase }}
+      artifact_name: ${{ steps.report.outputs.artifact_name }}
+    steps:
+      - name: Checkout consumer repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          path: consumer
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Checkout centralized automation
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .shared-versioning
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: Install consumer Node dependencies without lifecycle scripts
+        if: inputs.adapter == 'standard-version'
+        working-directory: consumer
+        env:
+          PROJECT_PATH: ${{ inputs.project_path }}
+          NODE_PACKAGE_MANAGER: npm
+        run: |
+          export GITHUB_WORKSPACE="$PWD"
+          bash ../.shared-versioning/scripts/versioning/install-node.sh
+      - name: Set up Go for go-gitsemver
+        if: inputs.adapter == 'go-gitsemver'
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
+        with:
+          go-version: '1.27.0'
+          cache: false
+      - name: Install pinned go-gitsemver
+        if: inputs.adapter == 'go-gitsemver'
+        run: go install github.com/MyCarrier-DevOps/go-gitsemver@680c1c12d9a4f573a8da1b2e3ccebb3571b1cab6
+      - name: Set up Java for jgitver
+        if: inputs.adapter == 'jgitver'
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install pinned Maven
+        if: inputs.adapter == 'jgitver'
+        run: bash .shared-versioning/scripts/versioning/install-maven.sh
+      - name: Calculate native report and validate publication
+        id: report
+        working-directory: consumer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ADAPTER: ${{ inputs.adapter }}
+          PROJECT_PATH: ${{ inputs.project_path }}
+          TARGET_BRANCH: ${{ inputs.target_branch }}
+          TAG_PREFIX: ${{ inputs.tag_prefix }}
+          VERSIONING_OUTPUT_DIR: ${{ runner.temp }}/versioning
+        run: |
+          export GITHUB_WORKSPACE="$PWD"
+          bash ../.shared-versioning/scripts/versioning/prepare-publication.sh
+      - name: Upload validated publication report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ steps.report.outputs.artifact_name }}
+          path: ${{ runner.temp }}/versioning/*
+          if-no-files-found: error
+
   environment-gate:
     if: inputs.publication_environment != ''
+    needs: validate-publication
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.publication_environment }}
@@ -47,9 +138,10 @@ jobs:
         run: echo "Environment autorizado para publicação"
 
   publish:
-    needs: environment-gate
+    needs: [validate-publication, environment-gate]
     if: >-
       ${{ always() && github.event_name == 'push' && github.ref_name == inputs.target_branch &&
+      needs.validate-publication.result == 'success' &&
       (needs.environment-gate.result == 'success' || needs.environment-gate.result == 'skipped') }}
     runs-on: ubuntu-latest
     concurrency:
@@ -65,35 +157,56 @@ jobs:
       published_sha: ${{ steps.publish.outputs.published_sha }}
       release_url: ${{ steps.publish.outputs.release_url }}
       outcome: ${{ steps.publish.outputs.outcome }}
+      version_pr_url: ${{ steps.publish.outputs.version_pr_url }}
     steps:
-      - name: Checkout do commit integrado no consumidor
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Checkout consumer repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ github.sha }}
+          path: consumer
           fetch-depth: 0
           persist-credentials: false
-      - name: Checkout da automação na mesma revisão do workflow
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Checkout centralized automation
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           repository: ${{ job.workflow_repository }}
           ref: ${{ job.workflow_sha }}
           path: .shared-versioning
           persist-credentials: false
-      - name: Preparar Go para go-gitsemver
-        if: inputs.adapter == 'go-gitsemver'
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          go-version: '1.27.0'
-      - name: Instalar go-gitsemver em revisão fixa
-        if: inputs.adapter == 'go-gitsemver'
-        run: |
-          go install github.com/MyCarrier-DevOps/go-gitsemver@680c1c12d9a4f573a8da1b2e3ccebb3571b1cab6
-          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
-      - name: Conferir gates e publicar tag/release sem sobrescrever
+          node-version: '24'
+      - name: Download validated publication report
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ needs.validate-publication.outputs.artifact_name }}
+          path: ${{ runner.temp }}/versioning-publication
+      - name: Emitir token efêmero para o PR técnico Node
+        id: versioning-app-token
+        if: inputs.adapter == 'standard-version' && needs.validate-publication.outputs.phase == 'functional'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          app-id: ${{ secrets.versioning_app_id }}
+          private-key: ${{ secrets.versioning_app_private_key }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Revalidate current policy and publish without overwriting
         id: publish
+        working-directory: consumer
         env:
           GH_TOKEN: ${{ github.token }}
           ADAPTER: ${{ inputs.adapter }}
           PROJECT_PATH: ${{ inputs.project_path }}
           TARGET_BRANCH: ${{ inputs.target_branch }}
           CHANGELOG_PATH: ${{ inputs.changelog_path }}
-        run: bash .shared-versioning/scripts/versioning/publish.sh
+          TAG_PREFIX: ${{ inputs.tag_prefix }}
+          VERSIONING_TOKEN: ${{ steps.versioning-app-token.outputs.token }}
+          VERSIONING_BOT_SLUG: ${{ steps.versioning-app-token.outputs.app-slug }}
+          VERSIONING_REQUIRE_PRECOMPUTED: '1'
+          VERSIONING_PRECOMPUTED_BUNDLE: ${{ runner.temp }}/versioning-publication/version-bundle.json
+          VERSIONING_PRECOMPUTED_REPORT: ${{ runner.temp }}/versioning-publication/version-report.json
+          VERSIONING_INPUTS_SNAPSHOT: ${{ runner.temp }}/versioning-publication/git-inputs.json
+        run: |
+          export GITHUB_WORKSPACE="$PWD"
+          bash ../.shared-versioning/scripts/versioning/publish.sh

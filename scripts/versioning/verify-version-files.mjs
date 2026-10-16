@@ -12,6 +12,10 @@ if (!files.length) throw Error('PR de versionamento sem arquivos alterados');
 const packageFiles = ['package.json', 'package-lock.json', 'npm-shrinkwrap.json',
   'pnpm-lock.yaml', 'yarn.lock', 'CHANGELOG.md'];
 const allowed = (file) => {
+  if (adapter === 'standard-version') {
+    return ['package.json', 'package-lock.json', 'npm-shrinkwrap.json', 'CHANGELOG.md']
+      .some(name => file === `${prefix}${name}`);
+  }
   if (packageFiles.some(name => file === `${prefix}${name}`)) return true;
   if (['pnpm-lock.yaml', 'yarn.lock', 'package-lock.json'].includes(file)) return true;
   if (adapter === 'changesets' && /^\.changeset\/[A-Za-z0-9_.-]+\.md$/.test(file)) return true;

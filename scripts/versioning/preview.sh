@@ -17,6 +17,7 @@ event_json=$(node -e '
   if(pr.base.ref==="develop"&&pr.head.ref!=="develop") phase="release-to-develop";
   else if(pr.head.ref==="develop"&&pr.base.ref===target) phase="develop-to-main";
   else if(/^hotfix\/.+$/.test(pr.head.ref)&&pr.base.ref===target) phase="hotfix-to-main";
+  else if(/^versioning\/standard-version\//.test(pr.head.ref)&&pr.base.ref===target) phase="versioning-to-main";
   else {console.error(`Transição de PR não suportada: ${pr.head.ref} -> ${pr.base.ref}`);process.exit(1)}
   process.stdout.write(JSON.stringify({number:pr.number,headSha:pr.head.sha,baseSha:pr.base.sha,phase}));
 ' "$(as_node_path "$GITHUB_EVENT_PATH")" "$TARGET_BRANCH")
@@ -37,8 +38,13 @@ snapshot_path="$output_dir/pr-policy.json"
 policy_input="$output_dir/policy-input.json"
 policy_output="$output_dir/release-policy.json"
 
-bash "$script_dir/collect-version-report.sh" "$report_path"
-bash "$script_dir/collect-pr-policy.sh" "$pr_number" "$snapshot_path"
+if [[ "$phase" == versioning-to-main ]]; then
+  bash "$script_dir/validate-version-pr.sh" "$pr_number" "$report_path" "$snapshot_path" \
+    "$output_dir/version-pr-context.json"
+else
+  bash "$script_dir/collect-version-report.sh" "$report_path"
+  bash "$script_dir/collect-pr-policy.sh" "$pr_number" "$snapshot_path"
+fi
 version=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).candidateVersion' "$(as_node_path "$report_path")")
 bump=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).bump' "$(as_node_path "$report_path")")
 policy_outcome=not-applicable
@@ -73,8 +79,10 @@ else
   node -e '
     const fs=require("node:fs");
     fs.writeFileSync(process.argv[3],JSON.stringify({report:JSON.parse(fs.readFileSync(process.argv[1],"utf8")),
-      snapshot:JSON.parse(fs.readFileSync(process.argv[2],"utf8"))},null,2)+"\n");
-  ' "$(as_node_path "$report_path")" "$(as_node_path "$snapshot_path")" "$(as_node_path "$policy_input")"
+      snapshot:JSON.parse(fs.readFileSync(process.argv[2],"utf8")),
+      phase:process.argv[4]==="versioning-to-main"?"publication":"preview"},null,2)+"\n");
+  ' "$(as_node_path "$report_path")" "$(as_node_path "$snapshot_path")" \
+    "$(as_node_path "$policy_input")" "$phase"
   node "$script_dir/release-policy.mjs" evaluate "$(as_node_path "$policy_input")" "$(as_node_path "$policy_output")"
   policy_outcome=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).outcome' "$(as_node_path "$policy_output")")
   [[ "$policy_outcome" != blocked ]] || { cat "$policy_output" >&2; exit 1; }

@@ -28,13 +28,12 @@
 
 ## Handoff
 
-- **Feature**: Pipeline centralizada de versionamento
-- **Phase / Task**: Governed hotfix extension complete; independent local MVP validation PASS
-- **Completed**: T1-T26; 43/43 ACs, 7/7 edges, 9/9 local fixtures, pinned real Go, 5/5 mutants killed; OpenSpec preserved
-- **In-progress** (file:line): none
-- **Next step**: review PR #10 (codex/issue-4-versioning-mvp -> master), inspect hosted checks, and await separate pilot authorization
-- **Blockers**: previous PR creation denial resolved after user-requested authentication switch to agentegersonfribeiro-AI; PR #10 created successfully. Hosted check results and boilerplate-cli integration are not claimed
-- **Uncommitted files**: none after documentation delivery commit; no merge/release or pilot changes
-- **Branch**: codex/issue-4-versioning-mvp
-- **Hotfix decision**: develop -> master and hotfix/<name> -> master share every gate; hotfix starts from master and does not force PATCH. Caller pinned to 07bd5372f7fc4a34a1b04134a84a0b9f4aba3b45. Pilot go-ci consolidation remains deferred.
-- **Documentation / PR**: workflows and scripts READMEs independently reviewed, 32 relative links and 50 workflow assertions PASS; docs commit c79429f. PR https://github.com/aplicacoesBoilerplate/.github/pull/10 authored by agentegersonfribeiro-AI; review requested from gersonfribeiro, milestone v1.0.0, issue #4 linked.
+- **Feature**: Conciliação Go/standard-version/jgitver no PR12 existente.
+- **Phase / Task**: REC T1-T14 concluídas; revisão independente PASS, entrega remota e CI hospedada aprovadas no8256757.
+- **Completed**: PR12 branch codex/versioning-profiles atualizada por AI/fast-forward; CI38836589007 success no8256757, título verde.27 fixtures, Node real/bootstrap2 replays+4 rejeições, Maven reactor118/prefixo/installer e Go real passaram no Linux. Sensor independente7/7 e parecer T14 preservados.
+- **In-progress** (file:line): .specs/features/reconcile-native-profiles/publication.md registra provas. Commit seguinte só documental; acompanhar checks de seu próprio SHA, sem atribuir a ele o run8256757.
+- **Next step**: Conferir checks do último commit documental e atualizar resumo do PR12; depois aguardar revisão humana de gersonfribeiro. Não fazer merge sem instrução específica.
+- **Blockers**: Nenhum para revisão da entrega. PR13 Changesets precisa conciliação própria; deploy/registry e pilotos continuam fora desta entrega.
+- **Uncommitted files**: Nenhum após commit do registro de publicação; apenas documentação/estado foi atualizada depois da revisão e CI.
+- **Branch**: codex/reconcile-native-profiles em C:/Users/gerso/.codex/worktrees/versioning-reconciled/.github; destino remoto codex/versioning-profiles. Código chamado11fa3c699b3ade5396e4d59ceb3845de80980a35; delta posterior de código é somente chmod/assertion do fixture Maven, aprovado e testado no Linux.
+- **Documentation / PR**: https://github.com/aplicacoesBoilerplate/.github/pull/12; CI https://github.com/aplicacoesBoilerplate/.github/actions/runs/38836589007. Sem merge, release, force-push ou alteração dos pilotos/PR13/PR14. Incidente npm fora do scratch mantido em validation.md; home/node_modules preservada sem limpeza.

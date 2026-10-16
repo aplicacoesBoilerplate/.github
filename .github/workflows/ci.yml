@@ -66,8 +66,34 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '24'
+      - name: Set up Python for semantic workflow contracts
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Install pinned YAML parser
+        run: python -m pip install PyYAML==6.0.1
       - name: Run deterministic versioning fixtures
+        # Semantic YAML contracts are part of the deterministic suite.
         run: node tests/versioning/run.mjs --local
+      - name: Run real standard-version fixture
+        run: node tests/versioning/real-standard-version.mjs
+      - name: Run real standard-version bootstrap and rejection fixtures
+        run: node tests/versioning/real-standard-bootstrap.mjs
+      - name: Set up Java for real jgitver fixture
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install pinned Maven
+        run: bash scripts/versioning/install-maven.sh
+      - name: Validate Maven installer and checksum rejection
+        run: node tests/versioning/maven-setup.mjs
+      - name: Run real jgitver fixture
+        run: node tests/versioning/real-jgitver.mjs
+      - name: Run real multi-module Maven reactor and native prefix fixtures
+        run: |
+          node tests/versioning/real-maven-reactor.mjs
+          node tests/versioning/real-jgitver-prefix.mjs
       - name: Set up Go
         uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:

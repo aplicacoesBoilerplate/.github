@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join,resolve } from 'node:path';
+import { normalizeStandardVersionReport } from '../../scripts/versioning/version-report.mjs';
+import {captureVersionBundle,applyVersionBundle} from '../../scripts/versioning/version-bundle.mjs';
 
 const cwd = mkdtempSync(join(tmpdir(), 'real-standard-version-'));
+const evidence = mkdtempSync(join(tmpdir(),'real-standard-evidence-'));
 const git = (...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 try {
   git('init', '-b', 'main');
@@ -27,6 +30,12 @@ try {
 
   execFileSync('bash', ['-c', 'npm install --no-save --ignore-scripts --no-audit standard-version@9.5.0'],
     { cwd, stdio: 'pipe', timeout: 120000 });
+  const preview = execFileSync('bash', ['-c', './node_modules/.bin/standard-version --dry-run --skip.commit --skip.tag'],
+    { cwd, encoding: 'utf8', timeout: 120000 });
+  const report = normalizeStandardVersionReport({ nativeOutput: preview, branch: 'main', sha, repository: cwd });
+  assert.equal(report.candidateVersion, '1.1.0');
+  assert.equal(report.baseVersion, '1.0.0');
+  assert.equal(git('rev-parse', 'HEAD'), sha, 'Dry-run must preserve the approved SHA');
   execFileSync('bash', ['-c', './node_modules/.bin/standard-version --skip.commit --skip.tag'],
     { cwd, stdio: 'pipe', timeout: 120000 });
   const pkg = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8'));
@@ -37,7 +46,27 @@ try {
   assert.match(readFileSync(join(cwd, 'CHANGELOG.md'), 'utf8'), /1\.1\.0/);
   assert.equal(git('rev-parse', 'HEAD'), sha, 'O adaptador não deve commitar');
   assert.equal(git('tag', '--list'), 'v1.0.0', 'O adaptador não deve criar tag');
+  const nativePackage=readFileSync(join(cwd,'package.json'),'utf8');
+  const nativeLock=readFileSync(join(cwd,'package-lock.json'),'utf8');
+  const nativeChangelog=readFileSync(join(cwd,'CHANGELOG.md'),'utf8');
+  const bundle=captureVersionBundle({repository:cwd,projectPath:'.',report});
+  assert.deepEqual(bundle.files.map(f=>f.path).sort(),['CHANGELOG.md','package-lock.json','package.json']);
+  writeFileSync(join(cwd,'package.json'),git('show',sha+':package.json')+'\n');
+  writeFileSync(join(cwd,'package-lock.json'),git('show',sha+':package-lock.json')+'\n');
+  rmSync(join(cwd,'CHANGELOG.md'));
+  applyVersionBundle({repository:cwd,projectPath:'.',report,bundle});
+  assert.equal(readFileSync(join(cwd,'package.json'),'utf8'),nativePackage);
+  assert.equal(readFileSync(join(cwd,'package-lock.json'),'utf8'),nativeLock);
+  assert.equal(readFileSync(join(cwd,'CHANGELOG.md'),'utf8'),nativeChangelog);
+  git('add','.');git('commit','-qm','chore(release): 1.1.0');git('tag','-a','v1.1.0','-m','release');
+  const originReport=join(evidence,'origin.json');
+  execFileSync('bash',[resolve(import.meta.dirname,'../../scripts/versioning/collect-origin-report.sh'),sha,originReport],
+    {cwd,encoding:'utf8',env:{...process.env,GITHUB_WORKSPACE:cwd,GITHUB_SHA:git('rev-parse','HEAD'),
+      TARGET_BRANCH:'main',ADAPTER:'standard-version',PROJECT_PATH:'.',TAG_PREFIX:'v'}});
+  assert.equal(JSON.parse(readFileSync(originReport,'utf8')).candidateVersion,'1.1.0',
+    'recalculating the functional SHA must not change after its release tag exists on the descendant merge');
   console.log('standard-version real: dois PRs, um bump 1.1.0, changelog sem commit/tag');
 } finally {
   rmSync(cwd, { recursive: true, force: true });
+  rmSync(evidence,{recursive:true,force:true});
 }
