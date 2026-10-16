@@ -33,7 +33,7 @@ T5 -> T6 -> T7
 ### Phase 3: Publicação
 T8 -> T9 -> T10
 ### Phase 4: Contrato e documentação
-T11 -> T12
+T11 -> T12 -> T13
 
 ## Task Breakdown
 ### T1: Registrar conciliação e baseline
@@ -180,6 +180,18 @@ T11 -> T12
 **Tests**: none
 **Gate**: Build
 
+### T13: Fechar precisão e prova real do bootstrap Node (G1)
+**What**: Fechar precisão e prova real do bootstrap Node (G1).
+**Where**: tests/versioning/real-standard-bootstrap.mjs; docs/versioning-standard-version.md; .github/workflows/ci.yml
+**Depends on**: T12
+**Requirement**: REC-01, REC-03, REC-04, REC-06
+**Reuses**: Process port, normalizador e bundle existentes; preserva todos os guards.
+**Tools**: TLC, CI/CD, Entregas, standard-version9.5.0 real.
+**Done when**:
+- [ ] Bootstrap nativo0.0.0->0.0.1 gera/aplica manifests/lock/changelog mantendo HEAD/tags; firstRelease e same-version sem diff são rejeitados com diagnóstico; docs declaram recorte e CI executa fixture sem escape npm.
+**Tests**: integration
+**Gate**: Full
+
 ## Diagram-Definition Cross-Check
 | Task | Depends On | Diagram Shows | Status |
 | --- | --- | --- | --- |
@@ -195,6 +207,7 @@ T11 -> T12
 | T10 | T9 | T9 | Match |
 | T11 | T10 | T10 | Match |
 | T12 | T11 | T11 | Match |
+| T13 | T12 | T12 | Match |
 
 ## Test Co-location Validation
 | Task | Required | Task Says | Status |
@@ -211,3 +224,4 @@ T11 -> T12
 | T10 | integration | integration | Match |
 | T11 | unit | unit | Match |
 | T12 | none | none | Match |
+| T13 | integration | integration | Match |

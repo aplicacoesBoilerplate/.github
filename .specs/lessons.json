@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 8,
+  "next_id": 10,
   "lessons": [
     {
       "id": "L-001",
@@ -130,6 +130,42 @@
       ],
       "created": "2026-10-03T18:36:21Z",
       "last_seen": "2026-10-03T18:36:21Z"
+    },
+    {
+      "id": "L-008",
+      "key": "spec_precision_gap::documente e teste o bootstrap node com incremento real de package json candidata igual a versao atual e firstrelease nao garantem um bundle publicavel",
+      "text": "Documente e teste o bootstrap Node com incremento real de package.json; candidata igual à versão atual e firstRelease não garantem um bundle publicável.",
+      "signal": "spec_precision_gap",
+      "scope": "tests/versioning",
+      "status": "candidate",
+      "features": [
+        "reconcile-native-profiles"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/reconcile-native-profiles/validation.md G1; scripts/versioning/verify-version-files.mjs:26 (tests/versioning)"
+      ],
+      "created": "2026-10-16T01:20:15Z",
+      "last_seen": "2026-10-16T01:20:15Z"
+    },
+    {
+      "id": "L-009",
+      "key": "gate_fail::crie package json no fixture temporario e passe prefix absoluto ao npm antes de instalar dependencias dos testes de versionamento",
+      "text": "Crie package.json no fixture temporário e passe --prefix absoluto ao npm antes de instalar dependências dos testes de versionamento.",
+      "signal": "gate_fail",
+      "scope": "tests/versioning",
+      "status": "candidate",
+      "features": [
+        "reconcile-native-profiles"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/reconcile-native-profiles/validation.md Incidente do harness de bootstrap (tests/versioning)"
+      ],
+      "created": "2026-10-16T01:20:15Z",
+      "last_seen": "2026-10-16T01:20:15Z"
     }
   ]
 }

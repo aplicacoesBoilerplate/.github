@@ -56,6 +56,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: validation.md:F1; scripts/versioning/release-policy.mjs:47 (versioning)
 - last seen: 2026-10-03T18:36:21Z
 
+### L-008 - Documente e teste o bootstrap Node com incremento real de package.json; candidata igual à versão atual e firstRelease não garantem um bundle publicável.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `tests/versioning` · harmful: 0
+- features: reconcile-native-profiles
+- evidence: .specs/features/reconcile-native-profiles/validation.md G1; scripts/versioning/verify-version-files.mjs:26 (tests/versioning)
+- last seen: 2026-10-16T01:20:15Z
+
+### L-009 - Crie package.json no fixture temporário e passe --prefix absoluto ao npm antes de instalar dependências dos testes de versionamento.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `tests/versioning` · harmful: 0
+- features: reconcile-native-profiles
+- evidence: .specs/features/reconcile-native-profiles/validation.md Incidente do harness de bootstrap (tests/versioning)
+- last seen: 2026-10-16T01:20:15Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
