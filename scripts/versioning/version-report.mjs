@@ -72,12 +72,20 @@ export function validateVersionReport(report) {
   }
   if (report.tag !== `${prefix}${report.candidateVersion}`) throw new Error('VersionReport tag diverge da versão candidata');
   if (!bumps.has(report.bump)) throw new Error('VersionReport bump inválido');
-  if (!report.native || !['json', 'text'].includes(report.native.format) ||
+  if (!report.native || !['json', 'text', 'java-properties'].includes(report.native.format) ||
       typeof report.native.explanation !== 'string') {
     throw new Error('VersionReport native inválido');
   }
   if (report.adapter === 'go-gitsemver' && report.native.format !== 'json') {
     throw new Error('go-gitsemver exige JSON nativo');
+  }
+  if (report.adapter === 'jgitver') {
+    const properties=report.native.result;
+    if (report.tagKind!=='annotated'||report.native.format!=='java-properties'||
+      properties?.['jgitver.used_version']!==report.candidateVersion||
+      properties?.['jgitver.calculated_version']!==report.candidateVersion||
+      properties?.['jgitver.git_sha1_full']?.toLowerCase()!==report.sha.toLowerCase()||
+      properties?.['jgitver.plugin-version']!=='1.9.0') throw Error('VersionReport native jgitver divergente');
   }
   return report;
 }
@@ -86,7 +94,11 @@ function normalizeTextReport({ adapter, candidate, nativeOutput, branch, sha, re
   if (!shaPattern.test(sha)) throw new Error(`SHA avaliado inválido: ${sha}`);
   const prefix = validateTagPrefix(tagPrefix);
   const candidateVersion = parseStableVersion(candidate).text;
-  const baseVersion = selectReachableStableTag(repository, sha, prefix) ?? '0.0.0';
+  const reachable = selectReachableStableTag(repository, sha, prefix);
+  const baseVersion = reachable ?? '0.0.0';
+  if (!reachable && candidateVersion !== '0.0.1') {
+    throw Error('Sem tag estável, somente 0.0.1 é publicável');
+  }
   return validateVersionReport({
     schemaVersion: 1, adapter, sha: sha.toLowerCase(), branch, tagPrefix: prefix,
     baseVersion, candidateVersion, tag: `${prefix}${candidateVersion}`,
@@ -104,10 +116,17 @@ export function normalizeStandardVersionReport({ nativeOutput, branch, sha, repo
     nativeOutput, branch, sha, repository, tagPrefix });
 }
 
-export function normalizeJgitverReport({ nativeOutput, branch, sha, repository, tagPrefix = 'v' }) {
-  const candidate = nativeOutput.replace(/\x1b\[[0-9;]*m/g, '').trim().split(/\r?\n/).at(-1);
-  return normalizeTextReport({ adapter: 'jgitver', candidate,
-    nativeOutput, branch, sha, repository, tagPrefix });
+export function normalizeJgitverReport({ native, branch, sha, repository, tagPrefix = 'v' }) {
+  const candidateVersion=parseStableVersion(native?.version).text;
+  if(native?.sha?.toLowerCase()!==sha.toLowerCase())throw Error('SHA jgitver diverge do avaliado');
+  const prefix=validateTagPrefix(tagPrefix);
+  const reachable=selectReachableStableTag(repository,sha,prefix);
+  if(!reachable&&candidateVersion!=='0.0.1')throw Error('Sem tag estável, somente 0.0.1 é publicável');
+  const baseVersion=reachable??'0.0.0';
+  return validateVersionReport({schemaVersion:1,adapter:'jgitver',sha:sha.toLowerCase(),branch,
+    tagPrefix:prefix,baseVersion,candidateVersion,tag:prefix+candidateVersion,tagKind:'annotated',
+    bump:bumpBetween(baseVersion,candidateVersion),native:{format:'java-properties',result:native.properties,
+      explanation:native.explanation}});
 }
 
 export function normalizeGoReport({ nativeJson, explanation, branch, sha, repository }) {

@@ -71,12 +71,15 @@ try {
     branch: 'master', sha: evaluatedSha, repository }), /versões divergentes/,
   'conflicting native bump outputs fail');
 
-  const jgitver = normalizeJgitverReport({ nativeOutput: '0.2.1\n',
+  const mavenNative = version => ({version,sha:evaluatedSha,properties:{'jgitver.used_version':version,
+    'jgitver.calculated_version':version,'jgitver.git_sha1_full':evaluatedSha,'jgitver.plugin-version':'1.9.0'},
+    explanation:'Derived Properties evidence'});
+  const jgitver = normalizeJgitverReport({ native: mavenNative('0.2.1'),
     branch: 'master', sha: evaluatedSha, repository,
   });
   equal(jgitver.adapter, 'jgitver', 'jgitver has a normalized adapter identity');
   equal(jgitver.candidateVersion, '0.2.1', 'Maven project.version is authoritative');
-  throws(() => normalizeJgitverReport({ nativeOutput: '0.3.0-SNAPSHOT',
+  throws(() => normalizeJgitverReport({ native: mavenNative('0.3.0-SNAPSHOT'),
     branch: 'master', sha: evaluatedSha, repository }), /SemVer estável/, 'jgitver prerelease fails');
 
   const taggedCommit = normalizeGoReport({

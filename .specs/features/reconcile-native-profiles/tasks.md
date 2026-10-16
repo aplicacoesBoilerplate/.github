@@ -80,7 +80,7 @@ T11 -> T12
 **Reuses**: PR12 e componentes locais validados, conforme matriz design.
 **Tools**: TLC, CI/CD, Entregas, Git/Node/Java/Maven e docs oficiais.
 **Done when**:
-- [ ] Go/standard/prefixos preservados; Properties/SHA strict e bootstrap0.0.1 rejeitam negativos.
+- [x] Go/standard/prefixos preservados; Properties/SHA strict e bootstrap0.0.1 rejeitam negativos.
 **Tests**: unit
 **Gate**: Quick
 
