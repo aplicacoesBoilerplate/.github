@@ -130,7 +130,7 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-02 | Confiança | Execute | Guards e handoff API T2 validados; ligação com auth T4 pendente |
 | REV-03 | Configuração | Execute | SHA default/config e fonte separados em T2; integração T4 pendente |
 | REV-04 | Central | Execute | T4/T7 propagam modelo/esforço/prompt e consomem v3 no workflow de domínio |
-| REV-05 | Limites | Execute | T11 corrige F1 de decode destrutivo; Git inválido retorna inconclusivo antes de auth/LLM. Re-verificação independente pendente |
+| REV-05 | Limites | Execute | T11 corrige F1 de decode destrutivo; Verifier rodada 2 confirma Git inválido inconclusivo antes de auth/LLM e UTF-8 válido preservado |
 | REV-06 | Proveniência | Execute | Snapshot T2, envelope v3 T3 e orquestração T4 validados; caller pendente |
 | REV-07 | Achados | Execute | Índice T1 e achados vinculados ao diff T3 validados; inferência pendente |
 | REV-08 | Recusa | Execute | Validator/reader v3 T3 e publisher T6 recusam identidade, sidecar e patch divergentes sem escritas |
@@ -153,7 +153,7 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-25 | Recuperação | Execute | T6/T10 simulam timeout após escrita/dispatch, correlacionam recurso/run exato e preservam recursos humanos |
 | REV-26 | Falhas | Execute | T6/T7 sanitizam API/escrita/runner e recusam sucesso após falhas dos jobs/upload/cleanup |
 
-**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T8/T10–T12 implementadas com gates locais verdes (Full 196/196). T11/T12 corrigem F1 e atualizam o pin; Verifier rodada 2 e piloto T9 pendentes. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
+**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T8/T10–T12 implementadas com gates locais verdes (Full 196/196) e Verifier rodada 2 PASS LOCAL, 24/24 AC locais. T11/T12 corrigem F1 e atualizam o pin. REV-22/23 e TRI-24/25 permanecem pendentes de T9 real; feature não concluída. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhuma simulação é declarada homologação.
 
 ## Success Criteria
 

@@ -1,5 +1,9 @@
 # Validation: issue-8-code-review — FAIL
 
+Veredito atual, rodada 2: **PASS LOCAL** em `1d2230ea27f55841b6cda38c7b2e01613ffff8b6`. F1 corrigido e pins conferidos. **GLOBAL FAIL / não concluída**, exclusivamente pelo piloto T9/REV-22/23/TRI-24/25 sem evidência real. O fechamento global permanece bloqueado por validate_state. Detalhes da rodada 2 ao final.
+
+## Rodada 1 histórica, preservada
+
 Veredito local T1–T8 + T10: **FAIL**, um defeito P2 em REV-05. A implementação aceita diff com decodificação destrutiva de UTF-8. Os gates existentes passaram; o probe independente expôs o caso ausente.
 
 Feature inteira: **FAIL / não concluída**. Além do defeito local, T9 e REV-22/23 (incluindo TRI-24/25) continuam pendentes. O piloto não é um defeito do código local e fixtures não constituem homologação.
@@ -100,3 +104,49 @@ Candidato descartado, sem lesson: seria incorreto afirmar que o bridge filtra PR
 T1–T8 + T10 entregues com gates existentes verdes, mas verificação local falhou em F1. T9 permanece explicitamente não executada. Não houve Docker/LLM reais, uso de auth pessoal/global, escrita externa, provisionamento, push ou commit. Não atualizar status para Verified nem considerar a feature inteira concluída.
 
 Fechamento determinístico executado: `python C:/Users/gerso/.codex/skills/tlc-spec-driven/scripts/validate_state.py issue-8-code-review` retornou exit 1 e `validation.md verdict is FAIL`, um erro, impedindo conclusão da feature. Lesson grounded F1 registrada via lessons.py: **L-004**, candidate, recurrence 1, scope review, source `scripts/review/collect.mjs:140 REV-05 F1`. Nenhum aprendizado baseado no candidato refutado ou no piloto ainda não executado.
+
+## Rodada 2: correção F1 e pins
+
+Data: 2026-10-16. Verifier independente original, sem autoria da correção. Workspace e branch iguais à rodada 1. HEAD `1d2230ea27f55841b6cda38c7b2e01613ffff8b6`; delta auditado `f2c12cc8..1d2230e`; commits `907c00b3f1202ddf811cd7d5578fdeb2b1aed939` (T11) e `1d2230ea27f55841b6cda38c7b2e01613ffff8b6` (T12).
+
+**Parecer local: PASS.** F1 resolvido; nenhum novo gap funcional ou mutante sobrevivente. 24/24 AC locais atendidos dentro dos limites dos serviços simulados já registrados. As 23 conclusões locais anteriores permanecem válidas; o runtime fora do decode não mudou. REV-05 passa com as novas provas abaixo. **Parecer global: FAIL, feature incompleta**, porque T9/REV-22/23/TRI-24/25 continuam sem execução/evidência real. Não usar o parecer local como homologação ou autorização de ativação.
+
+### Outcomes rederivados do delta
+
+| Critério | Código e assertion independente confrontada | Conclusão |
+| --- | --- | --- |
+| REV-05, F1/T11: old-side não representável não chega como revisão completa | `scripts/review/collect.mjs:139` usa `TextDecoder('utf-8', { fatal: true })`; :140 usa `encoding: 'buffer'`. Erro permanece no catch REVIEW_INCONCLUSIVE de :146. `tests/review/collect.test.mjs:128` executa delete, modify e rename com byte 0xff no lado antigo e head ausente/válido; :148 exige needs-human, :149 REVIEW_INCONCLUSIVE, :150 diff vazio/merge-base null e :151 índice vazio. | Atendido |
+| REV-05: U+FFFD literal em UTF-8 válido é texto representável | `tests/review/collect.test.mjs:133` cria bytes UTF-8 válidos, :145 exige correction/error_code vazio, :146 exige caractere literal preservado e um arquivo no índice. Não há busca proibitiva de U+FFFD na implementação. | Atendido |
+| REV-05/26: falha ocorre antes de auth/inferência/artefatos | `tests/review/central.test.mjs:116` exige rejeição REVIEW_INCONCLUSIVE; :117 exige `authUsed === false`, `f.calls` vazio e outputRoot vazio, usando Git real temporário e central existente com serviços simulados. | Atendido |
+| REV-21/T12: exemplos executam a correção revisada | Três callers, checkouts de automation, AUTOMATION_SHA/EXPECTED_AUTOMATION_SHA e README agora fixam `907c00b3f1202ddf811cd7d5578fdeb2b1aed939`. `git cat-file -t` retornou commit; `git merge-base --is-ancestor 907c00b3 HEAD` exit 0; `git show 907c00b3:scripts/review/collect.mjs` contém decode fatal/buffer; `git diff --quiet 907c00b3 HEAD -- scripts .github` exit 0. Portanto o pin contém o runtime corrigido e o helper, sem autorreferência a commit inexistente. `tests/review/caller.test.mjs:27`/ :33/ :47 exigem os mesmos pins em workflows/checkouts; :51/:52 conferem código no SHA. | Atendido local; publicação remota do pin continua não executada |
+
+### Gates executados nesta rodada
+
+Mesmo comando Full Node 22.23.3 da rodada 1, agora com 196 testes. Primeira execução: exit 1, **195 pass/1 fail/0 skip**, 77565 ms. A única falha foi `EBUSY` do Windows no cleanup `t.after` do fixture de `tests/review/central.test.mjs:100`, definido em :21, ao remover `C:/Users/gerso/AppData/Local/Temp/review-central-lkyO4l/consumer-source`. Não houve assertion funcional falha nesse caso. A evidência não foi ocultada nem reinterpretada como um gate aprovado.
+
+Reexecução direcionada sem mudanças: `npx --yes --package=node@22.23.3 node --test --test-reporter=spec --test-name-pattern='selected source exceeding snapshot size' tests/review/central.test.mjs`: exit 0, 1 pass/0 fail/0 skip. Repetição completa sem rodar testes de scratch simultaneamente: **exit 0, 196 pass/0 fail/0 skip/0 cancelled**, 77882 ms. Esse é o gate final desta rodada. A recorrência do EBUSY não foi observada; não há novo fix funcional exigido.
+
+`npm --prefix scripts/llm run check` exit 0. Actionlint 1.7.12 no mesmo binário e dez YAML da rodada 1, com exatamente as mesmas quatro opções/exceções: exit 0. Nenhuma assertion existente foi enfraquecida/removida: +2 testes de integração; teste de caller alterou somente o SHA esperado.
+
+### Sensor focado no delta
+
+Sete mutações killed da rodada 1 preservadas como evidência dos caminhos inalterados; não repetidas. Novo scratch independente `C:/Users/gerso/AppData/Local/Temp/review-verifier-round2-1d2230e`, clone local sem hardlinks e sem worktree gerenciada/stash; checkout do HEAD desta rodada. Dependências existentes via junction somente leitura. Nenhum scratch com cleanup negado anteriormente foi acessado, removido ou reutilizado.
+
+Baseline no scratch sem mutações: os dois novos testes passaram, 2/2, usando `--test-name-pattern='invalid UTF-8 on the old side|a deletion with invalid old-side' tests/review/collect.test.mjs tests/review/central.test.mjs`.
+
+| ID | Mutação independente em cópia | Evidência de discriminação | Resultado |
+| --- | --- | --- | --- |
+| M8 | `scripts/review/collect.mjs:139`: `fatal: true` → `fatal: false` | Mesmo comando dos dois novos testes: exit 1, 0 pass/2 fail. `collect.test.mjs:148` recebeu correction em vez de needs-human; `central.test.mjs:116` recebeu INVALID_RESULT posterior em vez de REVIEW_INCONCLUSIVE antes da inferência. | Killed |
+| M9 | Restaurar M8 e acrescentar `if (diff.includes('\uFFFD')) fail('REVIEW_INCONCLUSIVE')` após diff | `--test-name-pattern='invalid UTF-8 on the old side' tests/review/collect.test.mjs`: exit 1, 0 pass/1 fail. `collect.test.mjs:145` recebeu needs-human em vez de correction para bytes UTF-8 válidos. | Killed |
+
+Sensor rodada 2: **2 killed, 0 survived**; acumulado das duas rodadas **9 killed, 0 survived**. Mutações revertidas por apply_patch; `git status --porcelain=v1` no scratch depois da restauração retornou vazio. Não houve Docker/LLM reais ou mudança em dependências.
+
+`git status --porcelain=v1` real antes do sensor: vazio. Depois das restaurações e antes desta atualização do relatório: vazio. HEAD real permaneceu `1d2230ea27f55841b6cda38c7b2e01613ffff8b6`. Única escrita real desta rodada é este relatório, mais eventual lesson via script TLC. Implementação/testes permaneceram read-only.
+
+Cleanup do scratch novo: após confirmar o caminho absoluto no Temp e a junction apontando exatamente para node_modules real, uma tentativa nativa PowerShell de remover apenas a junction foi rejeitada automaticamente por policy antes de executar. Não foi repetida nem contornada. O scratch novo e sua junction permanecem, limpos de mutações, sem necessidade de acesso futuro para validar o parecer. Nenhuma remoção recursiva foi executada.
+
+### Fechamento da rodada 2
+
+Pode persistir o relatório e o progresso de T11/T12. F1 não está mais aberto. A tabela e os pareceres da rodada 1 acima são históricos; esta seção é o estado vigente. Piloto T9 continua pendente, sem credenciais/provisionamento, autorização de ativação ou evidência real. validate_state deve manter exit 1 pelo veredito global FAIL; não ajustar o relatório para produzir conclusão global artificial.
+
+Fechamento determinístico efetivamente reexecutado: `python C:/Users/gerso/.codex/skills/tlc-spec-driven/scripts/validate_state.py issue-8-code-review` retornou **exit 1**, um erro `validation.md verdict is FAIL`. Lesson via TLC para o gate inicialmente falho: **L-005**, candidate/recurrence 1, scope tests/windows, source `tests/review/central.test.mjs:21 round2 EBUSY cleanup`, orienta retry limitado de cleanup EBUSY em diretórios Git de fixtures próprios no Windows. É guidance candidata de teste, não novo blocker funcional nem autorização para repetir cleanup que recebeu negação de policy. L-004 permanece como evidência histórica de F1; nenhum aprendizado baseado em piloto não executado.

@@ -38,6 +38,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: scripts/review/collect.mjs:140 REV-05 F1 (review)
 - last seen: 2026-10-16T03:05:37Z
 
+### L-005 - Use bounded retries for transient EBUSY failures when cleaning owned Git fixture directories on Windows.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `tests/windows` · harmful: 0
+- features: issue-8-code-review
+- evidence: tests/review/central.test.mjs:21 round2 EBUSY cleanup (tests/windows)
+- last seen: 2026-10-16T03:16:47Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

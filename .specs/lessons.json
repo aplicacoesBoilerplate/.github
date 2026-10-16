@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 5,
+  "next_id": 6,
   "lessons": [
     {
       "id": "L-001",
@@ -76,6 +76,24 @@
       ],
       "created": "2026-10-16T03:05:37Z",
       "last_seen": "2026-10-16T03:05:37Z"
+    },
+    {
+      "id": "L-005",
+      "key": "gate_fail::use bounded retries for transient ebusy failures when cleaning owned git fixture directories on windows",
+      "text": "Use bounded retries for transient EBUSY failures when cleaning owned Git fixture directories on Windows.",
+      "signal": "gate_fail",
+      "scope": "tests/windows",
+      "status": "candidate",
+      "features": [
+        "issue-8-code-review"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "tests/review/central.test.mjs:21 round2 EBUSY cleanup (tests/windows)"
+      ],
+      "created": "2026-10-16T03:16:47Z",
+      "last_seen": "2026-10-16T03:16:47Z"
     }
   ]
 }
