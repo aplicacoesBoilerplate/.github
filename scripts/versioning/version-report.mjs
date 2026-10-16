@@ -90,7 +90,8 @@ export function validateVersionReport(report) {
   }
   if (report.adapter === 'jgitver') {
     const properties=report.native.result;
-    if (report.tagKind!=='annotated'||report.native.format!=='java-properties'||
+    if(report.tagKind!=='annotated')throw Error('VersionReport native jgitver exige tag anotada');
+    if (report.native.format!=='java-properties'||
       properties?.['jgitver.used_version']!==report.candidateVersion||
       properties?.['jgitver.calculated_version']!==report.candidateVersion||
       properties?.['jgitver.git_sha1_full']?.toLowerCase()!==report.sha.toLowerCase()||
@@ -202,7 +203,8 @@ if (process.argv[1] && import.meta.filename === process.argv[1]) {
     } else if (command === 'normalize-standard' || command === 'normalize-jgitver') {
       const [nativePath, branch, sha, repository, tagPrefix = 'v'] = args;
       const normalize = command === 'normalize-standard' ? normalizeStandardVersionReport : normalizeJgitverReport;
-      const report = normalize({ nativeOutput: readFileSync(nativePath, 'utf8'),
+      const input=readFileSync(nativePath,'utf8');
+      const report = normalize({ ...(command==='normalize-jgitver'?{native:JSON.parse(input)}:{nativeOutput:input}),
         branch, sha, repository, tagPrefix });
       process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
     } else {

@@ -30,6 +30,7 @@ const localFixtures = [
   'annotated-publish.mjs',
   'standard-precomputed.mjs',
   'native-workflows.mjs',
+  'jgitver-report.mjs',
 ];
 
 export function runFixtures(fixtures, execute = file => spawnSync(process.execPath, [join(directory, file)], {

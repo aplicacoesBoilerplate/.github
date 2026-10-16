@@ -49,6 +49,11 @@ export function buildHomologationGuide(reportInput, snapshot) {
     },
     suggestedChecks,
   };
+  const propertiesEvidence=report.native.format==='java-properties';
+  if(propertiesEvidence) guide.facts.nativeEvidence={
+    format:'java-properties',properties:report.native.result,
+    explanation:{kind:'derived',text:report.native.explanation},
+  };
   const lines = [
     '# Homologation guide', '',
     `- Repository: \`${codeText(guide.facts.repository)}\``,
@@ -56,7 +61,13 @@ export function buildHomologationGuide(reportInput, snapshot) {
     `- SHA: \`${codeText(guide.facts.sha)}\``,
     `- Candidate version: \`${codeText(guide.facts.candidateVersion)}\``,
     `- Increment: \`${codeText(guide.facts.bump)}\``, '',
-    '## Native adapter explanation', '', markdownText(guide.facts.nativeExplanation), '',
+    ...(propertiesEvidence?[
+      '## Native jgitver properties','',
+      ...Object.entries(guide.facts.nativeEvidence.properties).map(([key,value])=>
+        `- ${markdownText(key)}: ${markdownText(value)}`),'',
+      '## Derived adapter explanation','',
+    ]:['## Native adapter explanation','']),
+    markdownText(guide.facts.nativeExplanation), '',
     '## Delivered changes', '',
     ...(guide.facts.changes.length ? guide.facts.changes.map(change => `- ${markdownText(change)}`) : ['- No changes collected.']),
     '', '## Known CI checks', '',

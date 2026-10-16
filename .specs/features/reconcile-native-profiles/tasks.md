@@ -158,13 +158,13 @@ T11 -> T12
 
 ### T11: Integrar guia de evidência Maven
 **What**: Integrar guia de evidência Maven.
-**Where**: scripts/versioning/homologation-guide.mjs
+**Where**: scripts/versioning/homologation-guide.mjs; version-report.mjs (CLI do envelope Maven); tests/versioning/jgitver-report.mjs
 **Depends on**: T10
 **Requirement**: REC-05
 **Reuses**: PR12 e componentes locais validados, conforme matriz design.
 **Tools**: TLC, CI/CD, Entregas, Git/Node/Java/Maven e docs oficiais.
 **Done when**:
-- [ ] Payload Properties/derived e guia Go/Node preservados; policy equivalente passa.
+- [x] Payload Properties/derived e guia Go/Node preservados; policy equivalente e CLI do mesmo envelope Maven passam.
 **Tests**: unit
 **Gate**: Quick
 
