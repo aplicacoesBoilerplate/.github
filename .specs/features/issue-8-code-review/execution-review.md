@@ -14,6 +14,34 @@ Spec, design e tarefas aprovados em 2026-10-15. Execução pelo principal, seque
 
 Ruling: ledger e evidências usam a estrutura TLC existente, não uma segunda árvore de documentação superpowers. Preserva a fonte única aprovada e a preferência do mantenedor; custo: ferramentas de extração auxiliares não são necessárias.
 
+## T3: achados e envelope v3
+
+Premissas: pacote de review usa validator próprio v3, sem fazer o validador legado aceitar outro contrato. Snapshot é reconsultado/reconstruído pela camada confiável; modelo fornece somente summary/findings/patch. Arquivos: review/result.mjs, schemas/result.schema.json, exportação neutra resultIdentity no central e result.test.mjs.
+
+RED por módulo inexistente observado antes da implementação. GREEN: Full em Node 22.23.3, 159 pass/0 fail/0 skipped; node --check de review/result e llm/result, npm check e actionlint Windows 1.7.12 nos seis workflows passaram. Binário temporário anterior estava ausente; novo ZIP validado pelo SHA256 completo conhecido antes da execução. Nenhum schema/assertion legado foi alterado.
+
+Ruling: extrair somente a identidade comum por exportação, não importar review no módulo legado. Evita ciclo entre validadores e preserva v1/v2 fechados; T4 selecionará explicitamente o empacotamento v3. Custo: consumidores de review usam validator próprio, não validateEnvelope legado.
+
+Ruling: envelope v3 inclui hash do patch além do hash de review.json. Leitor confere bytes, lista fechada, identidade independente e referências ao diff; não aceita alteração do arquivo só porque o path continua permitido. Custo: novo campo obrigatório apenas em v3, sem migração das versões antigas.
+
+| Critério / AC | Evidência/assertion | Resultado |
+| --- | --- | --- |
+| Proveniência e pacote | `tests/review/result.test.mjs:26–39`: arquivos exatos, repo/PR/run/attempt/invocation/SHAs/hashes/summary e conteúdo do achado/patch iguais aos valores independentes; outputs ≤8192 | REV-06/07/09 |
+| Referências e resposta fechada | `:47–53`: throws INVALID_RESULT para linha/arquivo/severidade/message/extra/count inválidos, índice adulterado, patch fora do diff e rota não corrigível | REV-07/08 |
+| Identidades/bytes divergentes | `:61–66`: rejects INVALID_RESULT para outro run/attempt/repo/PR/base/config/automação/instruções, sidecar/patch alterados e arquivo extra | REV-06/08 |
+| Sigilo e limite agregado | `:73–77`: INVALID_RESULT para secret inclusive com aspas e payload excessivo, diretório vazio; duplicata ARTIFACT_FAILED e conteúdo original preservado | REV-08/26 |
+| Sem achados/skip | `:83–87`: patch_file/hash null, findings vazio e skipped com arquivos exatos | REV-09, sem aprovação nativa |
+| Legados | `:95–99` e `:40`: v1/v2 continuam sem review_file e aceitos somente no validator correto; v3 recusado pelo legado | Compatibilidade e opt-in |
+
+| Testes/assertions | Mapeamento reverso | Manter |
+| --- | --- | --- |
+| result:26–40 | REV-06/07/09 e formato v3 | Sim |
+| result:47–66 | REV-06/07/08, recusa integral | Sim |
+| result:73–77 | REV-08/26, sigilo/limites/preservação | Sim |
+| result:83–99 | REV-09 e compatibilidade legada | Sim |
+
+Adequação: conteúdo real escrito/lido e erros concretos, sem mocks ou testes documentais; expected não vem do envelope. Diff bruto é reindexado em vez de confiar no índice do artefato. Constituição/AD-003/004 seguidas; T3 completa localmente. T4 ainda deve ligar CLI e orquestração; não houve inferência real.
+
 ## T2: coleta confiável de PR e handoff
 
 Assumptions: sourceRoot contém objetos Git de head/base, conferidos pelos SHAs; configRoot é checkout separado da default. T7 fará os checkouts e lerá o evento real. O coletor não recebe sessão LLM nem executa produto. Arquivos: review/collect.mjs, api.mjs, extensão opcional triage_handoff da policy/schema e collect.test.mjs.

@@ -3,7 +3,7 @@
 **Goal:** Entregar review pela central e homologar #9/#7/#8 juntas no consumidor privado, sem configurações particulares na central.
 **Architecture:** caller confiável → coleta → central LLM → checks isolados → publicação recuperável. Triagem aciona review por dispatch de novo run após persistência da sessão.
 **Tech Stack:** Node 22.23.3, ESM/node:test, Git, Ajv e dependências fixadas existentes; GitHub Actions e container por digest do consumidor.
-**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T2 concluídas localmente; T3 é a próxima tarefa.
+**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T3 concluídas localmente; T4 é a próxima tarefa.
 
 ## Execution Protocol
 
@@ -114,9 +114,9 @@ Transição Phase 2 → Phase 3: T6 → T7
 **Requirement:** REV-06, REV-07, REV-08, REV-09, REV-26
 **Interfaces:** `validateReviewResult(result, snapshot)`; `packageReviewResult(result, provenance, snapshot, outputRoot)` → envelope v3, review.json/hash e patch opcional.
 **Done when:**
-- [ ] Achados respeitam severidade/limites/linha adicionada; invalidade recusa o resultado inteiro.
-- [ ] Proveniência deriva do snapshot confiável, sidecar tem hash e lista de arquivos fechada.
-- [ ] Pacote agregado ≤1 MiB; dados sensíveis não saem; formatos antigos continuam válidos e fechados.
+- [x] Achados respeitam severidade/limites/linha adicionada; invalidade recusa o resultado inteiro.
+- [x] Proveniência deriva do snapshot confiável, sidecar tem hash e lista de arquivos fechada.
+- [x] Pacote agregado ≤1 MiB; dados sensíveis não saem; formatos antigos continuam válidos e fechados.
 **Tests:** unit/integration; achado correto, linha inventada, hash adulterado, identidade de outro run/attempt/repo/PR e v1/v2 preservados.
 **Gate:** Quick + Full
 **Commit:** `feat(review): package validated review findings refs #8`
