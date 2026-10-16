@@ -34,11 +34,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/issue-7-triagem-issues/`
-- **Phase / Task**: Execute; T1–T7 concluídas localmente, 7/8 tarefas; revisão independente local PASS na rodada 2. T8 real pendente. Documentação adiada por pedido explícito.
-- **Completed**: In progress aplicado no Project GitHub Features por pedido explícito e verificado via API. Empilhamento sobre #9 preservado; nenhum merge/aceite do PR da central. Aprovação de spec/context registrada.
-- **In-progress**: F1 aprovado independentemente no HEAD f56a3e5; M5 eliminado pelo teste de run divergente. Gates Node 22.23.3, sintaxe e actionlint passaram. validation.md preserva FAIL de conclusão total exclusivamente pela ausência de T8; nenhum defeito local pendente. Caller mantém pin 3f7ec89a9e2457e1e839a22d6db6f9dc1c4784f6, ainda local; nenhum push/auth real.
-- **Next step**: Selecionar consumidor privado e provisionar o piloto T8 com autorização específica para publicação/ativação. Consulta API mostrou boilerplate-cli público e demo-repository privado (HTML); seleção solicitada ao mantenedor, nenhuma ativação realizada.
-- **Blockers**: Nenhum para implementação local autorizada; blocked-by #5/#9 preservados conforme entrega empilhada. Piloto real exige consumidor e credenciais do mantenedor.
-- **Uncommitted files**: Nenhum após commit da proposta. Planejamento OpenSpec anterior preservado como histórico.
-- **Branch**: `feature/issue-7-triagem-issues`
+- **Feature**: `.specs/features/issue-8-code-review/`
+- **Phase / Task**: Specify; proposta TLC/contexto escritos para review reutilizável e piloto conjunto #9/#7/#8.
+- **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
+- **In-progress**: Spec explicita configuração apenas no consumidor, review dos drafts da triagem, correção complementar e encadeamento explícito sem depender de eventos implícitos do GITHUB_TOKEN. Nenhuma implementação #8 nesta etapa.
+- **Next step**: Revisar spec/context; após aprovação escrita produzir design/tasks com reuso dos componentes existentes, depois executar sequencialmente.
+- **Blockers**: Gate TLC de revisão da especificação. Piloto real continua exigindo credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global.
+- **Uncommitted files**: Proposta/contexto/STATE até o commit desta etapa; demais worktrees preservados.
+- **Branch**: `feature/issue-8-code-review`
