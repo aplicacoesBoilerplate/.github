@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-8-code-review/`
-- **Phase / Task**: Design; spec/context aprovados pelo mantenedor em 2026-10-15; design escrito para revisão.
+- **Phase / Task**: Tasks; spec/context/design aprovados pelo mantenedor em 2026-10-15; plano escrito para revisão antes de código.
 - **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
-- **In-progress**: Design mantém configuração no consumidor, perfil review/envelope v3 compatíveis e dispatch para novo run após a triagem, evitando snapshot antigo da sessão. Nenhuma implementação #8 nesta etapa.
-- **Next step**: Aprovar design; então gerar tarefas sequenciais com gates contratuais e seguir à execução autorizada.
-- **Blockers**: Revisão TLC do design antes de tasks. Piloto real continua exigindo credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global. Meta retomada pelo produto: get_goal confirmou status active em 2026-10-15, sem alterar os requisitos de conclusão.
-- **Uncommitted files**: Nenhum após o commit deste registro; design em 2a8f3e8, demais worktrees preservados.
+- **In-progress**: Nove tarefas coesas: política, coleta, resultado, adaptação central, patch, publicação, workflow, caller e piloto. Execução sequencial pelo principal; testes relevantes e documentação extensa adiada. Nenhuma implementação #8 nesta etapa.
+- **Next step**: Revisão escrita das tasks; após aprovação executar T1 na mesma branch/worktree com teste contratual e commit local.
+- **Blockers**: Gate TLC de revisão do plano antes de execução. Piloto real continua exigindo credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global. Aprovação do design foi explicitamente confirmada, não está pendente.
+- **Uncommitted files**: Plano e registro da aprovação até o commit desta etapa; demais worktrees preservados.
 - **Branch**: `feature/issue-8-code-review`

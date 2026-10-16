@@ -1,6 +1,6 @@
 # Code review reutilizável Design
 
-**Spec:** spec.md, aprovada em 2026-10-15. **Status:** Draft para aprovação do mantenedor.
+**Spec:** spec.md, aprovada em 2026-10-15. **Status:** Approved pelo mantenedor em 2026-10-15.
 
 ## Architecture Overview
 
@@ -141,4 +141,4 @@ Código e constituição locais; spec/context aprovados. Context7 indisponível 
 - [Secrets reference](https://docs.github.com/en/actions/reference/security/secrets), leitura ao enfileirar o workflow, consultado em 2026-10-15.
 - [Trigger a workflow](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow), dispatch e eventos produzidos por GITHUB_TOKEN, consultado em 2026-10-15.
 
-Este design precisa de aprovação antes de gerar as tarefas de implementação, conforme TLC. Nenhuma capacidade descrita como nova já está implementada.
+Design aprovado pelo mantenedor em 2026-10-15. As tarefas serão revisadas antes da implementação, conforme TLC. Nenhuma capacidade descrita como nova já está implementada.

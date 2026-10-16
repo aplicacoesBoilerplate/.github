@@ -1,6 +1,6 @@
 # Code review reutilizável Specification
 
-**Status:** Especificação aprovada pelo mantenedor em 2026-10-15; design em revisão. **Issue:** #8. **Data:** 2026-10-15.
+**Status:** Especificação e design aprovados pelo mantenedor em 2026-10-15; tasks em revisão. **Issue:** #8. **Data:** 2026-10-15.
 **Base local:** #9 → #7 → #8. O OpenSpec `pr-code-review-mvp` permanece histórico; esta proposta reconcilia seu contrato com a implementação da central e da triagem.
 
 ## Problem Statement
