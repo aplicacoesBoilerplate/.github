@@ -56,7 +56,7 @@ T11 -> T12
 **Reuses**: PR12 e componentes locais validados, conforme matriz design.
 **Tools**: TLC, CI/CD, Entregas, Git/Node/Java/Maven e docs oficiais.
 **Done when**:
-- [ ] Process port passa timeout, confinamento, argv e remoção de credenciais.
+- [x] Process port passa timeout, confinamento, argv e remoção de credenciais.
 **Tests**: unit
 **Gate**: Quick
 
