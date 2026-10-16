@@ -7,3 +7,7 @@ Baseline de entrada fcf31e0 PR12, local b4c783a preservado. API PR12 e13 lidos; 
 ## T2
 
 Red: module missing. Quick PASS process-runner.mjs. REC-04: tests/process-runner.mjs:13 assert.deepEqual credentials null/visible retained, :15 assert.throws outsideworkspace, :16 timeout, :17 exit7, :19 missingcommand; argv/stdout assertions exact. Porta reutilizada b4c783a sem mudança, diretório confinado e env explícito; sintaxe/diff PASS. Toda assertion corresponde fronteira de execução; sem excluir testes baseline.
+
+## T3
+
+Red module missing; Quick Properties PASS. java-properties.mjs:3 assert.deepEqual nativas/escapes/unicode/continuação e :7-10 assert.throws malformed/duplicação/truncado/tipo. REC-02 parsing exato e falha fechada, sem fallbackstdout; fonte b4c783a preservada. Diff PASS, nenhum teste existente alterado.
