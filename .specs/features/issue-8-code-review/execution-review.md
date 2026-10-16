@@ -2,6 +2,35 @@
 
 Spec, design e tarefas aprovados em 2026-10-15. Execução pelo principal, sequencial, na branch/worktree da #8 empilhada sobre #7/#9. Nenhuma autorização de uso de auth pessoal, push ou ativação externa foi inferida.
 
+## T5: preparo isolado da correção
+
+Assumptions: autorização de paths pertence ao adapter; o núcleo Git recebe apenas a operação já autorizada. Config, snapshot e identidade esperada vêm dos componentes confiáveis anteriores, nunca do patch. Checks do produto e publicação permanecem fora desta tarefa.
+
+Files: scripts/shared/prepare-patch.mjs, scripts/triage/prepare-patch.mjs, scripts/review/prepare-patch.mjs e tests/review/patch.test.mjs, além deste progresso TLC.
+
+Success: interseção diff/allowlist, paths sensíveis recusados, pai=head exato e fonte intacta. Capacidade própria em memória impede metadados serializados de autorizar publicação/limpeza. Triagem preserva v2, erros públicos e testes sem alterações.
+
+RED: teste novo recusado por módulo ausente. Implementação extraiu apenas operações Git, ownership e limpeza; adapters mantêm contratos distintos. A fixture de adulteração de HEAD precisou fornecer identidade Git local para criar o commit adversarial; nenhuma expectativa foi modificada. GREEN: Full Node 22.23.3 com 170 pass/0 fail/0 skipped; sintaxe dos quatro módulos e validate_tasks/validate_spec/check_commit verdes. Sem SPEC_DEVIATION.
+
+| Critério / AC | Evidência/assertion | Resultado esperado |
+| --- | --- | --- |
+| Pai, conteúdo e fonte intacta | `tests/review/patch.test.mjs:44–51`: equal HEAD^/base_sha ao snapshot.source_sha, conteúdo fixed/new, status fonte vazio e deepEqual changes/base64 | REV-12/14, proposta isolada filha do head analisado |
+| Ownership e limpeza | `:53–57`: rejects cópia serializada INVALID_REVIEW_PATCH; alteração de metadados não muda base própria; diretório temporário ENOENT e fonte preservada | REV-12, somente capacidade própria autoriza consumo/remoção |
+| Diff/allowlist/identidade/rota/base | `:68/72/75`: rejects INVALID_RESULT ou INVALID_REVIEW_PATCH para expansão, hash/identidade/rotas/paths sensíveis; STALE_REVIEW_INPUT exato para checkout diferente | REV-11/16/24, nenhum preparo fora do contrato |
+| Sem execução de hook/texto/secrets | `:82–88`: deepEqual chaves do ambiente fechado, equal texto literal $(echo forbidden), marker ENOENT e HEAD adulterado recusado | REV-12, preparo não executa código; REV-13 em container ainda T7 |
+| Árvores inseguras | `:97–99`: rejects INVALID_REVIEW_PATCH para modos 120000/160000 e equal HEAD/conteúdo fonte preservados | REV-11/12 |
+| Triagem preservada | `tests/triage/patch.test.mjs:37–44/55/68–74/83–88`: conteúdo/pai/limpeza, recusas, ambiente fechado/hooks e árvores inseguras; arquivo legado sem alterações | REV-24 e Done-when T5, contrato v2 sem downgrade artificial de review |
+
+| Testes/assertions | Mapeamento reverso | Manter |
+| --- | --- | --- |
+| review/patch:44–57 | REV-12/14, integridade e limpeza T5 | Sim |
+| review/patch:68–75 | REV-11/16/24 | Sim |
+| review/patch:82–88 | REV-12 e segregação da preparação T5 | Sim |
+| review/patch:97–99 | REV-11/12 e edge cases árvores inseguras | Sim |
+| triage/patch existente | Regressão obrigatória T5, nenhum teste repetido novo para v2 | Sim |
+
+Adequação: assertions observam commits, árvores, bytes e erros reais, não contagem de chamadas. Sem testes de prosa ou meta numérica, seguindo constituição e AD-003/004. T5 completa localmente; PR complementar, checks em container e piloto real continuam pendentes.
+
 ## Pre-flight
 
 | Produtor → consumidor | Interface | Resultado |

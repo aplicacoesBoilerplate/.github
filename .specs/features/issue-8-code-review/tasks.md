@@ -3,7 +3,7 @@
 **Goal:** Entregar review pela central e homologar #9/#7/#8 juntas no consumidor privado, sem configurações particulares na central.
 **Architecture:** caller confiável → coleta → central LLM → checks isolados → publicação recuperável. Triagem aciona review por dispatch de novo run após persistência da sessão.
 **Tech Stack:** Node 22.23.3, ESM/node:test, Git, Ajv e dependências fixadas existentes; GitHub Actions e container por digest do consumidor.
-**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T4 concluídas localmente; T5 é a próxima tarefa.
+**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T5 concluídas localmente; T6 é a próxima tarefa.
 
 ## Execution Protocol
 
@@ -148,9 +148,9 @@ Transição Phase 2 → Phase 3: T6 → T7
 **Requirement:** REV-11, REV-12, REV-13, REV-14, REV-16, REV-24
 **Interfaces:** `prepareReviewPatch({snapshot,envelope,expected,patch,sourceRoot,config})` → proposta própria; núcleo shared recebe somente operação Git já autorizada pelos adapters.
 **Done when:**
-- [ ] Patch limitado ao diff e allowlist; paths sensíveis, symlinks/submódulos e base diferente recusados.
-- [ ] Commit preparado tem pai head exato; fonte intacta; sem hooks/produto/credenciais.
-- [ ] Adapter da triagem mantém suas recusas e contrato v2; review não finge envelope de triagem.
+- [x] Patch limitado ao diff e allowlist; paths sensíveis, symlinks/submódulos e base diferente recusados.
+- [x] Commit preparado tem pai head exato; fonte intacta; sem hooks/produto/credenciais.
+- [x] Adapter da triagem mantém suas recusas e contrato v2; review não finge envelope de triagem.
 **Tests:** integration com Git real temporário; conteúdo/pai/árvore/fonte/limpeza, patch fora do diff ou aplicável só em outra base recusados; testes triage preservados.
 **Gate:** Full
 **Commit:** `feat(review): prepare isolated corrective proposals refs #8`
