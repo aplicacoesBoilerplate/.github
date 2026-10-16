@@ -28,12 +28,12 @@
 
 ## Handoff
 
-- **Feature**: Conciliação Go/standard-version/jgitver no PR12 existente.
-- **Phase / Task**: REC T1-T14 concluídas; revisão independente PASS, entrega remota e CI hospedada aprovadas no8256757.
-- **Completed**: PR12 branch codex/versioning-profiles atualizada por AI/fast-forward; CI38836589007 success no8256757, título verde.27 fixtures, Node real/bootstrap2 replays+4 rejeições, Maven reactor118/prefixo/installer e Go real passaram no Linux. Sensor independente7/7 e parecer T14 preservados.
-- **In-progress** (file:line): .specs/features/reconcile-native-profiles/publication.md registra provas. Commit seguinte só documental; acompanhar checks de seu próprio SHA, sem atribuir a ele o run8256757.
-- **Next step**: Conferir checks do último commit documental e atualizar resumo do PR12; depois aguardar revisão humana de gersonfribeiro. Não fazer merge sem instrução específica.
-- **Blockers**: Nenhum para revisão da entrega. PR13 Changesets precisa conciliação própria; deploy/registry e pilotos continuam fora desta entrega.
-- **Uncommitted files**: Nenhum após commit do registro de publicação; apenas documentação/estado foi atualizada depois da revisão e CI.
-- **Branch**: codex/reconcile-native-profiles em C:/Users/gerso/.codex/worktrees/versioning-reconciled/.github; destino remoto codex/versioning-profiles. Código chamado11fa3c699b3ade5396e4d59ceb3845de80980a35; delta posterior de código é somente chmod/assertion do fixture Maven, aprovado e testado no Linux.
-- **Documentation / PR**: https://github.com/aplicacoesBoilerplate/.github/pull/12; CI https://github.com/aplicacoesBoilerplate/.github/actions/runs/38836589007. Sem merge, release, force-push ou alteração dos pilotos/PR13/PR14. Incidente npm fora do scratch mantido em validation.md; home/node_modules preservada sem limpeza.
+- **Feature**: packages-versioning-readiness: conciliação Changesets e aceite Java/Vue para a issue #4 reaberta.
+- **Phase / Task**: Specify concluído estruturalmente; proposta aguardando revisão humana antes de Design/Tasks/Execute.
+- **Completed**: spec.md e context.md com 8 requisitos, fronteiras A central/B integração/C distribuição, pressupostos identificados e fontes oficiais. validate_spec.py --strict: zero erros/avisos. REC T1-T14 permanece concluída no c7e6101 remoto, CI38837059222 aprovada nesse SHA e sensor independente7/7; não atribuir essa CI ao novo planejamento local.
+- **In-progress** (file:line): .specs/features/packages-versioning-readiness/spec.md, seção Assumptions & Open Questions; aprovar defaults, especialmente milestone em lote e distribuição como aceite separado.
+- **Next step**: Usuário revisar spec/context; depois produzir design e tarefas TLC antes da implementação. Não implementar nem presumir aprovação dos novos defaults.
+- **Blockers**: PR12/13 abertos sem aprovação/merge. Isso não impede planejamento e futura conciliação local; pilotos/publicação no registry dependem de autorização explícita aplicável.
+- **Uncommitted files**: Somente spec/context e este handoff até o commit documental desta iteração; demais mudanças do checkout principal foram preservadas.
+- **Branch**: codex/reconcile-native-profiles, worktree versioning-reconciled/.github; planejamento local apenas. Não enviar automaticamente esta especificação ao PR12. A implementação Changesets deverá continuar no PR13 após conciliação autorizada.
+- **Documentation / PR**: PR12 https://github.com/aplicacoesBoilerplate/.github/pull/12 HEADc7e610117edfbe8a6338ec0d3b6703156026ef70; PR13 https://github.com/aplicacoesBoilerplate/.github/pull/13 HEADb1b2ec51906306c7afa5129f6557b30b9528f6b5. Issue4 OPEN. Nenhuma alteração nos pilotos, workflows ou remotos nesta iteração documental. Incidente npm anterior preservado no relatório REC, sem limpeza adicional.
