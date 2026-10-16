@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   llm:
-    name: Validate reusable LLM contracts
+    name: Validate reusable LLM and triage contracts
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
