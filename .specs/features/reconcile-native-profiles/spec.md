@@ -110,9 +110,9 @@ PR #12 contém standard-version/jgitver, enquanto codex/jgitver-maven contém um
 | REC-03 | Node | Execute | Verified locally; independent PASS |
 | REC-04 | Read/write | Execute | Verified locally; independent PASS |
 | REC-05 | Governança | Execute | Verified locally; independent PASS |
-| REC-06 | Publicação existente | Execute | Blocked: OAuth workflow scope; remote unchanged |
+| REC-06 | Publicação existente | Delivered: PR12 fast-forward; hosted CI38836589007 PASS; human review pending |
 
 ## Success Criteria
 - [x] Baselines preservadas, três ferramentas reais aprovadas e sensor independente discriminante.
-- [ ] PR12 atualizado, sem merge e sem alterações dos pilotos.
+- [x] PR12 atualizado, sem merge e sem alterações dos pilotos.
 - [x] Limites de suporte standard-version e impacto sobre PR13 documentados.

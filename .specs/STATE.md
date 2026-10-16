@@ -29,11 +29,11 @@
 ## Handoff
 
 - **Feature**: Conciliação Go/standard-version/jgitver no PR12 existente.
-- **Phase / Task**: REC T1-T14 concluídas localmente; OAuth resolvido e73c0198 publicado no PR12; correção do fixture Linux aguarda revisão/push/CI.
-- **Completed**: Baseline PR12 congelada13 fixtures PASS; união27 fixtures PASS. Ferramentas reais Go/standard-version9.5.0/Maven1.9.0, reactor118 e prefixo nativo PASS; Maven3.9.9/checksum inválido PASS; workflow64 e semântico read/write PASS; callers lintados isoladamente e76 links relativos conferidos.
-- **In-progress** (file:line): tests/versioning/adapter-report.mjs:25 passa a declarar chmod755; CI38836186739 reproduziu EACCES no Linux antes dessa correção. Gates locais afetados passam; runtime de produção inalterado.
-- **Next step**: Revisão independente do delta T14; push fast-forward só no PR12 e conferir nova CI hospedada. Não fazer merge ou alterar pilotos/PR13.
-- **Blockers**: Nenhum bloqueio de autenticação; CI remota revelou fixture sem bit executável, corrigido localmente mas ainda sem confirmação hospedada.
-- **Uncommitted files**: Nenhum após commit do registro de bloqueio; implementação e evidências preservadas localmente.
-- **Branch**: codex/reconcile-native-profiles em C:/Users/gerso/.codex/worktrees/versioning-reconciled/.github, baseada no PR12 fcf31e08165156a5938eec7577bbf1be945f365f; código11fa3c699b3ade5396e4d59ceb3845de80980a35.
-- **Documentation / PR**: https://github.com/aplicacoesBoilerplate/.github/pull/12. Push/edição desse PR autorizados pelo usuário, sem merge, release, force-push ou alteração dos pilotos/PR13/PR14. Código local anterior b4c783a preservado na branch codex/jgitver-maven.
+- **Phase / Task**: REC T1-T14 concluídas; revisão independente PASS, entrega remota e CI hospedada aprovadas no8256757.
+- **Completed**: PR12 branch codex/versioning-profiles atualizada por AI/fast-forward; CI38836589007 success no8256757, título verde.27 fixtures, Node real/bootstrap2 replays+4 rejeições, Maven reactor118/prefixo/installer e Go real passaram no Linux. Sensor independente7/7 e parecer T14 preservados.
+- **In-progress** (file:line): .specs/features/reconcile-native-profiles/publication.md registra provas. Commit seguinte só documental; acompanhar checks de seu próprio SHA, sem atribuir a ele o run8256757.
+- **Next step**: Conferir checks do último commit documental e atualizar resumo do PR12; depois aguardar revisão humana de gersonfribeiro. Não fazer merge sem instrução específica.
+- **Blockers**: Nenhum para revisão da entrega. PR13 Changesets precisa conciliação própria; deploy/registry e pilotos continuam fora desta entrega.
+- **Uncommitted files**: Nenhum após commit do registro de publicação; apenas documentação/estado foi atualizada depois da revisão e CI.
+- **Branch**: codex/reconcile-native-profiles em C:/Users/gerso/.codex/worktrees/versioning-reconciled/.github; destino remoto codex/versioning-profiles. Código chamado11fa3c699b3ade5396e4d59ceb3845de80980a35; delta posterior de código é somente chmod/assertion do fixture Maven, aprovado e testado no Linux.
+- **Documentation / PR**: https://github.com/aplicacoesBoilerplate/.github/pull/12; CI https://github.com/aplicacoesBoilerplate/.github/actions/runs/38836589007. Sem merge, release, force-push ou alteração dos pilotos/PR13/PR14. Incidente npm fora do scratch mantido em validation.md; home/node_modules preservada sem limpeza.

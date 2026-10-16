@@ -11,13 +11,16 @@ separação entre cálculo somente leitura e publicação. Os resultados por tar
 estão em [evidence.md](evidence.md); push e CI hospedada serão registrados após
 a revisão. Nenhum piloto foi alterado e nenhuma Release foi criada.
 
-O envio foi tentado e recusado pelo GitHub por falta do escopo OAuth `workflow`
-na credencial AI. O [registro de publicação](publication.md) contém identidade,
-SHA remoto inalterado e comandos de autorização; não há CI hospedada nova.
+O bloqueio OAuth foi resolvido. A branch do PR12 recebeu8256757 e a
+[CI38836589007](https://github.com/aplicacoesBoilerplate/.github/actions/runs/38836589007)
+passou nesse SHA, incluindo todos os testes reais. O [registro](publication.md)
+preserva a tentativa recusada e a falha POSIX corrigida em T14. Os commits de
+registro são documentais e seus checks são acompanhados separadamente.
 
 ## Fontes modificados
 
 - `.specs/features/reconcile-native-profiles/publication.md`
+- `.specs/features/reconcile-native-profiles/posix-fixture-validation.md`
 - `.github/workflows/README.md`
 - `.github/workflows/ci.yml`
 - `.github/workflows/version-preview.yml`
