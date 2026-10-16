@@ -19,3 +19,7 @@ Red novo relatório: API stdout não aceita Properties. Quick PASS novo contrato
 ## T5
 
 Red módulo ausente; Quick coletor PASS. jgitver-adapter.mjs:20 versão/SHAexatos, :21 filtro dado pessoal, :22-24 branch/-N/temp cleanup, :31 divergência com todas Properties completas throws mensagem específica; skip/use-version bloqueados. REC02/04. Ruling: prova reactorCLI118 foi movida inteira para T7 onde a CLI existe (tentativa anterior falhou módulo ausente, não alegada como gate); nenhuma assertion removida/condicionada. Primeira baseline --local inválida: HEAD alterado pelo autor durante testepr-check; repetir em checkout congelado. Sintaxe/diff/tasks PASS.
+
+## T6
+
+Quick PASS go-adapter e version-report30. Red módulo ausente antes do código; go-adapter:18 argv exato branch/commit/json/explain, :20 envelope/identidade e :24-26 negativos JSON/SHA/runtime. Reuso b4c783a, sem alteração na normalizaçãoGo do PR12. REC01. Teste Go real permanece gateBuild; nenhuma assertion removida.

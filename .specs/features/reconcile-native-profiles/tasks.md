@@ -104,7 +104,7 @@ T11 -> T12
 **Reuses**: PR12 e componentes locais validados, conforme matriz design.
 **Tools**: TLC, CI/CD, Entregas, Git/Node/Java/Maven e docs oficiais.
 **Done when**:
-- [ ] Mesmo argv/envelope/SHA e negativos; Go real preservado.
+- [x] Mesmo argv/envelope/SHA e negativos; Go real preservado.
 **Tests**: unit
 **Gate**: Quick
 
