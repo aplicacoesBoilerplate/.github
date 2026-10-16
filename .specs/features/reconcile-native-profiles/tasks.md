@@ -33,7 +33,7 @@ T5 -> T6 -> T7
 ### Phase 3: Publicação
 T8 -> T9 -> T10
 ### Phase 4: Contrato e documentação
-T11 -> T12 -> T13
+T11 -> T12 -> T13 -> T14
 
 ## Task Breakdown
 ### T1: Registrar conciliação e baseline
@@ -192,6 +192,18 @@ T11 -> T12 -> T13
 **Tests**: integration
 **Gate**: Full
 
+### T14: Corrigir executabilidade do fixture Maven no Linux
+**What**: Corrigir executabilidade do fixture Maven no Linux.
+**Where**: tests/versioning/adapter-report.mjs
+**Depends on**: T13
+**Requirement**: REC-02, REC-06
+**Reuses**: Preparação chmod755 já usada nos outros executáveis de fixtures.
+**Tools**: TLC, CI/CD, Entregas, Node/GitHub CLI.
+**Done when**:
+- [x] Fixture Maven declara modo executável e verifica bits POSIX, preservando todas assertions; coletor passa localmente e correção fica pronta para confirmar CI Linux.
+**Tests**: integration
+**Gate**: Full
+
 ## Diagram-Definition Cross-Check
 | Task | Depends On | Diagram Shows | Status |
 | --- | --- | --- | --- |
@@ -208,6 +220,7 @@ T11 -> T12 -> T13
 | T11 | T10 | T10 | Match |
 | T12 | T11 | T11 | Match |
 | T13 | T12 | T12 | Match |
+| T14 | T13 | T13 | Match |
 
 ## Test Co-location Validation
 | Task | Required | Task Says | Status |
@@ -225,3 +238,4 @@ T11 -> T12 -> T13
 | T11 | unit | unit | Match |
 | T12 | none | none | Match |
 | T13 | integration | integration | Match |
+| T14 | integration | integration | Match |
