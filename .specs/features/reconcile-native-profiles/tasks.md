@@ -152,7 +152,7 @@ T11 -> T12
 **Reuses**: PR12 e componentes locais validados, conforme matriz design.
 **Tools**: TLC, CI/CD, Entregas, Git/Node/Java/Maven e docs oficiais.
 **Done when**:
-- [ ] Jobs read/write isolados, toolchains fixadas, suítes unidas e caller contracts passam.
+- [x] Jobs read/write isolados, toolchains fixadas, suítes unidas e caller contracts passam.
 **Tests**: integration
 **Gate**: Build
 

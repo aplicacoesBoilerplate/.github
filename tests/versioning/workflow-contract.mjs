@@ -47,19 +47,19 @@ publishMatches(/publication_environment:\s*\n\s+description:[^\n]*\n\s+required:
   'publication environment must be an optional empty string');
 publishExcludes(/homologation_environment:|\b(?:approved|force|skip_validation):/,
   'caller-controlled approval and bypass inputs are forbidden');
-publishMatches(/environment-gate:\s*\n\s+if: inputs\.publication_environment != ''[\s\S]*?environment:\s*\n\s+name: \$\{\{ inputs\.publication_environment \}\}/,
+publishMatches(/environment-gate:\s*\n\s+if: inputs\.publication_environment != ''\s*\n\s+needs: validate-publication[\s\S]*?environment:\s*\n\s+name: \$\{\{ inputs\.publication_environment \}\}/,
   'a named environment must gate publication');
-publishMatches(/publish:\s*\n\s+needs: environment-gate\s*\n\s+if: >-\s*\n\s+\$\{\{ always\(\)[\s\S]*needs\.environment-gate\.result == 'success'[\s\S]*needs\.environment-gate\.result == 'skipped'/,
+publishMatches(/publish:\s*\n\s+needs: \[validate-publication, environment-gate\]\s*\n\s+if: >-\s*\n\s+\$\{\{ always\(\)[\s\S]*needs\.validate-publication\.result == 'success'[\s\S]*needs\.environment-gate\.result == 'success'[\s\S]*needs\.environment-gate\.result == 'skipped'/,
   'publish must accept only a successful or skipped environment gate');
 publishMatches(/concurrency:\s*\n\s+group: version-publish-[^\n]+\n\s+cancel-in-progress: false/,
   'publication concurrency must serialize without cancellation');
-matches(/if: inputs\.adapter == 'standard-version'[\s\S]*?actions\/setup-node@[0-9a-f]{40}[\s\S]*?install-node\.sh/,
+matches(/actions\/setup-node@[0-9a-f]{40}[\s\S]*?if: inputs\.adapter == 'standard-version'[\s\S]*?install-node\.sh/,
   'standard-version preview must install Node dependencies');
 matches(/NODE_PACKAGE_MANAGER: npm/, 'standard-version preview must select npm lockfile mode');
 matches(/if: inputs\.adapter == 'jgitver'[\s\S]*?actions\/setup-java@[0-9a-f]{40}/,
   'jgitver preview must prepare Java');
-publishMatches(/if: inputs\.adapter == 'standard-version'[\s\S]*?actions\/setup-node@[0-9a-f]{40}[\s\S]*?install-node\.sh/,
-  'standard-version publisher must install Node dependencies');
+publishMatches(/validate-publication:[\s\S]*?actions\/setup-node@[0-9a-f]{40}[\s\S]*?if: inputs\.adapter == 'standard-version'[\s\S]*?install-node\.sh/,
+  'standard-version read-only publication preparer must install Node dependencies');
 publishMatches(/NODE_PACKAGE_MANAGER: npm/, 'standard-version publisher must select npm lockfile mode');
 publishMatches(/actions\/create-github-app-token@[0-9a-f]{40}[\s\S]*?permission-contents: write[\s\S]*?permission-pull-requests: write/,
   'standard-version must mint scoped app token for technical PR');

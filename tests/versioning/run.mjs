@@ -17,6 +17,19 @@ const localFixtures = [
   'workflow-contract.mjs',
   'runner-self-test.mjs',
   'standard-flow.mjs',
+  'adapter-registry.mjs',
+  'process-runner.mjs',
+  'java-properties.mjs',
+  'reconciled-report.mjs',
+  'jgitver-adapter.mjs',
+  'go-adapter.mjs',
+  'standard-adapter.mjs',
+  'collect-version-report.mjs',
+  'version-bundle.mjs',
+  'git-inputs.mjs',
+  'annotated-publish.mjs',
+  'standard-precomputed.mjs',
+  'native-workflows.mjs',
 ];
 
 export function runFixtures(fixtures, execute = file => spawnSync(process.execPath, [join(directory, file)], {
