@@ -92,9 +92,9 @@ T11 -> T12
 **Reuses**: PR12 e componentes locais validados, conforme matriz design.
 **Tools**: TLC, CI/CD, Entregas, Git/Node/Java/Maven e docs oficiais.
 **Done when**:
-- [ ] Plugin1.9/Java21 e reactor local118 comprovados; prefixos nativos testados.
-**Tests**: integration
-**Gate**: Full
+- [x] Coletor isolado exige plugin1.9, Properties completas e SHA, rejeita overrides; executor injetado comprovado.
+**Tests**: unit
+**Gate**: Quick
 
 ### T6: Encapsular coletor Go
 **What**: Encapsular coletor Go.
@@ -116,7 +116,7 @@ T11 -> T12
 **Reuses**: PR12 e componentes locais validados, conforme matriz design.
 **Tools**: TLC, CI/CD, Entregas, Git/Node/Java/Maven e docs oficiais.
 **Done when**:
-- [ ] Três adaptadores usam registro/port e entrypoint fino; baseline collector/native real Node passa.
+- [ ] Três adaptadores usam registro/port e entrypoint fino; collector, Node real e reactor Maven118/prefixo nativo passam juntos.
 **Tests**: integration
 **Gate**: Full
 
@@ -203,7 +203,7 @@ T11 -> T12
 | T2 | unit | unit | Match |
 | T3 | unit | unit | Match |
 | T4 | unit | unit | Match |
-| T5 | integration | integration | Match |
+| T5 | unit | unit | Match |
 | T6 | unit | unit | Match |
 | T7 | integration | integration | Match |
 | T8 | integration | integration | Match |

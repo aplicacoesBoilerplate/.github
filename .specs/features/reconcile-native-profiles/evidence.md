@@ -15,3 +15,7 @@ Red module missing; Quick Properties PASS. java-properties.mjs:3 assert.deepEqua
 ## T4
 
 Red novo relatório: API stdout não aceita Properties. Quick PASS novo contrato, version-report30 e policy54; diff PASS. reconciled-report.mjs:17 deepEqual bootstrap/base/tagKind/formato, :19-20 negativos bootstrap Maven/Node, :23 base/tag/bump prefix isolado, :26 propriedades divergentes rejeitadas, :28-29 SHA/SNAPSHOT. Teste antigo version-report mantém30 assertions e expectativas, apenas input Maven migrou para Properties completas1.9. REC-01/02. Coletor Bash antigo será conectado no T7, integração Maven não alegada neste gate unitário.
+
+## T5
+
+Red módulo ausente; Quick coletor PASS. jgitver-adapter.mjs:20 versão/SHAexatos, :21 filtro dado pessoal, :22-24 branch/-N/temp cleanup, :31 divergência com todas Properties completas throws mensagem específica; skip/use-version bloqueados. REC02/04. Ruling: prova reactorCLI118 foi movida inteira para T7 onde a CLI existe (tentativa anterior falhou módulo ausente, não alegada como gate); nenhuma assertion removida/condicionada. Primeira baseline --local inválida: HEAD alterado pelo autor durante testepr-check; repetir em checkout congelado. Sintaxe/diff/tasks PASS.

@@ -29,5 +29,10 @@ https://github.com/conventional-changelog/standard-version (depreciado; não mig
 https://github.com/jgitver/jgitver-maven-plugin (Properties, branch detached, regexVersionTag).
 Prefixos Maven precisam configurar regexVersionTag no consumidor; provar com ferramenta real.
 Riscos: hooks/updaters Node no escritor, App token em processo nativo, refs alteradas, artifacts adulterados, base funcional != merge técnico.
+Ruling de co-localização: T5 testa o contrato isolado do coletor via process port;
+o fixture reactor+CLI pertence a T7, que introduz o serviço de coleta necessário.
+Não condicionar nem remover a assertion CLI118 para fazê-lo passar antes da integração.
+Baseline deve ficar em checkout congelado: a primeira execução concorrente foi
+invalidada por avanço do HEAD durante fixture pr-check, não contada como PASS.
 Mitigar com jobs separados, schema/hash/path allowlists e snapshots, testes negativos e verificador fresco.
 Remoto: push somente HEAD:refs/heads/codex/versioning-profiles se ancestral do HEAD remoto esperado; nenhum force/merge.
