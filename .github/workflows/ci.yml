@@ -13,6 +13,27 @@ permissions:
   contents: read
 
 jobs:
+  llm:
+    name: Validate reusable LLM and triage contracts
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up feature runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+      - name: Install central locked dependencies
+        run: npm ci --prefix scripts/llm --ignore-scripts --no-fund --no-audit
+      - name: Verify invocation contracts
+        run: npm --prefix scripts/llm test
+      - name: Check script syntax
+        run: npm --prefix scripts/llm run check
+      - name: Check workflow syntax
+        run: npm --prefix scripts/llm run lint:workflow
+
   validate:
     name: Validate repository
     runs-on: ubuntu-latest

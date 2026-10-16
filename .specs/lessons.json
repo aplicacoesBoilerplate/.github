@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 4,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::revalide metadata de sessao antes de liberar resultados mesmo quando o arquivo local nao mudou ausencia de refresh implica zero put nao zero consultas",
+      "text": "Revalide metadata de sessão antes de liberar resultados mesmo quando o arquivo local não mudou; ausência de refresh implica zero PUT, não zero consultas.",
+      "signal": "ac_gap",
+      "scope": "llm/auth",
+      "status": "candidate",
+      "features": [
+        "issue-9-llm-centralizado"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "LLM-11; scripts/llm/persist-session.mjs:16; tests/llm/persistence.test.mjs:56 (llm/auth)"
+      ],
+      "created": "2026-10-13T23:56:54Z",
+      "last_seen": "2026-10-13T23:56:54Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::separe evidencia de contratos offline de autenticacao e recuperacao reais mantendo homologacao pendente ate executar o caller provisionado",
+      "text": "Separe evidência de contratos offline de autenticação e recuperação reais, mantendo homologação pendente até executar o caller provisionado.",
+      "signal": "ac_gap",
+      "scope": "llm/adoption",
+      "status": "candidate",
+      "features": [
+        "issue-9-llm-centralizado"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "LLM-24; .specs/features/issue-9-llm-centralizado/spec.md:109 (llm/adoption)"
+      ],
+      "created": "2026-10-13T23:56:54Z",
+      "last_seen": "2026-10-13T23:56:54Z"
+    },
+    {
+      "id": "L-003",
+      "key": "surviving_mutant::exercite o inspector do consumidor com envelope de outro run e exija rejeicao da identidade divergente",
+      "text": "Exercite o inspector do consumidor com envelope de outro run e exija rejeição da identidade divergente.",
+      "signal": "surviving_mutant",
+      "scope": "caller-inspector",
+      "status": "candidate",
+      "features": [
+        "issue-7-triagem-issues"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M5 (caller-inspector)"
+      ],
+      "created": "2026-10-14T11:48:31Z",
+      "last_seen": "2026-10-14T11:48:31Z"
+    }
+  ]
+}
