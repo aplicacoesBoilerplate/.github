@@ -4,6 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { normalizeJgitverReport } from '../../scripts/versioning/version-report.mjs';
+import { collectJgitver } from '../../scripts/versioning/adapters/jgitver.mjs';
 
 const cwd = mkdtempSync(join(tmpdir(), 'real-jgitver-'));
 const git = (...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
@@ -16,7 +17,7 @@ try {
   <artifactId>jgitver-fixture</artifactId><version>0.1.0</version></project>\n`);
   writeFileSync(join(cwd, '.mvn', 'extensions.xml'), `<extensions>
   <extension><groupId>fr.brouillard.oss</groupId>
-  <artifactId>jgitver-maven-plugin</artifactId><version>1.8.0</version></extension>
+  <artifactId>jgitver-maven-plugin</artifactId><version>1.9.0</version></extension>
 </extensions>\n`);
   writeFileSync(join(cwd, '.mvn', 'jgitver.config.xml'), `<configuration xmlns="http://jgitver.github.io/maven/configuration/1.1.0">
   <strategy>CONFIGURABLE</strategy><useSnapshot>false</useSnapshot>
@@ -26,12 +27,8 @@ try {
   writeFileSync(join(cwd, 'feature.txt'), 'feature\n');
   git('add', '.'); git('commit', '-qm', 'fix: change');
   const sha = git('rev-parse', 'HEAD');
-  const output = execFileSync('mvn', ['-q', '-Dstyle.color=never', '-DforceStdout',
-    'help:evaluate', '-Dexpression=project.version'], {
-    cwd, encoding: 'utf8', timeout: 180000,
-    env: { ...process.env, JGITVER_BRANCH: 'master' },
-  });
-  const report = normalizeJgitverReport({ nativeOutput: output, branch: 'master', sha, repository: cwd });
+  const native = collectJgitver({workspace:cwd,projectDirectory:cwd,targetBranch:'master',sha,env:process.env});
+  const report = normalizeJgitverReport({ native, branch: 'master', sha, repository: cwd });
   assert.equal(report.adapter, 'jgitver');
   assert.equal(report.sha, sha);
   assert.equal(report.baseVersion, '0.1.0');

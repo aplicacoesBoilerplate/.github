@@ -14,12 +14,14 @@ try {
   mkdirSync(join(root, '.mvn'));
   writeFileSync(join(root, 'package.json'), '{"version":"1.0.0"}\n');
   writeFileSync(join(root, 'pom.xml'), '<project/>\n');
-  writeFileSync(join(root, '.mvn', 'extensions.xml'), '<extensions/>\n');
+  writeFileSync(join(root, '.mvn', 'extensions.xml'), '<extensions><extension><groupId>fr.brouillard.oss</groupId><artifactId>jgitver-maven-plugin</artifactId><version>1.9.0</version></extension></extensions>\n');
   const standard = join(root, 'node_modules', '.bin', 'standard-version');
   writeFileSync(standard, '#!/usr/bin/env bash\n[[ "$*" == *"--dry-run"* && "$*" == *"infra/v"* ]] || exit 9\necho "bumping version in package.json from 1.0.0 to 1.1.0"\n');
   chmodSync(standard, 0o755);
   const maven = join(root, 'mvnw');
-  writeFileSync(maven, '#!/usr/bin/env bash\n[[ "$JGITVER_BRANCH" == master ]] || exit 8\necho 1.0.1\n');
+  writeFileSync(maven, '#!/usr/bin/env bash\n[[ "$JGITVER_BRANCH" == master ]] || exit 8\n'+
+    'for arg in "$@"; do case "$arg" in -Djgitver.export-properties-path=*) output="${arg#*=}";; esac; done\n'+
+    'printf "jgitver.used_version=1.0.1\\njgitver.calculated_version=1.0.1\\njgitver.git_sha1_full=%s\\njgitver.plugin-version=1.9.0\\n" "$GITHUB_SHA" > "$output"\n');
   git('add', 'package.json', 'pom.xml', '.mvn', 'mvnw'); git('commit', '-qm', 'feat: fixture');
   const sha = git('rev-parse', 'HEAD'); git('tag', 'infra/v1.0.0'); git('tag', 'v1.0.0');
   for (const [adapter, prefix, expected] of [

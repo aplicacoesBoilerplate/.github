@@ -116,7 +116,7 @@ T11 -> T12
 **Reuses**: PR12 e componentes locais validados, conforme matriz design.
 **Tools**: TLC, CI/CD, Entregas, Git/Node/Java/Maven e docs oficiais.
 **Done when**:
-- [ ] Três adaptadores usam registro/port e entrypoint fino; collector, Node real e reactor Maven118/prefixo nativo passam juntos.
+- [x] Três adaptadores usam registro/port e entrypoint fino; collector, Node real e reactor Maven118/prefixo nativo passam juntos.
 **Tests**: integration
 **Gate**: Full
 

@@ -23,3 +23,7 @@ Red módulo ausente; Quick coletor PASS. jgitver-adapter.mjs:20 versão/SHAexato
 ## T6
 
 Quick PASS go-adapter e version-report30. Red módulo ausente antes do código; go-adapter:18 argv exato branch/commit/json/explain, :20 envelope/identidade e :24-26 negativos JSON/SHA/runtime. Reuso b4c783a, sem alteração na normalizaçãoGo do PR12. REC01. Teste Go real permanece gateBuild; nenhuma assertion removida.
+
+## T7
+
+Full PASS: standard-adapter/registry/entrypoint, adapter-report original; reactorMaven118, antigo fixtureMaven agoraProperties1.9 mantendo assertions, novo Mavenprefix real PATCH/rebuild/checkpointMINOR com infra/v e v9.0.0 estrangeira ignorada; standard-version9.5 real calcula1.1.0 e arquivossemcommit/tag; standard-flow funcional/técnico/negativos/retry PASS. UnitNodeargs exatos e envelope/SHA/tag; registryunknown beforetools. SetupfixturesMaven exportaProperties em vezstdout, outcomesoriginais preservados. BootstrapNodeagora0.0.1: standard-flow representa entrega já1.0.0 com tag preexistente e novo commitfuncional; assertion zero-tags foi migrada para exigir exclusivamentev1.0.0 apósgeração (mesmo critério sem nova tag, não relaxado). Não se certifica publicação/remoto ainda.

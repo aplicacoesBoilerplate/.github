@@ -22,7 +22,10 @@ try {
   writeFileSync(join(workspace, 'package.json'), '{"name":"fixture","version":"1.0.0"}\n');
   writeFileSync(join(workspace, 'package-lock.json'), JSON.stringify({ version: '1.0.0',
     packages: { '': { version: '1.0.0' } } }));
-  git('add', '.'); git('commit', '-qm', 'fix: original');
+  git('add', '.'); git('commit', '-qm', 'chore: published base');
+  git('tag','v1.0.0');
+  writeFileSync(join(workspace,'fix.txt'),'functional delivery\n');
+  git('add','.');git('commit','-qm','fix: original');
   const originSha = git('rev-parse', 'HEAD');
   execFileSync('git', ['clone', '--bare', workspace, bare]);
   git('remote', 'add', 'origin', bare);
@@ -122,7 +125,7 @@ console.error('unexpected gh '+a.join(' '));process.exit(1);
   assert.equal(result.status, 0, result.stderr);
   assert.match(readFileSync(outputPath, 'utf8'), /outcome=pending-version-pr/);
   assert.equal(JSON.parse(readFileSync(join(workspace, 'package.json'), 'utf8')).version, '1.0.1');
-  assert.equal(git('tag', '--list'), '', 'technical PR preparation must not tag');
+  assert.equal(git('tag', '--list'), 'v1.0.0', 'technical PR preparation must preserve only the preexisting tag');
   assert.equal(git('rev-parse', 'master'), originSha, 'approved functional SHA remains on main');
   git('switch', 'master');
   result = run();
