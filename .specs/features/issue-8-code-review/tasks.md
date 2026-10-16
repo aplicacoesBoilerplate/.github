@@ -7,7 +7,7 @@
 
 ## Execution Protocol
 
-Usar `tlc-spec-driven` e execução sequencial pelo agente principal neste worktree, conforme escolha já expressa pelo mantenedor. Dez commits coesos em três fases; T10 separa o helper originalmente incluído em T8 para que o caller possa apontar para um SHA real contendo o código. Não abrir execução paralela nem delegar implementação. Verifier TLC independente ao entregar código local e após o piloto, com sensor em scratch isolado. Nenhuma meta quantitativa de testes, testes de prosa ou manual extenso.
+Usar `tlc-spec-driven` e execução sequencial pelo agente principal neste worktree, conforme escolha já expressa pelo mantenedor. Uma entrega por commit atômico em três fases; T10 separa o helper originalmente incluído em T8 para que o caller possa apontar para um SHA real contendo o código. T11/T12 corrigem F1 do Verifier e propagam seu pin, sem novos requisitos. Não abrir execução paralela nem delegar implementação. Verifier TLC independente ao entregar código local e após o piloto, com sensor em scratch isolado. Nenhuma meta quantitativa de testes, testes de prosa ou manual extenso.
 
 Cada tarefa segue: escrever teste contratual e observar RED; implementar o componente; executar o gate e revisar adequação; marcar progresso/traceability e criar um commit local atômico. Nunca enfraquecer assertions, remover testes ou usar fixtures como prova de homologação. Ferramentas: apply_patch, Node, Git local e scripts TLC; cicd para workflows; github-planning/permissões para operações remotas autorizadas. Context7 quando disponível; documentação oficial como fallback documentado.
 
@@ -62,7 +62,7 @@ Implementação estritamente sequencial. Fases são fronteiras de coesão, não 
 ```text
 Phase 1: T1 → T2 → T3
 Phase 2: T4 → T5 → T6
-Phase 3: T7 → T10 → T8 → T9
+Phase 3: T7 → T10 → T8 → T11 → T12 → T9
 
 Transição Phase 1 → Phase 2: T3 → T4
 Transição Phase 2 → Phase 3: T6 → T7
@@ -225,12 +225,46 @@ Transição Phase 2 → Phase 3: T6 → T7
 
 Gate do autor: Full Node 22.23.3 (194 pass/0 fail/0 skipped), syntax/npm check, actionlint Windows com dez YAML e gates estruturais verdes. Verifier TLC do grupo de código será executado após o commit T8; não declarar homologação completa antes de T9.
 
+### T11: Recusar diff com UTF-8 inválido
+
+**What:** Corrigir F1 confirmado pelo Verifier, preservando os bytes do diff até a decodificação estrita.
+**Where:** `scripts/review/collect.mjs`
+**Supporting files:** `tests/review/{collect,central}.test.mjs`, relatório/lição independente e progresso TLC.
+**Depends on:** T8
+**Reuses:** TextDecoder fatal já usado em configuração e blobs; tratamento REVIEW_INCONCLUSIVE existente.
+**Requirement:** REV-05, REV-26
+**Interfaces:** `collectReview(...)` mantém contrato; diff não representável resulta needs-human/REVIEW_INCONCLUSIVE antes da inferência.
+**Done when:**
+- [x] Deleção, modificação e rename com lado antigo inválido não produzem revisão completa; U+FFFD literal válido continua aceito.
+- [x] Full/Build passam sem alterar expectativas anteriores; correção segue para re-verificação independente.
+**Tests:** integração Git real derivada de REV-05; reproduzir RED antes de corrigir o decode.
+**Gate:** Full + Build
+**Commit:** `fix(review): reject lossy diff decoding refs #8`
+
+Gate: Full Node 22.23.3 195 pass/0 fail/0 skipped, mais regressão central adicionada depois do início desse Full (1 pass), npm check/actionlint e validate_tasks verdes. RED reproduziu correction em vez de needs-human. Sem mudanças nas expectativas existentes; Verifier rodada 2 após propagação do pin T12.
+
+### T12: Atualizar pins dos callers para a correção
+
+**What:** Garantir que os exemplos integrados executem T11, não a revisão anterior.
+**Where:** `examples/callers/review/`
+**Supporting files:** `tests/review/caller.test.mjs` e progresso TLC.
+**Depends on:** T11
+**Reuses:** Pins imutáveis e inspeção de existência de código já entregues em T8.
+**Requirement:** REV-05, REV-21
+**Interfaces:** Inputs/secrets e modelos inalterados; somente referência fixa da automação muda.
+**Done when:**
+- [ ] Workflows e instruções apontam para SHA real contendo a correção, sem self-reference de commit.
+- [ ] Gate do caller/Build e re-verificação independente confirmam a entrega local; T9 permanece pendente.
+**Tests:** contrato executável de pins, inspector e integração existentes, sem testes da prosa.
+**Gate:** Full + Build + Verifier TLC independente local
+**Commit:** `fix(review): pin callers to strict diff validation refs #8`
+
 ### T9: Piloto real do conjunto
 
 **What:** Homologar as três pipelines no consumidor escolhido com evidência real e sanitizada.
 **Where:** `.specs/features/issue-8-code-review/pilot.md`
 **Supporting files:** Configuração de produto somente no demo-repository, em sua entrega própria autorizada; atualizar evidências/status T8 da triagem sem dar baixa fictícia.
-**Depends on:** T8
+**Depends on:** T12
 **Reuses:** Caller integrado e critérios pendentes TRI-24/25; nenhum segundo login/conta central.
 **Requirement:** REV-22, REV-23; TRI-24, TRI-25
 **Done when:**
@@ -254,6 +288,8 @@ Gate do autor: Full Node 22.23.3 (194 pass/0 fail/0 skipped), syntax/npm check, 
 | T7 | Um entry point coordenador e seu runner | Granular |
 | T10 | Helper de dispatch antes do pin imutável do caller | Granular |
 | T8 | Um caller integrado e consumo | Granular |
+| T11 | Uma correção do decode do diff | Granular |
+| T12 | Um refresh coeso dos pins de adoção | Granular |
 | T9 | Uma homologação conjunta real | Granular |
 
 ## Diagram-Definition Cross-Check
@@ -269,7 +305,9 @@ Gate do autor: Full Node 22.23.3 (194 pass/0 fail/0 skipped), syntax/npm check, 
 | T7 | T6 | Phase 2 → Phase 3 | Match |
 | T10 | T7 | T7 → T10 | Match |
 | T8 | T10 | T10 → T8 | Match |
-| T9 | T8 | T8 → T9 | Match |
+| T11 | T8 | T8 → T11 | Match |
+| T12 | T11 | T11 → T12 | Match |
+| T9 | T12 | T12 → T9 | Match |
 
 ## Test Co-location Validation
 
@@ -284,6 +322,8 @@ Gate do autor: Full Node 22.23.3 (194 pass/0 fail/0 skipped), syntax/npm check, 
 | T7 | Workflow/runner | integration/contract | integration/contract | OK |
 | T10 | Dispatch/runner | integration/contract | integration/contract | OK |
 | T8 | Caller/dispatch/inspector | integration/contract | integration/contract | OK |
+| T11 | Coleta Git/decode | integration | integration | OK |
+| T12 | Caller/pins | integration/contract | integration/contract | OK |
 | T9 | Piloto | e2e real | e2e real | OK |
 
 ## Requirement Traceability

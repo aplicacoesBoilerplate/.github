@@ -2,6 +2,25 @@
 
 Spec, design e tarefas aprovados em 2026-10-15. Execução pelo principal, sequencial, na branch/worktree da #8 empilhada sobre #7/#9. Nenhuma autorização de uso de auth pessoal, push ou ativação externa foi inferida.
 
+## T11: correção F1, decode integral do diff
+
+Assumptions: REV-05 já exige inconclusivo para texto não representável; não muda o contrato aprovado. A perda acontece em execFile antes do parser; validar apenas blobs do head não cobre deleções/lado antigo. Arquivos: collect.mjs, collect/central.test.mjs, tasks/STATE e relatório/lição independente da rodada 1.
+
+RED em Node 22.23.3: teste novo falhou com actual correction, expected needs-human na deleção de byte 0xff. Correção mínima: stdout buffer e TextDecoder fatal, mantendo maxBuffer em bytes e tratamento REVIEW_INCONCLUSIVE existente. GREEN: collect 8/8; Full 195/195 (0 skip/fail), seguido da nova prova central 1/1, adicionada após início do Full; check, actionlint dez YAML, validate_tasks e diff check verdes. F1 implementado; parecer da rodada 1 preservado e re-verificação pendente.
+
+| Critério / AC | Evidência/assertion | Outcome |
+| --- | --- | --- |
+| REV-05, diff integral | `tests/review/collect.test.mjs:148`: `assert.equal(snapshot.route, 'needs-human', operation)`; :149 error_code REVIEW_INCONCLUSIVE; :150–151 diff vazio/merge null/índice vazio | Deleção, modificação e rename inválidos não parecem revisão completa |
+| REV-05, UTF-8 válido | `tests/review/collect.test.mjs:145–146`: correction/error vazio e diff contém U+FFFD literal | Não rejeitar texto válido por busca de caractere |
+| REV-05/26, antes da auth | `tests/review/central.test.mjs:116–117`: rejects REVIEW_INCONCLUSIVE, authUsed false, calls e outputRoot vazios | Nenhuma credencial restaurada, chamada ou resultado |
+
+| Testes/assertions | Mapeamento reverso | Manter |
+| --- | --- | --- |
+| collect:145–151 | REV-05 e F1 confirmado independentemente | Sim |
+| central:116–117 | REV-05/26 e gate antes de autenticação | Sim |
+
+Adequação: Git real e bytes explícitos, outcomes da spec, nenhum teste anterior enfraquecido ou removido. Sem teste documental/refatoração adjacente; guidelines de constituição/AD-003/004 preservadas. T12 propagará o SHA corrigido antes da rodada 2 independente. Scratch do Verifier permanece no Temp após cleanup negado, sem nova tentativa de remoção.
+
 ## T8: caller integrado e consumo
 
 Assumptions: exemplos genéricos só são ativados depois de revisão/publicação e configuração privada no consumidor. O commit e2027dd contém workflow/helper necessários ao caller, evitando pin de código inexistente. Sessão e modelo são escolhas locais; testes usam sessões simuladas, nunca a conta pessoal/global.

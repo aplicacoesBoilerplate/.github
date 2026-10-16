@@ -103,6 +103,20 @@ test('REV-05: selected source exceeding snapshot size fails before session resto
   assert.equal(authUsed, false); assert.deepEqual(await readdir(f.outputRoot), []);
 });
 
+test('REV-05: a deletion with invalid old-side UTF-8 never restores authentication or invokes the LLM', async t => {
+  const f = await fixture(t); let authUsed = false;
+  await writeFile(join(f.sourceRoot, 'main.go'), Buffer.from([0xff, 10]));
+  git(f.sourceRoot, ['add', '.']); git(f.sourceRoot, ['commit', '-qm', 'invalid old side']);
+  f.pull.base.sha = git(f.sourceRoot, ['rev-parse', 'HEAD']);
+  await rm(join(f.sourceRoot, 'main.go')); git(f.sourceRoot, ['add', '-A']); git(f.sourceRoot, ['commit', '-qm', 'delete']);
+  const head = git(f.sourceRoot, ['rev-parse', 'HEAD']); f.pull.head.sha = head;
+  f.inputs.expected_source_sha = head; f.options.checkedOutSha = head;
+  const snapshot = await collectReview({ ...f, inputs: { config_path: f.inputs.review_config_path, pull_number: 9, expected_source_sha: head } }, f.api);
+  f.inputs.review_fingerprint = snapshot.fingerprint;
+  await assert.rejects(runInvocation(f, { ...f.options, onAuth: () => { authUsed = true; } }), { code: 'REVIEW_INCONCLUSIVE' });
+  assert.equal(authUsed, false); assert.deepEqual(f.calls, []); assert.deepEqual(await readdir(f.outputRoot), []);
+});
+
 test('REV-20/26: review persistence failure prevents artifacts and removes the temporary authentication', async t => {
   const f = await fixture(t); let authDirectory;
   f.inputs.auth_mode = 'chatgpt-session'; f.inputs.session_secret_name = 'CONSUMER_SESSION';

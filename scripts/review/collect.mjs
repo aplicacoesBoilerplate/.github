@@ -136,8 +136,8 @@ async function reviewCorrectionOrigin(origin, api) {
 }
 
 async function gitDiff(root, base, head) {
-  const run = async (args, maxBuffer) => (await execute('git', ['--no-pager', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=NUL',
-    '-c', 'core.quotePath=false', ...args], { cwd: root, env: patchGitEnvironment(), encoding: 'utf8', timeout: 30000, maxBuffer, windowsHide: true })).stdout;
+  const run = async (args, maxBuffer) => new TextDecoder('utf-8', { fatal: true }).decode((await execute('git', ['--no-pager', '-c', 'core.fsmonitor=false', '-c', 'core.hooksPath=NUL',
+    '-c', 'core.quotePath=false', ...args], { cwd: root, env: patchGitEnvironment(), encoding: 'buffer', timeout: 30000, maxBuffer, windowsHide: true })).stdout);
   try {
     if (checkedHead(root) !== head) fail('STALE_REVIEW_INPUT');
     const merge = (await run(['merge-base', base, head], 128)).trim(); if (!sha.test(merge)) fail('REVIEW_INCONCLUSIVE');

@@ -32,6 +32,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M5 (caller-inspector)
 - last seen: 2026-10-14T11:48:31Z
 
+### L-004 - Decode Git diff bytes with fatal UTF-8 validation before indexing, including deleted and old-side content absent from the head snapshot.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `review` · harmful: 0
+- features: issue-8-code-review
+- evidence: scripts/review/collect.mjs:140 REV-05 F1 (review)
+- last seen: 2026-10-16T03:05:37Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

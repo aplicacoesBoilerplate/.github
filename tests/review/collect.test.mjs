@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, readFile, rename } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -123,6 +123,34 @@ test('REV-03/26: malformed trusted configuration is a configuration error, not a
   git(f.configRoot, ['add', '.']); git(f.configRoot, ['commit', '-qm', 'invalid config']);
   f.state.branch = git(f.configRoot, ['rev-parse', 'HEAD']); f.event.sha = f.state.branch; f.event.workflow_sha = f.state.branch;
   await assert.rejects(collectReview(f, f.api), { code: 'INVALID_REVIEW_CONFIG', message: 'INVALID_REVIEW_CONFIG' });
+});
+
+test('REV-05: invalid UTF-8 on the old side is inconclusive, but a literal replacement character is valid text', async t => {
+  const prefix = 'package main\n// unchanged context\n'.repeat(8);
+  for (const operation of ['delete', 'modify', 'rename', 'valid-delete']) {
+    const f = await fixture(t); const file = join(f.sourceRoot, 'main.go');
+    const old = operation === 'valid-delete' ? Buffer.from(`${prefix}\uFFFD\n`)
+      : Buffer.concat([Buffer.from(prefix), Buffer.from([0xff, 10])]);
+    await writeFile(file, old); git(f.sourceRoot, ['add', '.']); git(f.sourceRoot, ['commit', '-qm', 'old side']);
+    f.state.pull.base.sha = git(f.sourceRoot, ['rev-parse', 'HEAD']);
+    if (operation.endsWith('delete')) await rm(file);
+    else if (operation === 'rename') {
+      await rename(file, join(f.sourceRoot, 'renamed.go'));
+      await writeFile(join(f.sourceRoot, 'renamed.go'), `${prefix}clean\n`);
+    } else await writeFile(file, `${prefix}clean\n`);
+    git(f.sourceRoot, ['add', '-A']); git(f.sourceRoot, ['commit', '-qm', operation]);
+    f.state.pull.head.sha = git(f.sourceRoot, ['rev-parse', 'HEAD']); f.inputs.expected_source_sha = f.state.pull.head.sha;
+    const snapshot = await collectReview(f, f.api);
+    if (operation === 'valid-delete') {
+      assert.equal(snapshot.route, 'correction'); assert.equal(snapshot.error_code, '');
+      assert.ok(snapshot.diff.includes('\uFFFD')); assert.equal(snapshot.diff_index.files.length, 1);
+    } else {
+      assert.equal(snapshot.route, 'needs-human', operation);
+      assert.equal(snapshot.error_code, 'REVIEW_INCONCLUSIVE', operation);
+      assert.equal(snapshot.diff, ''); assert.equal(snapshot.merge_base_sha, null);
+      assert.deepEqual(snapshot.diff_index, { files: [] });
+    }
+  }
 });
 
 test('REV-17/19: only a completed trusted triage publication can authorize its bot draft handoff', async t => {
