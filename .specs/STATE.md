@@ -29,11 +29,11 @@
 ## Handoff
 
 - **Feature**: Conciliação Go/standard-version/jgitver no PR12 existente.
-- **Phase / Task**: REC T1-T13 concluídas; revisão independente rodada2 PASS técnico em b7d2c6b; envio remoto pendente.
+- **Phase / Task**: REC T1-T13 concluídas; revisão independente rodada2 PASS técnico em b7d2c6b; envio remoto bloqueado por escopo OAuth.
 - **Completed**: Baseline PR12 congelada13 fixtures PASS; união27 fixtures PASS. Ferramentas reais Go/standard-version9.5.0/Maven1.9.0, reactor118 e prefixo nativo PASS; Maven3.9.9/checksum inválido PASS; workflow64 e semântico read/write PASS; callers lintados isoladamente e76 links relativos conferidos.
-- **In-progress** (file:line): .specs/features/reconcile-native-profiles/validation.md PASS; novo bootstrap2 replays/4 rejeições e sensor agregado7/7. validate_state zero erros.
-- **Next step**: Reler head remoto, atualizar somente codex/versioning-profiles por fast-forward usando identidade AI e conferir CI. Conta AI possui push, mas token não lista workflow; confirmar aceitação do envio, sem usar conta pessoal como fallback.
-- **Blockers**: Nenhum bloqueio externo atual; não declarar revisão ou CI hospedada desta conciliação aprovadas antes de executá-las. PR13 requer conciliação própria.
-- **Uncommitted files**: Nenhum após commit T12; próximos artifacts pertencem à verificação.
+- **In-progress** (file:line): .specs/features/reconcile-native-profiles/publication.md registra tentativa recusada; remoto continua fcf31e0. Aprovação técnica, bootstrap2 replays/4 rejeições e sensor7/7 permanecem válidos.
+- **Next step**: Usuário autoriza workflow na credencial OAuth do agente; depois reler ponta/ancestralidade, fazer push fast-forward só no PR12 e conferir CI hospedada. Não usar conta pessoal como fallback.
+- **Blockers**: GitHub recusou o push do agente sem scope workflow; nenhuma revisão nova está no remoto. PR13 requer conciliação própria posterior; pilotos não foram alterados.
+- **Uncommitted files**: Nenhum após commit do registro de bloqueio; implementação e evidências preservadas localmente.
 - **Branch**: codex/reconcile-native-profiles em C:/Users/gerso/.codex/worktrees/versioning-reconciled/.github, baseada no PR12 fcf31e08165156a5938eec7577bbf1be945f365f; código11fa3c699b3ade5396e4d59ceb3845de80980a35.
 - **Documentation / PR**: https://github.com/aplicacoesBoilerplate/.github/pull/12. Push/edição desse PR autorizados pelo usuário, sem merge, release, force-push ou alteração dos pilotos/PR13/PR14. Código local anterior b4c783a preservado na branch codex/jgitver-maven.

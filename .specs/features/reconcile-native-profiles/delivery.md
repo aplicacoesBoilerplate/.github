@@ -11,8 +11,13 @@ separação entre cálculo somente leitura e publicação. Os resultados por tar
 estão em [evidence.md](evidence.md); push e CI hospedada serão registrados após
 a revisão. Nenhum piloto foi alterado e nenhuma Release foi criada.
 
+O envio foi tentado e recusado pelo GitHub por falta do escopo OAuth `workflow`
+na credencial AI. O [registro de publicação](publication.md) contém identidade,
+SHA remoto inalterado e comandos de autorização; não há CI hospedada nova.
+
 ## Fontes modificados
 
+- `.specs/features/reconcile-native-profiles/publication.md`
 - `.github/workflows/README.md`
 - `.github/workflows/ci.yml`
 - `.github/workflows/version-preview.yml`

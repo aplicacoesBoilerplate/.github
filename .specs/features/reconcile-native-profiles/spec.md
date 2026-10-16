@@ -4,9 +4,9 @@
 PR #12 contém standard-version/jgitver, enquanto codex/jgitver-maven contém uma implementação Maven independente validada. Consolidar os ganhos sem perder o fluxo técnico Node, prefixos ou compatibilidade Go. A publicação autorizada é na branch do PR #12, sem merge.
 
 ## Goals
-- [ ] Uma implementação modular para Go, Maven e standard-version no PR existente.
-- [ ] Cálculo e geração nativos sem permissões de escrita; escritor confiável sem executar ferramentas/configuração do consumidor.
-- [ ] Testes reais, negativos, idempotência e revisão independente antes do push.
+- [x] Uma implementação modular para Go, Maven e standard-version pronta para atualizar o PR existente.
+- [x] Cálculo e geração nativos sem permissões de escrita; escritor confiável sem executar ferramentas/configuração do consumidor.
+- [x] Testes reais, negativos, idempotência e revisão independente antes do push.
 
 ## Out of Scope
 | Feature | Reason |
@@ -110,9 +110,9 @@ PR #12 contém standard-version/jgitver, enquanto codex/jgitver-maven contém um
 | REC-03 | Node | Execute | Verified locally; independent PASS |
 | REC-04 | Read/write | Execute | Verified locally; independent PASS |
 | REC-05 | Governança | Execute | Verified locally; independent PASS |
-| REC-06 | Publicação existente | Execute | Pending |
+| REC-06 | Publicação existente | Execute | Blocked: OAuth workflow scope; remote unchanged |
 
 ## Success Criteria
-- [ ] Baselines preservadas, três ferramentas reais aprovadas e sensor independente discriminante.
+- [x] Baselines preservadas, três ferramentas reais aprovadas e sensor independente discriminante.
 - [ ] PR12 atualizado, sem merge e sem alterações dos pilotos.
-- [ ] Limites de suporte standard-version e impacto sobre PR13 documentados.
+- [x] Limites de suporte standard-version e impacto sobre PR13 documentados.
