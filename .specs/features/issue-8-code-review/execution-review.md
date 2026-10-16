@@ -2,6 +2,19 @@
 
 Spec, design e tarefas aprovados em 2026-10-15. Execução pelo principal, sequencial, na branch/worktree da #8 empilhada sobre #7/#9. Nenhuma autorização de uso de auth pessoal, push ou ativação externa foi inferida.
 
+## T12: pin da correção
+
+Assumptions: 907c00b3f1202ddf811cd7d5578fdeb2b1aed939 existe localmente, contém helper/workflows e T11. O SHA ainda precisa de publicação autorizada antes da adoção remota. Arquivos: três workflows do caller integrado, README, constante do pin no teste contratual existente e progresso TLC.
+
+Mudança mecânica de referência fixa, sem alteração de inputs/secrets/modelos ou expectativas comportamentais dos testes. A constante esperada acompanha a decisão de pin; todas as assertions de contrato/existência/inspector permanecem. Full Node 22.23.3: 196 pass/0 fail/0 skipped; check, actionlint dez YAML verdes. Verifier rodada 2 será acionado após o commit local. Nenhuma publicação/credencial real.
+
+| Critério / AC | Evidência/assertion | Outcome |
+| --- | --- | --- |
+| REV-21, referências consistentes | `tests/review/caller.test.mjs:27`/:33/:46–52: uses/ref/automation SHA e git show de helper/workflow no pin esperado | Todos os caminhos do caller usam revisão real corrigida |
+| REV-06/08/21, consumo preservado | `tests/review/caller.test.mjs:78–85`: inspector aceita válido, rejeita identidades/sidecar divergentes e preserva fonte | Troca do pin não altera limites do caller |
+
+Mapeamento reverso: caller:27/33/46–52 → REV-21/T12; caller:78–85 → REV-06/08/21. Necessários, sem testes de prosa; instruções revisadas manualmente. Adequação e guidelines de constituição/AD-003/004 mantidas; re-verificação independente e T9 real não são substituídas pelo gate do autor.
+
 ## T11: correção F1, decode integral do diff
 
 Assumptions: REV-05 já exige inconclusivo para texto não representável; não muda o contrato aprovado. A perda acontece em execFile antes do parser; validar apenas blobs do head não cobre deleções/lado antigo. Arquivos: collect.mjs, collect/central.test.mjs, tasks/STATE e relatório/lição independente da rodada 1.

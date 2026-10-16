@@ -4,7 +4,7 @@ Exemplo copiável para um consumidor privado, não fork. Nenhum workflow deste d
 
 ## Adoção
 
-1. Aguarde a publicação/revisão do commit central `e2027dd021a0dcfbb2f8fce08600d8aadb935284`. O código já existe nesse SHA local; não habilite uma referência ainda indisponível no remoto. Os três workflows e seus checkouts centrais usam o mesmo SHA imutável.
+1. Aguarde a publicação/revisão do commit central `907c00b3f1202ddf811cd7d5578fdeb2b1aed939`. O código já existe nesse SHA local; não habilite uma referência ainda indisponível no remoto. Os três workflows e seus checkouts centrais usam o mesmo SHA imutável.
 2. Copie a árvore `.github` deste diretório para a branch padrão do consumidor por PR revisado. Preserve seus workflows existentes e resolva colisões antes de ativar. Os nomes `triage.yml` e `review.yml` fazem parte do handoff; se os alterar, atualize também `triage_handoff.workflow_path` e `REVIEW_TARGET_WORKFLOW` nos jobs de dispatch.
 3. Em `.github/triage/config.json`, substitua `consumer-org`, o Project 1 e os nomes de fields pelos metadados reais. Ajuste reviewer, allowlist, checks e stacked_bases. Estimate/Size/Effort e vínculos de release determinam a rota: metadados incompletos não autorizam correção.
 4. Em `.github/review/config.json`, substitua `consumer-maintainer` e cada par id/login de `automation_actors` pelos autores reais dos PRs automáticos. Obtenha ambos na API de um PR; não adivinhe o ID nem aceite todos os bots. O login do reviewer precisa ser diferente do writer. Ajuste as mesmas allowlist/checks e os prefixos corrigíveis.

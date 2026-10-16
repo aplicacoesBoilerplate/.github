@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: aplicacoesBoilerplate/.github
-          ref: e2027dd021a0dcfbb2f8fce08600d8aadb935284
+          ref: 907c00b3f1202ddf811cd7d5578fdeb2b1aed939
           path: automation
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -32,7 +32,7 @@ jobs:
       - run: npm ci --prefix automation/scripts/llm --ignore-scripts --no-fund --no-audit
       - name: Validate author and dispatch without LLM or publication credentials
         env:
-          AUTOMATION_SHA: e2027dd021a0dcfbb2f8fce08600d8aadb935284
+          AUTOMATION_SHA: 907c00b3f1202ddf811cd7d5578fdeb2b1aed939
           REVIEW_READ_TOKEN: ${{ secrets.AUTOMATION_METADATA_READ_TOKEN }}
           REVIEW_DISPATCH_TOKEN: ${{ secrets.REVIEW_DISPATCH_TOKEN }}
         run: node automation/scripts/review/dispatch-run.mjs

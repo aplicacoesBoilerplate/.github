@@ -3,7 +3,7 @@
 **Goal:** Entregar review pela central e homologar #9/#7/#8 juntas no consumidor privado, sem configurações particulares na central.
 **Architecture:** caller confiável → coleta → central LLM → checks isolados → publicação recuperável. Triagem aciona review por dispatch de novo run após persistência da sessão.
 **Tech Stack:** Node 22.23.3, ESM/node:test, Git, Ajv e dependências fixadas existentes; GitHub Actions e container por digest do consumidor.
-**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; T1–T8 e T10 implementadas e com gates do autor verdes, commits locais. T8 segue para Verifier independente do grupo de código; piloto real T9 ainda pendente. Refinamento T10 não acrescentou requisitos.
+**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; T1–T8/T10–T12 implementadas com gates locais verdes. F1 corrigido; Verifier rodada 2 pendente após o commit T12. Piloto real T9 ainda pendente; correções não acrescentam requisitos.
 
 ## Execution Protocol
 
@@ -253,11 +253,13 @@ Gate: Full Node 22.23.3 195 pass/0 fail/0 skipped, mais regressão central adici
 **Requirement:** REV-05, REV-21
 **Interfaces:** Inputs/secrets e modelos inalterados; somente referência fixa da automação muda.
 **Done when:**
-- [ ] Workflows e instruções apontam para SHA real contendo a correção, sem self-reference de commit.
+- [x] Workflows e instruções apontam para SHA real contendo a correção, sem self-reference de commit.
 - [ ] Gate do caller/Build e re-verificação independente confirmam a entrega local; T9 permanece pendente.
 **Tests:** contrato executável de pins, inspector e integração existentes, sem testes da prosa.
 **Gate:** Full + Build + Verifier TLC independente local
 **Commit:** `fix(review): pin callers to strict diff validation refs #8`
+
+Gate do autor: Full Node 22.23.3 196 pass/0 fail/0 skipped, check e actionlint dez YAML verdes; pin 907c00b3f1202ddf811cd7d5578fdeb2b1aed939 contém a correção e helper. Falta somente re-verificação local independente para o segundo checkbox, sem executar T9.
 
 ### T9: Piloto real do conjunto
 

@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-8-code-review/`
-- **Phase / Task**: Execute; T1–T8/T10 locais, T11 corrige F1 do Verifier. T12 propagará o pin; T9 real permanece aberto.
+- **Phase / Task**: Execute; T1–T8/T10–T12 locais, F1 corrigido e callers atualizados. Verifier rodada 2 pendente; T9 real permanece aberto.
 - **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
-- **In-progress**: Verifier rodada 1 confirmou F1/REV-05 (UTF-8 inválido no lado antigo), 7 mutações killed. T11 implementa buffer/decode fatal; regressão RED→GREEN, collect 8/8 e prova central sem auth/LLM/artefatos 1/1. Full 195/195 iniciado antes da prova central adicional; check, actionlint dez YAML e gates estruturais verdes. Nenhum Docker/LLM/GitHub Actions real.
-- **Next step**: Commit T11, atualizar pin dos callers em T12 e re-verificar independentemente a correção. Piloto T9 continua separado, sem baixa fictícia de REV-22/23 e TRI-24/25.
+- **In-progress**: T11 commit 907c00b corrige UTF-8 inválido do diff; T12 propaga seu SHA completo aos callers. Full fresco Node 22.23.3 196/196, check/actionlint dez YAML verdes. Rodada 1 preservada em validation.md, 7 mutações killed; aguarda rodada 2. Nenhum Docker/LLM/GitHub Actions real.
+- **Next step**: Commit T12 e re-verificar independentemente F1/pins. Piloto T9 continua separado, sem baixa fictícia de REV-22/23 e TRI-24/25.
 - **Blockers**: Nenhum para implementação local já autorizada. Piloto real exige provisionamento de credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global.
-- **Uncommitted files**: T11/código/testes/registros, relatório e lesson L-004 até seu commit atômico. Scratch do Verifier C:/Users/gerso/AppData/Local/Temp/review-verifier-8-f2c12cc8 retido após limpeza negada, sem nova tentativa; demais worktrees preservados.
+- **Uncommitted files**: T12/pins/registros até seu commit atômico. Scratch do Verifier C:/Users/gerso/AppData/Local/Temp/review-verifier-8-f2c12cc8 retido após limpeza negada, sem nova tentativa; demais worktrees preservados.
 - **Branch**: `feature/issue-8-code-review`

@@ -32,7 +32,7 @@ jobs:
       issues: write
       pull-requests: write
       actions: read
-    uses: aplicacoesBoilerplate/.github/.github/workflows/pr-code-review.yml@e2027dd021a0dcfbb2f8fce08600d8aadb935284
+    uses: aplicacoesBoilerplate/.github/.github/workflows/pr-code-review.yml@907c00b3f1202ddf811cd7d5578fdeb2b1aed939
     with:
       config_path: .github/review/config.json
       pull_number: ${{ inputs.pull_number }}
@@ -68,7 +68,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: aplicacoesBoilerplate/.github
-          ref: e2027dd021a0dcfbb2f8fce08600d8aadb935284
+          ref: 907c00b3f1202ddf811cd7d5578fdeb2b1aed939
           path: automation
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -90,6 +90,6 @@ jobs:
           EXPECTED_BASE_SHA: ${{ needs.review.outputs.base_sha }}
           EXPECTED_MERGE_BASE_SHA: ${{ needs.review.outputs.merge_base_sha }}
           EXPECTED_CONFIG_SOURCE_SHA: ${{ needs.review.outputs.config_source_sha }}
-          EXPECTED_AUTOMATION_SHA: e2027dd021a0dcfbb2f8fce08600d8aadb935284
+          EXPECTED_AUTOMATION_SHA: 907c00b3f1202ddf811cd7d5578fdeb2b1aed939
           EXPECTED_FINGERPRINT: ${{ needs.review.outputs.fingerprint }}
         run: node consumer/.github/review/inspect-result.mjs

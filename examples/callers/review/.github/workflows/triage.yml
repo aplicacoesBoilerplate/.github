@@ -30,7 +30,7 @@ jobs:
       issues: write
       pull-requests: write
       actions: read
-    uses: aplicacoesBoilerplate/.github/.github/workflows/issue-triage.yml@e2027dd021a0dcfbb2f8fce08600d8aadb935284
+    uses: aplicacoesBoilerplate/.github/.github/workflows/issue-triage.yml@907c00b3f1202ddf811cd7d5578fdeb2b1aed939
     with:
       config_path: .github/triage/config.json
       issue_number: ${{ inputs.issue_number || 0 }}
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: aplicacoesBoilerplate/.github
-          ref: e2027dd021a0dcfbb2f8fce08600d8aadb935284
+          ref: 907c00b3f1202ddf811cd7d5578fdeb2b1aed939
           path: automation
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -84,7 +84,7 @@ jobs:
           EXPECTED_ISSUE_NUMBER: ${{ needs.triage.outputs.issue }}
           EXPECTED_SOURCE_SHA: ${{ needs.triage.outputs.source_sha }}
           EXPECTED_CONFIG_SOURCE_SHA: ${{ needs.triage.outputs.config_source_sha }}
-          EXPECTED_AUTOMATION_SHA: e2027dd021a0dcfbb2f8fce08600d8aadb935284
+          EXPECTED_AUTOMATION_SHA: 907c00b3f1202ddf811cd7d5578fdeb2b1aed939
           EXPECTED_FINGERPRINT: ${{ needs.triage.outputs.fingerprint }}
         run: node consumer/.github/triage/inspect-result.mjs
 
@@ -106,7 +106,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: aplicacoesBoilerplate/.github
-          ref: e2027dd021a0dcfbb2f8fce08600d8aadb935284
+          ref: 907c00b3f1202ddf811cd7d5578fdeb2b1aed939
           path: automation
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -115,7 +115,7 @@ jobs:
       - run: npm ci --prefix automation/scripts/llm --ignore-scripts --no-fund --no-audit
       - name: Dispatch new review run after successful triage persistence and inspection
         env:
-          AUTOMATION_SHA: e2027dd021a0dcfbb2f8fce08600d8aadb935284
+          AUTOMATION_SHA: 907c00b3f1202ddf811cd7d5578fdeb2b1aed939
           REVIEW_READ_TOKEN: ${{ secrets.AUTOMATION_METADATA_READ_TOKEN }}
           REVIEW_DISPATCH_TOKEN: ${{ github.token }}
           REVIEW_PULL_NUMBER: ${{ needs.triage.outputs.pr_number }}

@@ -130,7 +130,7 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-02 | Confiança | Execute | Guards e handoff API T2 validados; ligação com auth T4 pendente |
 | REV-03 | Configuração | Execute | SHA default/config e fonte separados em T2; integração T4 pendente |
 | REV-04 | Central | Execute | T4/T7 propagam modelo/esforço/prompt e consomem v3 no workflow de domínio |
-| REV-05 | Limites | Execute | Índice/limites T1 validados; coleta/inconclusivo integrados pendentes |
+| REV-05 | Limites | Execute | T11 corrige F1 de decode destrutivo; Git inválido retorna inconclusivo antes de auth/LLM. Re-verificação independente pendente |
 | REV-06 | Proveniência | Execute | Snapshot T2, envelope v3 T3 e orquestração T4 validados; caller pendente |
 | REV-07 | Achados | Execute | Índice T1 e achados vinculados ao diff T3 validados; inferência pendente |
 | REV-08 | Recusa | Execute | Validator/reader v3 T3 e publisher T6 recusam identidade, sidecar e patch divergentes sem escritas |
@@ -146,14 +146,14 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-18 | Idempotência | Execute | T6/T10 recuperam recursos/run exatos, sem duplicar; run antigo reprovado exige tentativa nova |
 | REV-19 | Recursão | Execute | T1/T2/T6/T10 comprovam origem; caller T8 conecta o guard sem ignorar drafts/bots genericamente |
 | REV-20 | Concorrência | Execute | Filas distintas T4/T7 e dispatch pós-persistência T8; simulação recusa run antigo após rotação; piloto real pendente |
-| REV-21 | Caller | Execute | T8 entrega três workflows, configs/prompts genéricos, instruções completas e inspector read-only com identidades independentes |
+| REV-21 | Caller | Execute | T8/T12 entregam três workflows, configs/prompts genéricos e inspector read-only; pin 907c00b contém a correção F1 |
 | REV-22 | Piloto conjunto | Specify | Pending review |
 | REV-23 | Piloto transferido | Specify | Pending review |
 | REV-24 | Entrada antiga | Execute | T2/T5/T6 recusam PR/config/head/base/entrada alterados antes das escritas |
 | REV-25 | Recuperação | Execute | T6/T10 simulam timeout após escrita/dispatch, correlacionam recurso/run exato e preservam recursos humanos |
 | REV-26 | Falhas | Execute | T6/T7 sanitizam API/escrita/runner e recusam sucesso após falhas dos jobs/upload/cleanup |
 
-**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T8 e T10 implementadas com gates locais verdes; Verifier do código e piloto T9 ainda pendentes. T10 foi separado de T8 para que o caller fixe um SHA já contendo o helper. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
+**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T8/T10–T12 implementadas com gates locais verdes (Full 196/196). T11/T12 corrigem F1 e atualizam o pin; Verifier rodada 2 e piloto T9 pendentes. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
 
 ## Success Criteria
 

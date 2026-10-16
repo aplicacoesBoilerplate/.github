@@ -12,7 +12,7 @@ import { reviewFingerprint } from '../../scripts/review/collect.mjs';
 import { prepareInstructions } from '../../scripts/llm/instructions.mjs';
 
 const require = createRequire(new URL('../../scripts/llm/package.json', import.meta.url)); const { parse } = require('yaml');
-const pin = 'e2027dd021a0dcfbb2f8fce08600d8aadb935284';
+const pin = '907c00b3f1202ddf811cd7d5578fdeb2b1aed939';
 const repository = fileURLToPath(new URL('../../', import.meta.url));
 function git(root, ...args) {
   const p = spawnSync('git', ['-c', 'core.hooksPath=', '-c', 'core.autocrlf=false', '-c', 'commit.gpgsign=false', ...args], { cwd: root, encoding: 'utf8' });
