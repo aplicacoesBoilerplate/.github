@@ -3,7 +3,7 @@
 **Goal:** Entregar review pela central e homologar #9/#7/#8 juntas no consumidor privado, sem configurações particulares na central.
 **Architecture:** caller confiável → coleta → central LLM → checks isolados → publicação recuperável. Triagem aciona review por dispatch de novo run após persistência da sessão.
 **Tech Stack:** Node 22.23.3, ESM/node:test, Git, Ajv e dependências fixadas existentes; GitHub Actions e container por digest do consumidor.
-**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T3 concluídas localmente; T4 é a próxima tarefa.
+**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T4 concluídas localmente; T5 é a próxima tarefa.
 
 ## Execution Protocol
 
@@ -125,15 +125,15 @@ Transição Phase 2 → Phase 3: T6 → T7
 
 **What:** Conectar coleta e contrato review ao ciclo de inferência existente.
 **Where:** `scripts/review/invocation.mjs`
-**Supporting files:** preflight/validate-request/execute/orchestrate/run centrais, interface llm-execute.yml, testes centrais afetados e `tests/review/central.test.mjs`.
+**Supporting files:** source.mjs para blobs limitados pré-auth, preflight/validate-request/execute/orchestrate/run centrais, interface llm-execute.yml, testes centrais afetados e `tests/review/central.test.mjs` com fixtures CLI/API.
 **Depends on:** T3
 **Reuses:** Login temporário, freshness, persistência, fila de sessão, diretrizes e executor existentes.
 **Requirement:** REV-02, REV-03, REV-04, REV-05, REV-06, REV-08, REV-20, REV-26
 **Interfaces:** `resolveReviewInvocation(...)` → request/context/snapshot confiáveis; `caller_profile: review` opt-in com PR/config/fingerprint/head esperado; defaults antigos intactos.
 **Done when:**
-- [ ] Contexto é refeito pela API; checked-out/config/head devem corresponder ao snapshot.
-- [ ] Modelo/esforço/prompt próprios chegam à invocação; snapshot limitado só envia arquivos necessários como dados.
-- [ ] Guard de sessão e limpeza mantidos; falha de persistência não produz v3 utilizável; perfil antigo não aceita inputs review.
+- [x] Contexto é refeito pela API; checked-out/config/head devem corresponder ao snapshot.
+- [x] Modelo/esforço/prompt próprios chegam à invocação; snapshot limitado só envia arquivos necessários como dados.
+- [x] Guard de sessão e limpeza mantidos; falha de persistência não produz v3 utilizável; perfil antigo não aceita inputs review.
 **Tests:** integration; execução CLI simulada verifica argumentos/prompt exatos, legado continua, forja/excesso/secret ausente falham antes de auth e erro de persistência não publica resultado.
 **Gate:** Full + Build do workflow central afetado
 **Commit:** `feat(llm): support trusted code review invocations refs #8`

@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-8-code-review/`
-- **Phase / Task**: Execute; spec/context/design/tasks aprovados pelo mantenedor em 2026-10-15; T1–T3 concluídas localmente.
+- **Phase / Task**: Execute; spec/context/design/tasks aprovados pelo mantenedor em 2026-10-15; T1–T4 concluídas localmente.
 - **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
-- **In-progress**: Contrato de achados, pacote/reader v3 e hashes de sidecar/patch implementados. Full em Node 22.23.3 passou com 159 testes, nenhuma falha/skip; syntax/npm check/actionlint Windows verdes. Validador legado continua fechado a v1/v2; nenhuma inferência real.
-- **Next step**: Executar T4: perfil review e adaptação CLI/orquestração/runner central, com credenciais e modelo do consumidor.
+- **In-progress**: Perfil review central, runner e CLI conectados ao v3. Fonte selecionada de blobs Git antes da auth, modelo/esforço/template próprios e ciclo de sessão preservado. Full Node 22.23.3: 166 pass/0 fail/0 skipped; syntax/npm check/actionlint Windows verdes. Sem inferência ou auth real.
+- **Next step**: Executar T5: preparar correção de review no head exato e extrair somente o núcleo Git neutro, preservando adapter/contrato da triagem.
 - **Blockers**: Nenhum para implementação local já autorizada. Piloto real exige provisionamento de credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global.
-- **Uncommitted files**: T3 e registros de progresso até seu commit atômico; demais worktrees preservados. Actionlint temporário validado em C:/Users/gerso/AppData/Local/Temp/review-actionlint-9e482284f513447183c17c298e019f76/actionlint.exe.
+- **Uncommitted files**: T4 e registros de progresso até seu commit atômico; demais worktrees preservados. Actionlint temporário validado em C:/Users/gerso/AppData/Local/Temp/review-actionlint-9e482284f513447183c17c298e019f76/actionlint.exe.
 - **Branch**: `feature/issue-8-code-review`

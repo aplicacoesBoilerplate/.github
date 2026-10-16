@@ -14,6 +14,38 @@ Spec, design e tarefas aprovados em 2026-10-15. Execução pelo principal, seque
 
 Ruling: ledger e evidências usam a estrutura TLC existente, não uma segunda árvore de documentação superpowers. Preserva a fonte única aprovada e a preferência do mantenedor; custo: ferramentas de extração auxiliares não são necessárias.
 
+## T4: integração com a central
+
+Premissas: o novo perfil é opt-in, não altera default manual/triage. Modelos, esforço e templates vêm das configs confiáveis do consumidor. Resolver API/config/diff e o conjunto limitado de blobs antes de restaurar auth. Arquivos: review/invocation.mjs e source.mjs; execute/orchestrate/preflight/run/validate-request e llm-execute.yml centrais; central.test.mjs/fixtures e assertion de interface fechada em llm/workflow.test.mjs.
+
+RED observado: perfil review era UNTRUSTED_CONTEXT, runner INVALID_CONFIG e campos/steps não existiam. GREEN final: Full em Node 22.23.3 com 166 pass/0 fail/0 skipped; npm check, sintaxe direta dos módulos review/centrais e actionlint Windows 1.7.12 nos seis workflows passaram. API e CLI são fixtures; Git, blob selection, subprocessos, empacotamento e limpeza reais locais. Nenhuma inferência/auth real.
+
+Ruling: coletar blobs regulares via ls-tree/cat-file no SHA confirmado, não copiar a working tree nem o repositório inteiro. Arquivo não alterado de 2 MiB não impede review; arquivo selecionado >1 MiB retorna inconclusivo antes da auth. Evita TOCTOU de conteúdo local e mantém snapshot limitado. Custo: revisão parcial por arquivos mudados; contexto complementar fica para evolução fora deste MVP.
+
+Ruling: interface central estendida explicitamente com pull_number/review_config_path/review_fingerprint/review_handoff_json e REVIEW_READ_TOKEN opcionais. Assertion fechada recebeu somente essas adições aprovadas; permissões, isolamento, origens e todos os guards legados permanecem. Inputs de review em perfil manual/triage são recusados. Não houve relaxamento para fazer teste antigo passar.
+
+Ruling: runner lê PR/handoff do GITHUB_EVENT_PATH real, comparando-os à chamada; preflight fornece config SHA e head separadamente. Checkout de review fetch-depth 0 permite merge-base, e phase source valida o contexto sem auth LLM. Modelos não recebem o token de leitura; invoke mantém único ponto de materialização das credenciais.
+
+| Critério / AC | Evidência/assertion | Resultado |
+| --- | --- | --- |
+| Modelo/esforço/prompt e fonte | `tests/review/central.test.mjs:65–75`: v3/SHAs corretos; summary own-review\|high\|OWN REVIEW PROMPT; source_files somente main.go/new, mesmo com arquivo sujo e arquivo não alterado de 2 MiB | REV-03/04/06 |
+| Instruções e fronteira | `:70–75`: READ/GITHUB_TOKEN undefined no processo, shell_tool false, AGENTS confiável presente e AGENTS head somente no diff | REV-02/03/04 |
+| Config/contexto/identidade/credenciais inválidos | `:84–88`: códigos exatos UNTRUSTED/STALE/METADATA/AUTH_CONFIG_ERROR, authUsed false e root vazio; manual rejeita inputs review | REV-02/03/08/26 |
+| Decisão antes da execução | `:96–97`: uma chamada own-decision, skipped/null/findings vazio | REV-04/08 |
+| Limite antes de auth | `:102–103`: REVIEW_INCONCLUSIVE, authUsed false e sem artefatos | REV-05 |
+| Persistência/limpeza | `:111–115`: AUTH_PERSIST_FAILED, sem artefato e ENOENT na auth temporária | REV-20/26 |
+| Runner/evento real | `:129–132`: preflight/source exit0 e source SHA exato; payload PR forjado exit1/UNTRUSTED_CONTEXT | REV-01/03 |
+| Workflow | `:137–143`: defaults, env sem auth na source, ref exata/fetch-depth0/persist-credentials false e mesma fila de sessão | REV-03/20/26 |
+
+| Testes/assertions | Mapeamento reverso | Manter |
+| --- | --- | --- |
+| central:65–75 | REV-02/03/04/06, modelo e instruções reais da chamada | Sim |
+| central:84–103 | REV-02/03/04/05/08/26, recusa antes de auth e decisão | Sim |
+| central:111–115 | REV-20/26, persistência e remoção | Sim |
+| central:129–143 e interface fechada central | REV-01/03/20/26 e compatibilidade | Sim |
+
+Adequação: sucesso inspeciona payload/args/artefato e conteúdo real; falhas inspecionam ausência de auth/artefatos e erro sanitizado. Nenhum teste de prosa, piso quantitativo, remoção/skip ou credencial pessoal. Gates legados preservados, AD-003/004/constituição seguidos. T4 completa localmente; workflow de domínio, caller integrado e piloto real ainda pendentes.
+
 ## T3: achados e envelope v3
 
 Premissas: pacote de review usa validator próprio v3, sem fazer o validador legado aceitar outro contrato. Snapshot é reconsultado/reconstruído pela camada confiável; modelo fornece somente summary/findings/patch. Arquivos: review/result.mjs, schemas/result.schema.json, exportação neutra resultIdentity no central e result.test.mjs.
