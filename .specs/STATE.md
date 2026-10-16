@@ -39,6 +39,6 @@
 - **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
 - **In-progress**: Design mantém configuração no consumidor, perfil review/envelope v3 compatíveis e dispatch para novo run após a triagem, evitando snapshot antigo da sessão. Nenhuma implementação #8 nesta etapa.
 - **Next step**: Aprovar design; então gerar tarefas sequenciais com gates contratuais e seguir à execução autorizada.
-- **Blockers**: Revisão TLC do design antes de tasks. Piloto real continua exigindo credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global. Ferramenta de goals ainda retorna blocked e não oferece transição para active; não marcar complete para contornar essa limitação.
-- **Uncommitted files**: Design e registro da aprovação até commit desta etapa; demais worktrees preservados.
+- **Blockers**: Revisão TLC do design antes de tasks. Piloto real continua exigindo credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global. Meta retomada pelo produto: get_goal confirmou status active em 2026-10-15, sem alterar os requisitos de conclusão.
+- **Uncommitted files**: Nenhum após o commit deste registro; design em 2a8f3e8, demais worktrees preservados.
 - **Branch**: `feature/issue-8-code-review`
