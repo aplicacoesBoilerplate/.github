@@ -93,6 +93,12 @@ Chave idempotente inclui repo/PR/head/base/config/automation/fingerprint; recurs
 
 Dispatch é pelo menos uma vez: em timeout, consultar runs com identidade/handoff exatos quando possível; nunca buscar o último run como prova. Duplicata que ainda ocorrer deve convergir no guard/idempotência de publicação. Falha ao acionar review fica explícita e recuperável por novo dispatch; não marca o conjunto homologado só porque a triagem terminou.
 
+Detalhamento T10: o helper usa config confiável na default, prova de finish da triagem e operador autorizado antes de criar outro run. A permissão especial de validar o próprio run existe somente nesse helper pré-dispatch; o coletor da LLM continua recusando self-run. Bridge roda em pull_request_target com código fixado e configuração da default, nunca checkout/execução do head. Seu token de dispatch precisa de identidade com write verificável pelo coletor (por exemplo, PAT restrito de uma conta colaboradora); não presumir que todo bot é colaborador. Para PR próprio da triagem, a identidade API id/login configurada e a prova de publicação permitem o token de dispatch correspondente à sua autoria. Nenhum token de sessão ou Secrets-write PAT entra no bridge.
+
+O caller de destino define run-name `review:<PR>:<dispatch_id>` e aceita somente PR, expected_head_sha, review_handoff_json e dispatch_id como entradas de contexto. A correlação inclui repo/PR/head/base/config/workflow/run de origem/attempt/handoff; não é uma autorização e não substitui a revalidação antes de auth na central. A API 2026-03-10 devolve workflow_run_id em resposta 200; o helper confere o run pela API. Timeout recupera correlação exata e autoria, nunca o run mais recente. Uma execução exata já reprovada não gera outro POST com a mesma identidade; novo dispatch manual/run de origem ou attempt explícito produz a nova tentativa. A consulta é limitada e falha se não conseguir percorrer o conjunto inteiro.
+
+Granularidade: T10 entrega helper/runner antes do caller T8 para permitir pin Git imutável real sem autorreferência a um commit que ainda não existe. O contrato opcional expected_head_sha também é revalidado no bootstrap/coletor do called; mudança de head entre dispatch e início falha antes de LLM.
+
 ## Data Models
 
 | Modelo | Campos relevantes e invariantes |

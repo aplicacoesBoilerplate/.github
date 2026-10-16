@@ -14,9 +14,10 @@ const hash = value => createHash('sha256').update(value).digest('hex');
 const fail = code => { throw contractError(code); };
 export function validateWorkflowInputs(inputs) {
   try {
-    if (!inputs || Object.keys(inputs).some(k => !['config_path', 'pull_number', 'review_handoff_json', 'auth_mode', 'session_secret_name', 'verification_image'].includes(k))
+    if (!inputs || Object.keys(inputs).some(k => !['config_path', 'pull_number', 'expected_head_sha', 'review_handoff_json', 'auth_mode', 'session_secret_name', 'verification_image'].includes(k))
       || !['api-key', 'chatgpt-session'].includes(inputs.auth_mode) || !Number.isSafeInteger(inputs.pull_number) || inputs.pull_number < 1) throw new Error();
     validateRelativePath(inputs.config_path); validateVerificationImage(inputs.verification_image);
+    if ((inputs.expected_head_sha ?? '') !== '' && !/^[a-f0-9]{40}$/.test(inputs.expected_head_sha)) throw new Error();
     const secret = inputs.session_secret_name ?? '';
     if (inputs.auth_mode === 'chatgpt-session' ? !/^[A-Z][A-Z0-9_]{0,99}$/.test(secret) || secret.startsWith('GITHUB_') : secret !== '') throw new Error();
     const handoff = inputs.review_handoff_json ?? '{}';
@@ -36,7 +37,8 @@ async function policy(root, inputs) {
 }
 function collectionInputs(inputs) {
   const handoff = JSON.parse(inputs.review_handoff_json ?? '{}');
-  return { config_path: inputs.config_path, pull_number: inputs.pull_number, ...(Object.keys(handoff).length ? { handoff } : {}) };
+  return { config_path: inputs.config_path, pull_number: inputs.pull_number, ...(inputs.expected_head_sha ? { expected_source_sha: inputs.expected_head_sha } : {}),
+    ...(Object.keys(handoff).length ? { handoff } : {}) };
 }
 export async function collectWorkflow({ configRoot, sourceRoot, event, inputs }, api) {
   const config = await policy(configRoot, inputs);
@@ -53,7 +55,8 @@ export function invocationInputs(inputs, snapshot, config) {
 async function readResult({ configRoot, sourceRoot, event, inputs, snapshot, artifactRoot, automation_sha }) {
   const config = await policy(configRoot, inputs);
   if (snapshot?.repository !== event.repository || snapshot.pull?.number !== inputs.pull_number || snapshot.pull.state !== 'open'
-    || snapshot.config_source_sha !== checkedHead(configRoot) || snapshot.source_sha !== checkedHead(sourceRoot)) fail('STALE_REVIEW_INPUT');
+    || snapshot.config_source_sha !== checkedHead(configRoot) || snapshot.source_sha !== checkedHead(sourceRoot)
+    || (inputs.expected_head_sha && snapshot.source_sha !== inputs.expected_head_sha)) fail('STALE_REVIEW_INPUT');
   if (snapshot.route === 'needs-human') {
     if (snapshot.error_code !== 'REVIEW_INCONCLUSIVE') fail('INVALID_REVIEW_INPUT');
     return { config, result: null };

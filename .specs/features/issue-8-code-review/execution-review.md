@@ -2,6 +2,37 @@
 
 Spec, design e tarefas aprovados em 2026-10-15. Execução pelo principal, sequencial, na branch/worktree da #8 empilhada sobre #7/#9. Nenhuma autorização de uso de auth pessoal, push ou ativação externa foi inferida.
 
+## T10: dispatch antes do pin do caller
+
+Assumptions: o destino é o caller de review na default do mesmo consumidor privado. Dispatch pós-triagem prova o próprio finish já concluído; central continua exigindo outro run. Credenciais de metadata/Actions pertencem ao consumidor e não autenticam a LLM. Correlação identifica uma solicitação, não concede autoridade.
+
+Files: scripts/review/{dispatch,dispatch-api,dispatch-run}.mjs, prova compartilhada explícita em collect.mjs, expected_head_sha opcional em workflow.mjs/run.mjs/pr-code-review.yml; tests/review/dispatch.test.mjs e fixtures/dispatch-api.mjs; progresso TLC. Helper separado do T8 original para que o caller possa fixar seu SHA real. Sem novos requisitos nem mudança de fronteira de auth.
+
+Desvio de processo: o rascunho inicial do helper precedeu a suíte específica. O gate não foi dispensado: RED comportamental reproduziu POST duplicado para run antigo já reprovado; a implementação passou a recusar esse caso antes de escrever. Dois erros de preparação da fixture (PR number omitido e evento do bridge usado em vez do novo workflow_dispatch) foram corrigidos sem alterar expectativas. GREEN: Full Node 22.23.3 com 191 pass/0 fail/0 skipped, npm check, sintaxe dos testes/fixture, actionlint Windows e gates estruturais verdes. Testes e guards legados preservados; nenhuma credencial real.
+
+| Critério / AC | Evidência/assertion | Resultado esperado |
+| --- | --- | --- |
+| Novo run e payload limitado | `tests/review/dispatch.test.mjs:70–73`: equal dispatched/run_id 200, segundo recovered sem novo POST; keys PR/head/handoff/correlação exatas e sem sessão | REV-01/17/20 |
+| Prova de source-run, guard da central | `:76–78`: UNTRUSTED_CONTEXT no mesmo run; outro run aceita origem triage/correction | REV-02/17, guard central não enfraquecido |
+| Job/attempt/autoria/entrada | `:87–95`: rejects UNTRUSTED_CONTEXT ou STALE_REVIEW_INPUT para finish falho, run/attempt/body, origem pública/evento indevido/head/role; posts vazio | REV-02/17/24 |
+| Timeout e falha anterior | `:100–106`: recovered 200, ignora latest 999, run antigo reprovado falha sem segundo POST, erro sanitizado sem run criado | REV-18/25/26 |
+| Head no called | `:112`: rejects STALE_REVIEW_INPUT quando expected_head_sha diverge, antes de inferência | REV-24 |
+| Transporte de tokens/dados | `:126–141`: token de leitura separado de dispatch, workflow_run_id 200/payload/ref exatos, paginação, redirect error, uma tentativa POST e payload de sessão/caminho/token recusados | REV-17/25/26 |
+| Complementar comprovado | `:155–157`: skipped-correction/run_id null e nenhum POST; pai adulterado recusado | REV-19, não filtrar genericamente todo bot |
+| Runner real | `:174–179`: exit 0/status dispatched, output run_id 200, payload sem credencial; PR number forjado falha sem alterar captura | REV-01/17/26, serviços simulados |
+
+| Testes/assertions | Mapeamento reverso | Manter |
+| --- | --- | --- |
+| dispatch:70–78 | REV-01/02/17/20 | Sim |
+| dispatch:87–95/112 | REV-02/17/24 | Sim |
+| dispatch:100–106/126–141 | REV-18/25/26 e transporte T10 | Sim |
+| dispatch:155–157 | REV-19 | Sim |
+| dispatch:174–179 | REV-01/17/26 e entrada de ambiente T10 | Sim |
+
+Adequação: assertions sobre payloads, origem, run recuperado, ausência de writes e erros reais; nenhuma contagem como meta, nenhum teste de prosa. T10 completa localmente; adoção com pins/instruções e sensor independente ainda T8. Não há evidência de homologação.
+
+Context7 indisponível (nenhuma ferramenta correspondente nesta sessão). Fontes oficiais consultadas em 2026-10-15: [dispatch de workflow](https://docs.github.com/en/rest/actions/workflows#create-a-workflow-dispatch-event), resposta 200 com workflow_run_id na API 2026-03-10, e [listagem de runs](https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-workflow), usada somente com correlação exata e paginação limitada.
+
 ## T7: workflow, runner e CI
 
 Assumptions: caller usa dispatch na default, como aprovado. Config e código são checkouts separados; produto só executa no container sem secrets. Resultado/checks são artefatos limitados, consumidos com identidade independente. Nenhuma fixture comprova Docker ou GitHub Actions reais.

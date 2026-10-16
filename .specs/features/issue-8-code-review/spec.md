@@ -142,18 +142,18 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-14 | PR complementar | Execute | T5/T6 validam pai/árvore e draft complementar com base no head_ref original; simulação, não publicação real |
 | REV-15 | Falha dos checks | Execute | T6/T7 mantêm draft-checks-failed após checks simulados falhos, sem sucesso artificial |
 | REV-16 | Integração | Execute | T1/T5/T6 recusam correções fora da rota corrigível e publicam somente comentário nas integrações |
-| REV-17 | Encadeamento | Execute | Prova API/run/job/commit T2 validada; dispatch T8 pendente |
-| REV-18 | Idempotência | Execute | T6 recupera recursos próprios íntegros e recusa proposta divergente na mesma identidade, sem duplicar |
-| REV-19 | Recursão | Execute | T1/T2/T6 comprovam origem e limitam complementares a comentário; encadeamento T8 pendente |
+| REV-17 | Encadeamento | Execute | Prova API/run/job/commit T2 e dispatch T10 validados; caller integrado T8 pendente |
+| REV-18 | Idempotência | Execute | T6/T10 recuperam recursos/run exatos, sem duplicar; run antigo reprovado exige tentativa nova |
+| REV-19 | Recursão | Execute | T1/T2/T6/T10 comprovam origem e interrompem dispatch de complementar; caller T8 pendente |
 | REV-20 | Concorrência | Execute | Central T4 e domínio T7 usam filas distintas sem cancelar; caller/piloto pendentes |
 | REV-21 | Caller | Specify | Pending review |
 | REV-22 | Piloto conjunto | Specify | Pending review |
 | REV-23 | Piloto transferido | Specify | Pending review |
 | REV-24 | Entrada antiga | Execute | T2/T5/T6 recusam PR/config/head/base/entrada alterados antes das escritas |
-| REV-25 | Recuperação | Execute | T6 simula timeout após escrita e preserva recursos humanos; dispatch T8 pendente |
+| REV-25 | Recuperação | Execute | T6/T10 simulam timeout após escrita/dispatch, correlacionam recurso/run exato e preservam recursos humanos |
 | REV-26 | Falhas | Execute | T6/T7 sanitizam API/escrita/runner e recusam sucesso após falhas dos jobs/upload/cleanup |
 
-**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T7 implementadas e validadas localmente; tarefas restantes ainda pendentes. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
+**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T7 e T10 implementadas e validadas localmente; caller/Verifier T8 e piloto T9 ainda pendentes. T10 foi separado de T8 para que o caller fixe um SHA já contendo o helper. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
 
 ## Success Criteria
 

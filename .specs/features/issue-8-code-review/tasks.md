@@ -3,11 +3,11 @@
 **Goal:** Entregar review pela central e homologar #9/#7/#8 juntas no consumidor privado, sem configurações particulares na central.
 **Architecture:** caller confiável → coleta → central LLM → checks isolados → publicação recuperável. Triagem aciona review por dispatch de novo run após persistência da sessão.
 **Tech Stack:** Node 22.23.3, ESM/node:test, Git, Ajv e dependências fixadas existentes; GitHub Actions e container por digest do consumidor.
-**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T7 concluídas localmente; T8 é a próxima tarefa.
+**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T7 e T10 concluídas localmente; T8 fixa esse helper já commitado no caller. Refinamento de granularidade, sem novos requisitos.
 
 ## Execution Protocol
 
-Usar `tlc-spec-driven` e execução sequencial pelo agente principal neste worktree, conforme escolha já expressa pelo mantenedor. Nove entregas coesas em três fases; não abrir execução paralela nem delegar implementação. Verifier TLC independente ao entregar código local e após o piloto, com sensor em scratch isolado. Nenhuma meta quantitativa de testes, testes de prosa ou manual extenso.
+Usar `tlc-spec-driven` e execução sequencial pelo agente principal neste worktree, conforme escolha já expressa pelo mantenedor. Dez commits coesos em três fases; T10 separa o helper originalmente incluído em T8 para que o caller possa apontar para um SHA real contendo o código. Não abrir execução paralela nem delegar implementação. Verifier TLC independente ao entregar código local e após o piloto, com sensor em scratch isolado. Nenhuma meta quantitativa de testes, testes de prosa ou manual extenso.
 
 Cada tarefa segue: escrever teste contratual e observar RED; implementar o componente; executar o gate e revisar adequação; marcar progresso/traceability e criar um commit local atômico. Nunca enfraquecer assertions, remover testes ou usar fixtures como prova de homologação. Ferramentas: apply_patch, Node, Git local e scripts TLC; cicd para workflows; github-planning/permissões para operações remotas autorizadas. Context7 quando disponível; documentação oficial como fallback documentado.
 
@@ -62,7 +62,7 @@ Implementação estritamente sequencial. Fases são fronteiras de coesão, não 
 ```text
 Phase 1: T1 → T2 → T3
 Phase 2: T4 → T5 → T6
-Phase 3: T7 → T8 → T9
+Phase 3: T7 → T10 → T8 → T9
 
 Transição Phase 1 → Phase 2: T3 → T4
 Transição Phase 2 → Phase 3: T6 → T7
@@ -189,12 +189,28 @@ Transição Phase 2 → Phase 3: T6 → T7
 **Gate:** Full + Build
 **Commit:** `feat(review): expose reusable workflow and CI gates refs #8`
 
-### T8: Caller integrado, dispatch e inspector
+### T10: Helper de dispatch confiável com revisão fixável
+
+**What:** Extrair do escopo original T8 o helper central de dispatch e sua validação, permitindo que o caller T8 fixe um commit real já contendo o helper.
+**Where:** `scripts/review/dispatch.mjs`
+**Supporting files:** Transporte/runner de dispatch, reuso explícito da prova de publicação em collect.mjs e testes/fixtures de dispatch.
+**Depends on:** T7
+**Reuses:** Metadata API e provas de autoria/run/job/commit da coleta de review, sem duplicar autenticação de LLM.
+**Requirement:** REV-01, REV-02, REV-17, REV-18, REV-19, REV-20, REV-26
+**Done when:**
+- [x] Origem humana ou publicação própria da triagem conferida antes de dispatch na default; complementar comprovado não reinicia correções.
+- [x] Somente PR/head/handoff e correlação entram no novo run, sem sessão, body ou configuração de modelo global.
+- [x] Timeout consulta identidade exata e não repete POST cegamente; falhas são explícitas e sanitizadas.
+**Tests:** integration/contract com serviços simulados; prova de finish/source-run, guard central preservado, payload, recuperação e recusas.
+**Gate:** Full + Build
+**Commit:** `feat(review): add trusted consumer dispatch helper refs #8`
+
+### T8: Caller integrado e inspector
 
 **What:** Entregar adoção copiável que encadeia triagem e review sem propagar sessão antiga.
 **Where:** `examples/callers/review/`
-**Supporting files:** Helper central de dispatch com validação e `tests/review/caller.test.mjs`; exemplo integrado de triagem referencia a revisão central fixa correspondente.
-**Depends on:** T7
+**Supporting files:** `tests/review/caller.test.mjs`; exemplo integrado de triagem referencia a revisão central fixa correspondente, incluindo helper entregue em T10.
+**Depends on:** T10
 **Reuses:** Caller triage, inspector de identidade independente, contrato de review e endpoint de dispatch.
 **Requirement:** REV-01, REV-02, REV-06, REV-17, REV-18, REV-19, REV-20, REV-21, REV-26
 **Interfaces:** `dispatchReview({pull, expected_head_sha, handoff, target}, api)` → disparado/recuperado ou falha explícita; inspector read-only recebe identidades esperadas independentes do artefato.
@@ -234,6 +250,7 @@ Transição Phase 2 → Phase 3: T6 → T7
 | T5 | Um preparador de proposta com extração coesa | Granular |
 | T6 | Um gateway de publicação recuperável | Granular |
 | T7 | Um entry point coordenador e seu runner | Granular |
+| T10 | Helper de dispatch antes do pin imutável do caller | Granular |
 | T8 | Um caller integrado e consumo | Granular |
 | T9 | Uma homologação conjunta real | Granular |
 
@@ -248,7 +265,8 @@ Transição Phase 2 → Phase 3: T6 → T7
 | T5 | T4 | T4 → T5 | Match |
 | T6 | T5 | T5 → T6 | Match |
 | T7 | T6 | Phase 2 → Phase 3 | Match |
-| T8 | T7 | T7 → T8 | Match |
+| T10 | T7 | T7 → T10 | Match |
+| T8 | T10 | T10 → T8 | Match |
 | T9 | T8 | T8 → T9 | Match |
 
 ## Test Co-location Validation
@@ -262,11 +280,12 @@ Transição Phase 2 → Phase 3: T6 → T7
 | T5 | Git/preparação | integration | integration | OK |
 | T6 | Publicação/API | integration | integration | OK |
 | T7 | Workflow/runner | integration/contract | integration/contract | OK |
+| T10 | Dispatch/runner | integration/contract | integration/contract | OK |
 | T8 | Caller/dispatch/inspector | integration/contract | integration/contract | OK |
 | T9 | Piloto | e2e real | e2e real | OK |
 
 ## Requirement Traceability
 
-REV-01/02/03/05/06: T1/T2/T3/T4/T8; REV-04: T4/T7; REV-07/08: T1/T3/T4; REV-09/10: T3/T6; REV-11/12: T1/T5; REV-13: T5/T7; REV-14/15/16: T1/T5/T6/T7; REV-17/18/19/20/21: T2/T4/T6/T7/T8; REV-22/23: T9; REV-24/25/26: T2/T3/T4/T5/T6/T7/T8. Todos os 26 requisitos mapeados; nenhum marcado Verified antes de evidência.
+REV-01/02/03/05/06: T1/T2/T3/T4/T8/T10; REV-04: T4/T7; REV-07/08: T1/T3/T4; REV-09/10: T3/T6; REV-11/12: T1/T5; REV-13: T5/T7; REV-14/15/16: T1/T5/T6/T7; REV-17/18/19/20/21: T2/T4/T6/T7/T8/T10; REV-22/23: T9; REV-24/25/26: T2/T3/T4/T5/T6/T7/T8/T10. Todos os 26 requisitos mapeados; nenhum marcado Verified antes de evidência.
 
 Plano escrito aprovado pelo mantenedor em 2026-10-15. Método de execução já escolhido: agente principal, sequencial e commits locais; não perguntar novamente por paralelização.

@@ -50,6 +50,7 @@ try {
       const configRoot = resolve(env.GITHUB_WORKSPACE, 'consumer'); const sourceRoot = resolve(env.GITHUB_WORKSPACE, 'consumer-source');
       if (phase === 'bootstrap') {
         const origin = await verifyReviewOrigin(event, createReviewApi(env.REVIEW_READ_TOKEN));
+        if (inputs.expected_head_sha && origin.pull.head.sha !== inputs.expected_head_sha) throw contractError('STALE_REVIEW_INPUT');
         await mkdir(root, { mode: 0o700 }); await writeFile(join(root, 'origin.json'), JSON.stringify(origin), { mode: 0o600, flag: 'wx' });
         await emit({ config_source_sha: origin.config_source_sha, source_sha: origin.pull.head.sha, base_sha: origin.pull.base.sha });
       } else if (phase === 'collect') {

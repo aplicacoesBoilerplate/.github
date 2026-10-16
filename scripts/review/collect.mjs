@@ -73,17 +73,21 @@ function intactBody(body, kind) {
   return typeof body === 'string' && pattern.test(body) && body.match(pattern)[1] === digest(body.replace(pattern, ''));
 }
 
-async function triageOrigin({ config, event, inputs, configRoot, origin }, api) {
+async function triageOrigin({ config, event, inputs, configRoot, origin }, api, sourceDispatch = false) {
   const h = inputs.handoff; const policy = config.triage_handoff; const repo = event.repository;
   if (!policy || !h || Object.keys(h).some(k => !['source_run_id', 'source_run_attempt', 'issue_number', 'source_fingerprint'].includes(k))
     || !/^[1-9][0-9]*$/.test(h.source_run_id) || !/^[1-9][0-9]*$/.test(h.source_run_attempt)
-    || h.source_run_id === String(event.run_id) || !Number.isSafeInteger(h.issue_number) || h.issue_number < 1
+    || (sourceDispatch ? h.source_run_id !== String(event.run_id) || h.source_run_attempt !== String(event.run_attempt) : h.source_run_id === String(event.run_id))
+    || !Number.isSafeInteger(h.issue_number) || h.issue_number < 1
     || !/^[a-f0-9]{64}$/.test(h.source_fingerprint ?? '') || !intactBody(origin.pull.body, 'triage')) fail('UNTRUSTED_CONTEXT');
   const run = await api.getRun(repo, h.source_run_id);
   if (String(run.id) !== h.source_run_id || String(run.run_attempt) !== h.source_run_attempt || run.repository?.full_name !== repo
     || run.head_repository?.full_name !== repo || run.path !== policy.workflow_path || run.head_branch !== origin.default_branch
     || run.head_sha !== origin.config_source_sha || !['issues', 'workflow_dispatch'].includes(run.event)
     || !['in_progress', 'completed'].includes(run.status) || (run.status === 'completed' && run.conclusion !== 'success')) fail('UNTRUSTED_CONTEXT');
+  if (sourceDispatch && (event.event_name !== run.event || event.actor !== run.actor?.login || event.sha !== run.head_sha
+    || event.workflow_sha !== run.head_sha || event.ref !== `refs/heads/${origin.default_branch}`
+    || event.workflow_ref !== `${repo}/${policy.workflow_path}@refs/heads/${origin.default_branch}`)) fail('UNTRUSTED_CONTEXT');
   const jobs = await api.getRunJobs(repo, h.source_run_id, h.source_run_attempt);
   const finish = jobs.filter(job => job.name === policy.finish_job);
   if (finish.length !== 1 || String(finish[0].run_id) !== h.source_run_id
@@ -106,6 +110,10 @@ async function triageOrigin({ config, event, inputs, configRoot, origin }, api) 
   if (!commit.message?.startsWith(prefix) || !/^[a-f0-9]{64}\n?$/.test(commit.message.slice(prefix.length))) fail('UNTRUSTED_CONTEXT');
   return { origin: 'triage', handoff: structuredClone(h) };
 }
+
+/** Only the source run may request its own post-finish dispatch. The LLM collector still refuses self-run handoffs. */
+export const verifyTriageDispatchOrigin = (input, api) => triageOrigin(input, api, true);
+export { pullState as reviewPullState, reviewCorrectionOrigin as verifyReviewCorrectionOrigin };
 
 /** A sealed body is an integrity check, not a signature; configured API authorship and commit ancestry are mandatory. */
 async function reviewCorrectionOrigin(origin, api) {
