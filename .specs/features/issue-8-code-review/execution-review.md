@@ -2,6 +2,39 @@
 
 Spec, design e tarefas aprovados em 2026-10-15. Execução pelo principal, sequencial, na branch/worktree da #8 empilhada sobre #7/#9. Nenhuma autorização de uso de auth pessoal, push ou ativação externa foi inferida.
 
+## T6: publicação recuperável
+
+Assumptions: recollect reconstrói snapshot confiável pela API/Git antes das escritas. O writer é do consumidor e distinto do reviewer; para correções, sua identidade deve estar explicitamente configurada para que o coletor consiga provar a origem do complementar. Nenhuma chamada real é autorizada nesta tarefa.
+
+Files: scripts/review/{publish,publication-api}.mjs, extração mínima scripts/shared/publication-api.mjs e adapter scripts/triage/publication-api.mjs; tests/review/{publish,publication-api}.test.mjs e fixtures/publication.mjs; registros TLC.
+
+Success: comentário automático distingue severidades/ausência/inconclusivo, SHA registrado e sem aprovação; draft complementar filho do head original; checks falhos explícitos; recursos próprios recuperáveis e humanos preservados. Transporte compartilhado conserva endpoint fixo, paginação, erros e guard de branches da triagem, sem retry cego.
+
+RED: teste de publicação recusado por módulo ausente. GREEN: Full em Node 22.23.3, 180 pass/0 fail/0 skipped; sintaxe dos sete módulos novos/alterados, npm check, actionlint Windows e validate_tasks/validate_spec/check_commit verdes. Testes legados não alterados, nenhum SPEC_DEVIATION. Fixtures simulam serviços externos; não são homologação.
+
+| Critério / AC | Evidência/assertion | Resultado esperado |
+| --- | --- | --- |
+| Comentário automático/SHAs/severidade/nenhum achado | `tests/review/publish.test.mjs:9–16`: equal reviewed/pr_number null, corpo inclui SHA/config/automação e categorias; nenhuma keyword de fechamento, somente escrita comment | REV-09/10/18 sem review APPROVE/merge/Project/Sonar |
+| Complementar e falha de checks | `:22–32`: equal draft-checks-failed, draft true, base=head_ref/head_sha; deepEqual parents e tree_sha da proposta; mensagem de commit exata e reviewer solicitado | REV-14/15, sem push no head original |
+| Integração/complementar e entrada antiga | `:37–55`: somente comment; rejects STALE_REVIEW_INPUT para PR/refs/SHAs/config/entrada; INVALID_RESULT/INVALID_REVIEW_VERIFICATION/INVALID_REVIEW_PATCH para artefatos/relatório/capacidade divergentes, writes vazio | REV-08/16/19/24 |
+| Recuperação idempotente | `:62–64`: mesmo comment_id/pr_number, um comentário/PR e uma escrita do recurso após timeout | REV-18/25, recursos próprios íntegros |
+| Recursos humanos e commit remoto | `:71–88`: rejects REVIEW_RESOURCE_CONFLICT; corpos/branch/escritas preservados; tree/parent/message divergentes recusados, comentário humano intacto | REV-18/24/25 |
+| Mudança tardia/falha sanitizada | `:94–98`: STALE_REVIEW_INPUT antes de escrita; REVIEW_PUBLISH_FAILED/message exato e nenhum comentário em erro | REV-24/26 |
+| Atualização própria e race de edição | `:106–113`: mesmo comment_id e uma update-comment recuperada; edição entre leitura/update recusa conflito, sem nova escrita | REV-09/18/25 |
+| Inconclusivo distinto de vazio | `:120–122`: needs-human/pr_number null, corpo afirma revisão incompleta e não afirma nenhum achado | REV-05/09 |
+| Git Data e superfície de escrita | `tests/review/publication-api.test.mjs:23–34`: parents/tree/author, ref e draft payloads exatos; branches originais/protegidas e PR não draft recusados sem chamadas | REV-10/14/26 |
+| Transporte limitado | `:48–57`: ausência null distinta de 403; segunda página observada; sem retry POST, token recusado no payload, árvore divergente impede commit e erro sanitizado | REV-25/26 |
+
+| Testes/assertions | Mapeamento reverso | Manter |
+| --- | --- | --- |
+| publish:9–16/37–38/120–122 | REV-05/09/10/16/19 | Sim |
+| publish:22–32 | REV-14/15/18 | Sim |
+| publish:43–55/94–98 | REV-08/24/26 | Sim |
+| publish:62–88/106–113 | REV-18/25 e preservação de intervenção humana | Sim |
+| publication-api:23–34/48–57 | REV-10/14/25/26 e transporte mínimo compartilhado | Sim |
+
+Adequação: asserts verificam corpos, SHAs, árvore, pai, refs e efeitos persistidos, além de recusas exatas. Sem testes de prosa nem metas quantitativas; constituição e AD-003/004 preservadas. T6 completa localmente. Conexão workflow/CI/caller e piloto real continuam T7–T9; nenhum PR remoto foi criado.
+
 ## T5: preparo isolado da correção
 
 Assumptions: autorização de paths pertence ao adapter; o núcleo Git recebe apenas a operação já autorizada. Config, snapshot e identidade esperada vêm dos componentes confiáveis anteriores, nunca do patch. Checks do produto e publicação permanecem fora desta tarefa.

@@ -133,27 +133,27 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-05 | Limites | Execute | Índice/limites T1 validados; coleta/inconclusivo integrados pendentes |
 | REV-06 | Proveniência | Execute | Snapshot T2, envelope v3 T3 e orquestração T4 validados; caller pendente |
 | REV-07 | Achados | Execute | Índice T1 e achados vinculados ao diff T3 validados; inferência pendente |
-| REV-08 | Recusa | Execute | Validator/reader v3 T3 recusam identidades e arquivos divergentes; integração pendente |
-| REV-09 | Publicação | Execute | Conteúdo e estados sem achados/skip T3 validados; publicação T6 pendente |
-| REV-10 | Humano/Sonar | Specify | Pending review |
+| REV-08 | Recusa | Execute | Validator/reader v3 T3 e publisher T6 recusam identidade, sidecar e patch divergentes sem escritas |
+| REV-09 | Publicação | Execute | T6 valida comentário automático com severidades, SHAs e nenhum achado/inconclusivo distintos |
+| REV-10 | Humano/Sonar | Execute | T6 só comenta/cria draft/solicita revisão; sem aprovação, merge, fechamento, Project ou Sonar |
 | REV-11 | Escopo do patch | Execute | Interseção diff/allowlist e paths protegidos T5 validados com Git real |
 | REV-12 | Preparação | Execute | T5 prepara filho do head exato; fonte intacta, sem hooks/credenciais |
 | REV-13 | Checks | Specify | Pending review |
-| REV-14 | PR complementar | Execute | Commit temporário filho do head T5 validado; publicação T6 pendente |
-| REV-15 | Falha dos checks | Specify | Pending review |
-| REV-16 | Integração | Execute | Classificação T1 e recusa de preparo fora da rota corrigível T5 validadas; publicação T6 pendente |
+| REV-14 | PR complementar | Execute | T5/T6 validam pai/árvore e draft complementar com base no head_ref original; simulação, não publicação real |
+| REV-15 | Falha dos checks | Execute | T6 mantém draft-checks-failed explícito; execução isolada de checks T7 pendente |
+| REV-16 | Integração | Execute | T1/T5/T6 recusam correções fora da rota corrigível e publicam somente comentário nas integrações |
 | REV-17 | Encadeamento | Execute | Prova API/run/job/commit T2 validada; dispatch T8 pendente |
-| REV-18 | Idempotência | Specify | Pending review |
-| REV-19 | Recursão | Execute | Origem review não corrigível em T1; prova API/handoff T2/T8 pendente |
+| REV-18 | Idempotência | Execute | T6 recupera recursos próprios íntegros e recusa proposta divergente na mesma identidade, sem duplicar |
+| REV-19 | Recursão | Execute | T1/T2/T6 comprovam origem e limitam complementares a comentário; encadeamento T8 pendente |
 | REV-20 | Concorrência | Execute | Central T4 reusa fila/ciclo de sessão; domínio/caller/piloto pendentes |
 | REV-21 | Caller | Specify | Pending review |
 | REV-22 | Piloto conjunto | Specify | Pending review |
 | REV-23 | Piloto transferido | Specify | Pending review |
-| REV-24 | Entrada antiga | Execute | Coleta T2 e base/head divergente no preparo T5 recusados; publisher pendente |
-| REV-25 | Recuperação | Specify | Pending review |
-| REV-26 | Falhas | Specify | Pending review |
+| REV-24 | Entrada antiga | Execute | T2/T5/T6 recusam PR/config/head/base/entrada alterados antes das escritas |
+| REV-25 | Recuperação | Execute | T6 simula timeout após escrita e preserva recursos humanos; dispatch T8 pendente |
+| REV-26 | Falhas | Execute | T6 sanitiza falhas de API/escrita; integração de upload/cleanup T7 pendente |
 
-**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T5 implementadas e validadas localmente; tarefas restantes ainda pendentes. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
+**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T6 implementadas e validadas localmente; tarefas restantes ainda pendentes. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
 
 ## Success Criteria
 

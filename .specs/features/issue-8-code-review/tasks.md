@@ -3,7 +3,7 @@
 **Goal:** Entregar review pela central e homologar #9/#7/#8 juntas no consumidor privado, sem configurações particulares na central.
 **Architecture:** caller confiável → coleta → central LLM → checks isolados → publicação recuperável. Triagem aciona review por dispatch de novo run após persistência da sessão.
 **Tech Stack:** Node 22.23.3, ESM/node:test, Git, Ajv e dependências fixadas existentes; GitHub Actions e container por digest do consumidor.
-**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T5 concluídas localmente; T6 é a próxima tarefa.
+**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T6 concluídas localmente; T7 é a próxima tarefa.
 
 ## Execution Protocol
 
@@ -165,9 +165,9 @@ Transição Phase 2 → Phase 3: T6 → T7
 **Requirement:** REV-09, REV-10, REV-14, REV-15, REV-16, REV-18, REV-19, REV-24, REV-25, REV-26
 **Interfaces:** `publishReview({snapshot,result,prepared,verification,config}, api)` → comentário/PR/status explícitos.
 **Done when:**
-- [ ] Comentário distingue críticos/sugestões/nenhum achado e registra SHA; nunca cria aprovação nativa/merge/fechamento.
-- [ ] Complementar draft aponta para head_ref original e deriva de head_sha; falha nos checks é explícita; integração só comenta.
-- [ ] Reexecução/timeouts recuperam somente recursos próprios íntegros; entrada antiga e edição humana impedem escrita destrutiva.
+- [x] Comentário distingue críticos/sugestões/nenhum achado e registra SHA; nunca cria aprovação nativa/merge/fechamento.
+- [x] Complementar draft aponta para head_ref original e deriva de head_sha; falha nos checks é explícita; integração só comenta.
+- [x] Reexecução/timeouts recuperam somente recursos próprios íntegros; entrada antiga e edição humana impedem escrita destrutiva.
 **Tests:** integration stateful; inspecionar body/ref/parent/tree/draft/checks, mesma identidade sem duplicata, erros ambíguos, PR alterado e recurso humano preservado.
 **Gate:** Full
 **Commit:** `feat(review): publish recoverable findings and correction PRs refs #8`

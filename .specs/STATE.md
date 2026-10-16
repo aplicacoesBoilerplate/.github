@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-8-code-review/`
-- **Phase / Task**: Execute; spec/context/design/tasks aprovados pelo mantenedor em 2026-10-15; T1–T5 concluídas localmente.
+- **Phase / Task**: Execute; spec/context/design/tasks aprovados pelo mantenedor em 2026-10-15; T1–T6 concluídas localmente.
 - **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
-- **In-progress**: Preparo isolado de review v3 concluído; núcleo Git extraído sem policy de domínio, adapter triage v2 preservado. Pai/head, fonte intacta, allowlist/diff, ownership e limpeza validados. Full Node 22.23.3: 170 pass/0 fail/0 skipped; sintaxe dos quatro módulos e gates estruturais verdes. Sem inferência ou auth real.
-- **Next step**: Executar T6: publicação recuperável dos achados e PR complementar, com revalidação antes das escritas e sem alterar o head original.
+- **In-progress**: Gateway de publicação de review concluído em simulações stateful: achados/SHAs, draft complementar, checks falhos explícitos, revalidação, recuperação de timeout e recusa de edições humanas. Transporte GitHub extraído com guards distintos e triagem preservada. Full Node 22.23.3: 180 pass/0 fail/0 skipped; sintaxe, npm check, actionlint Windows e gates estruturais verdes. Nenhuma publicação/inferência/auth real.
+- **Next step**: Executar T7: workflow/runner de review com jobs isolados, checks por container e CI descobrindo review/shared; depois caller/dispatch T8 e piloto real T9.
 - **Blockers**: Nenhum para implementação local já autorizada. Piloto real exige provisionamento de credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global.
-- **Uncommitted files**: T5 e registros de progresso até seu commit atômico; demais worktrees preservados. Actionlint temporário validado em C:/Users/gerso/AppData/Local/Temp/review-actionlint-9e482284f513447183c17c298e019f76/actionlint.exe.
+- **Uncommitted files**: T6 e registros de progresso até seu commit atômico; demais worktrees preservados. Actionlint temporário validado em C:/Users/gerso/AppData/Local/Temp/review-actionlint-9e482284f513447183c17c298e019f76/actionlint.exe.
 - **Branch**: `feature/issue-8-code-review`
