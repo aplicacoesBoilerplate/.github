@@ -34,11 +34,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/issue-7-triagem-issues/`
-- **Phase / Task**: Execute; T1–T7 concluídas localmente, 7/8 tarefas; revisão independente local PASS na rodada 2. T8 real pendente. Documentação adiada por pedido explícito.
-- **Completed**: In progress aplicado no Project GitHub Features por pedido explícito e verificado via API. Empilhamento sobre #9 preservado; nenhum merge/aceite do PR da central. Aprovação de spec/context registrada.
-- **In-progress**: F1 aprovado independentemente no HEAD f56a3e5; M5 eliminado pelo teste de run divergente. Gates Node 22.23.3, sintaxe e actionlint passaram. validation.md preserva FAIL de conclusão total exclusivamente pela ausência de T8; nenhum defeito local pendente. Caller mantém pin 3f7ec89a9e2457e1e839a22d6db6f9dc1c4784f6, ainda local; nenhum push/auth real.
-- **Next step**: Selecionar consumidor privado e provisionar o piloto T8 com autorização específica para publicação/ativação. Consulta API mostrou boilerplate-cli público e demo-repository privado (HTML); seleção solicitada ao mantenedor, nenhuma ativação realizada.
-- **Blockers**: Nenhum para implementação local autorizada; blocked-by #5/#9 preservados conforme entrega empilhada. Piloto real exige consumidor e credenciais do mantenedor.
-- **Uncommitted files**: Nenhum após commit da proposta. Planejamento OpenSpec anterior preservado como histórico.
-- **Branch**: `feature/issue-7-triagem-issues`
+- **Feature**: `.specs/features/issue-8-code-review/`
+- **Phase / Task**: Execute; T1–T8/T10–T12 concluídas localmente (11/12), Verifier rodada 2 PASS LOCAL. T9 real permanece aberto.
+- **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
+- **In-progress**: T11 commit 907c00b corrige decode do diff; T12 1d2230e propaga seu SHA completo aos callers. Verifier confirma 24/24 AC locais, Full repetido 196/196, check/actionlint dez YAML verdes, 2 mutações killed (9 acumuladas). EBUSY transitório de cleanup registrado, sem falha funcional remanescente. Nenhum Docker/LLM/GitHub Actions real.
+- **Next step**: Após autorização específica, publicar branch/PR #8 empilhado sobre #7; preparar adoção no demo por PR separado e provisionamento do consumidor antes de T9. Não fechar REV-22/23 ou TRI-24/25 sem piloto real.
+- **Blockers**: Nenhum para implementação local já autorizada. Piloto real exige provisionamento de credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global.
+- **Uncommitted files**: Parecer rodada 2, lesson L-005 e progresso até commit de evidência. Scratchs review-verifier-8-f2c12cc8 e review-verifier-round2-1d2230e retidos no Temp após limpeza negada, sem nova tentativa; demais worktrees preservados.
+- **Branch**: `feature/issue-8-code-review`

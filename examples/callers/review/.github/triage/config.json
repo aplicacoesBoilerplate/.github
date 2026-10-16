@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "project": { "owner": "consumer-org", "number": 1 },
+  "fields": { "effort": "Effort", "size": "Size", "estimate": "Estimate", "release": "Release" },
+  "llm_configs": { "plan": ".github/llm/triage-plan.json", "patch": ".github/llm/triage-patch.json" },
+  "reviewer": "consumer-maintainer",
+  "allowed_paths": ["main.go", "cmd", "internal", "pkg", "go.mod", "go.sum"],
+  "checks": [{ "command": "go", "args": ["test", "./..."] }],
+  "stacked_bases": {}
+}

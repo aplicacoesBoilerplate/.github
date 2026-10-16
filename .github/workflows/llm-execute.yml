@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       source_ref:
-        description: Consumer default branch or triage-authorized analysis base
+        description: Authorized consumer default branch, triage base or review head
         required: true
         type: string
       context_json:
@@ -50,6 +50,22 @@ on:
         required: false
         default: ''
         type: string
+      pull_number:
+        required: false
+        default: 0
+        type: number
+      review_config_path:
+        required: false
+        default: ''
+        type: string
+      review_fingerprint:
+        required: false
+        default: ''
+        type: string
+      review_handoff_json:
+        required: false
+        default: '{}'
+        type: string
     secrets:
       CODEX_AUTH_JSON:
         required: false
@@ -58,6 +74,8 @@ on:
       OPENAI_API_KEY:
         required: false
       TRIAGE_READ_TOKEN:
+        required: false
+      REVIEW_READ_TOKEN:
         required: false
     outputs:
       status:
@@ -76,6 +94,14 @@ on:
         value: ${{ jobs.invoke.outputs.request_id }}
       error_code:
         value: ${{ jobs.invoke.outputs.error_code }}
+      pull_number:
+        value: ${{ jobs.invoke.outputs.pull_number }}
+      base_sha:
+        value: ${{ jobs.invoke.outputs.base_sha }}
+      merge_base_sha:
+        value: ${{ jobs.invoke.outputs.merge_base_sha }}
+      review_fingerprint:
+        value: ${{ jobs.invoke.outputs.review_fingerprint }}
 
 permissions:
   contents: read
@@ -100,6 +126,10 @@ jobs:
       automation_sha: ${{ steps.invoke.outputs.automation_sha }}
       request_id: ${{ steps.invoke.outputs.request_id }}
       error_code: ${{ steps.invoke.outputs.error_code || steps.finish.outputs.error_code }}
+      pull_number: ${{ steps.invoke.outputs.pull_number }}
+      base_sha: ${{ steps.invoke.outputs.base_sha }}
+      merge_base_sha: ${{ steps.invoke.outputs.merge_base_sha }}
+      review_fingerprint: ${{ steps.invoke.outputs.review_fingerprint }}
     steps:
       - name: Checkout automation at the called workflow revision
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -119,6 +149,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TRIAGE_READ_TOKEN: ${{ secrets.TRIAGE_READ_TOKEN }}
+          REVIEW_READ_TOKEN: ${{ secrets.REVIEW_READ_TOKEN }}
         run: node automation/scripts/llm/run.mjs preflight
       - name: Checkout trusted consumer commit
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -139,7 +170,22 @@ jobs:
           ref: ${{ steps.source.outputs.source_sha }}
           path: consumer-source
           persist-credentials: false
+      - name: Checkout separately authorized review analysis source
+        if: inputs.caller_profile == 'review'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ steps.preflight.outputs.review_source_sha }}
+          fetch-depth: 0
+          path: consumer-source
+          persist-credentials: false
+      - name: Validate bounded review source before credentials
+        id: review-source
+        if: inputs.caller_profile == 'review'
+        env:
+          REVIEW_READ_TOKEN: ${{ secrets.REVIEW_READ_TOKEN }}
+        run: node automation/scripts/llm/run.mjs source
       - name: Execute caller configuration and preserve refreshed session
+        # Review uses the same session lifecycle after its own read-only source phase.
         id: invoke
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -148,6 +194,7 @@ jobs:
           CODEX_AUTH_WRITE_PAT: ${{ secrets.CODEX_AUTH_WRITE_PAT }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           TRIAGE_READ_TOKEN: ${{ secrets.TRIAGE_READ_TOKEN }}
+          REVIEW_READ_TOKEN: ${{ secrets.REVIEW_READ_TOKEN }}
         run: node automation/scripts/llm/run.mjs invoke
       - name: Upload this invocation result only
         id: upload

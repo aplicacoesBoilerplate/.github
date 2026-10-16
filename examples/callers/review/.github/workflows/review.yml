@@ -1,0 +1,95 @@
+name: Consumer review
+run-name: ${{ format('review:{0}:{1}', inputs.pull_number, inputs.dispatch_id || 'manual') }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      pull_number:
+        required: true
+        type: number
+      expected_head_sha:
+        required: false
+        default: ''
+        type: string
+      review_handoff_json:
+        required: false
+        default: '{}'
+        type: string
+      dispatch_id:
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  review:
+    if: github.event.repository.private && !github.event.repository.fork && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: read
+    uses: aplicacoesBoilerplate/.github/.github/workflows/pr-code-review.yml@907c00b3f1202ddf811cd7d5578fdeb2b1aed939
+    with:
+      config_path: .github/review/config.json
+      pull_number: ${{ inputs.pull_number }}
+      expected_head_sha: ${{ inputs.expected_head_sha }}
+      review_handoff_json: ${{ inputs.review_handoff_json }}
+      auth_mode: chatgpt-session
+      session_secret_name: CLI_CODEX_SESSION
+      verification_image: ${{ vars.TRIAGE_VERIFICATION_IMAGE }}
+    secrets:
+      REVIEW_READ_TOKEN: ${{ secrets.AUTOMATION_METADATA_READ_TOKEN }}
+      REVIEW_PUBLISH_TOKEN: ${{ github.token }}
+      CODEX_AUTH_JSON: ${{ secrets.CLI_CODEX_SESSION }}
+      CODEX_AUTH_WRITE_PAT: ${{ secrets.CLI_CODEX_SESSION_WRITE_PAT }}
+
+  inspect:
+    needs: review
+    if: needs.review.result == 'success' && needs.review.outputs.artifact_name != ''
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.review.outputs.config_source_sha }}
+          path: consumer
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.review.outputs.source_sha }}
+          path: consumer-source
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: aplicacoesBoilerplate/.github
+          ref: 907c00b3f1202ddf811cd7d5578fdeb2b1aed939
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+      - run: npm ci --prefix automation/scripts/llm --ignore-scripts --no-fund --no-audit
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ needs.review.outputs.artifact_name }}
+          path: llm-result
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ format('review-{0}-{1}-pr{2}', github.run_id, github.run_attempt, needs.review.outputs.pull_number) }}
+          path: review-input
+      - name: Inspect read-only; never apply or approve a patch
+        env:
+          EXPECTED_PULL_NUMBER: ${{ needs.review.outputs.pull_number }}
+          EXPECTED_SOURCE_SHA: ${{ needs.review.outputs.source_sha }}
+          EXPECTED_BASE_SHA: ${{ needs.review.outputs.base_sha }}
+          EXPECTED_MERGE_BASE_SHA: ${{ needs.review.outputs.merge_base_sha }}
+          EXPECTED_CONFIG_SOURCE_SHA: ${{ needs.review.outputs.config_source_sha }}
+          EXPECTED_AUTOMATION_SHA: 907c00b3f1202ddf811cd7d5578fdeb2b1aed939
+          EXPECTED_FINGERPRINT: ${{ needs.review.outputs.fingerprint }}
+        run: node consumer/.github/review/inspect-result.mjs

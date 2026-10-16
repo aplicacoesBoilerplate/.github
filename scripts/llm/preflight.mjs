@@ -1,6 +1,7 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { contractError, validateRelativePath } from './validate-request.mjs';
 import { verifyTriageOrigin } from '../triage/collect.mjs';
+import { verifyReviewOrigin } from '../review/collect.mjs';
 
 const shaPattern = /^[a-f0-9]{40}$/;
 const repoPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]*\/[a-zA-Z0-9_.-]+$/;
@@ -32,6 +33,12 @@ export function githubMetadataApi(token, options = {}) {
 
 export async function verifyContext(event, inputs, api) {
   try {
+    if (inputs.caller_profile === 'review') {
+      if (event.pull_number !== inputs.pull_number) throw contractError('UNTRUSTED_CONTEXT');
+      const origin = await verifyReviewOrigin(event, api);
+      return { repository: event.repository, default_branch: origin.default_branch, source_sha: origin.config_source_sha,
+        config_source_sha: origin.config_source_sha, review_source_sha: origin.pull.head.sha, review_base_sha: origin.pull.base.sha, private: true };
+    }
     if (inputs.caller_profile === 'triage') {
       if (event.issue_number !== inputs.issue_number) throw contractError('UNTRUSTED_CONTEXT');
       const origin = await verifyTriageOrigin(event, api);

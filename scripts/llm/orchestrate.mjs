@@ -9,19 +9,28 @@ import { executeRequest } from './execute.mjs';
 import { validateAndPackage } from './result.mjs';
 import { resolveTriageInvocation } from '../triage/invocation.mjs';
 import { createTriageApi } from '../triage/api.mjs';
+import { resolveReviewInvocation } from '../review/invocation.mjs';
+import { createReviewApi } from '../review/api.mjs';
+import { packageReviewResult } from '../review/result.mjs';
 
 export async function runInvocation({ sourceRoot, configRoot = sourceRoot, outputRoot, event, inputs, secrets, automation_sha }, options = {}) {
-  const manualMetadata = inputs.caller_profile !== 'triage'
+  const manualMetadata = !['triage', 'review'].includes(inputs.caller_profile)
     ? await verifyContext(event, inputs, options.metadataApi ?? githubMetadataApi(secrets.GITHUB_TOKEN, options)) : null;
   const request = await loadRequest(configRoot, inputs);
-  let triage;
+  let triage; let review;
   if (inputs.caller_profile === 'triage') {
     if (!secrets.TRIAGE_READ_TOKEN) throw contractError('TRIAGE_METADATA_UNAVAILABLE');
     triage = await resolveTriageInvocation({ configRoot, event, inputs, checkedConfigSha: options.checkedConfigSha, checkedOutSha: options.checkedOutSha },
       options.triageApi ?? createTriageApi(secrets.TRIAGE_READ_TOKEN, options));
     request.context = JSON.parse(triage.context_json);
   }
-  const metadata = triage ?? manualMetadata;
+  if (inputs.caller_profile === 'review') {
+    if (!secrets.REVIEW_READ_TOKEN) throw contractError('REVIEW_METADATA_UNAVAILABLE');
+    review = await resolveReviewInvocation({ configRoot, sourceRoot, event, inputs, checkedConfigSha: options.checkedConfigSha, checkedOutSha: options.checkedOutSha },
+      options.reviewApi ?? createReviewApi(secrets.REVIEW_READ_TOKEN, options));
+    request.context = JSON.parse(review.context_json); request.source_files = review.source_files;
+  }
+  const metadata = review ?? triage ?? manualMetadata;
   if (options.checkedOutSha !== undefined && options.checkedOutSha !== metadata.source_sha) throw contractError('UNTRUSTED_CONTEXT');
   const instructions = await prepareInstructions(configRoot);
   const configBytes = await readTrustedFile(configRoot, inputs.config_path, 32768);
@@ -56,12 +65,14 @@ export async function runInvocation({ sourceRoot, configRoot = sourceRoot, outpu
   }
   if (failure) throw contractError(failure.code ?? 'PROVIDER_ERROR');
   if (boundary) sensitiveValues.push(...Object.values(validateManagedSession(secrets.CODEX_AUTH_JSON).tokens).filter(value => typeof value === 'string' && value));
-  return validateAndPackage(result, {
+  const provenance = {
     repository: event.repository, source_sha: metadata.source_sha, automation_sha,
-    ...(triage ? { config_source_sha: triage.config_source_sha } : {}),
+    ...(triage || review ? { config_source_sha: metadata.config_source_sha } : {}),
     run_id: event.run_id, run_attempt: event.run_attempt, invocation_id: inputs.invocation_id,
     config_sha256: createHash('sha256').update(configBytes).digest('hex'), instructions_sha256: instructions.sha256,
-  }, outputRoot, { sensitiveValues });
+  };
+  return review ? packageReviewResult(result, provenance, review, outputRoot, { sensitiveValues })
+    : validateAndPackage(result, provenance, outputRoot, { sensitiveValues });
 }
 
 export function publicationStatus(invocation, upload, cleanup, resultStatus) {

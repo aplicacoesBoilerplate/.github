@@ -12,7 +12,7 @@ const checkV2 = ajv.compile({ ...schema, required: [...schema.required, 'config_
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const fields = ['repository', 'run_id', 'run_attempt', 'invocation_id', 'source_sha', 'automation_sha', 'config_sha256', 'instructions_sha256'];
 
-function identity(provenance) {
+export function resultIdentity(provenance) {
   const p = Object.fromEntries(fields.map(key => [key, provenance[key]]));
   if (provenance.config_source_sha !== undefined) p.config_source_sha = provenance.config_source_sha;
   p.run_id = String(p.run_id); p.run_attempt = String(p.run_attempt);
@@ -57,7 +57,7 @@ export function validateEnvelope(envelope, expected) {
   const consistent = envelope.status === 'succeeded' ? ['none', 'proceed'].includes(envelope.decision)
     : envelope.status === 'skipped' ? envelope.decision === 'skip' && envelope.patch_file === null
       : envelope.decision === 'needs-human' && envelope.patch_file === null;
-  const trusted = identity(expected);
+  const trusted = resultIdentity(expected);
   if (!consistent || Object.entries(trusted).some(([key, value]) => envelope[key] !== value)) throw contractError('INVALID_RESULT');
   return envelope;
 }
@@ -67,7 +67,7 @@ export async function validateAndPackage(result, provenance, outputRoot, { sensi
   if (!result || Object.keys(result).some(key => !allowed.includes(key)) || typeof result.summary !== 'string'
     || !(result.patch === null || typeof result.patch === 'string')) throw contractError('INVALID_RESULT');
   if (result.patch !== null) validatePatch(result.patch);
-  const trusted = identity(provenance);
+  const trusted = resultIdentity(provenance);
   const envelope = { schema_version: provenance.config_source_sha === undefined ? 1 : 2, ...trusted, status: result.status, decision: result.decision, summary: result.summary, patch_file: result.patch === null ? null : 'proposal.patch', error_code: '' };
   validateEnvelope(envelope, provenance);
   const json = JSON.stringify(envelope, null, 2) + '\n';
