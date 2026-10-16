@@ -2,7 +2,9 @@
 
 ## Realização
 
-Implementação local concluída para revisão independente. O PR12 preserva seu
+Implementação local concluída; rodada1 independente passou gates e6 mutantes,
+mas exigiu precisão documental e teste real do bootstrap Node (G1). A correção
+local passou2 replays e4 rejeições e aguarda revalidação. O PR12 preserva seu
 fluxo técnico Node e ganha coleta Maven verificável, registro modular e
 separação entre cálculo somente leitura e publicação. Os resultados por tarefa
 estão em [evidence.md](evidence.md); push e CI hospedada serão registrados após
@@ -14,12 +16,17 @@ a revisão. Nenhum piloto foi alterado e nenhuma Release foi criada.
 - `.github/workflows/ci.yml`
 - `.github/workflows/version-preview.yml`
 - `.github/workflows/version-publish.yml`
+- `.specs/LESSONS.md`
 - `.specs/STATE.md`
+- `.specs/features/reconcile-native-profiles/delivery.md`
 - `.specs/features/reconcile-native-profiles/design.md`
 - `.specs/features/reconcile-native-profiles/evidence.md`
 - `.specs/features/reconcile-native-profiles/pr13-compatibility.md`
 - `.specs/features/reconcile-native-profiles/spec.md`
 - `.specs/features/reconcile-native-profiles/tasks.md`
+- `.specs/features/reconcile-native-profiles/validation-round-1.md`
+- `.specs/features/reconcile-native-profiles/validation.md`
+- `.specs/lessons.json`
 - `README.md`
 - `docs/versioning-jgitver.md`
 - `docs/versioning-standard-version.md`
@@ -66,6 +73,7 @@ a revisão. Nenhum piloto foi alterado e nenhuma Release foi criada.
 - `tests/versioning/real-jgitver-prefix.mjs`
 - `tests/versioning/real-jgitver.mjs`
 - `tests/versioning/real-maven-reactor.mjs`
+- `tests/versioning/real-standard-bootstrap.mjs`
 - `tests/versioning/real-standard-version.mjs`
 - `tests/versioning/reconciled-report.mjs`
 - `tests/versioning/run.mjs`

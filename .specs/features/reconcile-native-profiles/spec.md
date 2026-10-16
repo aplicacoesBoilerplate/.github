@@ -27,6 +27,7 @@ PR #12 contém standard-version/jgitver, enquanto codex/jgitver-maven contém um
 | Maven | plugin1.9.0/Java21/Maven3.9.9; versão única | Perfil nativo já provado localmente | Sim |
 | Bootstrap | primeira versão de cada escopo sem tags somente0.0.1 | Regra aprovada; configuração nativa deve produzi-la sem fallback central | Herdado |
 | Node | preservar PR técnico e outputs version_pr_url/pending-version-pr | Contrato remoto existente | Sim |
+| Bootstrap Node | manifests0.0.0 -> candidata0.0.1 e alteração real; firstRelease e same-version não suportados | G1 reproduzido pelo Verifier; preservar guard de integridade, documentar e testar o recorte | Precisão técnica |
 | Compatibilidade interna | migrar fixtures Maven de stdout para Properties, mantendo assertions de comportamento | Formato ativo mais forte e SHA nativo obrigatório | Decisão técnica |
 | Autenticação | agente AI autorizado; token não impresso | Permissão de publicação existente nesta conversa | Sim |
 

@@ -188,7 +188,7 @@ T11 -> T12 -> T13
 **Reuses**: Process port, normalizador e bundle existentes; preserva todos os guards.
 **Tools**: TLC, CI/CD, Entregas, standard-version9.5.0 real.
 **Done when**:
-- [ ] Bootstrap nativo0.0.0->0.0.1 gera/aplica manifests/lock/changelog mantendo HEAD/tags; firstRelease e same-version sem diff são rejeitados com diagnóstico; docs declaram recorte e CI executa fixture sem escape npm.
+- [x] Bootstrap nativo0.0.0->0.0.1 gera/aplica manifests/lock/changelog mantendo HEAD/tags; firstRelease e same-version sem diff são rejeitados com diagnóstico; docs declaram recorte e CI executa fixture sem escape npm.
 **Tests**: integration
 **Gate**: Full
 

@@ -25,12 +25,25 @@ revise-os mesmo sendo executados em job de leitura, não em sandbox.
 ## Primeira versão
 
 Sem tag estável alcançável no `tag_prefix`, a ferramenta nativa precisa produzir
-`0.0.1`. O central nunca substitui o resultado. Uma configuração que produza
+`0.0.1`. O central nunca substitui o resultado. O bootstrap suportado começa
+com `package.json` e lockfile em `0.0.0` e um commit `fix:` que faça o nativo
+incrementar para `0.0.1`. Os manifests precisam ser efetivamente alterados;
+o teste real cobre tanto o cálculo padrão quanto `releaseAs: 0.0.1` temporário.
+Uma configuração que produza
 `1.0.0` ou `0.1.0` será bloqueada, mesmo sem milestone.
 Verifique o dry-run local no histórico real antes da primeira entrega.
 As opções de bootstrap pertencem ao consumidor e devem ser temporárias;
-não deixe `releaseAs` fixo depois da primeira versão. `--first-release` não
-significa incrementar automaticamente para0.0.1.
+não deixe `releaseAs` fixo depois da primeira versão.
+
+`firstRelease`/`--first-release` não é suportado por este adaptador: a ferramenta
+nativa deixa de emitir a linha de incremento exigida pelo normalizador.
+Se os manifests já estiverem em `0.0.1`, o padrão calcula `0.0.2` e será bloqueado
+por ausência de tag anterior. Forçar `releaseAs: 0.0.1` nessa situação não é um
+bootstrap suportado: com arquivos já formatados, o guard recusa package.json sem
+alteração. Uma reformatação incidental não deve ser usada como autorização.
+Não contorne o guard nem configure firstRelease para tentar publicar essa entrega.
+Repos com versões/pacotes existentes exigem inventário e migração explícita antes
+de ativar o fluxo; não crie ou mova tags cegamente para satisfazer o check.
 
 ## Fluxo e SHAs
 
@@ -81,6 +94,10 @@ bloqueiam sem mover tags. A concorrência do escritor é serializada por repo/br
 com o binário nativo desativado no escritor. `real-standard-version.mjs`
 executa9.5.0, comprova versão1.1.0, changelog/manifests, ausência de commit/tag
 e replay byte a byte. Também recalcula a origem após tag no descendente.
+`node tests/versioning/real-standard-bootstrap.mjs` cobre duas gerações/replays
+0.0.0->0.0.1 e quatro rejeições: default já0.0.1, firstRelease nos dois valores
+iniciais e same-version com manifests formatados. A instalação tem manifest
+temporário e `npm --prefix` absoluto, com prefixo e binário confinados no fixture.
 Essas provas não substituem uma execução remota no consumidor com a sua App.
 
 Em ensaio autorizado, confira: primeiro push sem Release; PR técnico com arquivos

@@ -29,9 +29,9 @@
 ## Handoff
 
 - **Feature**: Conciliação Go/standard-version/jgitver no PR12 existente.
-- **Phase / Task**: REC T1-T12 concluídas; revisão independente rodada1 FAIL somente G1; T13 corretiva em curso.
+- **Phase / Task**: REC T1-T13 concluídas localmente; rodada1 FAIL por G1, correção documental/fixture pronta para revalidação.
 - **Completed**: Baseline PR12 congelada13 fixtures PASS; união27 fixtures PASS. Ferramentas reais Go/standard-version9.5.0/Maven1.9.0, reactor118 e prefixo nativo PASS; Maven3.9.9/checksum inválido PASS; workflow64 e semântico read/write PASS; callers lintados isoladamente e76 links relativos conferidos.
-- **In-progress** (file:line): .specs/features/reconcile-native-profiles/validation.md:G1; documentar/testar bootstrap Node suportado, sem afrouxar guard.
+- **In-progress** (file:line): .specs/features/reconcile-native-profiles/validation.md:G1 aguarda revalidação; fixture real novo passou2 replays e4 rejeições, sem alterar código de produção.
 - **Next step**: Fechar gate, revisão independente com mutações em scratch; após PASS, atualizar somente codex/versioning-profiles no remoto por fast-forward e conferir CI.
 - **Blockers**: Nenhum bloqueio externo atual; não declarar revisão ou CI hospedada desta conciliação aprovadas antes de executá-las. PR13 requer conciliação própria.
 - **Uncommitted files**: Nenhum após commit T12; próximos artifacts pertencem à verificação.

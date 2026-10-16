@@ -281,6 +281,7 @@ Use Git Bash no Windows e inclua `C:\Program Files\Git\bin` no `PATH`.
 ```bash
 node tests/versioning/run.mjs --local
 node tests/versioning/real-standard-version.mjs
+node tests/versioning/real-standard-bootstrap.mjs
 node tests/versioning/real-jgitver.mjs
 node tests/versioning/real-maven-reactor.mjs
 node tests/versioning/real-jgitver-prefix.mjs
