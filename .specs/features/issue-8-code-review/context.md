@@ -1,6 +1,6 @@
 # Context: entrega integrada LLM, triagem e review
 
-**Gathered:** 2026-10-15. **Status:** Especificação/contexto/design aprovados pelo mantenedor; tasks em revisão. **Spec:** spec.md.
+**Gathered:** 2026-10-15. **Status:** Especificação/contexto/design/tasks aprovados pelo mantenedor; execução sequencial autorizada. **Spec:** spec.md.
 
 ## Feature Boundary
 

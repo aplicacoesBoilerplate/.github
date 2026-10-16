@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-8-code-review/`
-- **Phase / Task**: Tasks; spec/context/design aprovados pelo mantenedor em 2026-10-15; plano escrito para revisão antes de código.
+- **Phase / Task**: Execute; spec/context/design/tasks aprovados pelo mantenedor em 2026-10-15; T1 concluída localmente.
 - **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
-- **In-progress**: Nove tarefas coesas: política, coleta, resultado, adaptação central, patch, publicação, workflow, caller e piloto. Execução sequencial pelo principal; testes relevantes e documentação extensa adiada. Nenhuma implementação #8 nesta etapa.
-- **Next step**: Revisão escrita das tasks; após aprovação executar T1 na mesma branch/worktree com teste contratual e commit local.
-- **Blockers**: Gate TLC de revisão do plano antes de execução. Piloto real continua exigindo credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global. Aprovação do design foi explicitamente confirmada, não está pendente.
-- **Uncommitted files**: Plano e registro da aprovação até o commit desta etapa; demais worktrees preservados.
+- **In-progress**: Política/config fechada e índice do diff implementados. Full em Node 22.23.3 passou com 146 testes, nenhuma falha/skip; sintaxe verde. T1 sem uso de credenciais ou escrita externa; triagem/central legadas preservadas.
+- **Next step**: Executar T2: coleta confiável de PR, SHAs e prova de handoff pela API, com testes relevantes e commit local.
+- **Blockers**: Nenhum para implementação local já autorizada. Piloto real exige provisionamento de credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global.
+- **Uncommitted files**: T1 e registros de aprovação/progresso até seu commit atômico; demais worktrees preservados.
 - **Branch**: `feature/issue-8-code-review`

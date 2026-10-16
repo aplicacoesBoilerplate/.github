@@ -3,7 +3,7 @@
 **Goal:** Entregar review pela central e homologar #9/#7/#8 juntas no consumidor privado, sem configurações particulares na central.
 **Architecture:** caller confiável → coleta → central LLM → checks isolados → publicação recuperável. Triagem aciona review por dispatch de novo run após persistência da sessão.
 **Tech Stack:** Node 22.23.3, ESM/node:test, Git, Ajv e dependências fixadas existentes; GitHub Actions e container por digest do consumidor.
-**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** Draft para revisão do plano escrito.
+**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1 concluída localmente, T2 é a próxima tarefa.
 
 ## Execution Protocol
 
@@ -80,9 +80,9 @@ Transição Phase 2 → Phase 3: T6 → T7
 **Requirement:** REV-05, REV-07, REV-11, REV-16, REV-19
 **Interfaces:** `validateReviewConfig(config)` → policy; `classifyPull(pr, config)` → review-only/correction/skip-correction; `buildDiffIndex(diff)` → arquivos e linhas adicionadas válidas.
 **Done when:**
-- [ ] Config inválida/paths inseguros recusados; integração e complementar nunca autorizam correção.
-- [ ] Diff completo indexa linhas RIGHT adicionadas; arquivo/linha fora do índice não é válido.
-- [ ] Limites textuais/arquivos e formato incompleto são distinguíveis de diff vazio válido.
+- [x] Config inválida/paths inseguros recusados; integração e complementar nunca autorizam correção.
+- [x] Diff completo indexa linhas RIGHT adicionadas; arquivo/linha fora do índice não é válido.
+- [x] Limites textuais/arquivos e formato incompleto são distinguíveis de diff vazio válido.
 **Tests:** unit; config e linhas exatas, integração/feature/complementar, limites e diff inválido.
 **Gate:** Quick
 **Commit:** `feat(review): validate review policy and diff references refs #8`
@@ -269,4 +269,4 @@ Transição Phase 2 → Phase 3: T6 → T7
 
 REV-01/02/03/05/06: T1/T2/T3/T4/T8; REV-04: T4/T7; REV-07/08: T1/T3/T4; REV-09/10: T3/T6; REV-11/12: T1/T5; REV-13: T5/T7; REV-14/15/16: T1/T5/T6/T7; REV-17/18/19/20/21: T2/T4/T6/T7/T8; REV-22/23: T9; REV-24/25/26: T2/T3/T4/T5/T6/T7/T8. Todos os 26 requisitos mapeados; nenhum marcado Verified antes de evidência.
 
-Plano escrito para aprovação do mantenedor antes do primeiro código. Método de execução já escolhido: agente principal, sequencial e commits locais; não perguntar novamente por paralelização.
+Plano escrito aprovado pelo mantenedor em 2026-10-15. Método de execução já escolhido: agente principal, sequencial e commits locais; não perguntar novamente por paralelização.

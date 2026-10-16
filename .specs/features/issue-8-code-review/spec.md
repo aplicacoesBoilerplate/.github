@@ -1,6 +1,6 @@
 # Code review reutilizável Specification
 
-**Status:** Especificação e design aprovados pelo mantenedor em 2026-10-15; tasks em revisão. **Issue:** #8. **Data:** 2026-10-15.
+**Status:** Especificação/design/tasks aprovados em 2026-10-15; implementação em andamento. **Issue:** #8. **Data:** 2026-10-15.
 **Base local:** #9 → #7 → #8. O OpenSpec `pr-code-review-mvp` permanece histórico; esta proposta reconcilia seu contrato com a implementação da central e da triagem.
 
 ## Problem Statement
@@ -130,21 +130,21 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-02 | Confiança | Specify | Pending review |
 | REV-03 | Configuração | Specify | Pending review |
 | REV-04 | Central | Specify | Pending review |
-| REV-05 | Limites | Specify | Pending review |
+| REV-05 | Limites | Execute | Índice/limites T1 validados; coleta/inconclusivo integrados pendentes |
 | REV-06 | Proveniência | Specify | Pending review |
-| REV-07 | Achados | Specify | Pending review |
+| REV-07 | Achados | Execute | Índice de linhas T1 validado; validação de achados T3 pendente |
 | REV-08 | Recusa | Specify | Pending review |
 | REV-09 | Publicação | Specify | Pending review |
 | REV-10 | Humano/Sonar | Specify | Pending review |
-| REV-11 | Escopo do patch | Specify | Pending review |
+| REV-11 | Escopo do patch | Execute | Config/política T1 validadas; aplicação T5 pendente |
 | REV-12 | Preparação | Specify | Pending review |
 | REV-13 | Checks | Specify | Pending review |
 | REV-14 | PR complementar | Specify | Pending review |
 | REV-15 | Falha dos checks | Specify | Pending review |
-| REV-16 | Integração | Specify | Pending review |
+| REV-16 | Integração | Execute | Classificação T1 validada; publicação T6 pendente |
 | REV-17 | Encadeamento | Specify | Pending review |
 | REV-18 | Idempotência | Specify | Pending review |
-| REV-19 | Recursão | Specify | Pending review |
+| REV-19 | Recursão | Execute | Origem review não corrigível em T1; prova API/handoff T2/T8 pendente |
 | REV-20 | Concorrência | Specify | Pending review |
 | REV-21 | Caller | Specify | Pending review |
 | REV-22 | Piloto conjunto | Specify | Pending review |
@@ -153,7 +153,7 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-25 | Recuperação | Specify | Pending review |
 | REV-26 | Falhas | Specify | Pending review |
 
-**Coverage:** 26 requisitos aprovados, em design e ainda sem implementação da #8. Os estados Pending review da tabela registram a rodada original; a aprovação desta revisão os promove a In Design, não a Verified.
+**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1 implementada e validada localmente; tarefas restantes ainda pendentes. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
 
 ## Success Criteria
 
