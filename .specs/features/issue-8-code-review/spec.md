@@ -126,10 +126,10 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| REV-01 | Origem | Execute | Bootstrap/coleta T2 validados localmente; caller/runner T7/T8 pendentes |
+| REV-01 | Origem | Execute | Bootstrap/coleta T2 e workflow/runner T7 validados localmente; caller T8 pendente |
 | REV-02 | Confiança | Execute | Guards e handoff API T2 validados; ligação com auth T4 pendente |
 | REV-03 | Configuração | Execute | SHA default/config e fonte separados em T2; integração T4 pendente |
-| REV-04 | Central | Execute | Perfil review e modelo/esforço/template do caller T4 validados localmente |
+| REV-04 | Central | Execute | T4/T7 propagam modelo/esforço/prompt e consomem v3 no workflow de domínio |
 | REV-05 | Limites | Execute | Índice/limites T1 validados; coleta/inconclusivo integrados pendentes |
 | REV-06 | Proveniência | Execute | Snapshot T2, envelope v3 T3 e orquestração T4 validados; caller pendente |
 | REV-07 | Achados | Execute | Índice T1 e achados vinculados ao diff T3 validados; inferência pendente |
@@ -138,22 +138,22 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-10 | Humano/Sonar | Execute | T6 só comenta/cria draft/solicita revisão; sem aprovação, merge, fechamento, Project ou Sonar |
 | REV-11 | Escopo do patch | Execute | Interseção diff/allowlist e paths protegidos T5 validados com Git real |
 | REV-12 | Preparação | Execute | T5 prepara filho do head exato; fonte intacta, sem hooks/credenciais |
-| REV-13 | Checks | Specify | Pending review |
+| REV-13 | Checks | Execute | T7 compartilha executor de container isolado; args/env/mount e reconstrução após mutação validados; Docker real pendente |
 | REV-14 | PR complementar | Execute | T5/T6 validam pai/árvore e draft complementar com base no head_ref original; simulação, não publicação real |
-| REV-15 | Falha dos checks | Execute | T6 mantém draft-checks-failed explícito; execução isolada de checks T7 pendente |
+| REV-15 | Falha dos checks | Execute | T6/T7 mantêm draft-checks-failed após checks simulados falhos, sem sucesso artificial |
 | REV-16 | Integração | Execute | T1/T5/T6 recusam correções fora da rota corrigível e publicam somente comentário nas integrações |
 | REV-17 | Encadeamento | Execute | Prova API/run/job/commit T2 validada; dispatch T8 pendente |
 | REV-18 | Idempotência | Execute | T6 recupera recursos próprios íntegros e recusa proposta divergente na mesma identidade, sem duplicar |
 | REV-19 | Recursão | Execute | T1/T2/T6 comprovam origem e limitam complementares a comentário; encadeamento T8 pendente |
-| REV-20 | Concorrência | Execute | Central T4 reusa fila/ciclo de sessão; domínio/caller/piloto pendentes |
+| REV-20 | Concorrência | Execute | Central T4 e domínio T7 usam filas distintas sem cancelar; caller/piloto pendentes |
 | REV-21 | Caller | Specify | Pending review |
 | REV-22 | Piloto conjunto | Specify | Pending review |
 | REV-23 | Piloto transferido | Specify | Pending review |
 | REV-24 | Entrada antiga | Execute | T2/T5/T6 recusam PR/config/head/base/entrada alterados antes das escritas |
 | REV-25 | Recuperação | Execute | T6 simula timeout após escrita e preserva recursos humanos; dispatch T8 pendente |
-| REV-26 | Falhas | Execute | T6 sanitiza falhas de API/escrita; integração de upload/cleanup T7 pendente |
+| REV-26 | Falhas | Execute | T6/T7 sanitizam API/escrita/runner e recusam sucesso após falhas dos jobs/upload/cleanup |
 
-**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T6 implementadas e validadas localmente; tarefas restantes ainda pendentes. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
+**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T7 implementadas e validadas localmente; tarefas restantes ainda pendentes. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
 
 ## Success Criteria
 

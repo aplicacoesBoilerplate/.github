@@ -2,6 +2,36 @@
 
 Spec, design e tarefas aprovados em 2026-10-15. Execução pelo principal, sequencial, na branch/worktree da #8 empilhada sobre #7/#9. Nenhuma autorização de uso de auth pessoal, push ou ativação externa foi inferida.
 
+## T7: workflow, runner e CI
+
+Assumptions: caller usa dispatch na default, como aprovado. Config e código são checkouts separados; produto só executa no container sem secrets. Resultado/checks são artefatos limitados, consumidos com identidade independente. Nenhuma fixture comprova Docker ou GitHub Actions reais.
+
+Files: .github/workflows/{pr-code-review,ci}.yml, scripts/review/{workflow,run,collect}.mjs, scripts/shared/verify-product.mjs, adapter triage/verify-product.mjs, scripts/llm/{package.json,check.mjs,lint-workflow.mjs}, tests/review/workflow.test.mjs e fixture review-api.mjs, mais progresso TLC.
+
+Success: cinco jobs separados; modelo/prompt propagados; snapshot e pacote v3 revalidados; somente proposta reconstruída chega ao publisher; falhas de etapas e limpeza impedem sucesso. CI mantém descoberta antiga e acrescenta review/shared/YAML. Nenhuma fila de sessão duplicada no pai.
+
+RED: módulo workflow ausente antes da implementação. O runner reproduziu REVIEW_METADATA_UNAVAILABLE porque a fixture antiga só reconhecia author/operator; o simulador passou a aceitar explicitamente o autor do PR configurado e o operador, sem modificar assertions nem os guards reais. GREEN: Full Node 22.23.3 com 184 pass/0 fail/0 skipped; npm check, sintaxe dos testes e actionlint Windows sobre os sete YAML passaram. Assertions adicionais de gates/continue-on-error confirmadas também em Node 22.23.3. Sem SPEC_DEVIATION.
+
+| Critério / AC | Evidência/assertion | Resultado esperado |
+| --- | --- | --- |
+| Central/configuração do consumidor | `tests/review/workflow.test.mjs:65`: equal received.model consumer-review/effort high e invocation.context_json '{}' | REV-04, nenhuma configuração central de modelo |
+| Isolamento dos checks | `:53–59`: docker/network none/read-only/cap-drop, um mount sem socket/automação e deepEqual chaves env fechadas | REV-13; args inspecionados, Docker real ainda pendente |
+| Fonte e árvore publicadas | `:66–71`: verification failed, temporário ENOENT, draft-checks-failed e deepEqual mudanças fixed/base64, fonte new intacta | REV-13/15, produto que grava poison não fornece árvore ao publisher |
+| Identidade/relatório/limpeza | `:76–84`: rejects INVALID_REVIEW_INPUT/STALE_REVIEW_INPUT/INVALID_RESULT/INVALID_REVIEW_VERIFICATION/CHECK_CLEANUP_FAILED e writes vazio; imagem mutável/config fora do contrato recusadas | REV-06/24/26 |
+| Status final | `:86–87`: draft normal, ARTIFACT_FAILED para failure em collect/llm/checks/publish/cleanup | REV-26, upload/cleanup falhos não viram sucesso |
+| Segregação e filas | `:92–105`: jobs exatos, review queue max sem cancelamento, llm sem concorrência duplicada, secrets explícitos e ausentes em checks/publisher conforme papel, condições de sucesso antes de publicar | REV-01/20/26 |
+| Artefatos e CI | `:106–113`: upload if-no-files-found error/retention 1/overwrite false, checkout sem persistência e descoberta llm/triage/review/shared/YAML | REV-26 e Done-when CI T7 |
+| Runner real | `:131–139`: saída correction/source_sha limitada sem texto/token, snapshot PR 9, cleanup ENOENT, evento forjado UNTRUSTED_CONTEXT e finish ARTIFACT_FAILED | REV-01/26 com API simulada |
+
+| Testes/assertions | Mapeamento reverso | Manter |
+| --- | --- | --- |
+| workflow:53–71 | REV-04/13/14/15 e árvore independente dos checks | Sim |
+| workflow:76–87 | REV-06/24/26 | Sim |
+| workflow:92–113 | REV-01/20/26 e discovery T7 | Sim |
+| workflow:131–139 | REV-01/26 e runner/cleanup T7 | Sim |
+
+Adequação: quatro cenários coesos exercitam o fluxo e falhas relevantes, com assertions sobre dados e efeitos; testes legados preservados. Nenhum teste de prosa, nenhuma meta quantitativa. TLC e cicd orientaram gates e segregação. T7 completa localmente; caller/dispatch/Verifier T8 e homologação real T9 permanecem.
+
 ## T6: publicação recuperável
 
 Assumptions: recollect reconstrói snapshot confiável pela API/Git antes das escritas. O writer é do consumidor e distinto do reviewer; para correções, sua identidade deve estar explicitamente configurada para que o coletor consiga provar a origem do complementar. Nenhuma chamada real é autorizada nesta tarefa.

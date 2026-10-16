@@ -3,7 +3,7 @@
 **Goal:** Entregar review pela central e homologar #9/#7/#8 juntas no consumidor privado, sem configurações particulares na central.
 **Architecture:** caller confiável → coleta → central LLM → checks isolados → publicação recuperável. Triagem aciona review por dispatch de novo run após persistência da sessão.
 **Tech Stack:** Node 22.23.3, ESM/node:test, Git, Ajv e dependências fixadas existentes; GitHub Actions e container por digest do consumidor.
-**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T6 concluídas localmente; T7 é a próxima tarefa.
+**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T7 concluídas localmente; T8 é a próxima tarefa.
 
 ## Execution Protocol
 
@@ -182,9 +182,9 @@ Transição Phase 2 → Phase 3: T6 → T7
 **Requirement:** REV-01, REV-04, REV-13, REV-15, REV-20, REV-26
 **Interfaces:** workflow_call com config_path, PR/handoff, modalidade/secrets e verification_image por digest; outputs status/PR/SHA/artefato limitados.
 **Done when:**
-- [ ] Jobs separam metadata, sessão e escrita; checks usam container sem rede/secrets/socket/mounts do central.
-- [ ] Serialização por PR e chave de sessão compartilhada não se cancelam nem criam deadlock pai/filho.
-- [ ] Upload/cleanup/publicação falhos impedem sucesso; CI descobre testes/scripts/YAML novos sem quebrar descoberta antiga.
+- [x] Jobs separam metadata, sessão e escrita; checks usam container sem rede/secrets/socket/mounts do central.
+- [x] Serialização por PR e chave de sessão compartilhada não se cancelam nem criam deadlock pai/filho.
+- [x] Upload/cleanup/publicação falhos impedem sucesso; CI descobre testes/scripts/YAML novos sem quebrar descoberta antiga.
 **Tests:** integration/contract; runner real com serviços simulados chega a comentário/complementar; assertions de env/outputs/status e falhas de cada fronteira, sem execução de produto em publisher.
 **Gate:** Full + Build
 **Commit:** `feat(review): expose reusable workflow and CI gates refs #8`

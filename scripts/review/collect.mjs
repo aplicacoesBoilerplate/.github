@@ -13,6 +13,12 @@ const sha = /^[a-f0-9]{40}$/;
 const login = /^[a-zA-Z0-9][a-zA-Z0-9-]*(?:\[bot\])?$/;
 const fail = code => { throw contractError(code); };
 const digest = value => createHash('sha256').update(value).digest('hex');
+export function reviewFingerprint(snapshot, configBytes) {
+  const { automation_origin, ...pull } = snapshot.pull;
+  return digest(JSON.stringify({ repository: snapshot.repository, default_branch: snapshot.default_branch,
+    config_source_sha: snapshot.config_source_sha, pull, config_sha256: digest(configBytes),
+    merge_base_sha: snapshot.merge_base_sha, diff: snapshot.diff, diff_index: snapshot.diff_index, handoff: snapshot.handoff }));
+}
 const knownCodes = new Set(['UNTRUSTED_CONTEXT', 'STALE_REVIEW_INPUT', 'INVALID_REVIEW_CONFIG', 'REVIEW_INCONCLUSIVE']);
 function decodeConfig(bytes) {
   try { return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
@@ -160,7 +166,7 @@ export async function collectReview({ event, configRoot, sourceRoot, inputs }, a
     const latest = await verifyReviewOrigin(event, api);
     if (JSON.stringify(latest) !== JSON.stringify(origin) || checkedHead(configRoot) !== origin.config_source_sha
       || checkedHead(sourceRoot) !== pull.head.sha) fail('STALE_REVIEW_INPUT');
-    const fingerprint = digest(JSON.stringify({ ...origin, config_sha256: digest(configBytes), ...comparison, handoff: provenance.handoff }));
+    const fingerprint = reviewFingerprint({ ...origin, ...comparison, handoff: provenance.handoff }, configBytes);
     const context = { repository: event.repository, pull, source_sha: pull.head.sha, base_sha: pull.base.sha,
       config_source_sha: origin.config_source_sha, merge_base_sha: comparison.merge_base_sha, diff: comparison.diff };
     let context_json = JSON.stringify(context);
