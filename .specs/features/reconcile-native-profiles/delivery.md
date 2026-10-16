@@ -2,9 +2,10 @@
 
 ## Realização
 
-Implementação local concluída; rodada1 independente passou gates e6 mutantes,
-mas exigiu precisão documental e teste real do bootstrap Node (G1). A correção
-local passou2 replays e4 rejeições e aguarda revalidação. O PR12 preserva seu
+Implementação local aprovada na revisão independente rodada2. G1 foi resolvido:
+bootstrap real passou2 replays e4 rejeições; sensor agregado7/7 sem sobreviventes.
+O [relatório independente](validation.md) registra provas e o incidente de isolamento npm.
+O PR12 preserva seu
 fluxo técnico Node e ganha coleta Maven verificável, registro modular e
 separação entre cálculo somente leitura e publicação. Os resultados por tarefa
 estão em [evidence.md](evidence.md); push e CI hospedada serão registrados após

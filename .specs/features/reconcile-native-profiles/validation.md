@@ -1,17 +1,18 @@
 # Validação independente da conciliação
 
-## Validation: FAIL
+## Validation: PASS
 
-Os gates existentes e o sensor passaram. A prontidão técnica permanece bloqueada por uma lacuna de precisão do bootstrap Node: o guia não distingue a candidata nativa 0.0.1 de um bootstrap que realmente altera package.json. A reprodução adicional mostrou comportamento dependente da formatação dos manifests já em 0.0.1. O guard deve ser preservado; documentar o caminho suportado e fixá-lo em teste real resolve a lacuna sem aceitar flags arbitrárias.
+Prontidão técnica aprovada no HEAD b7d2c6b. G1 foi resolvido por documentação explícita do bootstrap0.0.0->0.0.1 e um fixture real de seis cenários, sem alterar os guards de produção. Os gates integrais e seis mutantes da primeira rodada são reutilizados somente para código/testes imutáveis; esta rodada executou diretamente o delta, seus contratos e mais um mutante. A entrega remota/CI hospedada continua etapa operacional seguinte.
 
 - Data: 2026-10-15, America/Sao_Paulo.
 - Verifier: subagente independente, autor diferente do implementador.
-- Range integral revisado: `fcf31e08165156a5938eec7577bbf1be945f365f..bcb145a06dff6bfca0ca460ed094c83bc6a67e44`, 67 arquivos.
+- Range integral da primeira rodada: `fcf31e08165156a5938eec7577bbf1be945f365f..bcb145a06dff6bfca0ca460ed094c83bc6a67e44`, 67 arquivos.
+- Delta revalidado: `bcb145a06dff6bfca0ca460ed094c83bc6a67e44..b7d2c6b31bedd884a4b4cbbbc1a13eb48cdce90b`. Range final: `fcf31e08165156a5938eec7577bbf1be945f365f..b7d2c6b31bedd884a4b4cbbbc1a13eb48cdce90b`.
 - Branch congelada: `codex/reconcile-native-profiles`.
 - Apenas este relatório e lessons geradas pelo script podem mudar na árvore real durante esta verificação. Nenhum código/teste real foi alterado pelo Verifier.
 - REC-06 é entrega operacional subsequente. O veredicto não afirma push, nova CI hospedada, merge, deploy ou homologação dos pilotos.
 
-## Gates executados
+## Gates integrais da primeira rodada, reutilizados
 
 Ambiente: Node 24.19.0; Git Bash primeiro no PATH; Go instalado; JAVA_HOME `C:/Users/gerso/.jdks/corretto-21.0.3`; Java21/Maven3.9.9; Python/PyYAML; actionlint1.7.12.
 
@@ -43,7 +44,7 @@ Integridade dos testes: `git show fcf31e0:tests/versioning/run.mjs` contém 13 f
 | REC-02.2 | Versão divergente, SHA incorreto e qualificador bloqueados | `tests/versioning/jgitver-adapter.mjs:31` assert.throws divergência com Properties completas; `tests/versioning/reconciled-report.mjs:26` quatro propriedades adulteradas rejeitadas; :28 SHA incorreto; :29 SNAPSHOT rejeitado | Coberto |
 | REC-02.3 | Tag anotada no merge, retry sem mover ref | `tests/versioning/annotated-publish.mjs:57` tag===sha e objeto===d*40; :58 Release target===sha; :60 writes idênticos no retry; :63 conflito sem writes | Coberto |
 | REC-02.4 | Quatro módulos versão única, dirty/core-only/rebuild | `tests/versioning/real-maven-reactor.mjs:56` lista dos quatro artifacts; :60 project.version===expectedVersion; :62 referências internas iguais; :65 porcelain; :115 dirty bytes iguais; :150 diff somente Core.java | Coberto |
-| REC-03.1 | Um PR técnico, manifests/lock/changelog nativos, sem Release funcional | `tests/versioning/standard-flow.mjs:142` pending-version-pr; :143 versão1.0.1; :144 tags somentev1.0.0; :149 mesmo PR aberto; `tests/versioning/real-standard-version.mjs:53` três paths exatos, :58-60 replay igual | Coberto no caminho versionado; precisão insuficiente no bootstrap já0.0.1, G1 |
+| REC-03.1 | Um PR técnico, manifests/lock/changelog nativos, sem Release funcional | `tests/versioning/standard-flow.mjs:142` pending-version-pr; :143 versão1.0.1; :144 tags somentev1.0.0; :149 mesmo PR aberto; `tests/versioning/real-standard-version.mjs:53` três paths exatos, :58-60 replay igual; `tests/versioning/real-standard-bootstrap.mjs:53` envelope bootstrap exato e :61-75 arquivos/replay/HEAD/tags | Coberto; G1 resolvido |
 | REC-03.2 | Humano no head atual, cálculo no SHA funcional e tag no merge técnico | `tests/versioning/version-pr.mjs:46` revisor humano aprovado; :56 SHA antigo rejeitado; `tests/versioning/standard-flow.mjs:188-189` published_sha/tagSha===versionMergeSha; `tests/versioning/real-standard-version.mjs:66` origem recalculada1.1.0 | Coberto |
 | REC-03.3 | Bot/dismissed/obsoleto/PR inválido bloqueiam sem escrita | `tests/versioning/version-pr.mjs:47` changes-requested revoga aprovação; :49 dismissed; :51-56 bots/head antigo; :38 metadado/origem; :65 arquivo extra; `tests/versioning/standard-flow.mjs:160-182` negativos e tagSha undefined | Coberto |
 | REC-03.4 | Retry técnico/Release não duplica nem sobrescreve | `tests/versioning/standard-flow.mjs:149` já aberto; :193 already-published; :194 SHA inalterado; :201-209 retry antigo completo permitido, incompleto bloqueado | Coberto |
@@ -76,7 +77,7 @@ Scratch exclusivo: `C:/Users/gerso/AppData/Local/Temp/reconcile-verifier-06099b4
 
 Profundidade aumentada por fronteira de credenciais/integridade: 6 injetados, 6 mortos, zero sobreviventes. Porcelain real era vazio antes do sensor e continuava vazio após todos os ensaios; HEAD permaneceu bcb145a. A remoção recursiva do scratch exclusivo via Remove-Item foi rejeitada pela revisão automática; o diretório descartável permanece no caminho acima. Nenhum pedido de permissão nem tentativa alternativa de apagar foi feito.
 
-## G1: precisão do bootstrap Node e cobertura real
+## G1 resolvido: histórico da precisão do bootstrap Node
 
 Prioridade: P2. Relacionado a REC-03.1 e edge bootstrap. `docs/versioning-standard-version.md:27` exige candidata nativa0.0.1; :32 apenas diz que first-release não incrementa automaticamente. Não explicita que firstRelease não é suportado pelo parser, nem que o PR técnico exige uma alteração efetiva de package.json. `scripts/versioning/version-report.mjs:122` depende de linhas de bump; `scripts/versioning/verify-version-files.mjs:26` rejeita package.json sem alteração; `scripts/versioning/version-bundle.mjs:86` exige esse arquivo no bundle.
 
@@ -91,9 +92,9 @@ Reprodução adicional real, standard-version9.5.0, sem tags, commit `fix: boots
 | 0.0.1 formatados com JSON.stringify(data,null,2)+newline | releaseAs0.0.1 | Relatório0.0.1, geração nativa sem modificar package.json; captura falha `PR de versionamento não altera o package.json selecionado` |
 | 0.0.0 ou0.0.1 | firstRelease:true | Nativo `skip version bump on first release`; parser bloqueia `standard-version não informou a versão calculada` |
 
-Script de reprodução preservado no scratch como `bootstrap-check.mjs`; caso formatado em `bootstrap3-one-releaseAs-formatted`. Módulos importados da árvore real são somente lidos. O teste real comprometido `tests/versioning/real-standard-version.mjs:19` começa1.0.0 com tag e não cobre esse caminho; o unitário `tests/versioning/reconciled-report.mjs:20` cobre apenas rejeição de candidata incorreta.
+Script de reprodução preservado no scratch como `bootstrap-check.mjs`; caso formatado em `bootstrap3-one-releaseAs-formatted`. Módulos importados da árvore real são somente lidos. Na primeira rodada, `tests/versioning/real-standard-version.mjs:19` começava1.0.0 com tag e não cobria esse caminho; o unitário `tests/versioning/reconciled-report.mjs:20` cobria apenas rejeição de candidata incorreta. O novo fixture fecha essa lacuna sem modificar os testes anteriores.
 
-Fix proposto: declarar no guia o bootstrap suportado0.0.0->0.0.1, exigência de bump reportado e package.json efetivamente alterado; declarar firstRelease incompatível, sem prometer same-version bootstrap baseado em reformat. Acrescentar prova real positiva0.0.0 e negativas firstRelease e same-version sem diff, preservando os guards de paths/bundle e a exigência0.0.1. Não é necessário aceitar qualquer flag ou diminuir o guard de integridade.
+Correção aplicada em T13: `docs/versioning-standard-version.md:28` exige manifests0.0.0, candidata0.0.1 e alteração efetiva; :38 declara firstRelease não suportado; :40-44 explica default já0.0.1 e same-version/reformat. `spec.md:30` delimita o mesmo pressuposto. O novo teste real cobre geração/replay e as rejeições, preservando os guards de paths/bundle e a exigência0.0.1. Nenhuma flag arbitrária foi aceita e nenhum guard foi reduzido.
 
 ## Incidente do harness de bootstrap
 
@@ -103,10 +104,35 @@ Efeito confirmado: instalação de standard-version9.5.0 e dependências em `C:/
 
 O harness foi corrigido com package.json explícito em bootstrap-tools e prefixo local; o último ensaio usou `npm install --prefix "$1" --no-save --ignore-scripts --no-audit standard-version@9.5.0`, passando o caminho absoluto de bootstrap-tools em argv. Antes do último ensaio, npm prefix e localização de node_modules/standard-version/bin/cli.js foram confirmados dentro do scratch. Essa falha do harness não é contada como regressão do código nem como sobrevivente do sensor.
 
+## Revalidação independente do delta T13
+
+Executado diretamente pelo Verifier no HEAD congelado b7d2c6b:
+
+| Gate | Resultado próprio desta rodada |
+| --- | --- |
+| `node tests/versioning/real-standard-bootstrap.mjs` | exit0; duas gerações/replays e quatro rejeições; nenhum skip |
+| `node tests/versioning/native-workflows.mjs` | exit0; fronteira read/write e outputs preservados |
+| `node tests/versioning/workflow-contract.mjs` | exit0;64 assertions |
+| actionlint central, mesmo filtro específico | exit0 |
+| Python/PyYAML central/callers |12 YAML parseados |
+| `node --check tests/versioning/real-standard-bootstrap.mjs` | exit0 |
+| TLC validate_spec / validate_tasks | zero erros; spec zero avisos; tasks cinco avisos documentais/granularidade/diagrama, T13 depende de T12 conforme diagrama |
+| `git diff --check bcb145a..HEAD` | exit0 |
+
+O novo fixture usa package.json próprio, `npm --prefix` absoluto e `--package-lock=false`; `tests/versioning/real-standard-bootstrap.mjs:19` compara realpath do prefixo com tools, :23 confina o binário e :24 exige9.5.0. Esse caminho foi executado com sucesso tanto na prova normal quanto no sensor. Não houve novo escape npm nesta rodada. O incidente anterior continua registrado acima.
+
+Resultados ancorados: :53-54 exige exatamente candidata0.0.1/base0.0.0/tagv0.0.1/patch/SHA atual; :61 e :65 exigem os três arquivos; :67 compara bytes nativos e replay; :68-71 verificam package, lock raiz, lock.packages[''] e changelog0.0.1; :74-75 exigem HEAD intacto e zero tags. Os dois casos firstRelease e default já0.0.1 exigem os diagnósticos específicos em :46-47, manifests byte-idênticos e porcelain vazio em :48-50. Same-version usa manifests formatados e exige bytes de package inalterados e rejeição de captura em :57-58. O stack trace do subprocesso verify-version-files é esperado nesse negativo, seguido de exit0 do fixture.
+
+CI nova foi inspecionada: `.github/workflows/ci.yml:80-81` executa o fixture depois do real-standard-version, no job que já prepara Node24. Docs comum e caller Node incluem o comando/recorte. Nenhuma assertion anterior foi removida ou enfraquecida. A suite local continua27 fixtures; o novo fixture é um gate nativo standalone, não um28º local.
+
+Reuso explícito: `git diff --name-only bcb145a..b7d2c6b -- scripts/versioning tests/versioning` devolveu somente o novo real-standard-bootstrap.mjs. A comparação de scripts/versioning não teve diff. Portanto os27 fixtures, seis gates reais e sensor6/6 registrados na primeira rodada permanecem evidência do código idêntico; não foram alegados como executados novamente. O snapshot integral da rodada1 está em `validation-round-1.md`.
+
+Sensor adicional proporcional: cópia exclusiva de scripts e novo fixture em `C:/Users/gerso/AppData/Local/Temp/reconcile-bootstrap-sensor-dbcdaaf82c144d518c10275866fb3343`. Mutante M7 substituiu apenas a condição bootstrap de `scripts/versioning/version-report.mjs:109` por false, permitindo candidata0.0.2 sem tag. O novo fixture matou o mutante em `tests/versioning/real-standard-bootstrap.mjs:46`, Missing expected exception /somente0.0.1/, exit1. Os dois cenários positivos anteriores chegaram a executar; a falha ocorre no cenário default-already-one. Resultado:1/1 morto nesta rodada; agregado7/7, zero sobreviventes. Porcelain real vazio antes/depois e HEAD b7d2c6b intacto. O scratch adicional fica preservado, sem repetir a operação de limpeza recusada da rodada1.
+
 ## Prontidão e próximos passos
 
-T1-T12 estão marcadas concluídas, mas G1 impede fechar a revisão independente. Nenhum bug de cálculo/publicação nos caminhos documentados com versão incrementada foi reproduzido; o bloqueio é precisão/cobertura do bootstrap. Corrigir G1, repetir sua prova e revalidar o range final antes de declarar prontidão técnica.
+T1-T13 estão marcadas concluídas. G1 está resolvido com precisão documental e prova real discriminante. Nenhuma lacuna técnica permanece nesta revisão. REC-01/02/03/04/05 estão verificados; REC-06 mantém a distinção entre prontidão técnica aprovada e entrega operacional ainda pendente.
 
 Após aprovação técnica, o autor deve reler o head remoto e enviar apenas para `refs/heads/codex/versioning-profiles` se continuar ancestral, sem force ou merge. O remoto observado nesta revisão continua fcf31e0. Push e CI da nova revisão continuam sem evidência. Pilotos, Maven deploy/npm publish, registry e consumidor externo permanecem fora do escopo. A análise PR13 documenta os contratos e conflitos; não certifica Changesets/Turbo.
 
-O fechamento determinístico `validate_state.py reconcile-native-profiles` retornou exit1 porque o veredicto é FAIL, como esperado. Duas lições candidatas foram registradas via script: L-008 para G1 e L-009 para confinamento das instalações npm do harness. O diff final do Verifier contém somente este relatório e os dois arquivos de lessons gerenciados pelo script. HEAD e código/testes reais permanecem congelados.
+Na rodada1, `validate_state.py reconcile-native-profiles` retornou exit1 pelo veredicto negativo, e L-008/L-009 foram registradas via script. Nesta rodada, o fechamento determinístico foi executado e retornou exit0, zero erros, com o relatório atual aprovado. Esta rodada não gerou novos gaps ou sobreviventes, portanto não acrescenta lessons. O diff do Verifier desta rodada contém somente validation.md. HEAD e código/testes reais permanecem congelados.
