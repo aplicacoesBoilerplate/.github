@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { normalizeStandardVersionReport } from '../../scripts/versioning/version-report.mjs';
+import {captureVersionBundle,applyVersionBundle} from '../../scripts/versioning/version-bundle.mjs';
 
 const cwd = mkdtempSync(join(tmpdir(), 'real-standard-version-'));
 const git = (...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
@@ -44,6 +45,18 @@ try {
   assert.match(readFileSync(join(cwd, 'CHANGELOG.md'), 'utf8'), /1\.1\.0/);
   assert.equal(git('rev-parse', 'HEAD'), sha, 'O adaptador não deve commitar');
   assert.equal(git('tag', '--list'), 'v1.0.0', 'O adaptador não deve criar tag');
+  const nativePackage=readFileSync(join(cwd,'package.json'),'utf8');
+  const nativeLock=readFileSync(join(cwd,'package-lock.json'),'utf8');
+  const nativeChangelog=readFileSync(join(cwd,'CHANGELOG.md'),'utf8');
+  const bundle=captureVersionBundle({repository:cwd,projectPath:'.',report});
+  assert.deepEqual(bundle.files.map(f=>f.path).sort(),['CHANGELOG.md','package-lock.json','package.json']);
+  writeFileSync(join(cwd,'package.json'),git('show',sha+':package.json')+'\n');
+  writeFileSync(join(cwd,'package-lock.json'),git('show',sha+':package-lock.json')+'\n');
+  rmSync(join(cwd,'CHANGELOG.md'));
+  applyVersionBundle({repository:cwd,projectPath:'.',report,bundle});
+  assert.equal(readFileSync(join(cwd,'package.json'),'utf8'),nativePackage);
+  assert.equal(readFileSync(join(cwd,'package-lock.json'),'utf8'),nativeLock);
+  assert.equal(readFileSync(join(cwd,'CHANGELOG.md'),'utf8'),nativeChangelog);
   console.log('standard-version real: dois PRs, um bump 1.1.0, changelog sem commit/tag');
 } finally {
   rmSync(cwd, { recursive: true, force: true });

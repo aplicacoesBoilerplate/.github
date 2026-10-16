@@ -128,7 +128,7 @@ T11 -> T12
 **Reuses**: PR12 e componentes locais validados, conforme matriz design.
 **Tools**: TLC, CI/CD, Entregas, Git/Node/Java/Maven e docs oficiais.
 **Done when**:
-- [ ] Bundle valida conteúdo/hash/path e gera/aplica manifests sem execução nativa no escritor; adulteração bloqueia.
+- [x] Bundle valida conteúdo/hash/path e gera/aplica manifests sem execução nativa no escritor; adulteração bloqueia.
 **Tests**: integration
 **Gate**: Full
 
