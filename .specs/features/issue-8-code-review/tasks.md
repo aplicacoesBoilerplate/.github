@@ -3,7 +3,7 @@
 **Goal:** Entregar review pela central e homologar #9/#7/#8 juntas no consumidor privado, sem configurações particulares na central.
 **Architecture:** caller confiável → coleta → central LLM → checks isolados → publicação recuperável. Triagem aciona review por dispatch de novo run após persistência da sessão.
 **Tech Stack:** Node 22.23.3, ESM/node:test, Git, Ajv e dependências fixadas existentes; GitHub Actions e container por digest do consumidor.
-**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1 concluída localmente, T2 é a próxima tarefa.
+**Spec:** spec.md. **Design:** design.md, aprovado em 2026-10-15. **Status:** In Progress; plano aprovado e implementação sequencial autorizada em 2026-10-15. T1–T2 concluídas localmente; T3 é a próxima tarefa.
 
 ## Execution Protocol
 
@@ -95,11 +95,11 @@ Transição Phase 2 → Phase 3: T6 → T7
 **Depends on:** T1
 **Reuses:** Transporte limitado de leitura, padrão de coleta da triagem e ambiente Git fechado.
 **Requirement:** REV-01, REV-02, REV-03, REV-05, REV-06, REV-17, REV-19, REV-24, REV-26
-**Interfaces:** `collectReview({event, configRoot, inputs}, api)` → snapshot/fingerprint ou inconclusivo; head/base/merge-base/config separados.
+**Interfaces:** `verifyReviewOrigin(event, api)` → metadata de bootstrap; `collectReview({event, configRoot, sourceRoot, inputs}, api)` → snapshot/fingerprint ou inconclusivo; head/base/merge-base/config separados. sourceRoot contém os objetos Git da comparação, sem scripts de produto executados.
 **Done when:**
-- [ ] Privacidade, origem, operador/autoria, default, PR e SHAs são consultados, não derivados do body.
-- [ ] Handoff de triagem confere run/attempt, publicação concluída e PR próprio; marker/bot/número isolados não autorizam LLM.
-- [ ] Coleta completa respeita limites; mudanças durante a coleta são detectadas; nenhuma credencial LLM necessária.
+- [x] Privacidade, origem, operador/autoria, default, PR e SHAs são consultados, não derivados do body.
+- [x] Handoff de triagem confere run/attempt, publicação concluída e PR próprio; marker/bot/número isolados não autorizam LLM.
+- [x] Coleta completa respeita limites; mudanças durante a coleta são detectadas; nenhuma credencial LLM necessária.
 **Tests:** integration; snapshot exato, API incompleta/403, fork/público/identidade não autorizada, handoff forjado e PR antigo recusados antes de auth.
 **Gate:** Full
 **Commit:** `feat(review): collect trusted pull request context refs #8`

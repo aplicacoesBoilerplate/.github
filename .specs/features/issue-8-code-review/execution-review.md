@@ -14,6 +14,40 @@ Spec, design e tarefas aprovados em 2026-10-15. Execução pelo principal, seque
 
 Ruling: ledger e evidências usam a estrutura TLC existente, não uma segunda árvore de documentação superpowers. Preserva a fonte única aprovada e a preferência do mantenedor; custo: ferramentas de extração auxiliares não são necessárias.
 
+## T2: coleta confiável de PR e handoff
+
+Assumptions: sourceRoot contém objetos Git de head/base, conferidos pelos SHAs; configRoot é checkout separado da default. T7 fará os checkouts e lerá o evento real. O coletor não recebe sessão LLM nem executa produto. Arquivos: review/collect.mjs, api.mjs, extensão opcional triage_handoff da policy/schema e collect.test.mjs.
+
+RED: módulos ainda ausentes; casos adicionais reproduziram aceitação ausente de complementar próprio e classificação errada de JSON inválido como erro de API. GREEN: Full em Node 22.23.3 passou, 153 pass/0 fail/0 skipped; syntax de collect/api/policy e gates estruturais passaram. API simulada; Git, conteúdo, comparação e hashes reais locais. Nenhuma credencial pessoal ou escrita remota.
+
+Ruling: parâmetros adicionais sourceRoot e triage_handoff concretizam a origem aprovada; paths de workflow/config e nome do job de conclusão pertencem ao consumidor, sem hardcode do piloto. Custo: consumidor configura esses três valores para habilitar handoff automático.
+
+Ruling: a tentativa é vinculada pelo endpoint `/actions/runs/{id}/attempts/{attempt}/jobs` e pelo run consultado; não exigir run_attempt em cada objeto job, pois esse campo não faz parte do contrato documentado. Mesmo teste de sucesso mantido, fixture ganhou caso sem esse campo; novas assertions de recusa não foram enfraquecidas.
+
+Ruling: selo de body detecta edição, não é assinatura. Handoff também exige autor id/login configurados, run/path/config SHA, job finish concluído, recolhe a issue pela política da triagem e cruza fingerprint/commit/pai/base. Complementar próprio usa protocolo review:v1 e ancestralidade/PR original, sem virar um novo pedido de correção. Custo: edição humana, mudança de default ou metadados após a triagem requer nova execução/intervenção, não uma autorização silenciosa.
+
+| Critério / AC | Evidência/assertion | Resultado |
+| --- | --- | --- |
+| Snapshot, diff e SHAs separados | `tests/review/collect.test.mjs:82–87`: repository/PR/head/base/config/merge-base exatos, added_lines [1], body API, source config old e fingerprint muda com body | REV-01/03/06, Git sem produto |
+| Origem e autorização | `:93–100`: rejects UNTRUSTED_CONTEXT para evento/ref/workflow/PR/fork/público e autor/operador sem escrita | REV-02 antes de LLM |
+| Entrada antiga | `:101–104`: rejects STALE_REVIEW_INPUT para PR fechado/default/head alterados | REV-24 |
+| Limites/inconclusivo e erros | `:109–118`: needs-human/body vazio, REVIEW_INCONCLUSIVE e erro API sem texto privado; `:125`: INVALID_REVIEW_CONFIG exato para JSON inválido | REV-05/26 sem revisão parcial falsa |
+| Handoff próprio | `:131–137`: origin triage/route correction/source_run_id 100; falha de job/path/edição/autoria/fingerprint recusa UNTRUSTED_CONTEXT | REV-17/19 com evidência cruzada |
+| Complementar não recursivo | `:151–152`: skip-correction para origem review comprovada, pai divergente recusado | REV-19 |
+| Transporte e paginação | `:161–166`: 101 jobs, segunda página de attempt correta, endpoint/auth/redirect e 403 sanitizado | REV-02/26, ausência distinta de indisponibilidade |
+
+| Testes/assertions | Mapeamento reverso | Manter |
+| --- | --- | --- |
+| collect:82–87 | REV-01/03/06 e fingerprint | Sim |
+| collect:93–104 | REV-02/24 | Sim |
+| collect:109–125 | REV-03/05/26 | Sim |
+| collect:131–152 | REV-17/19 | Sim |
+| collect:161–166 | REV-02/26 e adapter de leitura | Sim |
+
+Adequação: asserts medem dados, estado e erros reais, não apenas chamadas. Sem testes de prosa/pisos numéricos; legados preservados, constituição e AD-003/004 seguidos. T2 completa localmente; caller/dispatch e autenticação real permanecem T4/T8/T9.
+
+Fontes técnicas, Context7 indisponível e fallback oficial: [workflow jobs](https://docs.github.com/en/rest/actions/workflow-jobs#list-jobs-for-a-workflow-run-attempt), [workflow runs](https://docs.github.com/en/rest/actions/workflow-runs#get-a-workflow-run) e [git diff](https://git-scm.com/docs/git-diff), consultados em 2026-10-15.
+
 ## T1: política e diff
 
 Assumptions: classificação pura decide somente a elegibilidade da correção. T2 comprovará confiança real via API; um marker ou nome de bot não é prova de ownership. Paths de checks/config/modelos permanecem controlados pelo consumidor.

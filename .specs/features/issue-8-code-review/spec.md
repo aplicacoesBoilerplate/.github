@@ -126,9 +126,9 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| REV-01 | Origem | Specify | Pending review |
-| REV-02 | Confiança | Specify | Pending review |
-| REV-03 | Configuração | Specify | Pending review |
+| REV-01 | Origem | Execute | Bootstrap/coleta T2 validados localmente; caller/runner T7/T8 pendentes |
+| REV-02 | Confiança | Execute | Guards e handoff API T2 validados; ligação com auth T4 pendente |
+| REV-03 | Configuração | Execute | SHA default/config e fonte separados em T2; integração T4 pendente |
 | REV-04 | Central | Specify | Pending review |
 | REV-05 | Limites | Execute | Índice/limites T1 validados; coleta/inconclusivo integrados pendentes |
 | REV-06 | Proveniência | Specify | Pending review |
@@ -142,18 +142,18 @@ A central LLM e a triagem estão implementadas localmente, mas ainda não existe
 | REV-14 | PR complementar | Specify | Pending review |
 | REV-15 | Falha dos checks | Specify | Pending review |
 | REV-16 | Integração | Execute | Classificação T1 validada; publicação T6 pendente |
-| REV-17 | Encadeamento | Specify | Pending review |
+| REV-17 | Encadeamento | Execute | Prova API/run/job/commit T2 validada; dispatch T8 pendente |
 | REV-18 | Idempotência | Specify | Pending review |
 | REV-19 | Recursão | Execute | Origem review não corrigível em T1; prova API/handoff T2/T8 pendente |
 | REV-20 | Concorrência | Specify | Pending review |
 | REV-21 | Caller | Specify | Pending review |
 | REV-22 | Piloto conjunto | Specify | Pending review |
 | REV-23 | Piloto transferido | Specify | Pending review |
-| REV-24 | Entrada antiga | Specify | Pending review |
+| REV-24 | Entrada antiga | Execute | Coleta T2 rejeita PR/default/head alterados; publisher pendente |
 | REV-25 | Recuperação | Specify | Pending review |
 | REV-26 | Falhas | Specify | Pending review |
 
-**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1 implementada e validada localmente; tarefas restantes ainda pendentes. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
+**Coverage:** 26 requisitos aprovados e mapeados nas tasks. T1–T2 implementadas e validadas localmente; tarefas restantes ainda pendentes. Os estados Specify/Pending review remanescentes registram a rodada original, não ausência de aprovação. Nenhum requisito é declarado Verified antes da revisão independente e evidência completa.
 
 ## Success Criteria
 

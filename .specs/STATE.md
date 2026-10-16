@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-8-code-review/`
-- **Phase / Task**: Execute; spec/context/design/tasks aprovados pelo mantenedor em 2026-10-15; T1 concluída localmente.
+- **Phase / Task**: Execute; spec/context/design/tasks aprovados pelo mantenedor em 2026-10-15; T1–T2 concluídas localmente.
 - **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
-- **In-progress**: Política/config fechada e índice do diff implementados. Full em Node 22.23.3 passou com 146 testes, nenhuma falha/skip; sintaxe verde. T1 sem uso de credenciais ou escrita externa; triagem/central legadas preservadas.
-- **Next step**: Executar T2: coleta confiável de PR, SHAs e prova de handoff pela API, com testes relevantes e commit local.
+- **In-progress**: Coleta de PR, bootstrap, diff Git exato e handoff cruzado implementados. Full em Node 22.23.3 passou com 153 testes, nenhuma falha/skip; sintaxe verde. API simulada e Git real local, sem credenciais LLM ou escrita externa.
+- **Next step**: Executar T3: resultado estruturado, achados/sidecar e envelope review v3, mantendo v1/v2 inalterados.
 - **Blockers**: Nenhum para implementação local já autorizada. Piloto real exige provisionamento de credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global.
-- **Uncommitted files**: T1 e registros de aprovação/progresso até seu commit atômico; demais worktrees preservados.
+- **Uncommitted files**: T2 e registros de progresso até seu commit atômico; demais worktrees preservados.
 - **Branch**: `feature/issue-8-code-review`

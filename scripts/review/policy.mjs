@@ -18,10 +18,12 @@ function validBranch(ref) {
 export function validateReviewConfig(config) {
   try {
     if (Buffer.byteLength(JSON.stringify(config) ?? '') > 32768 || !checkConfig(config)) throw new Error();
-    for (const path of [...Object.values(config.llm_configs), ...config.allowed_paths]) {
+    for (const path of [...Object.values(config.llm_configs), ...config.allowed_paths,
+      ...[config.triage_handoff?.workflow_path, config.triage_handoff?.config_path].filter(value => value !== undefined)]) {
       validateRelativePath(path);
       if (/[\*?\[\]{}]/.test(path)) throw new Error();
     }
+    if (config.triage_handoff && !/^\.github\/workflows\/[a-zA-Z0-9_.-]+\.ya?ml$/.test(config.triage_handoff.workflow_path)) throw new Error();
     if (config.protected_branches.some(ref => !validBranch(ref))
       || config.correctable_prefixes.some(prefix => !prefix.endsWith('/') || !validBranch(prefix.slice(0, -1))
         || /^(?:master|develop|release)(?:\/|$)/.test(prefix))) throw new Error();
