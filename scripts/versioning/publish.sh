@@ -113,7 +113,14 @@ else
   fi
   node "$script_dir/version-report.mjs" ensure-new-tag \
     "$(as_node_path "${GITHUB_WORKSPACE:-$(pwd)}")" "$sha" "$version" "${TAG_PREFIX:-v}"
-  if ! gh api -X POST "repos/$repo/git/refs" -f "ref=refs/tags/$tag" -f "sha=$sha" >/dev/null; then
+  reference_sha="$sha"
+  tag_kind=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).tagKind??"lightweight"' "$(as_node_path "$report_path")")
+  if [[ "$tag_kind" == annotated ]]; then
+    tag_object=$(gh api -X POST "repos/$repo/git/tags" -f "tag=$tag" -f "message=Release $tag" \
+      -f "object=$sha" -f type=commit)
+    reference_sha=$(node -e 'const r=JSON.parse(process.argv[1]);if(!/^[0-9a-f]{40}$/i.test(r.sha??""))process.exit(1);process.stdout.write(r.sha)' "$tag_object")
+  fi
+  if ! gh api -X POST "repos/$repo/git/refs" -f "ref=refs/tags/$tag" -f "sha=$reference_sha" >/dev/null; then
     ref_sha=''
     for attempt in {1..10}; do
       if ref_sha=$(current_ref_sha); then break; fi

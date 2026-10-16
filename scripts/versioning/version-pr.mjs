@@ -33,7 +33,13 @@ export function validateHumanReview(pr, reviewPages) {
       reviewPages.some(page => !Array.isArray(page))) {
     throw Error('Reviews do PR de versão incompletos');
   }
-  const approvals = reviewPages.flat().filter(review =>
+  const effective=new Map();
+  for(const review of reviewPages.flat()){
+    if(['APPROVED','CHANGES_REQUESTED','DISMISSED'].includes(review?.state)&&review.user?.login){
+      effective.set(review.user.login,review);
+    }
+  }
+  const approvals = [...effective.values()].filter(review =>
     review?.state === 'APPROVED' && review.commit_id === pr.head.sha &&
     review.user?.type === 'User' && review.user.login &&
     review.user.login !== pr.user?.login);

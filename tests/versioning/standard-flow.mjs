@@ -32,6 +32,7 @@ try {
   mkdirSync(join(workspace, 'node_modules', '.bin'), { recursive: true });
   const adapter = join(workspace, 'node_modules', '.bin', 'standard-version');
   writeFileSync(adapter, `#!/usr/bin/env node
+if(process.env.GH_TOKEN||process.env.VERSIONING_TOKEN)process.exit(98);
 if(process.argv.includes('--dry-run')){
  console.log('bumping version in package.json from 1.0.0 to 1.0.1');
  if(process.env.MOCK_BAD_NATIVE)console.log('bumping version in package-lock.json from 1.0.0 to 1.0.2');
@@ -69,7 +70,7 @@ if(a[0]==='pr'&&a[1]==='create'){
  save();console.log(s.pr.url);process.exit(0);
 }
 if(a[0]==='api'&&a[1]==='repos/acme/consumer'){console.log('master');process.exit(0)}
-if(a[0]==='api'&&a[1].endsWith('/git/ref/heads/master')){console.log(git('rev-parse','refs/heads/master'));process.exit(0)}
+if(a[0]==='api'&&a[1].endsWith('/git/ref/heads/master')){console.log(process.env.MOCK_REMOTE_SHA??git('rev-parse','refs/heads/master'));process.exit(0)}
 if(a[0]==='api'&&a[1]==='users/test-app[bot]'){console.log('12345');process.exit(0)}
 if(a[0]==='api'&&a[1].includes('/commits/')&&a[1].endsWith('/pulls?per_page=100')){
  const sha=a[1].split('/')[4];console.log(JSON.stringify(sha===s.versionMergeSha?[versionPr()]:
@@ -109,8 +110,7 @@ console.error('unexpected gh '+a.join(' '));process.exit(1);
   chmodSync(gh, 0o755);
   const run = (script = 'prepare-version-pr.sh', overrides = {}) => {
     writeFileSync(outputPath, '');
-    return spawnSync('bash', [join(root, `scripts/versioning/${script}`)], {
-      cwd: workspace, encoding: 'utf8', env: { ...process.env,
+    const env={ ...process.env,
         PATH: `${bin}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH}`,
         MOCK_STATE: statePath, MOCK_BARE: bare, GITHUB_WORKSPACE: workspace, GITHUB_REPOSITORY: 'acme/consumer',
         GITHUB_SHA: originSha, TARGET_BRANCH: 'master', ADAPTER: 'standard-version',
@@ -118,8 +118,24 @@ console.error('unexpected gh '+a.join(' '));process.exit(1);
         PROJECT_PATH: '.', TAG_PREFIX: 'v', ORIGIN_SHA: originSha, PUBLISH_PHASE: 'functional',
         RELEASE_GATES_VALIDATED: '1', VERSIONING_TOKEN: 'mock', VERSIONING_BOT_SLUG: 'test-app',
         VERSION_REPORT_PATH: reportPath, PR_POLICY_PATH: policyPath, GITHUB_OUTPUT: outputPath,
-        ...overrides },
-    });
+        ...overrides };
+    if(process.env.TEST_PRECOMPUTED_MODE==='1'&&script==='publish.sh'){
+      const artifact=mkdtempSync(join(temp,'artifact-'));
+      const files=['package.json','package-lock.json','CHANGELOG.md'];
+      const before=files.map(name=>{try{return readFileSync(join(workspace,name));}catch(error){if(error.code==='ENOENT')return null;throw error;}});
+      const prepared=spawnSync('bash',[join(root,'scripts/versioning/prepare-publication.sh')],{
+        cwd:workspace,encoding:'utf8',env:{...env,VERSIONING_TOKEN:undefined,VERSIONING_BOT_SLUG:undefined,
+          VERSIONING_OUTPUT_DIR:artifact,GITHUB_RUN_ID:'7',GITHUB_RUN_ATTEMPT:'1'}});
+      files.forEach((name,index)=>before[index]===null?rmSync(join(workspace,name),{force:true}):writeFileSync(join(workspace,name),before[index]));
+      if(prepared.status!==0)return prepared;
+      const native=readFileSync(adapter,'utf8');
+      writeFileSync(adapter,'#!/usr/bin/env node\nprocess.exit(99);\n');
+      try{return spawnSync('bash',[join(root,'scripts/versioning/publish.sh')],{cwd:workspace,encoding:'utf8',env:{...env,
+        VERSIONING_REQUIRE_PRECOMPUTED:'1',VERSIONING_PRECOMPUTED_REPORT:join(artifact,'version-report.json'),
+        VERSIONING_INPUTS_SNAPSHOT:join(artifact,'git-inputs.json'),VERSIONING_PRECOMPUTED_BUNDLE:join(artifact,'version-bundle.json')}});}
+      finally{writeFileSync(adapter,native);}
+    }
+    return spawnSync('bash',[join(root,`scripts/versioning/${script}`)],{cwd:workspace,encoding:'utf8',env});
   };
   let result = run('publish.sh', { GITHUB_EVENT_NAME: 'push', GITHUB_REF_NAME: 'master' });
   assert.equal(result.status, 0, result.stderr);
@@ -191,5 +207,15 @@ console.error('unexpected gh '+a.join(' '));process.exit(1);
     GITHUB_REF_NAME: 'master' });
   assert.notEqual(result.status, 0, 'stale push may not repair a missing Release');
   assert.equal(JSON.parse(readFileSync(statePath, 'utf8')).tagSha, versionMergeSha);
+  git('switch','-c','intervening-delivery',originSha);
+  writeFileSync(join(workspace,'extra-feature.txt'),'feat not included in original version calculation\n');
+  git('add','.');git('commit','-qm','feat: intervening delivery');
+  git('merge','--no-ff','versioning/standard-version/'+originSha.slice(0,12),'-m','Merge outdated version PR');
+  const outdatedMerge=git('rev-parse','HEAD');
+  writeFileSync(statePath,JSON.stringify({...JSON.parse(readFileSync(statePath,'utf8')),
+    versionMergeSha:outdatedMerge,tagSha:undefined,release:undefined}));
+  result=run('publish.sh',{GITHUB_SHA:outdatedMerge,GITHUB_EVENT_NAME:'push',GITHUB_REF_NAME:'master',MOCK_REMOTE_SHA:outdatedMerge});
+  assert.notEqual(result.status,0,'technical merge must not version additional functional commits using an older source calculation');
+  assert.equal(JSON.parse(readFileSync(statePath,'utf8')).tagSha,undefined);
 console.log('standard-version: technical PR, published merge SHA and idempotent rerun validated');
 } finally { rmSync(temp, { recursive: true, force: true }); }

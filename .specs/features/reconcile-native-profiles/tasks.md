@@ -140,7 +140,7 @@ T11 -> T12
 **Reuses**: PR12 e componentes locais validados, conforme matriz design.
 **Tools**: TLC, CI/CD, Entregas, Git/Node/Java/Maven e docs oficiais.
 **Done when**:
-- [ ] Snapshots e contexto pré-computado passam; escritor exit99 nativo, tag anotada, Node funcional/técnico e retries passam.
+- [x] Snapshots e contexto pré-computado passam; escritor exit99 nativo, tag anotada, Node funcional/técnico e retries passam.
 **Tests**: integration
 **Gate**: Full
 

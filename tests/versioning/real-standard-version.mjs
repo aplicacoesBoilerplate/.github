@@ -2,11 +2,12 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join,resolve } from 'node:path';
 import { normalizeStandardVersionReport } from '../../scripts/versioning/version-report.mjs';
 import {captureVersionBundle,applyVersionBundle} from '../../scripts/versioning/version-bundle.mjs';
 
 const cwd = mkdtempSync(join(tmpdir(), 'real-standard-version-'));
+const evidence = mkdtempSync(join(tmpdir(),'real-standard-evidence-'));
 const git = (...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 try {
   git('init', '-b', 'main');
@@ -57,7 +58,15 @@ try {
   assert.equal(readFileSync(join(cwd,'package.json'),'utf8'),nativePackage);
   assert.equal(readFileSync(join(cwd,'package-lock.json'),'utf8'),nativeLock);
   assert.equal(readFileSync(join(cwd,'CHANGELOG.md'),'utf8'),nativeChangelog);
+  git('add','.');git('commit','-qm','chore(release): 1.1.0');git('tag','-a','v1.1.0','-m','release');
+  const originReport=join(evidence,'origin.json');
+  execFileSync('bash',[resolve(import.meta.dirname,'../../scripts/versioning/collect-origin-report.sh'),sha,originReport],
+    {cwd,encoding:'utf8',env:{...process.env,GITHUB_WORKSPACE:cwd,GITHUB_SHA:git('rev-parse','HEAD'),
+      TARGET_BRANCH:'main',ADAPTER:'standard-version',PROJECT_PATH:'.',TAG_PREFIX:'v'}});
+  assert.equal(JSON.parse(readFileSync(originReport,'utf8')).candidateVersion,'1.1.0',
+    'recalculating the functional SHA must not change after its release tag exists on the descendant merge');
   console.log('standard-version real: dois PRs, um bump 1.1.0, changelog sem commit/tag');
 } finally {
   rmSync(cwd, { recursive: true, force: true });
+  rmSync(evidence,{recursive:true,force:true});
 }

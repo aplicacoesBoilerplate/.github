@@ -44,6 +44,10 @@ try {
   const approval = { state: 'APPROVED', commit_id: head,
     user: { login: 'maintainer', type: 'User' } };
   assert.equal(validateHumanReview(reviewedPr, [[approval]]), 'maintainer');
+  assert.throws(()=>validateHumanReview(reviewedPr,[[approval,{...approval,state:'CHANGES_REQUESTED'}]]),/humana/,
+    'a later change request revokes earlier human approval');
+  assert.throws(()=>validateHumanReview(reviewedPr,[[approval,{...approval,state:'DISMISSED'}]]),/humana/,
+    'dismissed latest review must not leave a historical approval effective');
   assert.throws(() => validateHumanReview(reviewedPr, [[{ ...approval,
     user: { login: 'version-app[bot]', type: 'Bot' } }]]), /humana/);
   assert.throws(() => validateHumanReview(reviewedPr, [[{ ...approval,

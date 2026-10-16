@@ -27,10 +27,18 @@ if [[ -n "$existing" ]]; then
 fi
 remote_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$TARGET_BRANCH" --jq .object.sha)
 [[ "$remote_sha" == "$GITHUB_SHA" ]] || { echo 'Branch principal avançou; recalcule antes de abrir PR técnico' >&2; exit 1; }
-select_adapter standard-version "${PROJECT_PATH:-.}"
 git switch -c "$branch" "$GITHUB_SHA"
 before=$(git rev-parse HEAD)
-(cd "$PROJECT_DIR" && "$ADAPTER_BIN" --skip.commit --skip.tag --tag-prefix "${TAG_PREFIX:-v}")
+if [[ -n "${VERSIONING_PRECOMPUTED_BUNDLE:-}" ]]; then
+  node "$script_dir/version-bundle.mjs" apply "$(as_node_path "${GITHUB_WORKSPACE:-$(pwd)}")" \
+    "${PROJECT_PATH:-.}" "$report_path" "$(as_node_path "$VERSIONING_PRECOMPUTED_BUNDLE")" >/dev/null
+else
+  [[ "${VERSIONING_REQUIRE_PRECOMPUTED:-0}" != 1 ]] || { echo 'Escritor exige bundle pré-calculado' >&2; exit 1; }
+  select_adapter standard-version "${PROJECT_PATH:-.}"
+  native_bundle=$(mktemp)
+  node "$script_dir/version-bundle.mjs" generate "$(as_node_path "${GITHUB_WORKSPACE:-$(pwd)}")" \
+    "${PROJECT_PATH:-.}" "$report_path" "$(as_node_path "$native_bundle")" "$(as_node_path "$ADAPTER_BIN")"
+fi
 [[ "$(git rev-parse HEAD)" == "$before" ]] || { echo 'Adaptador criou commit inesperado' >&2; exit 1; }
 files=$(node "$(as_node_path "$script_dir/verify-version-files.mjs")" working standard-version "${PROJECT_PATH:-.}")
 node "$node_script" verify-manifests "$(as_node_path "${GITHUB_WORKSPACE:-$(pwd)}")" \
@@ -44,7 +52,10 @@ bot_id=$(gh api "users/${bot_slug}[bot]" --jq .id)
 [[ "$bot_id" =~ ^[0-9]+$ ]] || { echo 'Identidade da GitHub App inválida' >&2; exit 1; }
 git -c user.name="${bot_slug}[bot]" \
   -c user.email="${bot_id}+${bot_slug}[bot]@users.noreply.github.com" \
+  -c core.hooksPath=/dev/null -c commit.gpgsign=false \
   commit -m "chore(release): $version"
+remote_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$TARGET_BRANCH" --jq .object.sha)
+[[ "$remote_sha" == "$GITHUB_SHA" ]] || { echo 'Branch principal avançou antes do envio técnico' >&2; exit 1; }
 gh auth setup-git
 git push origin "HEAD:refs/heads/$branch"
 body=$(printf 'Origin-PR: #%s\nOrigin-SHA: %s\nAdapter: standard-version\nProject: %s\nTag-Prefix: %s\nVersion: %s\n\nArquivos de versão calculados pelo standard-version no SHA homologado. Revise CI, manifests e changelog antes do merge.\n' \

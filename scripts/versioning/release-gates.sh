@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Source from the publisher so the validated report and policy remain available.
 script_dir=$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-source "$script_dir/resolve-adapter.sh"
+source "$script_dir/paths.sh"
 
 validate_release_gates() {
   : "${GITHUB_REPOSITORY:?Informe o repositório consumidor}"
@@ -15,6 +15,11 @@ validate_release_gates() {
   [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]] || {
     echo 'Checkout não corresponde ao commit integrado' >&2; return 1;
   }
+  if [[ "${VERSIONING_REQUIRE_PRECOMPUTED:-0}" == 1 ]]; then
+    [[ -n "${VERSIONING_PRECOMPUTED_REPORT:-}" && -n "${VERSIONING_INPUTS_SNAPSHOT:-}" ]] || {
+      echo 'Escritor exige relatório e snapshot pré-calculados' >&2; return 1;
+    }
+  fi
 
   local default_branch remote_sha gate_dir snapshot_path report_path input_path policy_path outcome
   local associated version_pr_number expected_report_sha
@@ -47,7 +52,22 @@ validate_release_gates() {
     PUBLISH_PHASE=version-pr
   else
     bash "$script_dir/collect-pr-policy.sh" --commit "$GITHUB_SHA" "$snapshot_path" || return 1
-    bash "$script_dir/collect-version-report.sh" "$report_path" || return 1
+    if [[ -n "${VERSIONING_PRECOMPUTED_REPORT:-}" ]]; then
+      node "$script_dir/version-report.mjs" validate "$(as_node_path "$VERSIONING_PRECOMPUTED_REPORT")" >"$report_path" || return 1
+    else
+      bash "$script_dir/collect-version-report.sh" "$report_path" || return 1
+    fi
+  fi
+  node -e 'const r=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8"));
+    if(r.adapter!==process.env.ADAPTER||r.branch!==process.env.TARGET_BRANCH||
+      (r.tagPrefix??"v")!==(process.env.TAG_PREFIX??"v")||
+      (process.argv[2]!=="version-pr"&&r.sha!==process.env.GITHUB_SHA))process.exit(1);' \
+    "$(as_node_path "$report_path")" "$PUBLISH_PHASE" || { echo 'Relatório diverge do contexto atual' >&2; return 1; }
+  if [[ -n "${VERSIONING_INPUTS_SNAPSHOT:-}" ]]; then
+    local expected_tag
+    expected_tag=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).tag' "$(as_node_path "$report_path")")
+    node "$script_dir/git-inputs.mjs" verify "$(as_node_path "${GITHUB_WORKSPACE:-$(pwd)}")" \
+      "$(as_node_path "$VERSIONING_INPUTS_SNAPSHOT")" "$GITHUB_SHA" "$expected_tag" "$ADAPTER" || return 1
   fi
   expected_report_sha=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).sha' \
     "$(as_node_path "$report_path")") || return 1

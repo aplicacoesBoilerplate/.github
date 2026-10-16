@@ -4,6 +4,7 @@ import {existsSync,lstatSync,realpathSync,readFileSync,writeFileSync,statSync} f
 import {join,posix} from 'node:path';
 import {validateVersionReport,validateTagPrefix} from './version-report.mjs';
 import {verifyVersionFiles} from './version-pr.mjs';
+import {runProcess} from './process-runner.mjs';
 
 const limit=10*1024*1024;
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -94,9 +95,16 @@ export function applyVersionBundle({repository,bundle,report,projectPath}){
 }
 if(process.argv[1]&&import.meta.filename===process.argv[1]){
   try{
-    const [mode,repository,projectPath,reportPath,bundlePath]=process.argv.slice(2);
+    const [mode,repository,projectPath,reportPath,bundlePath,adapterBin]=process.argv.slice(2);
     const report=JSON.parse(readFileSync(reportPath,'utf8'));
-    if(mode==='capture')writeFileSync(bundlePath,JSON.stringify(captureVersionBundle({repository,projectPath,report}))+'\n');
+    if(mode==='capture'||mode==='generate'){
+      if(mode==='generate'){
+        identity(realpathSync(repository),report,projectPath);
+        runProcess({command:adapterBin,args:['--skip.commit','--skip.tag','--tag-prefix',report.tagPrefix??'v'],
+          cwd:realpathSync(join(repository,projectPath)),workspace:repository});
+      }
+      writeFileSync(bundlePath,JSON.stringify(captureVersionBundle({repository,projectPath,report}))+'\n');
+    }
     else if(mode==='apply'){
       if(statSync(bundlePath).size>16*1024*1024)throw Error('Bundle excede limite serializado');
       process.stdout.write(applyVersionBundle({repository,projectPath,report,bundle:JSON.parse(readFileSync(bundlePath,'utf8'))}).join('\n'));

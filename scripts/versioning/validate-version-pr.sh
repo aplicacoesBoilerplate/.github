@@ -20,6 +20,9 @@ origin_pr=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],
 origin_sha=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).originSha' "$(as_node_path "$context_path")")
 expected_version=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).version' "$(as_node_path "$context_path")")
 if [[ "${REQUIRE_MERGED:-}" == 1 ]]; then
+  [[ "$(git rev-parse "$GITHUB_SHA^")" == "$origin_sha" ]] || {
+    echo 'SHA funcional de origem não é mais a base imediata do merge técnico; recalcule a entrega' >&2; exit 1;
+  }
   node -e 'const p=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8"));
     if(!p.merged_at||p.merge_commit_sha!==process.argv[2])process.exit(1)' \
     "$(as_node_path "$pr_path")" "$GITHUB_SHA" || { echo 'PR de versão não corresponde ao merge integrado' >&2; exit 1; }
@@ -47,7 +50,15 @@ node -e '
 ' "$(as_node_path "$snapshot_path")" "$origin_sha" "$TARGET_BRANCH" || {
   echo 'PR original não é uma integração homologada elegível' >&2; exit 1;
 }
-bash "$script_dir/collect-origin-report.sh" "$origin_sha" "$report_path"
+if [[ -n "${VERSIONING_PRECOMPUTED_REPORT:-}" ]]; then
+  node "$script_dir/version-report.mjs" validate "$(as_node_path "$VERSIONING_PRECOMPUTED_REPORT")" >"$report_path"
+  node -e 'const r=JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8"));
+    if(r.adapter!=="standard-version"||r.sha!==process.argv[2]||r.branch!==process.env.TARGET_BRANCH||
+      (r.tagPrefix??"v")!==(process.env.TAG_PREFIX??"v"))process.exit(1)' \
+    "$(as_node_path "$report_path")" "$origin_sha" || { echo 'Evidência diverge do SHA funcional' >&2; exit 1; }
+else
+  bash "$script_dir/collect-origin-report.sh" "$origin_sha" "$report_path"
+fi
 native_version=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).candidateVersion' "$(as_node_path "$report_path")")
 [[ "$native_version" == "$expected_version" ]] || {
   echo "Versão do PR ($expected_version) diverge do cálculo nativo ($native_version)" >&2; exit 1;

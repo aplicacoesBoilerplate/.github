@@ -72,12 +72,21 @@ export function validateVersionReport(report) {
   }
   if (report.tag !== `${prefix}${report.candidateVersion}`) throw new Error('VersionReport tag diverge da versão candidata');
   if (!bumps.has(report.bump)) throw new Error('VersionReport bump inválido');
+  if(report.bump!==bumpBetween(report.baseVersion,report.candidateVersion))throw Error('VersionReport incremento divergente');
   if (!report.native || !['json', 'text', 'java-properties'].includes(report.native.format) ||
       typeof report.native.explanation !== 'string') {
     throw new Error('VersionReport native inválido');
   }
   if (report.adapter === 'go-gitsemver' && report.native.format !== 'json') {
     throw new Error('go-gitsemver exige JSON nativo');
+  }
+  if(report.adapter==='go-gitsemver'){
+    const native=report.native.result;
+    if(parseStableVersion(native?.SemVer).text!==report.candidateVersion||
+      (native?.Sha!==''&&native?.Sha?.toLowerCase()!==report.sha.toLowerCase()))throw Error('VersionReport native Go divergente');
+  }
+  if(report.adapter==='standard-version'&&(report.native.format!=='text'||report.native.result?.version!==report.candidateVersion)){
+    throw Error('VersionReport native standard-version divergente');
   }
   if (report.adapter === 'jgitver') {
     const properties=report.native.result;
