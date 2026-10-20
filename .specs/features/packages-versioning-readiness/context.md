@@ -1,7 +1,7 @@
 # Contexto: versionamento de packages
 
 **Data:** 2026-10-16; aditivo em 2026-10-19.
-**Status:** escopo anterior aprovado em 2026-10-19; requisitos Release Please e organização modular adicionados por solicitação do usuário, com defaults técnicos novos destacados para revisão. Design e tarefas ainda não iniciados.
+**Status:** especificação inteira, incluindo Release Please/modularização e defaults, aprovada expressamente em 2026-10-19 com solicitação de implementação local. Design registrado em design.md aguardando revisão TLC; tarefas e código ainda não iniciados.
 **Spec:** [spec.md](spec.md).
 
 ## Feature Boundary
@@ -69,7 +69,7 @@ O usuário autorizou a ampliação de escopo para Release Please e organização
 
 ### Declined / Undiscussed Gray Areas -> Assumptions
 
-Os defaults anteriores, inclusive milestone de lote, ordem A/B/C e recuperação conservadora, foram aprovados em 2026-10-19. Somente os defaults do aditivo estão pendentes de revisão: primeiro perfil Node único, preparo nativo somente leitura, conjunto suportado de configuração, composição incremental e ausência de novo piloto Release Please. Eles estão enumerados em Assumptions & Open Questions da spec.
+Os defaults anteriores e do aditivo foram aprovados em 2026-10-19. Isso inclui milestone de lote, ordem A/B/C, recuperação conservadora, primeiro perfil Release Please Node único, preparo nativo somente leitura, composição incremental e ausência de novo piloto. O design fixa versão, conjunto de opções e componentes técnicos sem reabrir essas decisões de escopo.
 
 ## Specific References
 

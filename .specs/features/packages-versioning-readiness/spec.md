@@ -8,7 +8,7 @@ Esta especificação fecha a conciliação central e define o aceite remoto de P
 
 O aditivo de 2026-10-19 inclui Release Please como quinto adaptador e a organização modular dos scripts, mantendo standard-version operacional para os consumidores existentes. Não substitui Changesets/Turbo no piloto Vue nem jgitver no piloto Java.
 
-**Status:** escopo PKG-01 a PKG-08 e defaults anteriores aprovados pelo usuário em 2026-10-19. PKG-09/10 registram as adições solicitadas; os defaults técnicos novos estão identificados para revisão, sem implementação nesta iteração documental.
+**Status:** especificação completa PKG-01 a PKG-10 e seus defaults aprovados expressamente pelo usuário em 2026-10-19, com solicitação de implementação local. Design concretizado em design.md aguarda seu gate de revisão TLC antes de Tasks/Execute; aprovação da spec não significa comportamento já implementado.
 **Data:** 2026-10-16; aditivo em 2026-10-19. **Issue:** [#4](https://github.com/aplicacoesBoilerplate/.github/issues/4).
 **Continuidade:** complementa `reconcile-native-profiles` e a feature `changesets-turbo` do PR #13; não invalida suas evidências nos respectivos SHAs.
 
@@ -57,14 +57,14 @@ O aditivo de 2026-10-19 inclui Release Please como quinto adaptador e a organiza
 | Recuperação parcial no registry | Inspecionar coordenadas e digests; retomar só ausentes quando comprovadamente seguro; divergência ou estado não verificável exige intervenção | Publicação de vários packages não é transação atômica | Aprovado 2026-10-19 |
 | Dados e retenção | Usar retenção configurada/default dos artifacts; registrar links e SHAs duráveis no relatório de aceite | Não exigir retenção infinita nem presumir que artifacts permanecerão disponíveis | Aprovado 2026-10-19 |
 | Coexistência Node | Seleção explícita entre standard-version e release-please; nenhuma substituição silenciosa ou fallback entre eles | Aplicações existentes precisam continuar funcionando | Solicitado pelo usuário 2026-10-19 |
-| Perfil inicial Release Please | Adaptador release-please, estratégia nativa node, um componente npm com package-lock.json; versão upstream fixada no design | Reutilizar o contrato Node existente sem prometer todos os ecossistemas suportados pela ferramenta | Default novo proposto |
-| Preparação Release Please | Planejamento nativo somente leitura; um PR técnico de release sob controle dos gates centrais; publicação somente pelo escritor central | O fluxo nativo também gerencia PRs/releases e não pode virar segundo produtor concorrente | Default novo proposto |
-| Configuração Release Please | JSON nativo com paths confinados e conjunto suportado de opções documentado; extra-files/plugins fora desse conjunto rejeitados | Preservar cálculo nativo sem autorizar alterações arbitrárias de arquivos ou código do consumidor no escritor | Default novo proposto |
-| Reuso semelhante a POO | Interfaces por contrato, encapsulamento, composição e dependências explícitas; classes apenas se trouxerem benefício demonstrável | Reaproveitar módulos JavaScript existentes sem construir uma hierarquia artificial | Direção solicitada; forma técnica proposta |
-| Ordem das adições | Consolidar pontos comuns durante a conciliação; depois incluir Release Please; caracterizar e verificar cada extração separadamente | Separar regressão de refatoração e comportamento novo, sem reescrita em bloco | Default novo proposto |
-| Piloto Release Please | Sem aplicação piloto nova escolhida; validar primeiro em fixture Node real no .github | Não alterar aplicações ou inferir escolha de piloto nesta solicitação | Default novo proposto |
+| Perfil inicial Release Please | Adaptador release-please, estratégia nativa node, um componente npm com package-lock.json; versão upstream fixada no design | Reutilizar o contrato Node existente sem prometer todos os ecossistemas suportados pela ferramenta | Aprovado com a spec completa 2026-10-19 |
+| Preparação Release Please | Planejamento nativo somente leitura; um PR técnico de release sob controle dos gates centrais; publicação somente pelo escritor central | O fluxo nativo também gerencia PRs/releases e não pode virar segundo produtor concorrente | Aprovado com a spec completa 2026-10-19 |
+| Configuração Release Please | JSON nativo com paths confinados e conjunto suportado de opções documentado; extra-files/plugins fora desse conjunto rejeitados | Preservar cálculo nativo sem autorizar alterações arbitrárias de arquivos ou código do consumidor no escritor | Aprovado com a spec completa 2026-10-19 |
+| Reuso semelhante a POO | Interfaces por contrato, encapsulamento, composição e dependências explícitas; classes apenas se trouxerem benefício demonstrável | Reaproveitar módulos JavaScript existentes sem construir uma hierarquia artificial | Aprovado com a spec completa 2026-10-19 |
+| Ordem das adições | Consolidar pontos comuns durante a conciliação; depois incluir Release Please; caracterizar e verificar cada extração separadamente | Separar regressão de refatoração e comportamento novo, sem reescrita em bloco | Aprovado com a spec completa 2026-10-19 |
+| Piloto Release Please | Sem aplicação piloto nova escolhida; validar primeiro em fixture Node real no .github | Não alterar aplicações ou inferir escolha de piloto nesta solicitação | Aprovado com a spec completa 2026-10-19 |
 
-**Open questions:** none — o escopo anterior está aprovado. Defaults do aditivo estão explicitamente registrados para revisão; a escolha de versão upstream e do conjunto exato de opções será fundamentada no design antes de implementar.
+**Open questions:** none — especificação e defaults do aditivo aprovados pelo usuário. A escolha de versão upstream e do conjunto exato de opções foi fundamentada em design.md e depende do gate de revisão desse documento antes de implementar.
 
 ## Evidence Baseline
 
@@ -269,18 +269,18 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PKG-01 | Conciliação sem regressão | Specify | Pending |
-| PKG-02 | Plano nativo do monorepo | Specify | Pending |
-| PKG-03 | PR técnico e confiança | Specify | Pending |
-| PKG-04 | Governança e homologação | Specify | Pending |
-| PKG-05 | Publicação recuperável | Specify | Pending |
-| PKG-06 | Callers e prontidão | Specify | Pending |
-| PKG-07 | Distribuição e consumo externo | Specify | Pending |
-| PKG-08 | Evidências e encerramento | Specify | Pending |
-| PKG-09 | Release Please coexistente | Specify: aditivo | Pending |
-| PKG-10 | Contratos e composição dos scripts | Specify: aditivo | Pending |
+| PKG-01 | Conciliação sem regressão | Design | In Design |
+| PKG-02 | Plano nativo do monorepo | Design | In Design |
+| PKG-03 | PR técnico e confiança | Design | In Design |
+| PKG-04 | Governança e homologação | Design | In Design |
+| PKG-05 | Publicação recuperável | Design | In Design |
+| PKG-06 | Callers e prontidão | Design | In Design |
+| PKG-07 | Distribuição e consumo externo | Design | In Design |
+| PKG-08 | Evidências e encerramento | Design | In Design |
+| PKG-09 | Release Please coexistente | Design | In Design |
+| PKG-10 | Contratos e composição dos scripts | Design | In Design |
 
-**Coverage:** 10 requisitos definidos; PKG-01 a PKG-08 aprovados como requisitos, PKG-09/10 adicionados por solicitação em 2026-10-19. Tarefas ainda não derivadas. Pending indica implementação não verificada, não ausência de aprovação do escopo anterior.
+**Coverage:** 10 requisitos aprovados; todos mapeados ao design. Tarefas ainda não derivadas. In Design indica que os contratos técnicos foram desenhados, não que a implementação esteja verificada.
 
 ## Delivery Boundaries
 
