@@ -34,11 +34,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/issue-7-triagem-issues/`
-- **Phase / Task**: Execute; T1–T7 concluídas localmente, 7/8 tarefas; revisão independente local PASS na rodada 2. T8 real pendente. Documentação adiada por pedido explícito.
-- **Completed**: In progress aplicado no Project GitHub Features por pedido explícito e verificado via API. Empilhamento sobre #9 preservado; nenhum merge/aceite do PR da central. Aprovação de spec/context registrada.
-- **In-progress**: F1 aprovado independentemente no HEAD f56a3e5; M5 eliminado pelo teste de run divergente. Gates Node 22.23.3, sintaxe e actionlint passaram. validation.md preserva FAIL de conclusão total exclusivamente pela ausência de T8; nenhum defeito local pendente. Caller mantém pin 3f7ec89a9e2457e1e839a22d6db6f9dc1c4784f6, ainda local; nenhum push/auth real.
-- **Next step**: Selecionar consumidor privado e provisionar o piloto T8 com autorização específica para publicação/ativação. Consulta API mostrou boilerplate-cli público e demo-repository privado (HTML); seleção solicitada ao mantenedor, nenhuma ativação realizada.
-- **Blockers**: Nenhum para implementação local autorizada; blocked-by #5/#9 preservados conforme entrega empilhada. Piloto real exige consumidor e credenciais do mantenedor.
-- **Uncommitted files**: Nenhum após commit da proposta. Planejamento OpenSpec anterior preservado como histórico.
-- **Branch**: `feature/issue-7-triagem-issues`
+- **Feature**: `.specs/features/issue-8-code-review/`
+- **Phase / Task**: Execute; código verificado e publicado nos PRs empilhados #15/#16. F2 aprovado independentemente e na CI real dos dois PRs. T9 real permanece aberto; meta não concluída.
+- **Completed**: Publicação explicitamente autorizada pelo mantenedor e realizada: PR #15 (triagem) sobre #9 e PR #16 (review) sobre #7, ambos draft, autor agentegersonfribeiro-AI, milestone v1.0.0 e review solicitada a gersonfribeiro. Nenhum merge remoto. Consumidor demo-repository privado selecionado; piloto ainda pendente.
+- **In-progress**: F2 em #7/549d1dc e merge local #8/076d18a habilitam histórico no checkout do job de contratos, preservando persist-credentials false. RED→GREEN; Full #7 141/141, #8 196/196; check/actionlint verdes. Verifier focado: 5/5 e mutação depth1 killed, relatório ci-history-validation.md. CI antiga falhou nos runs 38881461059/38881522449 por pins indisponíveis em depth1. Nenhuma inferência/refresh/check Docker de produto real foi executado.
+- **Next step**: Configurar o caller integrado no demo e executar T9 somente com credenciais dedicadas e autorização de ativação do consumidor. Não fechar REV-22/23 ou TRI-24/25 sem piloto real. F2 publicado e CI aprovada nos runs 39349822522 (#15) e 39349825275 (#16); evidência também registrada em comentários dos PRs.
+- **Blockers**: Publicação das branches já autorizada. Piloto real exige provisionamento de credenciais dedicadas e autorização específica de ativação; nenhuma auth pessoal/global. Pergunta sobre disponibilidade dos secrets enviada ao mantenedor.
+- **Uncommitted files**: Nenhum após commit de evidência F2. Scratchs antigos e novo ci-history-verifier-076d18a retidos após cleanup negado, sem nova tentativa; demais worktrees preservados.
+- **Branch**: `feature/issue-8-code-review`

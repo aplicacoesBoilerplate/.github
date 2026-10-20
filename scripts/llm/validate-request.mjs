@@ -15,11 +15,15 @@ const checkInputs = ajv.compile({
     context_json: { type: 'string' },
     auth_mode: { enum: ['chatgpt-session', 'api-key'] },
     session_secret_name: { type: 'string' },
-    caller_profile: { enum: ['manual', 'triage'] },
+    caller_profile: { enum: ['manual', 'triage', 'review'] },
     issue_number: { type: 'integer', minimum: 0 },
     triage_config_path: { type: 'string', maxLength: 240 },
     expected_source_sha: { type: 'string' },
     triage_fingerprint: { type: 'string', pattern: '^(?:[a-f0-9]{64})?$' },
+    pull_number: { type: 'integer', minimum: 0 },
+    review_config_path: { type: 'string', maxLength: 240 },
+    review_fingerprint: { type: 'string', pattern: '^(?:[a-f0-9]{64})?$' },
+    review_handoff_json: { type: 'string', maxLength: 2048 },
   },
 });
 
@@ -36,10 +40,20 @@ export function validateRelativePath(path) {
 export function validateRequest(config, inputs) {
   if (!checkInputs(inputs) || !checkConfig(config)) throw contractError('INVALID_CONFIG');
   const profile = inputs.caller_profile ?? 'manual';
+  const reviewUnset = (inputs.pull_number ?? 0) === 0 && (inputs.review_config_path ?? '') === ''
+    && (inputs.review_fingerprint ?? '') === '' && (inputs.review_handoff_json ?? '{}') === '{}';
+  if (profile !== 'review' && !reviewUnset) throw contractError('INVALID_CONFIG');
+  if (profile === 'review') {
+    if (!Number.isSafeInteger(inputs.pull_number) || inputs.pull_number < 1 || !/^[a-f0-9]{40}$/.test(inputs.expected_source_sha ?? '')
+      || !/^[a-f0-9]{64}$/.test(inputs.review_fingerprint ?? '') || (inputs.issue_number ?? 0) !== 0
+      || (inputs.triage_config_path ?? '') !== '' || (inputs.triage_fingerprint ?? '') !== ''
+      || Buffer.byteLength(inputs.review_handoff_json ?? '{}') > 2048) throw contractError('INVALID_CONFIG');
+    validateRelativePath(inputs.review_config_path);
+  }
   if (profile === 'triage') {
     if (!Number.isSafeInteger(inputs.issue_number) || inputs.issue_number < 1 || !/^[a-f0-9]{40}$/.test(inputs.expected_source_sha ?? '')) throw contractError('INVALID_CONFIG');
     validateRelativePath(inputs.triage_config_path);
-  } else if ((inputs.issue_number ?? 0) !== 0 || (inputs.triage_config_path ?? '') !== '' || (inputs.expected_source_sha ?? '') !== '' || (inputs.triage_fingerprint ?? '') !== '') throw contractError('INVALID_CONFIG');
+  } else if (profile !== 'review' && ((inputs.issue_number ?? 0) !== 0 || (inputs.triage_config_path ?? '') !== '' || (inputs.expected_source_sha ?? '') !== '' || (inputs.triage_fingerprint ?? '') !== '')) throw contractError('INVALID_CONFIG');
   validateRelativePath(inputs.config_path);
   for (const stage of [config.execution, config.decision].filter(Boolean)) {
     if (stage.template_path !== undefined) validateRelativePath(stage.template_path);
