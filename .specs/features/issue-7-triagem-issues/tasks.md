@@ -219,6 +219,22 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 **Status:** Complete localmente; rodada 2 de validation.md confirmou gates verdes e M5 killed no HEAD f56a3e5.
 **Commit:** `test(triage): reject mismatched caller run identities refs #7`
 
+## Validation fix F2: histórico dos pins na CI
+
+**What:** Disponibilizar os commits imutáveis consultados pelos testes do caller, corrigindo a falha remota do PR #15 sem enfraquecer o contrato.
+**Where:** `.github/workflows/ci.yml`, somente checkout do job llm.
+**Supporting files:** `tests/llm/ci.test.mjs` e este registro.
+**Requirement:** TRI-23; gate executável de T6/T7 já aprovado.
+**Tests:** Contrato existente fortalecido exige fetch-depth 0 e persist-credentials false; testes dos callers continuam consultando os commits reais. RED confirmou fetch-depth ausente antes do ajuste.
+**Gate:** Full Node 22.23.3 + sintaxe/actionlint + revisão independente focada; CI real depois de publicação autorizada.
+**Done when:** CI resolve pins históricos, testes anteriores permanecem íntegros e o empilhamento #9 → #7 → #8 é preservado sem rebase/force-push.
+**Status:** Correção local concluída com Full Node 22.23.3 141/141, 0 fail/skip, npm check, actionlint 1.7.12 (binário novo com checksum verificado) e validate_tasks verdes. Revisão independente focada e nova CI remota ainda pendentes. Piloto T8 não é substituído por CI.
+**Commit:** `fix(ci): fetch history for immutable caller contracts refs #7`
+
+Evidência de origem: run 38881461059/PR #15 falhou ao resolver 3f7ec89 em checkout depth 1; PR #16 também falhou para os pins do review e triagem. Context7 indisponível; README oficial do actions/checkout no SHA fixado confirma fetch-depth 0 para histórico completo. Nenhuma permissão/secret/job de produto foi ampliado.
+
+Adequação: `tests/llm/ci.test.mjs:12` exige checkout fetch-depth 0 (TRI-23/F2) e :13 exige persist-credentials false (limite de credenciais T6). Assertions anteriores preservadas; RED observou undefined !== 0. Testes de caller continuam executando git show nos SHAs reais, sem fallback ou skip. Fonte: https://github.com/actions/checkout/blob/11d5960a326750d5838078e36cf38b85af677262/README.md#fetch-all-history-for-all-tags-and-branches.
+
 ## Diagram-Definition Cross-Check
 
 | Task | Depends On | Diagram Shows | Status |
