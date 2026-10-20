@@ -8,7 +8,7 @@
 
 ## Architecture Overview
 
-Usar composição de módulos JavaScript, descritores de capacidades e portas explícitas de Git/processo/API. A ferramenta nativa calcula e prepara arquivos no leitor; serviços centrais validam policy, bundle e proveniência; somente o escritor confiável abre/atualiza PR técnico e publica tags/Releases. Distribuição de packages permanece uma etapa separada no caller.
+Usar composição de módulos TypeScript, descritores de capacidades e portas explícitas de Git/processo/API. Essa escolha de linguagem foi confirmada pelo usuário e substitui a proposta anterior de fontes JavaScript. A ferramenta nativa calcula e prepara arquivos no leitor; serviços centrais validam policy, bundle e proveniência; somente o escritor confiável abre/atualiza PR técnico e publica tags/Releases. Distribuição de packages permanece uma etapa separada no caller.
 
 Não construir uma classe base com métodos obrigatórios de publicação. Go/jgitver não geram PR de manifests; standard-version/Changesets/Release Please precisam preparar arquivos. Essa diferença é capacidade, não motivo para duplicar policy.
 
@@ -50,7 +50,23 @@ Confirmado por consultas read-only em 2026-10-19:
 
 A implementação deve continuar em um worktree próprio da branch do PR #13. Preservar a base remota como ancestral, incorporar o #12 por merge local sem reescrever histórico e resolver conflitos por comportamento. Transportar os commits documentais locais de planejamento, sem enviá-los automaticamente ao PR #12. Conferir novamente SHAs antes de qualquer ação de publicação autorizada posteriormente.
 
-Ordem técnica: caracterização -> contratos/portas -> integração Changesets -> serviços compartilhados de arquivos/PR/publicação -> Release Please -> callers/documentação -> verificador independente. As tarefas serão derivadas após aprovação deste design. Não remover testes do #12 ou #13 para acomodar a conciliação.
+Ordem técnica: caracterização -> toolchain TypeScript e distribuição -> contratos/portas -> integração Changesets -> serviços compartilhados de arquivos/PR/publicação -> Release Please -> callers/documentação -> verificador independente. As tarefas serão derivadas após aprovação deste design. Não remover testes do #12 ou #13 para acomodar a conciliação.
+
+## TypeScript Build and Distribution
+
+Fontes editáveis ficam em `scripts/versioning/src/`, com contratos/interfaces, adaptadores, serviços, portas e CLIs. Compilar para `scripts/versioning/dist/` como JavaScript ESM; manter os caminhos públicos `.mjs` atuais como fachadas de compatibilidade para os módulos migrados. Os arquivos legados ainda não migrados continuam funcionando. Não manter duas implementações ativas da mesma regra em TS e JS.
+
+Adicionar package.json/lockfile próprios em `scripts/versioning/` com type module e scripts typecheck/build/test/check-dist. O compilador e os tipos de Node serão fixados no lockfile da tarefa de toolchain. O package.json da aplicação consumidora não recebe esses pacotes. O SDK Release Please conserva sua instalação isolada no leitor, conforme a seção própria; não deve ser carregado transitivamente pelo grafo de imports do escritor.
+
+Configuração projetada: strict true, noEmitOnError true, module/moduleResolution NodeNext, target ES2022, rootDir src, outDir dist, noUncheckedIndexedAccess e exactOptionalPropertyTypes habilitados. Imports de tipos são explícitos e imports de módulos usam os caminhos emitidos .js. Tipos de fronteira começam como unknown e são refinados por validadores runtime, nunca apenas convertidos por assertions.
+
+Versionar fontes, config, lockfile e saída compilada na mesma revisão central. A CI instala o toolchain pelo lockfile, executa typecheck, recompila em diretório temporário isolado e compara a lista completa de arquivos e seus bytes com dist. Rejeitar arquivos ausentes, extras, divergentes ou symlinks. A verificação não se limita a git diff, que não detectaria sozinho arquivos novos não rastreados.
+
+O workflow consumidor faz checkout do SHA central e executa dist por meio dos entrypoints compatíveis. Nenhum job consumidor compila TypeScript, baixa artifacts de compilação de outro PR ou executa ts-node/tsx. O escritor privilegiado não instala toolchain nem SDK. Isso evita transferir a construção do executável para a etapa com escrita.
+
+Fontes são a única entrada de manutenção; dist é gerado e revisado junto, nunca editado manualmente. Testar o compilado que será entregue, além dos testes de tipos. Um teste com erro de tipo deve falhar no typecheck; um artifact/JSON malformado deve continuar sendo rejeitado em runtime mesmo quando o programa compilou.
+
+Classes podem encapsular estado ou serviços com dependências injetadas. Interfaces modelam contratos; uniões discriminadas representam perfis único/lote e capacidades. Não criar classes vazias, service locator global, contêiner de DI ou herança para padronizar ferramentas que têm ciclos diferentes.
 
 ## Code Reuse Analysis
 
@@ -69,23 +85,25 @@ Ordem técnica: caracterização -> contratos/portas -> integração Changesets 
 
 ## Components and Interfaces
 
-Assinaturas abaixo são contratos propostos em JavaScript/JSDoc, não exigem TypeScript ou etapa de compilação. Nomes e contratos serão reproduzidos nas tarefas e nos testes.
+Assinaturas abaixo são contratos TypeScript, com interfaces e uniões discriminadas nos modelos/portas. Paths da tabela são relativos a scripts/versioning. Nomes e contratos serão reproduzidos nas tarefas e nos testes; as fachadas legadas preservam os imports públicos existentes.
 
 | Componente e localização | Interface proposta | Dependências e responsabilidade |
 | --- | --- | --- |
-| `adapter-contract.mjs` | `validateDescriptor(value)`, `validateReleasePlan(value)`, `planFromReport(report, descriptor)` | Validação pura de capacidades e envelope; não usa filesystem/rede |
-| `adapter-registry.mjs` | `resolveAdapter(id, implementations) -> descriptor` | Registro explícito dos cinco IDs; overrides somente por injeção de código confiável nos testes |
-| `services/versioning.mjs` | `collectPlan(context, ports) -> Promise<ReleasePlan>` | Resolve adaptador, aguarda cálculo sync/async e valida relatório/plano; não escreve remotamente |
-| `ports/git.mjs` | `createGitPort(repository, execute) -> git` | Consultas a refs, blobs e histórico por argv; SHA explícito, sem eval/shell concatenada |
-| `ports/github.mjs` | `createReadApi(transport)`, `createWriteApi(transport)` | Leitura paginada e escrita separadas; distinguir 404 de 401/403/429/5xx; não simular ausência em erro |
-| `services/version-files.mjs` | `captureBundle(context, plan, filePolicy, ports)`, `validateBundle(bundle, plan, filePolicy, ports)` | Transporte regular de bytes/exclusões, hashes e identidade; `filePolicy` é função pura confiável, não plugin do consumidor |
-| `services/technical-release.mjs` | `prepareTechnicalPr(context, plan, bundle, ports)`, `validateTechnicalMerge(context, evidence, ports)` | PR técnico e reviews/proveniência comuns; não recalcula SemVer nem executa ferramenta nativa |
-| `services/publication.mjs` | `reconcilePublication(context, plan, ports) -> PublicationResult` | Preflight de todas as entradas; tags/Releases imutáveis, reconciliação e resultados parciais |
-| `adapters/changesets.mjs` | `collect(context, ports)`, `prepare(context, nativePlan, ports)` | CLI Changesets do lockfile, um plano para todo o workspace e preparação somente no leitor |
-| `adapters/release-please.mjs` | `collect(context, ports)`, `prepare(context, nativePlan, ports)` | SDK Release Please fixado; serializar plano/arquivos e notas nativos sem chamar métodos de escrita |
-| `adapters/release-please/snapshot-scm.mjs` | `createSnapshotScm(context, snapshot, ports)` | Porta nativa específica da ferramenta, restrita à origem observada; métodos mutantes sempre rejeitados |
+| `src/adapter-contract.ts` | `validateDescriptor(value: unknown)`, `validateReleasePlan(value: unknown)`, `planFromReport(report, descriptor)` | Validação pura de capacidades e envelope; não usa filesystem/rede |
+| `src/adapter-registry.ts` | `resolveAdapter(id, implementations): AdapterDescriptor` | Registro explícito dos cinco IDs; overrides somente por injeção de código confiável nos testes |
+| `src/services/versioning.ts` | `collectPlan(context, ports): Promise<ReleasePlan>` | Resolve adaptador, aguarda cálculo sync/async e valida relatório/plano; não escreve remotamente |
+| `src/ports/git.ts` | `createGitPort(repository, execute): GitPort` | Consultas a refs, blobs e histórico por argv; SHA explícito, sem eval/shell concatenada |
+| `src/ports/github.ts` | `createReadApi(transport): ReadApi`, `createWriteApi(transport): WriteApi` | Leitura paginada e escrita separadas; distinguir 404 de 401/403/429/5xx; não simular ausência em erro |
+| `src/services/version-files.ts` | `captureBundle(context, plan, filePolicy, ports)`, `validateBundle(bundle, plan, filePolicy, ports)` | Transporte regular de bytes/exclusões, hashes e identidade; `filePolicy` é função pura confiável, não plugin do consumidor |
+| `src/services/technical-release.ts` | `prepareTechnicalPr(context, plan, bundle, ports)`, `validateTechnicalMerge(context, evidence, ports)` | PR técnico e reviews/proveniência comuns; não recalcula SemVer nem executa ferramenta nativa |
+| `src/services/publication.ts` | `reconcilePublication(context, plan, ports): Promise<PublicationResult>` | Preflight de todas as entradas; tags/Releases imutáveis, reconciliação e resultados parciais |
+| `src/adapters/changesets.ts` | `collect(context, ports)`, `prepare(context, nativePlan, ports)` | CLI Changesets do lockfile, um plano para todo o workspace e preparação somente no leitor |
+| `src/adapters/release-please.ts` | `collect(context, ports)`, `prepare(context, nativePlan, ports)` | SDK Release Please fixado; serializar plano/arquivos e notas nativos sem chamar métodos de escrita |
+| `src/adapters/release-please/snapshot-scm.ts` | `createSnapshotScm(context, snapshot, ports)` | Porta nativa específica da ferramenta, restrita à origem observada; métodos mutantes sempre rejeitados |
 
 Os adaptadores Go, jgitver e standard-version mantêm seus módulos e assinaturas públicas. A orquestração usa `await` para aceitar tanto implementações síncronas existentes quanto o SDK assíncrono novo. `collect-version-report.mjs` e `verify-version-files.mjs` deixam de executar no import; a CLI fica sob guarda de entrypoint explícita.
+
+Ao migrar cada módulo, mover a implementação para src e fazer sua fachada pública reexportar o compilado. Tipar as dependências de leitura e de escrita separadamente, sem tratar tipagem como mecanismo de segurança suficiente. As portas e os jobs continuam aplicando as restrições efetivas em runtime.
 
 O Bash permanece como compatibilidade para os caminhos usados pelos workflows e fixtures. Ele prepara entradas/saídas e chama a orquestração. Decisões de versão, autorização, identidade e publicação ficam em serviços testáveis, não em cópias condicionadas ao ID do adaptador.
 
@@ -217,6 +235,8 @@ Erros de CLI continuam com exit não zero e stderr; formatos públicos existente
 | Pin de exemplo anterior não contém novos contratos | `examples/callers/` | Exemplo parece funcional, mas chama SHA antigo | Atualização do pin somente após revisão/publicação autorizada; pendência explícita antes disso |
 | Tag Java sem prefixo e revision fixa | Baseline PackagesJava descrita na spec | Release e coordenadas internas podem divergir | Inventário e validação de POMs/prefixo antes de adoção; sem correção automática de tags |
 | Retomada registry não atômica | PKG-07 | Duplicar ou misturar coordenadas publicadas | Digest/identidade por coordenada e intervenção se estado não verificável |
+| Fontes TS e JavaScript distribuído divergentes | `scripts/versioning/src/` e `dist/` projetados | Consumidor executa bytes diferentes do código revisado | Build reprodutível isolado e comparação completa de arquivos/bytes na CI; testar o compilado |
+| Compilação ou import do SDK no escritor | Grafo de módulos e jobs projetados | Aumentar superfície privilegiada ou exigir dependências no consumidor | Nenhum tsc/loader/install no escritor; imports nativos apenas no leitor e testes de grafo/contrato |
 
 ## Test Strategy and Requirement Mapping
 
@@ -234,6 +254,7 @@ Testes serão derivados das expectativas dos critérios da spec, não da saída 
 | PKG-08 | Matriz requisito/caso/run/SHA com cenários não executados pendentes; verificador independente e mutantes |
 | PKG-09 | SDK real17.11.2 com SCM controlado: fix1.0.1, feat1.1.0 e breaking2.0.0 desde1.0.0; bootstrap0.0.1, no-release e PR atualizado |
 | PKG-10 | Testes de contratos, capacidades, import sem I/O, adaptador substituto confiável e portas sentinela; regressão completa dos cinco perfis |
+| PKG-11 | Typecheck positivo/negativo, noEmitOnError, dist ausente/extra/divergente, execução do compilado sem compilador e JSON inválido rejeitado em runtime |
 
 Comandos existentes a preservar: `node tests/versioning/run.mjs --local`, `node tests/versioning/real-standard-version.mjs`, `node tests/versioning/real-standard-bootstrap.mjs`, `node tests/versioning/real-jgitver.mjs`, `node tests/versioning/real-maven-reactor.mjs`, `node tests/versioning/real-jgitver-prefix.mjs`, `node tests/versioning/maven-setup.mjs` e `node tests/versioning/run.mjs --real-go`. Os comandos novos e nomes exatos dos testes serão definidos em Tasks. Git Bash explícito no Windows evita o bash de WSL não instalado; CI Linux valida permissões POSIX dos fixtures.
 
@@ -243,7 +264,8 @@ Gates documentais agora: `validate_spec.py --strict` e `git diff --check`. Eles 
 
 | Decision | Choice | Rationale |
 | --- | --- | --- |
-| Runtime/linguagem | JavaScript ESM e Bash fino existentes | Não criar dependência de compilação ou reescrever ecossistema |
+| Runtime/linguagem | Fontes TypeScript estritas, JavaScript ESM compilado e Bash fino | Escolha do usuário para manutenção; não exigir compilação no consumidor |
+| Distribuição | src e dist versionados juntos, lockfile central e CI de correspondência | Runtime disponível no SHA selecionado sem instalar toolchain no escritor |
 | POO | Contratos, encapsulamento e composição; sem classe base obrigatória | Ferramentas têm ciclos e capacidades distintos |
 | Release Please | SDK17.11.2 fixado, isolado no checkout confiável | Reprodutibilidade e nenhum requisito de instalar SDK em toda aplicação |
 | Escrita | Somente serviços centrais após policy e validação de evidência | Preservar AD-001/002/003 e evitar bot concorrente |
@@ -251,7 +273,7 @@ Gates documentais agora: `validate_spec.py --strict` e `git diff --check`. Eles 
 | Migração | Incremental com caracterização por etapa | Separar regressão da refatoração de comportamento novo |
 | Ship gate | Evidência local, revisão independente, CI hospedada e piloto são resultados distintos | Não encerrar issue nem afirmar homologação por CI central verde |
 
-Não é necessário superseder AD-001/002/003. O desenho segue essas decisões. Escolhas específicas de versão/perfil/bundle desta entrega permanecem neste documento.
+Não é necessário superseder AD-001/002/003. O desenho segue essas decisões. A escolha TypeScript foi registrada como AD-004, sem mudar as fronteiras centrais de autorização. Escolhas específicas de versão/perfil/bundle desta entrega permanecem neste documento.
 
 ## Official Research References
 
@@ -262,6 +284,7 @@ Context7 indisponível nesta sessão. Conferidos código/docs do tag fixado, nã
 - [SCM](https://github.com/googleapis/release-please/blob/v17.11.2/src/scm.ts): contrato nativo que será limitado pelo snapshot adapter.
 - [Node strategy](https://github.com/googleapis/release-please/blob/v17.11.2/src/strategies/node.ts) e [BaseStrategy](https://github.com/googleapis/release-please/blob/v17.11.2/src/strategies/base.ts): arquivos atualizáveis e bootstrap nativo.
 - [Changesets3 CLI](https://changesets.dev/guide/cli): plano, versionamento e distribuição são fases distintas. Compatibilidade2/3 precisa dos testes reais citados.
+- [TypeScript módulos Node](https://www.typescriptlang.org/docs/handbook/modules/reference.html), [strict](https://www.typescriptlang.org/tsconfig/strict.html) e [noEmitOnError](https://www.typescriptlang.org/tsconfig/noEmitOnError.html): referências oficiais do desenho de compilação; gates ainda não executados nesta etapa documental.
 
 ## Approval Gate
 

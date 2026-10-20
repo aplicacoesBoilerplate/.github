@@ -8,7 +8,9 @@ Esta especificação fecha a conciliação central e define o aceite remoto de P
 
 O aditivo de 2026-10-19 inclui Release Please como quinto adaptador e a organização modular dos scripts, mantendo standard-version operacional para os consumidores existentes. Não substitui Changesets/Turbo no piloto Vue nem jgitver no piloto Java.
 
-**Status:** especificação completa PKG-01 a PKG-10 e seus defaults aprovados expressamente pelo usuário em 2026-10-19, com solicitação de implementação local. Design concretizado em design.md aguarda seu gate de revisão TLC antes de Tasks/Execute; aprovação da spec não significa comportamento já implementado.
+Na mesma data, o usuário escolheu TypeScript como linguagem da automação central para facilitar manutenção, contratos e encapsulamento. Essa escolha acrescenta PKG-11 e substitui apenas a decisão técnica anterior de implementar os módulos novos em JavaScript.
+
+**Status:** PKG-01 a PKG-10 e seus defaults aprovados expressamente pelo usuário em 2026-10-19, com solicitação de implementação local. PKG-11 registra a escolha adicional de TypeScript. Design atualizado em design.md aguarda seu gate de revisão TLC antes de Tasks/Execute; aprovação da spec não significa comportamento já implementado.
 **Data:** 2026-10-16; aditivo em 2026-10-19. **Issue:** [#4](https://github.com/aplicacoesBoilerplate/.github/issues/4).
 **Continuidade:** complementa `reconcile-native-profiles` e a feature `changesets-turbo` do PR #13; não invalida suas evidências nos respectivos SHAs.
 
@@ -20,6 +22,7 @@ O aditivo de 2026-10-19 inclui Release Please como quinto adaptador e a organiza
 - [ ] Produzir evidências remotas, de recuperação e de consumo externo antes de propor o encerramento da issue #4.
 - [ ] Acrescentar release-please como opção explícita, preservando standard-version sem migração automática.
 - [ ] Organizar scripts por responsabilidade e contratos reutilizáveis, sem duplicar policy ou comprometer a separação read/write.
+- [ ] Implementar módulos centrais novos/migrados em TypeScript com tipagem estrita, distribuição compilada e compatibilidade dos consumidores.
 
 ## Out of Scope
 
@@ -37,7 +40,7 @@ O aditivo de 2026-10-19 inclui Release Please como quinto adaptador e a organiza
 | Tornar a publicação de packages parte obrigatória de todos os adaptadores | Go e aplicações sem distribuição de biblioteca continuam usando o contrato central existente |
 | Remover standard-version ou migrar aplicações automaticamente | O usuário mantém aplicações legadas e pediu coexistência dos adaptadores |
 | Habilitar todos os release-types, plugins e monorepos do Release Please de uma vez | O primeiro perfil proposto é Node/npm com um componente; ampliação exige testes e contrato próprios |
-| Reescrever scripts em outra linguagem, criar framework de plugins dinâmicos ou impor hierarquias de classes | A organização solicitada será incremental, por composição e contratos explícitos |
+| Reescrita integral de uma vez, framework de plugins dinâmicos ou hierarquias obrigatórias de classes | TypeScript foi escolhido; a migração continua incremental e baseada em composição/contratos |
 
 ## Assumptions & Open Questions
 
@@ -63,6 +66,8 @@ O aditivo de 2026-10-19 inclui Release Please como quinto adaptador e a organiza
 | Reuso semelhante a POO | Interfaces por contrato, encapsulamento, composição e dependências explícitas; classes apenas se trouxerem benefício demonstrável | Reaproveitar módulos JavaScript existentes sem construir uma hierarquia artificial | Aprovado com a spec completa 2026-10-19 |
 | Ordem das adições | Consolidar pontos comuns durante a conciliação; depois incluir Release Please; caracterizar e verificar cada extração separadamente | Separar regressão de refatoração e comportamento novo, sem reescrita em bloco | Aprovado com a spec completa 2026-10-19 |
 | Piloto Release Please | Sem aplicação piloto nova escolhida; validar primeiro em fixture Node real no .github | Não alterar aplicações ou inferir escolha de piloto nesta solicitação | Aprovado com a spec completa 2026-10-19 |
+| Linguagem central | TypeScript para módulos novos e migração dos existentes conforme reorganização; YAML e entrypoints compatíveis permanecem | Manutenção próxima da programação habitual da equipe, sem reescrever aplicações consumidoras | Escolha explícita do usuário 2026-10-19 |
+| Distribuição TypeScript | Fontes e JavaScript compilado versionados juntos no repositório central; CI verifica correspondência e consumidores executam somente o compilado | Não exigir compilador/loader TS no consumidor ou no escritor privilegiado | Default técnico registrado no design |
 
 **Open questions:** none — especificação e defaults do aditivo aprovados pelo usuário. A escolha de versão upstream e do conjunto exato de opções foi fundamentada em design.md e depende do gate de revisão desse documento antes de implementar.
 
@@ -239,7 +244,24 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 11. WHEN concluir a reorganização THEN os READMEs de workflows e scripts SHALL documentar responsabilidades, fluxo, dependências, fronteira read/write, como adicionar adaptador e quais contratos/testes devem passar.
 12. WHEN reportar conclusão THEN a entrega SHALL apresentar os gates dos cinco perfis, testes dos módulos compartilhados e revisão independente, sem usar redução de linhas ou adoção de classes como substituto de evidência funcional.
 
-**Independent Test**: Contratos com adaptador substituto e dependências sentinela; importações sem I/O; fixtures reais dos cinco perfis; cenários negativos de segurança e mutantes de policy/SHA detectados após a refatoração. Interfaces podem ser módulos/objetos JavaScript; composição é o padrão, sem herança obrigatória.
+**Independent Test**: Contratos com adaptador substituto e dependências sentinela; importações sem I/O; fixtures reais dos cinco perfis; cenários negativos de segurança e mutantes de policy/SHA detectados após a refatoração. Interfaces TypeScript descrevem módulos/objetos; o JavaScript compilado é o executável distribuído. Composição é o padrão, sem herança obrigatória.
+
+### P1: Automação central em TypeScript — PKG-11
+
+**User Story**: Como mantenedor, quero trabalhar em TypeScript para explicitar contratos, encapsular responsabilidades e detectar incompatibilidades durante o desenvolvimento sem aumentar as exigências dos consumidores.
+
+**Acceptance Criteria**:
+1. WHEN criar módulos centrais novos ou migrar módulos durante a reorganização THEN a implementação SHALL usar fontes TypeScript com strict habilitado e contratos explícitos de adaptadores, contexto, planos, portas e resultados.
+2. WHEN compilar a automação THEN o build SHALL bloquear emissão em caso de erro de tipo e produzir JavaScript ESM para o runtime Node central, sem exigir um loader TypeScript em execução.
+3. WHEN entregar uma revisão central THEN a CI SHALL verificar que o JavaScript distribuído corresponde aos fontes TypeScript e lockfile da mesma revisão, rejeitando saídas ausentes, divergentes ou extras.
+4. WHEN um consumidor executar o workflow central THEN o job SHALL usar o JavaScript distribuído no SHA selecionado sem instalar TypeScript ou compilar os fontes da automação nesse job.
+5. WHEN o escritor privilegiado executar THEN o job SHALL permanecer sem compilação, instalação de dependências ou execução de ferramentas nativas do consumidor, preservando a fronteira read/write.
+6. WHEN migrar um módulo legado THEN a compatibilidade SHALL preservar caminhos dos entrypoints, exports públicos utilizados, outputs e códigos de erro já suportados, com testes de caracterização.
+7. WHEN receber JSON de ferramenta, arquivo, artifact ou API THEN o sistema SHALL validar os dados em runtime antes de tratá-los como contrato de domínio, sem usar cast de TypeScript como validação.
+8. WHEN verificar contratos TypeScript THEN os testes SHALL demonstrar rejeição de capacidades/contextos incompatíveis e executar as fixtures comportamentais contra o JavaScript efetivamente distribuído.
+9. WHEN documentar a automação THEN os READMEs SHALL distinguir fontes editáveis, saídas geradas, comandos de typecheck/build/testes e responsabilidades das classes/interfaces, sem apresentar o compilado como fonte de manutenção manual.
+
+**Independent Test**: Testes de compilação positivos/negativos, fixture de dist divergente/ausente/extra rejeitada, contratos de workflow sem compilador nos jobs consumidores, validação runtime de JSON inválido e regressões contra o compilado. Classes são permitidas para encapsular comportamento; composição continua preferida à herança obrigatória.
 
 ## Edge Cases
 
@@ -279,8 +301,9 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 | PKG-08 | Evidências e encerramento | Design | In Design |
 | PKG-09 | Release Please coexistente | Design | In Design |
 | PKG-10 | Contratos e composição dos scripts | Design | In Design |
+| PKG-11 | TypeScript e distribuição compilada | Design | In Design |
 
-**Coverage:** 10 requisitos aprovados; todos mapeados ao design. Tarefas ainda não derivadas. In Design indica que os contratos técnicos foram desenhados, não que a implementação esteja verificada.
+**Coverage:** PKG-01 a PKG-10 aprovados e PKG-11 acrescentado pela escolha de TypeScript em 2026-10-19; todos mapeados ao design. Tarefas ainda não derivadas. In Design não significa implementação verificada.
 
 ## Delivery Boundaries
 
@@ -303,6 +326,7 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 - [ ] Usuário recebe relatório final com recomendação fundamentada sobre o encerramento da issue #4.
 - [ ] Release Please preserva os gates centrais e o fluxo de PR técnico; standard-version continua selecionável e testado sem migração forçada.
 - [ ] Serviços compartilhados são verificados por contrato, possuem dependências explícitas e estão documentados; adaptadores não duplicam regras centrais.
+- [ ] Typecheck estrito, compilação e verificação de correspondência dos arquivos distribuídos passam; os consumidores não precisam de compilador TypeScript.
 
 ## Sources
 
@@ -316,5 +340,6 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 - [Release Please oficial](https://github.com/googleapis/release-please): ferramenta baseada em PRs de release, com publicação no registry separada. Fonte consultada em 2026-10-19.
 - [Configuração de manifest](https://github.com/googleapis/release-please/blob/main/docs/manifest-releaser.md) e [customização](https://github.com/googleapis/release-please/blob/main/docs/customizing.md): selecionar e fixar apenas o perfil suportado no design.
 - [Planejamento nativo e mutações separados no código upstream](https://github.com/googleapis/release-please/blob/main/src/manifest.ts): a integração deve provar o modo somente leitura na versão fixada; a documentação de main não substitui o teste desse comportamento.
+- [TypeScript strict](https://www.typescriptlang.org/tsconfig/strict.html), [noEmitOnError](https://www.typescriptlang.org/tsconfig/noEmitOnError.html) e [módulos Node](https://www.typescriptlang.org/docs/handbook/modules/reference.html): referências para o desenho da compilação, não evidência de implementação executada.
 
 Context7 não está disponível nesta sessão. Pesquisa complementar limitada a fontes oficiais; a evidência de compatibilidade virá dos testes na versão efetivamente fixada.

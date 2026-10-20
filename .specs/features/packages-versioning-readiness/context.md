@@ -10,6 +10,8 @@ Concluir a conciliação central Changesets/Turbo e definir o aceite de integra�
 
 O aditivo mantém esse escopo e inclui Release Please e modularização dos scripts comuns. Não inicia migração automática de aplicações nem troca os adaptadores aprovados para Java/Vue.
 
+O usuário escolheu TypeScript para aproximar a manutenção da automação da programação habitual da equipe. O código central novo será escrito em TS; compilado JavaScript e entrypoints compatíveis preservam o consumo dos workflows.
+
 ## Implementation Decisions
 
 ### Decisões já tomadas pelo usuário
@@ -27,6 +29,7 @@ O aditivo mantém esse escopo e inclui Release Please e modularização dos scri
 - O conteúdo anterior da especificação e seus defaults estão aprovados, conforme confirmação expressa em 2026-10-19. Não reabrir essas decisões pela adição de um adaptador.
 - Acrescentar Release Please sem remover standard-version, pois existem consumidores legados.
 - Organizar e reutilizar os scripts com princípios próximos a POO, respeitando os recursos comuns a vários adaptadores.
+- Usar TypeScript em vez de manter JavaScript como linguagem dos módulos novos; migrar os existentes conforme a reorganização, sem reescrita integral de uma vez.
 
 ### Escopo anterior aprovado
 
@@ -46,6 +49,9 @@ O aditivo mantém esse escopo e inclui Release Please e modularização dos scri
 - Extrair serviços de processos/paths, leitura Git/API, policy, bundle/PR técnico e publicação quando houver uso real por mais de um perfil. Não criar classes apenas para simular POO.
 - Preservar os entrypoints e outputs públicos existentes. A redução de duplicação será acompanhada de testes de caracterização e contratos, não de uma meta artificial de redução de linhas.
 - Os detalhes de versão upstream, opções aceitas, caminhos permitidos e APIs de planejamento serão fechados no design com evidência da versão escolhida.
+- PKG-11 cobre TypeScript estrito, build bloqueado por erro de tipo, distribuição compilada e validação runtime. O compilador pertence à automação central, não às aplicações consumidoras.
+- YAML continua a orquestrar os jobs; Bash limita-se aos entrypoints necessários. Interfaces/classes e composição organizam a lógica, sem impor classe base única.
+- O design prevê src e dist no mesmo SHA e CI de correspondência. Não executar compilador ou loader TS no escritor privilegiado.
 
 ### Alternativas do aditivo
 
