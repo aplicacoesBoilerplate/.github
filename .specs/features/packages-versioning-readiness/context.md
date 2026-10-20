@@ -1,12 +1,14 @@
 # Contexto: versionamento de packages
 
-**Data:** 2026-10-16.
-**Status:** proposta aguardando revisão do usuário; design e tarefas ainda não iniciados.
+**Data:** 2026-10-16; aditivo em 2026-10-19.
+**Status:** escopo anterior aprovado em 2026-10-19; requisitos Release Please e organização modular adicionados por solicitação do usuário, com defaults técnicos novos destacados para revisão. Design e tarefas ainda não iniciados.
 **Spec:** [spec.md](spec.md).
 
 ## Feature Boundary
 
 Concluir a conciliação central Changesets/Turbo e definir o aceite de integração e distribuição de PackagesJava e PackagesVue. A primeira execução ocorre apenas no repositório .github. Não inclui desenvolvimento das funcionalidades dos pilotos.
+
+O aditivo mantém esse escopo e inclui Release Please e modularização dos scripts comuns. Não inicia migração automática de aplicações nem troca os adaptadores aprovados para Java/Vue.
 
 ## Implementation Decisions
 
@@ -22,8 +24,11 @@ Concluir a conciliação central Changesets/Turbo e definir o aceite de integra�
 - Este chat não implementa funcionalidades/issues dos pilotos.
 - Implementação será feita neste chat, sem delegar lotes por padrão; revisão independente é o gate final TLC.
 - A issue #4 foi reaberta; não considerar PR aberto ou CI central verde como homologação completa.
+- O conteúdo anterior da especificação e seus defaults estão aprovados, conforme confirmação expressa em 2026-10-19. Não reabrir essas decisões pela adição de um adaptador.
+- Acrescentar Release Please sem remover standard-version, pois existem consumidores legados.
+- Organizar e reutilizar os scripts com princípios próximos a POO, respeitando os recursos comuns a vários adaptadores.
 
-### Proposta desta iteração
+### Escopo anterior aprovado
 
 - Aproveitar o PR #13 existente sobre o #12, sem criar fluxo concorrente e sem reescrever histórico.
 - Executar primeiro conciliação, testes e templates no .github; só depois alterar pilotos mediante autorização aplicável.
@@ -31,6 +36,24 @@ Concluir a conciliação central Changesets/Turbo e definir o aceite de integra�
 - Manter o limite de milestone em lotes Changesets: mais de um release com milestone bloqueia. Não criar mapa de versões novo nesta entrega.
 - Separar GitHub tag/Release de distribuição no registry; encadear por resultado completo e published_sha.
 - Testar consumo externo com cache isolado; falha parcial não provoca rollback de tags nem sobrescrita de coordenadas.
+
+### Aditivo Release Please e modularização
+
+- PKG-09 especifica seleção explícita, cálculo e arquivos nativos, PR técnico atualizável, publicação central e compatibilidade com standard-version.
+- PKG-10 especifica encapsulamento, contrato de adaptador, registro de capacidades, composição e injeção explícita de processos/Git/API.
+- Propor inicialmente Release Please para um componente Node/npm com lockfile. Os demais release-types e monorepos da ferramenta não ficam automaticamente certificados; Changesets continua dono do piloto Vue.
+- O planejamento Release Please não pode chamar APIs mutantes nem receber token de escrita. O escritor central aplica o bundle e publica após gates, sem executar a ferramenta/configuração do consumidor.
+- Extrair serviços de processos/paths, leitura Git/API, policy, bundle/PR técnico e publicação quando houver uso real por mais de um perfil. Não criar classes apenas para simular POO.
+- Preservar os entrypoints e outputs públicos existentes. A redução de duplicação será acompanhada de testes de caracterização e contratos, não de uma meta artificial de redução de linhas.
+- Os detalhes de versão upstream, opções aceitas, caminhos permitidos e APIs de planejamento serão fechados no design com evidência da versão escolhida.
+
+### Alternativas do aditivo
+
+| Abordagem | Consequência | Recomendação |
+| --- | --- | --- |
+| Adaptador Release Please com serviços comuns por composição | Reusa gates sem acoplar a policy ao ciclo nativo de uma ferramenta | Adotar como default técnico proposto |
+| Action Release Please completa em paralelo ao publicador central | Pode abrir/publicar por fora dos gates e competir com o fluxo existente | Não adotar |
+| Hierarquia única de classes para todos os scripts | Exige herança artificial para ferramentas com ciclos distintos | Não adotar; classes continuam possíveis onde forem úteis |
 
 ### Alternativas consideradas
 
@@ -42,19 +65,22 @@ Concluir a conciliação central Changesets/Turbo e definir o aceite de integra�
 
 ### Agent's Discretion
 
-Ainda não há delegação nova de decisões de produto. O design poderá escolher componentes e testes dentro das regras aprovadas, sem ampliar adaptadores, package managers ou privilégios.
+O usuário autorizou a ampliação de escopo para Release Please e organização modular. Isso não delega a escolha de outro piloto ou ampliação de package managers, release-types e privilégios. O design poderá escolher componentes/testes dentro dos defaults explicitamente revisados.
 
 ### Declined / Undiscussed Gray Areas -> Assumptions
 
-Novos defaults estão integralmente enumerados em Assumptions & Open Questions da spec. Em especial: milestone de lote, ordem A/B/C, consolidação do release Vue e tratamento conservador de coordenadas já publicadas. Nenhum deles está marcado como aprovação do usuário.
+Os defaults anteriores, inclusive milestone de lote, ordem A/B/C e recuperação conservadora, foram aprovados em 2026-10-19. Somente os defaults do aditivo estão pendentes de revisão: primeiro perfil Node único, preparo nativo somente leitura, conjunto suportado de configuração, composição incremental e ausência de novo piloto Release Please. Eles estão enumerados em Assumptions & Open Questions da spec.
 
 ## Specific References
 
 - PR #12 c7e610117edfbe8a6338ec0d3b6703156026ef70; PR #13 b1b2ec51906306c7afa5129f6557b30b9528f6b5.
 - PackagesVue possui tags próprias por package; PackagesJava tem tag 0.0.1 sem prefixo v. Preservar ambas as histórias e verificar as bases antes da adoção.
 - Guias nativos e changelogs devem ser reaproveitados na homologação, não substituídos por um algoritmo central.
+- O upstream de standard-version declara depreciação; a sua manutenção futura não é assumida como garantia. Manter o perfil testado é uma decisão de compatibilidade do projeto, sem instalar fork automaticamente.
+- O Release Please trabalha com PRs de release e não distribui packages em registries. Consumir seu cálculo/preparo nativos sem permitir uma segunda autoridade de escrita exige teste específico no design/implementação.
 
 ## Deferred Ideas
 
 - Versionamento independente dos módulos Java, pnpm/Yarn, Gradle, prereleases e aprovação de environments por LLM.
 - Campos/mapas de versão para milestones de monorepo. O recorte atual não define um novo formato de planejamento por package.
+- Release-types e monorepos Release Please além do primeiro perfil validado; substituição automática de standard-version por ferramentas/forks alternativos.

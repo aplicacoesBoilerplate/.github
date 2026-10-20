@@ -6,8 +6,10 @@ A issue #4 foi reaberta porque a implementação central ainda não comprova o f
 
 Esta especificação fecha a conciliação central e define o aceite remoto de PackagesJava e PackagesVue. Ela separa três resultados: código central verificado, integração homologada no consumidor e packages publicados e consumíveis. Um resultado não comprova automaticamente o seguinte.
 
-**Status:** proposta para revisão do usuário, sem implementação autorizada por este documento.
-**Data:** 2026-10-16. **Issue:** [#4](https://github.com/aplicacoesBoilerplate/.github/issues/4).
+O aditivo de 2026-10-19 inclui Release Please como quinto adaptador e a organização modular dos scripts, mantendo standard-version operacional para os consumidores existentes. Não substitui Changesets/Turbo no piloto Vue nem jgitver no piloto Java.
+
+**Status:** escopo PKG-01 a PKG-08 e defaults anteriores aprovados pelo usuário em 2026-10-19. PKG-09/10 registram as adições solicitadas; os defaults técnicos novos estão identificados para revisão, sem implementação nesta iteração documental.
+**Data:** 2026-10-16; aditivo em 2026-10-19. **Issue:** [#4](https://github.com/aplicacoesBoilerplate/.github/issues/4).
 **Continuidade:** complementa `reconcile-native-profiles` e a feature `changesets-turbo` do PR #13; não invalida suas evidências nos respectivos SHAs.
 
 ## Goals
@@ -16,6 +18,8 @@ Esta especificação fecha a conciliação central e define o aceite remoto de P
 - [ ] Entregar um caller por consumidor, com CI, prévia, publicação de versão e encadeamento explícito para distribuição.
 - [ ] Homologar Maven com versão única e Vue com o plano coordenado de packages calculado pelo Changesets.
 - [ ] Produzir evidências remotas, de recuperação e de consumo externo antes de propor o encerramento da issue #4.
+- [ ] Acrescentar release-please como opção explícita, preservando standard-version sem migração automática.
+- [ ] Organizar scripts por responsabilidade e contratos reutilizáveis, sem duplicar policy ou comprometer a separação read/write.
 
 ## Out of Scope
 
@@ -31,26 +35,36 @@ Esta especificação fecha a conciliação central e define o aceite remoto de P
 | Movimentar/excluir tags publicadas, sobrescrever versões no registry, migração massiva de histórico | Referências e coordenadas publicadas são imutáveis |
 | Aprovação autônoma de environments por LLM | Evolução posterior; manter environment opcional e suas regras humanas quando configurado |
 | Tornar a publicação de packages parte obrigatória de todos os adaptadores | Go e aplicações sem distribuição de biblioteca continuam usando o contrato central existente |
+| Remover standard-version ou migrar aplicações automaticamente | O usuário mantém aplicações legadas e pediu coexistência dos adaptadores |
+| Habilitar todos os release-types, plugins e monorepos do Release Please de uma vez | O primeiro perfil proposto é Node/npm com um componente; ampliação exige testes e contrato próprios |
+| Reescrever scripts em outra linguagem, criar framework de plugins dinâmicos ou impor hierarquias de classes | A organização solicitada será incremental, por composição e contratos explícitos |
 
 ## Assumptions & Open Questions
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
-| Ordem de trabalho | Conciliação central, preparo dos callers/fixtures, homologação remota, distribuição e consumo externo | Avançar sem aguardar merge, sem tratar CI local como homologação remota | Proposto nesta especificação |
-| Destino do trabalho Changesets | Continuar o PR #13 empilhado no #12; preservar histórico e enviar apenas fast-forward quando autorizado | Evitar uma implementação concorrente e respeitar a revisão aberta | Coerente com a orientação anterior; envio desta iteração exige confirmação |
+| Ordem de trabalho | Conciliação central, preparo dos callers/fixtures, homologação remota, distribuição e consumo externo | Avançar sem aguardar merge, sem tratar CI local como homologação remota | Aprovado 2026-10-19; adições centrais precedem adoção dos novos perfis |
+| Destino do trabalho Changesets | Continuar o PR #13 empilhado no #12; preservar histórico e enviar apenas fast-forward quando autorizado | Evitar uma implementação concorrente e respeitar a revisão aberta | Escopo aprovado 2026-10-19; não equivale a nova autorização de push |
 | Execução | Implementação neste chat; revisão independente após a última tarefa | Preferência já expressa pelo usuário e gate obrigatório TLC | Herdado |
 | Java | Maven, Java 21, jgitver 1.9.0 e versão conjunta dos quatro módulos | Modelo aprovado e perfil central já validado | Herdado |
-| Vue | npm workspaces, package-lock.json e versões nativas por package; uma coordenação por monorepo | Configuração atual de PackagesVue e escopo do PR #13 | Base observada; confirmar a especificação |
-| Milestone em lote Vue | Lote com mais de um package exige ausência de milestone; milestone presente bloqueia antes da escrita, sem override para esse formato não suportado | Um título SemVer não expressa várias versões; não inventar mapa/plano novo nesta entrega | Proposta a aprovar, preserva o limite documentado no PR #13 |
-| Milestone com um release | Aplicar contrato existente: versão exata e incremento, sem substituir o cálculo nativo | Preservar a governança aprovada para versão única | Herdado; adaptação ao lote unitário proposta |
+| Vue | npm workspaces, package-lock.json e versões nativas por package; uma coordenação por monorepo | Configuração atual de PackagesVue e escopo do PR #13 | Aprovado 2026-10-19 |
+| Milestone em lote Vue | Lote com mais de um package exige ausência de milestone; milestone presente bloqueia antes da escrita, sem override para esse formato não suportado | Um título SemVer não expressa várias versões; não inventar mapa/plano novo nesta entrega | Aprovado 2026-10-19 |
+| Milestone com um release | Aplicar contrato existente: versão exata e incremento, sem substituir o cálculo nativo | Preservar a governança aprovada para versão única | Aprovado 2026-10-19 |
 | Bootstrap | Escopo sem tag estável reconhecida aceita somente candidata nativa 0.0.1; nenhum reset de manifest ou criação de baseline automática | Regra aprovada de primeira versão; tags existentes exigem diagnóstico de escopo | Herdado |
 | Registry do piloto | GitHub Packages npm e Maven, com permissões verificadas separadamente | É o destino configurado nos dois repositórios | Observado; publicação exige autorização específica |
-| Migração do release Vue | Um único produtor de PR técnico, tags e GitHub Releases; retirar o produtor concorrente na adoção autorizada | O workflow atual já cria PRs de release e publica packages | Proposta técnica a aprovar |
-| Distribuição | Etapa posterior explícita no caller, condicionada ao resultado completo da versão e ao published_sha | GitHub Release não é npm publish nem Maven deploy | Proposta a aprovar |
-| Recuperação parcial no registry | Inspecionar coordenadas e digests; retomar só ausentes quando comprovadamente seguro; divergência ou estado não verificável exige intervenção | Publicação de vários packages não é transação atômica | Proposta conservadora a aprovar |
-| Dados e retenção | Usar retenção configurada/default dos artifacts; registrar links e SHAs duráveis no relatório de aceite | Não exigir retenção infinita nem presumir que artifacts permanecerão disponíveis | Proposto |
+| Migração do release Vue | Um único produtor de PR técnico, tags e GitHub Releases; retirar o produtor concorrente na adoção autorizada | O workflow atual já cria PRs de release e publica packages | Aprovado 2026-10-19 |
+| Distribuição | Etapa posterior explícita no caller, condicionada ao resultado completo da versão e ao published_sha | GitHub Release não é npm publish nem Maven deploy | Aprovado 2026-10-19 |
+| Recuperação parcial no registry | Inspecionar coordenadas e digests; retomar só ausentes quando comprovadamente seguro; divergência ou estado não verificável exige intervenção | Publicação de vários packages não é transação atômica | Aprovado 2026-10-19 |
+| Dados e retenção | Usar retenção configurada/default dos artifacts; registrar links e SHAs duráveis no relatório de aceite | Não exigir retenção infinita nem presumir que artifacts permanecerão disponíveis | Aprovado 2026-10-19 |
+| Coexistência Node | Seleção explícita entre standard-version e release-please; nenhuma substituição silenciosa ou fallback entre eles | Aplicações existentes precisam continuar funcionando | Solicitado pelo usuário 2026-10-19 |
+| Perfil inicial Release Please | Adaptador release-please, estratégia nativa node, um componente npm com package-lock.json; versão upstream fixada no design | Reutilizar o contrato Node existente sem prometer todos os ecossistemas suportados pela ferramenta | Default novo proposto |
+| Preparação Release Please | Planejamento nativo somente leitura; um PR técnico de release sob controle dos gates centrais; publicação somente pelo escritor central | O fluxo nativo também gerencia PRs/releases e não pode virar segundo produtor concorrente | Default novo proposto |
+| Configuração Release Please | JSON nativo com paths confinados e conjunto suportado de opções documentado; extra-files/plugins fora desse conjunto rejeitados | Preservar cálculo nativo sem autorizar alterações arbitrárias de arquivos ou código do consumidor no escritor | Default novo proposto |
+| Reuso semelhante a POO | Interfaces por contrato, encapsulamento, composição e dependências explícitas; classes apenas se trouxerem benefício demonstrável | Reaproveitar módulos JavaScript existentes sem construir uma hierarquia artificial | Direção solicitada; forma técnica proposta |
+| Ordem das adições | Consolidar pontos comuns durante a conciliação; depois incluir Release Please; caracterizar e verificar cada extração separadamente | Separar regressão de refatoração e comportamento novo, sem reescrita em bloco | Default novo proposto |
+| Piloto Release Please | Sem aplicação piloto nova escolhida; validar primeiro em fixture Node real no .github | Não alterar aplicações ou inferir escolha de piloto nesta solicitação | Default novo proposto |
 
-**Open questions:** none — decisões anteriores preservadas; novos defaults estão identificados acima e precisam de aprovação antes do design e da implementação.
+**Open questions:** none — o escopo anterior está aprovado. Defaults do aditivo estão explicitamente registrados para revisão; a escolha de versão upstream e do conjunto exato de opções será fundamentada no design antes de implementar.
 
 ## Evidence Baseline
 
@@ -100,7 +114,7 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 **Acceptance Criteria**:
 1. WHEN integrar o PR funcional autorizado THEN a automação SHALL abrir ou reconciliar um único PR técnico por origem/plano e não publicar tag nem Release nesse estágio.
 2. WHILE executar cálculo e geração nativos o job SHALL operar sem credenciais de escrita, App private key ou packages:write.
-3. WHEN executar o escritor central THEN o job SHALL aplicar somente o bundle validado, sem executar npm install, Changesets, Maven, lifecycle scripts ou código/configuração do consumidor.
+3. WHEN executar o escritor central THEN o job SHALL aplicar somente o bundle validado, sem executar npm install, Changesets, Release Please, Maven, lifecycle scripts ou código/configuração do consumidor.
 4. IF bundle, hashes, lista de arquivos, plano, head do PR ou SHA funcional divergirem da evidência validada THEN o escritor SHALL rejeitar a operação antes de qualquer escrita.
 5. IF o bundle incluir path fora do workspace, symlink, arquivo não permitido ou alteração de código-fonte THEN o escritor SHALL rejeitá-lo antes de aplicar arquivos.
 6. WHEN publicar após merge técnico THEN a validação SHALL exigir aprovação humana válida no head revisado e vínculo verificável com o SHA funcional e o plano de origem.
@@ -185,6 +199,48 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 
 **Independent Test**: Matriz requisito -> teste -> evidência e um cenário deliberadamente não executado que deve continuar pendente no relatório.
 
+### P1: Release Please sem regressão dos perfis existentes — PKG-09
+
+**User Story**: Como mantenedor de aplicações Node, quero escolher Release Please para novas adoções e continuar usando standard-version nas aplicações existentes, com a mesma governança central.
+
+**Acceptance Criteria**:
+1. WHEN o caller selecionar release-please THEN o registro SHALL resolver um adaptador próprio sem invocar standard-version nem alterar a escolha de ferramenta de outro consumidor.
+2. WHEN calcular uma candidata Release Please THEN o adaptador SHALL consumir o plano nativo de versão, changelog e atualizações de arquivos para o SHA funcional identificado, com a versão upstream fixada e registrada no relatório.
+3. IF a configuração, o manifest nativo e o histórico de releases/tags do componente divergirem THEN o adaptador SHALL bloquear com diagnóstico antes de qualquer escrita, sem inventar baseline ou recorrer a outro adaptador.
+4. WHEN o plano nativo não contiver release elegível THEN a execução SHALL retornar no-release sem abrir PR técnico, criar tag/Release ou disparar distribuição.
+5. WHEN preparar uma release elegível THEN a automação SHALL criar ou atualizar um único PR técnico identificável por repositório, branch-alvo e componente, contendo somente as alterações nativas validadas e sem publicar a release nessa fase.
+6. WHEN o PR técnico receber novo conteúdo ou nova origem funcional THEN a validação SHALL invalidar o plano e as aprovações da revisão anterior antes de permitir publicação.
+7. WHEN publicar após merge técnico aprovado e CI correspondente aprovada THEN o publicador central SHALL criar ou reconciliar a tag e a GitHub Release no SHA integrado verificado, usando a versão e as notas nativas validadas.
+8. WHEN avaliar milestone e override no perfil Release Please THEN a policy SHALL aplicar as mesmas regras de release única de PKG-04 sem usar a milestone para configurar release-as ou forçar o cálculo.
+9. IF o escopo Release Please não possuir baseline estável reconhecida e a candidata nativa não for 0.0.1 THEN a execução SHALL bloquear sem sobrescrever a candidata com um cálculo central.
+10. WHILE planejar versões ou materializar alterações nativas o adaptador SHALL operar sem permissões de escrita, e nenhuma chamada mutante de API será permitida nessa etapa.
+11. IF um label nativo como autorelease: pending ou tagged estiver presente THEN a autorização SHALL continuar exigindo proveniência, diff, SHA e reviews verificados, sem tratar esse label como permissão ou prova de publicação.
+12. WHEN o caller continuar selecionando standard-version THEN a execução SHALL preservar o comportamento já suportado, incluindo bootstrap, PR técnico, outputs e recuperação, sem migrar configuração, manifests ou histórico.
+13. IF o consumidor solicitar release-type, plugin, extra-file ou formato de workspace fora do perfil suportado THEN o adaptador SHALL rejeitar a configuração com diagnóstico explícito antes da escrita.
+14. WHEN documentar e testar o novo perfil THEN a entrega SHALL incluir caller e fixture Node com ferramenta real, cobrindo PATCH/MINOR/MAJOR em base estável, bootstrap, no-release, PR atualizado, merge aprovado, retry e conflito de tag sem publicação remota na fixture.
+
+**Independent Test**: Release Please real fixado, transporte GitHub controlado que registra e proíbe mutações no planejamento; fixture Node com versões esperadas derivadas da spec e regressões do standard-version real. Merge técnico e publicação são testados com payloads de API verificáveis, sem presumir que mocks substituem uma futura homologação remota.
+
+### P1: Scripts organizados por contrato e composição — PKG-10
+
+**User Story**: Como mantenedor da pipeline, quero módulos com responsabilidades claras e recursos reutilizáveis para acrescentar adaptadores sem duplicar scripts e regras.
+
+**Acceptance Criteria**:
+1. WHEN executar qualquer um dos cinco adaptadores THEN a orquestração SHALL usar o mesmo contrato de contexto explícito e resultado normalizado de release única ou lote, sem exigir métodos artificiais de publicação nos coletores nativos.
+2. WHEN selecionar uma ferramenta THEN o registro SHALL declarar suas capacidades de runtime, formato único/lote, geração de arquivos e tipo de tag, rejeitando capacidade não suportada em vez de inferi-la apenas pelo ID.
+3. WHEN dois ou mais adaptadores precisarem executar processos ou consultar Git/API THEN os módulos SHALL reutilizar as portas comuns de execução, paths, Git e transporte por dependências explícitas, sem manter cópias das mesmas operações em cada adaptador.
+4. WHEN avaliar governança THEN todos os adaptadores SHALL usar a policy compartilhada de milestone/override e os validadores comuns de proveniência, sem manter uma segunda implementação dessas regras no adaptador.
+5. WHEN compartilhar preparo de PR técnico, bundle ou publicação THEN os serviços comuns SHALL receber dados validados e capacidades explícitas, mantendo os formatos nativos dentro de seus próprios adaptadores.
+6. WHEN um módulo de domínio ou adaptador for importado THEN ele SHALL permanecer sem efeitos de processo, filesystem ou rede até uma chamada explícita com o contexto e dependências necessários.
+7. WHEN executar entrypoints Bash THEN eles SHALL limitar-se a traduzir entradas e invocar a orquestração testável, sem duplicar decisões de versão, override ou publicação.
+8. IF uma capacidade ausente, um resultado inválido ou um path fora do escopo for recebido THEN a camada comum SHALL falhar antes de qualquer escrita, sem fallback para outro adaptador.
+9. WHEN extrair um comportamento compartilhado THEN a tarefa SHALL incluir testes de caracterização antes da mudança e testes de contrato após a extração, preservando outputs públicos, códigos de erro e as proteções existentes.
+10. WHEN provar extensibilidade THEN um adaptador substituto registrado no teste SHALL executar pelo contrato comum sem alterar a policy ou os publicadores, mantendo rejeitados IDs arbitrários fornecidos pelo caller.
+11. WHEN concluir a reorganização THEN os READMEs de workflows e scripts SHALL documentar responsabilidades, fluxo, dependências, fronteira read/write, como adicionar adaptador e quais contratos/testes devem passar.
+12. WHEN reportar conclusão THEN a entrega SHALL apresentar os gates dos cinco perfis, testes dos módulos compartilhados e revisão independente, sem usar redução de linhas ou adoção de classes como substituto de evidência funcional.
+
+**Independent Test**: Contratos com adaptador substituto e dependências sentinela; importações sem I/O; fixtures reais dos cinco perfis; cenários negativos de segurança e mutantes de policy/SHA detectados após a refatoração. Interfaces podem ser módulos/objetos JavaScript; composição é o padrão, sem herança obrigatória.
+
 ## Edge Cases
 
 - IF um pacote tiver apenas tag de outro namespace THEN o adaptador SHALL ignorar essa tag para seu cálculo e diagnosticar a ausência de baseline reconhecida.
@@ -192,19 +248,21 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 - IF um artifact expirar antes da retomada THEN a execução SHALL exigir nova coleta/verificação da mesma origem em vez de reconstruir evidência por suposição.
 - IF o registry rejeitar autenticação THEN a distribuição SHALL falhar sem registrar segredos e sem alterar o resultado já publicado no GitHub.
 - IF um PR funcional não possuir changeset e a ferramenta nativa reportar erro THEN a execução SHALL preservar esse erro em vez de gerar um PATCH central.
+- IF uma action ou bot Release Please externo competir pelo mesmo componente THEN a adoção SHALL bloquear até existir uma única autoridade de PR técnico e de tag/Release.
+- IF o plano Release Please for calculado com histórico diferente do snapshot de origem THEN a execução SHALL invalidar o plano antes de aplicar o bundle ou publicar.
 
 ## Implicit Requirement Dimensions
 
 | Dimension | Coverage |
 | --- | --- |
-| Input validation and bounds | PKG-02/03: schema do plano, releases estáveis, paths restritos e hashes; preservar limites de tamanho/timeout já impostos pelos executores centrais |
+| Input validation and bounds | PKG-02/03/09/10: schemas nativos e contrato comum, opções permitidas, releases estáveis, paths restritos e hashes; preservar limites de tamanho/timeout já impostos pelos executores centrais |
 | Failure and partial failure | PKG-05/07: lote e registry não atômicos; entradas concluídas e pendentes explícitas |
-| Idempotency and retries | PKG-03/05/07: PR técnico por origem/plano, tags imutáveis, inventário antes de retomar |
-| Auth boundaries and rate limits | PKG-03/04/07: read/write separados e credenciais mínimas; API indisponível/rate limit bloqueia sem bypass |
-| Concurrency and ordering | PKG-03/05: origem e head atualizados, serialização por repo/destino existente e revalidação após environment |
+| Idempotency and retries | PKG-03/05/07/09: identidade e atualização do PR técnico, origem/plano, tags imutáveis, inventário antes de retomar |
+| Auth boundaries and rate limits | PKG-03/04/07/09/10: read/write separados e credenciais mínimas; planejamento Release Please sem chamadas mutantes; API indisponível/rate limit bloqueia sem bypass |
+| Concurrency and ordering | PKG-03/05/09: origem e head atualizados, serialização por repo/destino existente e revalidação após environment; PR atualizado exige nova revisão |
 | Data lifecycle and expiry | Artifacts com retenção configurada/default; relatório durável com links/SHAs; artifact expirado exige nova validação |
 | Observability | PKG-05/08: resultado por package/coordenada, motivo, versão, origem e links sem tokens |
-| External dependency failure | PKG-02/08: falha fechada de ferramenta, API e registry; nenhum fallback SemVer |
+| External dependency failure | PKG-02/08/09/10: falha fechada de ferramenta, API e registry; nenhum fallback SemVer ou troca silenciosa de adaptador |
 | State transition integrity | Funcional -> preparação -> review técnico -> merge técnico -> tags/Releases -> distribuição -> consumo externo; resultado completo antes do próximo estágio |
 
 ## Requirement Traceability
@@ -219,21 +277,23 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 | PKG-06 | Callers e prontidão | Specify | Pending |
 | PKG-07 | Distribuição e consumo externo | Specify | Pending |
 | PKG-08 | Evidências e encerramento | Specify | Pending |
+| PKG-09 | Release Please coexistente | Specify: aditivo | Pending |
+| PKG-10 | Contratos e composição dos scripts | Specify: aditivo | Pending |
 
-**Coverage:** 8 requisitos definidos; tarefas ainda não derivadas. Nenhum requisito está marcado como implementado por existir esta especificação.
+**Coverage:** 10 requisitos definidos; PKG-01 a PKG-08 aprovados como requisitos, PKG-09/10 adicionados por solicitação em 2026-10-19. Tarefas ainda não derivadas. Pending indica implementação não verificada, não ausência de aprovação do escopo anterior.
 
 ## Delivery Boundaries
 
 | Resultado | Trabalho previsto | Gate e autoridade |
 | --- | --- | --- |
-| A: Central pronta | Conciliar #13/#12, fixtures reais, exemplos e documentação no repositório .github | Aprovação desta spec -> design -> tarefas; implementação local; verificador independente obrigatório; push só autorizado |
+| A: Central pronta | Conciliar #13/#12, organizar serviços comuns, acrescentar Release Please, fixtures reais, exemplos e documentação no repositório .github | Escopo anterior aprovado; revisar defaults novos -> design -> tarefas; implementação local; verificador independente obrigatório; push só autorizado |
 | B: Consumidores homologados | Adoção remota nos pilotos, rotas/gates e identidade do SHA | Autorizar alterações/publicação nas branches dos pilotos; revisão humana e runs do GitHub; não usar checkout local como substituto do called remoto |
 | C: Packages consumíveis | Distribuição npm/Maven e instalação externa | Autorizar credenciais/destino/publicação real; validar coordenadas e conteúdo; registrar falhas parciais |
 | Encerramento da issue | Consolidar A/B e a evidência de C quando aprovada como parte do aceite ponta a ponta | Decisão humana com diferenças de escopo e pendências explícitas; não encerrar só por CI verde |
 
 ## Success Criteria
 
-- [ ] Quatro adaptadores coexistem no mesmo contrato central e a CI hospedada passa no SHA efetivamente entregue.
+- [ ] Cinco adaptadores coexistem no mesmo contrato central e a CI hospedada passa no SHA efetivamente entregue.
 - [ ] Changesets prepara um lote nativo completo, revisado uma vez e publicado no SHA técnico correto.
 - [ ] Gates de milestone, override e hotfix não são contornados pela adição do adaptador.
 - [ ] PackagesJava usa a versão conjunta sem referências internas antigas nos POMs distribuídos.
@@ -241,6 +301,8 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 - [ ] Callers consomem um SHA central disponível no GitHub e usam outputs tipados para o formato único/lote.
 - [ ] Ensaios remotos e consumo externo estão documentados ou explicitamente pendentes; não há sucesso presumido.
 - [ ] Usuário recebe relatório final com recomendação fundamentada sobre o encerramento da issue #4.
+- [ ] Release Please preserva os gates centrais e o fluxo de PR técnico; standard-version continua selecionável e testado sem migração forçada.
+- [ ] Serviços compartilhados são verificados por contrato, possuem dependências explícitas e estão documentados; adaptadores não duplicam regras centrais.
 
 ## Sources
 
@@ -250,5 +312,9 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 - [PackagesJava pom.xml](https://github.com/aplicacoesBoilerplate/PackagesJava/blob/master/pom.xml) e [deploy.yml](https://github.com/aplicacoesBoilerplate/PackagesJava/blob/master/.github/workflows/deploy.yml).
 - [Changesets CLI oficial](https://changesets.dev/guide/cli): cálculo/preparo/publicação separados e namespace nativo de tags. A versão testada será fixada no design/lockfile; documentação atual não comprova compatibilidade de qualquer versão da CLI.
 - [GitHub GITHUB_TOKEN](https://docs.github.com/en/actions/concepts/security/github_token): eventos originados por esse token não disparam outros workflows, exceto dispatch explícito suportado.
+- [standard-version upstream](https://github.com/conventional-changelog/standard-version): depreciação declarada e indicação de Release Please como alternativa; isso não garante manutenção futura do pacote original nem autoriza substituição automática por forks.
+- [Release Please oficial](https://github.com/googleapis/release-please): ferramenta baseada em PRs de release, com publicação no registry separada. Fonte consultada em 2026-10-19.
+- [Configuração de manifest](https://github.com/googleapis/release-please/blob/main/docs/manifest-releaser.md) e [customização](https://github.com/googleapis/release-please/blob/main/docs/customizing.md): selecionar e fixar apenas o perfil suportado no design.
+- [Planejamento nativo e mutações separados no código upstream](https://github.com/googleapis/release-please/blob/main/src/manifest.ts): a integração deve provar o modo somente leitura na versão fixada; a documentação de main não substitui o teste desse comportamento.
 
 Context7 não está disponível nesta sessão. Pesquisa complementar limitada a fontes oficiais; a evidência de compatibilidade virá dos testes na versão efetivamente fixada.
