@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-8-code-review/`
-- **Phase / Task**: Execute; T1–T8/T10–T12 concluídas localmente (11/12), Verifier rodada 2 PASS LOCAL. T9 real permanece aberto.
-- **Completed**: Consumidor demo-repository escolhido pelo mantenedor e privacidade confirmada via API. Branch #8 empilhada por merge local sobre #7 em 745023c, sem reescrever histórico. T1–T7 da triagem preservadas e verificadas localmente; T8 real permanece pendente.
-- **In-progress**: T11 commit 907c00b corrige decode do diff; T12 1d2230e propaga seu SHA completo aos callers. Verifier confirma 24/24 AC locais, Full repetido 196/196, check/actionlint dez YAML verdes, 2 mutações killed (9 acumuladas). EBUSY transitório de cleanup registrado, sem falha funcional remanescente. Nenhum Docker/LLM/GitHub Actions real.
-- **Next step**: Após autorização específica, publicar branch/PR #8 empilhado sobre #7; preparar adoção no demo por PR separado e provisionamento do consumidor antes de T9. Não fechar REV-22/23 ou TRI-24/25 sem piloto real.
-- **Blockers**: Nenhum para implementação local já autorizada. Piloto real exige provisionamento de credenciais dedicadas e autorização específica de publicação/ativação; nenhuma auth pessoal/global.
-- **Uncommitted files**: Parecer rodada 2, lesson L-005 e progresso até commit de evidência. Scratchs review-verifier-8-f2c12cc8 e review-verifier-round2-1d2230e retidos no Temp após limpeza negada, sem nova tentativa; demais worktrees preservados.
+- **Phase / Task**: Execute; código local verificado e publicado nos PRs empilhados #15/#16. F2 corrige o checkout raso da CI com revisão independente PASS LOCAL; nova CI remota pendente. T9 real permanece aberto.
+- **Completed**: Publicação explicitamente autorizada pelo mantenedor e realizada: PR #15 (triagem) sobre #9 e PR #16 (review) sobre #7, ambos draft, autor agentegersonfribeiro-AI, milestone v1.0.0 e review solicitada a gersonfribeiro. Nenhum merge remoto. Consumidor demo-repository privado selecionado; piloto ainda pendente.
+- **In-progress**: F2 em #7/549d1dc e merge local #8/076d18a habilitam histórico no checkout do job de contratos, preservando persist-credentials false. RED→GREEN; Full #7 141/141, #8 196/196; check/actionlint verdes. Verifier focado: 5/5 e mutação depth1 killed, relatório ci-history-validation.md. CI antiga falhou nos runs 38881461059/38881522449 por pins indisponíveis em depth1. Nenhuma inferência/refresh/check Docker de produto real foi executado.
+- **Next step**: Publicar F2 nos mesmos PRs e conferir os novos runs. Depois, preparar adoção no demo com credenciais dedicadas e autorização de ativação. Não fechar REV-22/23 ou TRI-24/25 sem piloto real.
+- **Blockers**: Publicação das branches já autorizada. Piloto real exige provisionamento de credenciais dedicadas e autorização específica de ativação; nenhuma auth pessoal/global. Pergunta sobre disponibilidade dos secrets enviada ao mantenedor.
+- **Uncommitted files**: Nenhum após commit de evidência F2. Scratchs antigos e novo ci-history-verifier-076d18a retidos após cleanup negado, sem nova tentativa; demais worktrees preservados.
 - **Branch**: `feature/issue-8-code-review`
