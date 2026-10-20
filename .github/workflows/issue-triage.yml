@@ -1,0 +1,294 @@
+name: Reusable issue triage
+
+on:
+  workflow_call:
+    inputs:
+      config_path:
+        required: true
+        type: string
+      issue_number:
+        required: false
+        default: 0
+        type: number
+      auth_mode:
+        required: true
+        type: string
+      session_secret_name:
+        required: false
+        default: ''
+        type: string
+      verification_image:
+        description: Caller-owned OCI image pinned by digest, with offline product dependencies
+        required: true
+        type: string
+    secrets:
+      TRIAGE_READ_TOKEN:
+        required: true
+      TRIAGE_PUBLISH_TOKEN:
+        required: true
+      CODEX_AUTH_JSON:
+        required: false
+      CODEX_AUTH_WRITE_PAT:
+        required: false
+      OPENAI_API_KEY:
+        required: false
+    outputs:
+      status:
+        value: ${{ jobs.finish.outputs.status }}
+      error_code:
+        value: ${{ jobs.finish.outputs.error_code }}
+      route:
+        value: ${{ jobs.collect.outputs.route }}
+      issue:
+        value: ${{ jobs.collect.outputs.issue_number }}
+      pr_number:
+        value: ${{ jobs.publish.outputs.pr_number }}
+      artifact_name:
+        value: ${{ jobs.llm.outputs.artifact_name }}
+      source_sha:
+        value: ${{ jobs.collect.outputs.source_sha }}
+      config_source_sha:
+        value: ${{ jobs.collect.outputs.config_source_sha }}
+      fingerprint:
+        value: ${{ jobs.collect.outputs.fingerprint }}
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ${{ format('triage-{0}-{1}', github.repository, github.event.issue.number || inputs.issue_number) }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  collect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      INPUTS_JSON: ${{ toJSON(inputs) }}
+    outputs:
+      route: ${{ steps.collect.outputs.route }}
+      issue_number: ${{ steps.collect.outputs.issue_number }}
+      source_sha: ${{ steps.collect.outputs.source_sha }}
+      config_source_sha: ${{ steps.collect.outputs.config_source_sha }}
+      source_ref: ${{ steps.collect.outputs.source_ref }}
+      llm_config_path: ${{ steps.collect.outputs.llm_config_path }}
+      fingerprint: ${{ steps.collect.outputs.fingerprint }}
+      artifact_name: ${{ steps.collect.outputs.artifact_name }}
+    steps:
+      - name: Checkout trusted automation
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+      - run: npm ci --prefix automation/scripts/llm --ignore-scripts --no-fund --no-audit
+      - name: Validate platform origin before consumer configuration
+        id: bootstrap
+        env:
+          TRIAGE_READ_TOKEN: ${{ secrets.TRIAGE_READ_TOKEN }}
+          AUTOMATION_SHA: ${{ job.workflow_sha }}
+        run: node automation/scripts/triage/run.mjs bootstrap
+      - name: Checkout trusted consumer configuration
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ steps.bootstrap.outputs.config_source_sha }}
+          path: consumer
+          persist-credentials: false
+      - name: Collect API-backed issue and route
+        id: collect
+        env:
+          TRIAGE_READ_TOKEN: ${{ secrets.TRIAGE_READ_TOKEN }}
+          AUTOMATION_SHA: ${{ job.workflow_sha }}
+        run: node automation/scripts/triage/run.mjs collect
+      - name: Upload limited snapshot, never credentials
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ steps.collect.outputs.artifact_name }}
+          path: ${{ steps.collect.outputs.artifact_directory }}/*
+          retention-days: 1
+          if-no-files-found: error
+          overwrite: false
+      - id: cleanup
+        if: always()
+        run: node automation/scripts/triage/run.mjs cleanup
+
+  llm:
+    needs: collect
+    if: needs.collect.outputs.route != 'needs-human'
+    uses: ./.github/workflows/llm-execute.yml
+    permissions:
+      contents: read
+      actions: read
+    with:
+      invocation_id: ${{ format('triage-{0}', needs.collect.outputs.issue_number) }}
+      config_path: ${{ needs.collect.outputs.llm_config_path }}
+      source_ref: ${{ needs.collect.outputs.source_ref }}
+      expected_source_sha: ${{ needs.collect.outputs.source_sha }}
+      caller_profile: triage
+      issue_number: ${{ fromJSON(needs.collect.outputs.issue_number) }}
+      triage_config_path: ${{ inputs.config_path }}
+      triage_fingerprint: ${{ needs.collect.outputs.fingerprint }}
+      auth_mode: ${{ inputs.auth_mode }}
+      session_secret_name: ${{ inputs.session_secret_name }}
+    secrets:
+      TRIAGE_READ_TOKEN: ${{ secrets.TRIAGE_READ_TOKEN }}
+      CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
+      CODEX_AUTH_WRITE_PAT: ${{ secrets.CODEX_AUTH_WRITE_PAT }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+  checks:
+    needs: [collect, llm]
+    if: needs.collect.outputs.route != 'needs-human' && needs.llm.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    env:
+      INPUTS_JSON: ${{ toJSON(inputs) }}
+    outputs:
+      artifact_name: ${{ steps.prepare.outputs.artifact_name }}
+      verification_status: ${{ steps.prepare.outputs.verification_status }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+      - run: npm ci --prefix automation/scripts/llm --ignore-scripts --no-fund --no-audit
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.collect.outputs.config_source_sha }}
+          path: consumer
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.collect.outputs.source_sha }}
+          path: consumer-source
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ needs.collect.outputs.artifact_name }}
+          path: triage-input
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ needs.llm.outputs.artifact_name }}
+          path: llm-result
+      - name: Prepare patch and record checks inside an unprivileged container
+        id: prepare
+        env:
+          AUTOMATION_SHA: ${{ job.workflow_sha }}
+        run: node automation/scripts/triage/run.mjs prepare
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ steps.prepare.outputs.artifact_name }}
+          path: ${{ steps.prepare.outputs.artifact_directory }}/*
+          retention-days: 1
+          if-no-files-found: error
+          overwrite: false
+      - id: cleanup
+        if: always()
+        run: node automation/scripts/triage/run.mjs cleanup
+
+  publish:
+    needs: [collect, llm, checks]
+    if: ${{ !cancelled() && needs.collect.result == 'success' && (needs.collect.outputs.route == 'needs-human' || (needs.llm.result == 'success' && needs.checks.result == 'success')) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: read
+    env:
+      INPUTS_JSON: ${{ toJSON(inputs) }}
+    outputs:
+      status: ${{ steps.publish.outputs.status }}
+      pr_number: ${{ steps.publish.outputs.pr_number }}
+      error_code: ${{ steps.publish.outputs.error_code }}
+      cleanup: ${{ steps.cleanup.outcome }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+      - run: npm ci --prefix automation/scripts/llm --ignore-scripts --no-fund --no-audit
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.collect.outputs.config_source_sha }}
+          path: consumer
+          persist-credentials: false
+      - if: needs.collect.outputs.route != 'needs-human'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.collect.outputs.source_sha }}
+          path: consumer-source
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ needs.collect.outputs.artifact_name }}
+          path: triage-input
+      - if: needs.collect.outputs.route != 'needs-human'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ needs.llm.outputs.artifact_name }}
+          path: llm-result
+      - if: needs.collect.outputs.route != 'needs-human'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ needs.checks.outputs.artifact_name }}
+          path: triage-checks
+      - name: Revalidate and publish without executing product code
+        id: publish
+        env:
+          TRIAGE_READ_TOKEN: ${{ secrets.TRIAGE_READ_TOKEN }}
+          TRIAGE_PUBLISH_TOKEN: ${{ secrets.TRIAGE_PUBLISH_TOKEN }}
+          AUTOMATION_SHA: ${{ job.workflow_sha }}
+        run: node automation/scripts/triage/run.mjs publish
+      - id: cleanup
+        if: always()
+        run: node automation/scripts/triage/run.mjs cleanup
+
+  finish:
+    needs: [collect, llm, checks, publish]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      status: ${{ steps.finish.outputs.status }}
+      error_code: ${{ steps.finish.outputs.error_code }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: automation
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.3'
+      - run: npm ci --prefix automation/scripts/llm --ignore-scripts --no-fund --no-audit
+      - id: finish
+        env:
+          COLLECT_OUTCOME: ${{ needs.collect.result }}
+          PUBLISH_OUTCOME: ${{ needs.publish.result }}
+          CLEANUP_OUTCOME: ${{ needs.publish.outputs.cleanup }}
+          RESULT_STATUS: ${{ needs.publish.outputs.status }}
+        run: node automation/scripts/triage/run.mjs finish

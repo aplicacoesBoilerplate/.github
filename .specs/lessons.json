@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 3,
+  "next_id": 4,
   "lessons": [
     {
       "id": "L-001",
@@ -40,6 +40,24 @@
       ],
       "created": "2026-10-13T23:56:54Z",
       "last_seen": "2026-10-13T23:56:54Z"
+    },
+    {
+      "id": "L-003",
+      "key": "surviving_mutant::exercite o inspector do consumidor com envelope de outro run e exija rejeicao da identidade divergente",
+      "text": "Exercite o inspector do consumidor com envelope de outro run e exija rejeição da identidade divergente.",
+      "signal": "surviving_mutant",
+      "scope": "caller-inspector",
+      "status": "candidate",
+      "features": [
+        "issue-7-triagem-issues"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M5 (caller-inspector)"
+      ],
+      "created": "2026-10-14T11:48:31Z",
+      "last_seen": "2026-10-14T11:48:31Z"
     }
   ]
 }

@@ -8,6 +8,9 @@ const { parse } = require('yaml');
 test('T10: central feature gate runs with its own lockfile even without a root Node project', async () => {
   const ci = parse(await readFile(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8'));
   const steps = ci.jobs.llm.steps;
+  const checkout = steps.find(step => step.uses?.startsWith('actions/checkout@'));
+  assert.equal(checkout.with['fetch-depth'], 0, 'contract tests must resolve immutable caller revisions from Git history');
+  assert.equal(checkout.with['persist-credentials'], false);
   const commands = steps.filter(step => step.run).map(step => step.run);
   assert.equal(commands.includes('npm ci --prefix scripts/llm --ignore-scripts --no-fund --no-audit'), true);
   assert.equal(commands.includes('npm --prefix scripts/llm test'), true);

@@ -26,6 +26,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: LLM-24; .specs/features/issue-9-llm-centralizado/spec.md:109 (llm/adoption)
 - last seen: 2026-10-13T23:56:54Z
 
+### L-003 - Exercite o inspector do consumidor com envelope de outro run e exija rejeição da identidade divergente.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `caller-inspector` · harmful: 0
+- features: issue-7-triagem-issues
+- evidence: M5 (caller-inspector)
+- last seen: 2026-10-14T11:48:31Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

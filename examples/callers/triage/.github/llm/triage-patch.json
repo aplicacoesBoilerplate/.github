@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "invocation_mode": "single",
+  "execution": { "model": "MODELO_HABILITADO_NA_CONTA", "effort": "high", "template_path": ".github/llm/triage-patch.md" }
+}

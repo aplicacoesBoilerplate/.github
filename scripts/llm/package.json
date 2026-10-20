@@ -6,7 +6,7 @@
   "engines": { "node": ">=22.23.3 <25" },
   "volta": { "node": "22.23.3" },
   "scripts": {
-    "test": "node --test ../../tests/llm/*.test.mjs",
+    "test": "node --test ../../tests/llm/*.test.mjs ../../tests/triage/*.test.mjs",
     "check": "node check.mjs",
     "lint:workflow": "node lint-workflow.mjs"
   },

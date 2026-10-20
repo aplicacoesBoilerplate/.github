@@ -34,11 +34,11 @@
 
 ## Handoff
 
-- **Feature**: `.specs/features/issue-9-llm-centralizado/`
-- **Phase / Task**: Meta de entrega local encerrada por solicitação explícita do mantenedor; T1–T11 concluídas e verificadas, T12 adiada, T13 transferida para triagem #7, não executada.
-- **Completed**: Workflow central, scripts, CI, callers ChatGPT/API opt-in, configuração/prompt do consumidor, inspector de resultado e instruções completas. Commits locais por tarefa e contratos verificados.
-- **In-progress**: Nenhuma implementação parcial. Correção de LLM-11 e caller atualizado passaram na reverificação independente; aprovação pendente do teste foi concedida e resolvida.
-- **Next step**: Especificação TLC da triagem #7, primeiro consumidor e responsável pelo piloto real compartilhado. PR draft da central publicado para release/v1.0.0 e revisão humana solicitada; não houve merge.
-- **Blockers**: Nenhum para a meta local revista. Homologação real transferida exige consumidor privado e credenciais próprias; fixtures não a comprovam. Nenhum login pessoal ou inferência real realizado.
-- **Uncommitted files**: Nenhum após commit do relatório e deste handoff. Dois scratches de auditoria restaurados/inativos permanecem no Temp, conforme validation.md; remoção rejeitada pela política automática, sem credenciais reais.
-- **Branch**: `feature/issue-9-llm-centralizado`
+- **Feature**: `.specs/features/issue-7-triagem-issues/`
+- **Phase / Task**: Execute; T1–T7 concluídas localmente, 7/8 tarefas; revisão independente local PASS na rodada 2. T8 real pendente. Documentação adiada por pedido explícito.
+- **Completed**: In progress aplicado no Project GitHub Features por pedido explícito e verificado via API. Empilhamento sobre #9 preservado; nenhum merge/aceite do PR da central. Aprovação de spec/context registrada.
+- **In-progress**: F1 aprovado independentemente no HEAD f56a3e5; M5 eliminado pelo teste de run divergente. Gates Node 22.23.3, sintaxe e actionlint passaram. validation.md preserva FAIL de conclusão total exclusivamente pela ausência de T8; nenhum defeito local pendente. Caller mantém pin 3f7ec89a9e2457e1e839a22d6db6f9dc1c4784f6, ainda local; nenhum push/auth real.
+- **Next step**: Selecionar consumidor privado e provisionar o piloto T8 com autorização específica para publicação/ativação. Consulta API mostrou boilerplate-cli público e demo-repository privado (HTML); seleção solicitada ao mantenedor, nenhuma ativação realizada.
+- **Blockers**: Nenhum para implementação local autorizada; blocked-by #5/#9 preservados conforme entrega empilhada. Piloto real exige consumidor e credenciais do mantenedor.
+- **Uncommitted files**: Nenhum após commit da proposta. Planejamento OpenSpec anterior preservado como histórico.
+- **Branch**: `feature/issue-7-triagem-issues`
