@@ -35,10 +35,10 @@
 ## Handoff
 
 - **Feature**: `.specs/features/issue-8-code-review/`
-- **Phase / Task**: Execute; código local verificado e publicado nos PRs empilhados #15/#16. F2 corrige o checkout raso da CI com revisão independente PASS LOCAL; nova CI remota pendente. T9 real permanece aberto.
+- **Phase / Task**: Execute; código verificado e publicado nos PRs empilhados #15/#16. F2 aprovado independentemente e na CI real dos dois PRs. T9 real permanece aberto; meta não concluída.
 - **Completed**: Publicação explicitamente autorizada pelo mantenedor e realizada: PR #15 (triagem) sobre #9 e PR #16 (review) sobre #7, ambos draft, autor agentegersonfribeiro-AI, milestone v1.0.0 e review solicitada a gersonfribeiro. Nenhum merge remoto. Consumidor demo-repository privado selecionado; piloto ainda pendente.
 - **In-progress**: F2 em #7/549d1dc e merge local #8/076d18a habilitam histórico no checkout do job de contratos, preservando persist-credentials false. RED→GREEN; Full #7 141/141, #8 196/196; check/actionlint verdes. Verifier focado: 5/5 e mutação depth1 killed, relatório ci-history-validation.md. CI antiga falhou nos runs 38881461059/38881522449 por pins indisponíveis em depth1. Nenhuma inferência/refresh/check Docker de produto real foi executado.
-- **Next step**: Publicar F2 nos mesmos PRs e conferir os novos runs. Depois, preparar adoção no demo com credenciais dedicadas e autorização de ativação. Não fechar REV-22/23 ou TRI-24/25 sem piloto real.
+- **Next step**: Configurar o caller integrado no demo e executar T9 somente com credenciais dedicadas e autorização de ativação do consumidor. Não fechar REV-22/23 ou TRI-24/25 sem piloto real. F2 publicado e CI aprovada nos runs 39349822522 (#15) e 39349825275 (#16); evidência também registrada em comentários dos PRs.
 - **Blockers**: Publicação das branches já autorizada. Piloto real exige provisionamento de credenciais dedicadas e autorização específica de ativação; nenhuma auth pessoal/global. Pergunta sobre disponibilidade dos secrets enviada ao mantenedor.
 - **Uncommitted files**: Nenhum após commit de evidência F2. Scratchs antigos e novo ci-history-verifier-076d18a retidos após cleanup negado, sem nova tentativa; demais worktrees preservados.
 - **Branch**: `feature/issue-8-code-review`
