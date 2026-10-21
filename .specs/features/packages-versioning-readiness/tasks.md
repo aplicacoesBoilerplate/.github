@@ -5,7 +5,7 @@
 Usar a skill `tlc-spec-driven` e seguir seu fluxo Execute e Critical Rules. Se a skill não puder ser carregada, parar e informar o usuário. Testes derivam da spec; cada tarefa futura inclui seus testes, gate, status e commit atômico. Nunca enfraquecer testes para acomodar a implementação. O verificador final é distinto do autor.
 
 **Design:** [design.md](design.md). **Spec:** [spec.md](spec.md).
-**Status:** Execução em andamento; 7/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
+**Status:** Execução em andamento; 8/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
 **Escopo da execução:** implementar neste chat, uma tarefa por vez, conforme preferência já registrada. A revisão independente documental anterior não substitui o Verifier de implementação.
 
 T1–T33 são preparação e verificação locais da entrega A. T34–T35 completam sua disponibilidade remota. T36–T37 produzem B; T38–T39 produzem C. T40 consolida o aceite completo. Etapas remotas ficam pendentes sem execução autorizada. Autorizações anteriores devem ser conferidas pelo alvo/ação antes de pedir nova permissão; esta rodada não as exerce.
@@ -212,8 +212,8 @@ Ferramentas previstas por tarefa: TLC como protocolo; Git/filesystem para trabal
 **Tools**: ferramentas previstas acima; execução local, sem publicação remota.
 **Done when**:
 
-- [ ] 12 casos mínimos: rotas normal/hotfix equivalentes; sem milestone; exata; versão divergente; bump divergente; título inválido com override; duas pessoas válidas; mesmo ator; papel insuficiente; review anterior; lote múltiplo com/sem milestone.
-- [ ] Gate Quick passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
+- [x] 12 casos mínimos: rotas normal/hotfix equivalentes; sem milestone; exata; versão divergente; bump divergente; título inválido com override; duas pessoas válidas; mesmo ator; papel insuficiente; review anterior; lote múltiplo com/sem milestone.
+- [x] Gate Quick passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
 
 **Tests**: unit: release-policy.mjs ampliado; regra do PR funcional preservada quando PR técnico não tem milestone.
 **Gate**: Quick (Gate Check Commands).

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { evaluateReleasePolicy } from '../../scripts/versioning/release-policy.mjs';
+import { evaluateReleasePolicy as compiledPolicy } from '../../scripts/versioning/dist/services/release-policy.js';
+assert.equal(evaluateReleasePolicy, compiledPolicy, 'Legacy entrypoint must delegate to compiled policy');
 
 const sha = 'a'.repeat(40);
 const report = { baseVersion: '1.2.3', candidateVersion: '2.0.0', bump: 'major', sha };
@@ -31,6 +33,14 @@ const matched = outcome({ title: 'v2.0.0' }, 'matched');
 assertions += 2;
 assert.equal(matched.plannedVersion, '2.0.0');
 assert.equal(matched.plannedBump, 'major');
+for (const headBranch of ['develop', 'hotfix/production-fix']) {
+  const routed = evaluateReleasePolicy({ report,
+    snapshot: { ...snapshot({ title: 'v2.0.0' }), headBranch, baseBranch: 'master' } });
+  assert.equal(routed.outcome, 'matched', `${headBranch} must use the same policy`);
+}
+assert.equal(evaluateReleasePolicy({ report: { ...report, adapter: 'release-please' },
+  snapshot: snapshot(null) }).outcome, 'adapter-authoritative');
+assertions += 3;
 const batchReport = { ...report, adapter: 'changesets', releases: [
   { name: '@lab/cli', version: '1.0.1' }, { name: '@lab/core', version: '3.0.0' }] };
 assert.equal(evaluateReleasePolicy({ report: batchReport, snapshot: snapshot(null) }).outcome,
@@ -39,7 +49,10 @@ const batchMilestone = evaluateReleasePolicy({ report: batchReport,
   snapshot: snapshot({ title: 'v3.0.0' }) });
 assert.equal(batchMilestone.outcome, 'blocked');
 assert.match(batchMilestone.reasons.join(' '), /milestone.*lote|lote.*milestone/);
-assertions += 3;
+assert.equal(evaluateReleasePolicy({ report: batchReport,
+  snapshot: snapshot({ title: 'v3.0.0' }, validOverride) }).outcome, 'blocked',
+'A multi-package milestone cannot be overridden');
+assertions += 4;
 
 const invalid = outcome({ title: 'release-2' }, 'blocked');
 assertions += 1; assert.match(invalid.reasons.join(' '), /vMAJOR\.MINOR\.PATCH/);
@@ -118,5 +131,9 @@ for (const field of ['mergeCommitSha', 'headSha']) {
 }
 assert.throws(() => evaluateReleasePolicy({ report, snapshot: snapshot(null), phase: 'invalid' }),
   /Fase de avaliação inválida/);
-assertions += 9;
+assert.throws(() => evaluateReleasePolicy({ report: { ...report, sha: 'invalid' },
+  snapshot: snapshot(null) }), /SHA da policy inválido/);
+assert.throws(() => evaluateReleasePolicy({ report: { ...report, candidateVersion: '2.0.0-rc.1' },
+  snapshot: snapshot(null) }), /Versão ou incremento calculado inválido/);
+assertions += 11;
 console.log(`Release policy: ${assertions} assertions passed`);

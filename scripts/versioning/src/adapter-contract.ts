@@ -138,7 +138,7 @@ function checkedVersion(value: unknown): string {
   return value;
 }
 
-function bumpBetween(before: string, after: string): Bump {
+export function bumpBetween(before: string, after: string): Bump {
   const left = before.split('.').map(Number);
   const right = after.split('.').map(Number);
   if (right[0]! < left[0]! || (right[0] === left[0] && right[1]! < left[1]!) ||

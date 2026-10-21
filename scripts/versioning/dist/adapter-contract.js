@@ -79,7 +79,7 @@ function checkedVersion(value) {
         throw new Error('SemVer estável inválido');
     return value;
 }
-function bumpBetween(before, after) {
+export function bumpBetween(before, after) {
     const left = before.split('.').map(Number);
     const right = after.split('.').map(Number);
     if (right[0] < left[0] || (right[0] === left[0] && right[1] < left[1]) ||
