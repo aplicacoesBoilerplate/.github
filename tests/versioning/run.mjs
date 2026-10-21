@@ -30,6 +30,7 @@ const localFixtures = [
   'standard-flow.mjs',
   'adapter-registry.mjs',
   'process-runner.mjs',
+  'publication.mjs',
   'java-properties.mjs',
   'reconciled-report.mjs',
   'jgitver-adapter.mjs',
