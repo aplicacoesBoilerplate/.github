@@ -26,7 +26,7 @@ function branch(value) {
 function digest(value) {
     return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
-function provenance(body) {
+export function parseTechnicalPrProvenance(body) {
     if (typeof body !== 'string')
         throw new Error('PR técnico sem proveniência');
     const match = marker.exec(body);
@@ -49,6 +49,10 @@ function provenance(body) {
         planDigest: value.planDigest, bundleDigest: value.bundleDigest,
         headSha: sha(value.headSha, 'Head técnico'), treeSha: sha(value.treeSha, 'Árvore técnica') };
 }
+export function technicalBranchName(owner, repo, targetBranch, adapter, component) {
+    const identity = digest(`${owner}/${repo}/${targetBranch}/${adapter}/${component}`).slice(0, 16);
+    return `versioning/${adapter}/${identity}`;
+}
 export async function prepareTechnicalPr(request) {
     const plan = validateReleasePlan(request.plan);
     if (!namePattern.test(request.owner) || !namePattern.test(request.repo) ||
@@ -64,9 +68,7 @@ export async function prepareTechnicalPr(request) {
     validateVersionFiles({ repository: request.repository, plan, bundle: request.bundle,
         ...(request.trustedAllowedWrites && { trustedAllowedWrites: request.trustedAllowedWrites }) }, true);
     const component = plan.entries[0].projectPath;
-    const identity = digest(`${request.owner}/${request.repo}/${targetBranch}/${plan.adapter}/${component}`)
-        .slice(0, 16);
-    const technicalBranch = `versioning/${plan.adapter}/${identity}`;
+    const technicalBranch = technicalBranchName(request.owner, request.repo, targetBranch, plan.adapter, component);
     const scope = `repos/${request.owner}/${request.repo}`;
     const read = createReadApi(request.transport);
     const write = createWriteApi(request.transport);
@@ -94,7 +96,7 @@ export async function prepareTechnicalPr(request) {
             !Number.isSafeInteger(current.number) || Number(current.number) <= 0) {
             throw new Error('PR técnico não pertence à automação ou está fechado');
         }
-        const previous = provenance(current.body);
+        const previous = parseTechnicalPrProvenance(current.body);
         oldHead = sha(record(current.head, 'Head do PR').sha, 'Head do PR');
         if (previous.originPrNumber !== request.originPrNumber || oldHead !== remoteHead ||
             oldHead !== previous.headSha)
@@ -149,7 +151,7 @@ export async function prepareTechnicalPr(request) {
         const valuePr = record(await write.patch(`${scope}/pulls/${current.number}`, { title, body }), 'PR técnico atualizado');
         if (typeof valuePr.html_url !== 'string' ||
             sha(record(valuePr.head, 'Head do PR atualizado').sha, 'Head do PR atualizado') !== headSha ||
-            provenance(valuePr.body).headSha !== headSha) {
+            parseTechnicalPrProvenance(valuePr.body).headSha !== headSha) {
             throw new Error('PR técnico não confirmou novo head e proveniência');
         }
         return { outcome: 'updated', number: Number(current.number), url: valuePr.html_url,
@@ -162,7 +164,7 @@ export async function prepareTechnicalPr(request) {
     const valuePr = record(await write.post(`${scope}/pulls`, { title, body, head: technicalBranch, base: targetBranch }), 'PR técnico criado');
     if (!Number.isSafeInteger(valuePr.number) || typeof valuePr.html_url !== 'string' ||
         sha(record(valuePr.head, 'Head do PR criado').sha, 'Head do PR criado') !== headSha ||
-        provenance(valuePr.body).headSha !== headSha) {
+        parseTechnicalPrProvenance(valuePr.body).headSha !== headSha) {
         throw new Error('PR técnico não confirmou número, URL, head e proveniência');
     }
     return { outcome: 'created', number: Number(valuePr.number), url: valuePr.html_url,

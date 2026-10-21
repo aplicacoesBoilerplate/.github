@@ -63,7 +63,7 @@ function baseBytes(root, sha, path) {
     }
     return createGitPort(root).readBlob(sha, path);
 }
-function requiredIdentity(request) {
+function requiredIdentity(request, requireHead = true) {
     const root = realpathSync(request.repository);
     const plan = validateReleasePlan(request.plan);
     if (plan.status !== 'release' ||
@@ -71,7 +71,7 @@ function requiredIdentity(request) {
         throw new Error('Bundle schema2 exige plano de files adapter');
     }
     const head = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
-    if (head !== plan.sha)
+    if (requireHead && head !== plan.sha)
         throw new Error('Bundle SHA não corresponde ao checkout');
     const paths = new Set(plan.entries.map(entry => entry.projectPath));
     if (paths.size !== 1)
@@ -193,8 +193,8 @@ export function captureVersionFiles(request) {
     validateVersionFiles({ ...request, bundle }, false);
     return bundle;
 }
-export function validateVersionFiles(request, checkWorking = false) {
-    const { root, plan, projectPath, configHash, lockHash } = requiredIdentity(request);
+export function validateVersionFiles(request, checkWorking = false, requireHead = true) {
+    const { root, plan, projectPath, configHash, lockHash } = requiredIdentity(request, requireHead);
     const bundle = request.bundle;
     if (!bundle || bundle.schemaVersion !== 2 || bundle.adapter !== plan.adapter ||
         bundle.sha !== plan.sha || bundle.planDigest !== plan.planDigest ||

@@ -15,6 +15,7 @@ const localFixtures = [
   'multi-version-bundle.mjs',
   'typed-maven-install.mjs',
   'technical-release.mjs',
+  'technical-merge.mjs',
   'version-report.mjs',
   'version-pr.mjs',
   'go-version.mjs',

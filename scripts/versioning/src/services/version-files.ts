@@ -92,7 +92,7 @@ function baseBytes(root: string, sha: string, path: string): Buffer | null {
   return createGitPort(root).readBlob(sha, path);
 }
 
-function requiredIdentity(request: VersionFilesRequest) {
+function requiredIdentity(request: VersionFilesRequest, requireHead = true) {
   const root = realpathSync(request.repository);
   const plan = validateReleasePlan(request.plan);
   if (plan.status !== 'release' ||
@@ -100,7 +100,7 @@ function requiredIdentity(request: VersionFilesRequest) {
     throw new Error('Bundle schema2 exige plano de files adapter');
   }
   const head = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
-  if (head !== plan.sha) throw new Error('Bundle SHA não corresponde ao checkout');
+  if (requireHead && head !== plan.sha) throw new Error('Bundle SHA não corresponde ao checkout');
   const paths = new Set(plan.entries.map(entry => entry.projectPath));
   if (paths.size !== 1) throw new Error('Bundle exige um projeto por plano');
   const projectPath = [...paths][0]!;
@@ -214,8 +214,8 @@ export function captureVersionFiles(request: CaptureVersionFilesRequest): Versio
 }
 
 export function validateVersionFiles(request: VersionFilesRequest & { bundle: VersionFilesBundle },
-  checkWorking = false): true {
-  const { root, plan, projectPath, configHash, lockHash } = requiredIdentity(request);
+  checkWorking = false, requireHead = true): true {
+  const { root, plan, projectPath, configHash, lockHash } = requiredIdentity(request, requireHead);
   const bundle = request.bundle;
   if (!bundle || bundle.schemaVersion !== 2 || bundle.adapter !== plan.adapter ||
     bundle.sha !== plan.sha || bundle.planDigest !== plan.planDigest ||
