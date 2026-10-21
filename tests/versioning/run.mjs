@@ -31,6 +31,7 @@ const localFixtures = [
   'git-inputs.mjs',
   'annotated-publish.mjs',
   'standard-precomputed.mjs',
+  'typescript-build.mjs',
   'native-workflows.mjs',
   'jgitver-report.mjs',
 ];
