@@ -9,6 +9,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
+    "check-dist": "node ../../tests/versioning/dist-integrity.mjs",
     "test": "node ../../tests/versioning/run.mjs --local"
   },
   "devDependencies": {
