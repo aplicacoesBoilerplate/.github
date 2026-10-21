@@ -32,16 +32,24 @@
 - **Trade-off**: Acrescenta toolchain/build e exige conferir a correspondência entre fontes e executável, sem transferir compilação para o consumidor ou escritor privilegiado.
 - **Scope**: Código central de versionamento e sua distribuição, não a linguagem das aplicações consumidoras ou outros sistemas do repositório.
 - **Date**: 2026-10-19
+- **Status**: superseded by AD-005
+
+### AD-005
+- **Decision**: Toda a lógica central de versionamento em escopo terá fonte TypeScript e execução Node compilada no checkout do workflow; retirar scripts Shell próprios do fluxo final, sem distribuir um produto CLI independente.
+- **Reason**: O usuário consolidou master, PRs e trabalho local relevante no objetivo de migração completa, mantendo callers de configuração e os calleds centrais.
+- **Trade-off**: Exige migrar e verificar todos os pontos de entrada internos, além da correspondência src/dist; preserva contratos externos, não caminhos .sh internos.
+- **Scope**: Cinco adaptadores e serviços/workflows centrais de versionamento; não inclui shell do runner, launchers nativos ou automações alheias.
+- **Date**: 2026-10-20
 - **Status**: active
 
 ## Handoff
 
-- **Feature**: packages-versioning-readiness: adição TypeScript aprovada pelo usuário para a automação central, em 2026-10-19.
-- **Phase / Task**: PKG-01 a10 aprovados e PKG-11 adicionado pela escolha TS; design atualizado, ainda aguardando gate humano antes de Tasks/Execute exigido pelo TLC.
-- **Completed**: Spec/context/design agora mapeiam11 requisitos e AD-004 registra TypeScript. Fontes src, dist ESM da mesma revisão, typecheck estrito e CI de correspondência; nenhum compilador nos jobs consumidores/escritor. Contratos, cinco adaptadores, permissões e fronteiras A/B/C preservados.
-- **In-progress** (file:line): .specs/features/packages-versioning-readiness/design.md, TypeScript Build and Distribution. Apenas planejamento alterado; nenhuma instalação ou execução de TypeScript ocorreu.
-- **Next step**: Revisar o design atualizado e derivar tarefas formais que incluam toolchain, testes de tipos, distribuição e migração incremental; manter execução neste chat após gates TLC.
-- **Blockers**: Context7 indisponível, fontes oficiais do tag fixado consultadas como fallback. PR12/13 reconfirmados abertos em2026-10-19 nos mesmos SHAs registrados; nenhuma aprovação/merge presumidos. Adoção dos pilotos e publicação remota continuam dependentes de autorização própria.
-- **Uncommitted files**: Somente spec/context/design e este STATE até o commit documental TypeScript; sem código, workflows, dependências ou pilotos alterados.
-- **Branch**: codex/reconcile-native-profiles, worktree versioning-reconciled/.github; planejamento local apenas. Não enviar automaticamente esta especificação ao PR12. A implementação Changesets deverá continuar no PR13 após conciliação autorizada.
-- **Documentation / PR**: PR12 https://github.com/aplicacoesBoilerplate/.github/pull/12 HEADc7e610117edfbe8a6338ec0d3b6703156026ef70; PR13 https://github.com/aplicacoesBoilerplate/.github/pull/13 HEADb1b2ec51906306c7afa5129f6557b30b9528f6b5. Issue4 OPEN. Nenhuma alteração nos pilotos, workflows ou remotos nesta iteração documental. Incidente npm anterior preservado no relatório REC, sem limpeza adicional.
+- **Feature**: packages-versioning-readiness, cinco adaptadores e automação central TypeScript sem produto CLI independente.
+- **Phase / Task**: Planejamento TLC consolidado em spec/context/design/tasks. Ordem atual de 2026-10-20: SOMENTE ESPECIFICAÇÃO, parar antes de Execute. 0/40 tarefas implementadas nesta feature.
+- **Completed**: Inventário remoto reconfirmado; retirada final dos .sh e governança funcional/técnica explicitadas; matriz de cobertura dos 11 requisitos/93 ACs e 7 edge cases, 40 tarefas em 9 fases. validate_spec/validate_tasks --strict: 0 erros/avisos; rastreabilidade e diff-check aprovados. Revisão documental independente sem lacunas restantes.
+- **In-progress** (file:line): Nenhuma tarefa em execução. Parado após completar a especificação TLC conforme instrução; nenhum código, workflow, dependência ou piloto alterado.
+- **Next step**: Após nova instrução para implementar, reconciliar refs/status e começar T1. Manter execução neste chat; revisão independente central T33 e aceite completo T40 são distintos.
+- **Blockers**: Nenhum para o planejamento. Context7 indisponível, referências oficiais usadas. Publicação central, pilotos e registry têm etapas futuras específicas; nenhum aceite remoto presumido.
+- **Uncommitted files**: .specs/STATE.md e spec/context/design/tasks de packages-versioning-readiness. HEAD 93f72bf; nenhuma publicação, merge ou commit novo nesta rodada.
+- **Branch**: codex/reconcile-native-profiles, worktree versioning-reconciled/.github. Preservar sujeira do checkout principal develop em .specify/.agents/docs; PRs #14/#15/#16 não fazem parte deste escopo.
+- **Documentation / PR**: Em 2026-10-20, master 3511b1f1266a35d43ff12a81306514c44cc65fc5; #12 aberto c7e610117edfbe8a6338ec0d3b6703156026ef70 -> master; #13 aberto b1b2ec51906306c7afa5129f6557b30b9528f6b5 -> codex/versioning-profiles. Preservar histórico OpenSpec, evidências anteriores e registro do incidente npm.

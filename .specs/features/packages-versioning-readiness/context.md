@@ -1,7 +1,7 @@
 # Contexto: versionamento de packages
 
-**Data:** 2026-10-16; aditivo em 2026-10-19.
-**Status:** especificação inteira, incluindo Release Please/modularização e defaults, aprovada expressamente em 2026-10-19 com solicitação de implementação local. Design registrado em design.md aguardando revisão TLC; tarefas e código ainda não iniciados.
+**Data:** 2026-10-16; aditivos em 2026-10-19 e 2026-10-20.
+**Status:** requisitos e direção anteriores aprovados; planejamento completo em spec/design/tasks. A instrução mais recente limita esta rodada à especificação TLC, com parada obrigatória antes de implementar. Tarefas apenas planejadas; código não iniciado.
 **Spec:** [spec.md](spec.md).
 
 ## Feature Boundary
@@ -10,7 +10,7 @@ Concluir a conciliação central Changesets/Turbo e definir o aceite de integra�
 
 O aditivo mantém esse escopo e inclui Release Please e modularização dos scripts comuns. Não inicia migração automática de aplicações nem troca os adaptadores aprovados para Java/Vue.
 
-O usuário escolheu TypeScript para aproximar a manutenção da automação da programação habitual da equipe. O código central novo será escrito em TS; compilado JavaScript e entrypoints compatíveis preservam o consumo dos workflows.
+O usuário escolheu TypeScript para aproximar a manutenção da automação da programação habitual da equipe. Toda a lógica central de versionamento em escopo terminará em TS. Os workflows executarão JavaScript compilado diretamente com Node. Não haverá produto CLI separado para as aplicações instalarem.
 
 ## Implementation Decisions
 
@@ -29,7 +29,8 @@ O usuário escolheu TypeScript para aproximar a manutenção da automação da p
 - O conteúdo anterior da especificação e seus defaults estão aprovados, conforme confirmação expressa em 2026-10-19. Não reabrir essas decisões pela adição de um adaptador.
 - Acrescentar Release Please sem remover standard-version, pois existem consumidores legados.
 - Organizar e reutilizar os scripts com princípios próximos a POO, respeitando os recursos comuns a vários adaptadores.
-- Usar TypeScript em vez de manter JavaScript como linguagem dos módulos novos; migrar os existentes conforme a reorganização, sem reescrita integral de uma vez.
+- Usar TypeScript para toda a lógica central em escopo. Migrar incrementalmente os módulos de master, PRs e trabalho local relevante; ao final retirar os .sh centrais e qualquer implementação de negócio JS manual paralela.
+- Concluir somente o planejamento TLC nesta rodada; parar antes de Execute, mesmo com autorizações de implementação anteriores.
 
 ### Escopo anterior aprovado
 
@@ -47,11 +48,12 @@ O usuário escolheu TypeScript para aproximar a manutenção da automação da p
 - Propor inicialmente Release Please para um componente Node/npm com lockfile. Os demais release-types e monorepos da ferramenta não ficam automaticamente certificados; Changesets continua dono do piloto Vue.
 - O planejamento Release Please não pode chamar APIs mutantes nem receber token de escrita. O escritor central aplica o bundle e publica após gates, sem executar a ferramenta/configuração do consumidor.
 - Extrair serviços de processos/paths, leitura Git/API, policy, bundle/PR técnico e publicação quando houver uso real por mais de um perfil. Não criar classes apenas para simular POO.
-- Preservar os entrypoints e outputs públicos existentes. A redução de duplicação será acompanhada de testes de caracterização e contratos, não de uma meta artificial de redução de linhas.
+- Preservar o contrato externo dos workflows e os exports JS utilizados por fachadas sem lógica. Atualizar todos os usos versionados dos entrypoints .sh antes de retirá-los. Testes de caracterização verificam comportamento, sem obrigar a preservar a tecnologia antiga.
 - Os detalhes de versão upstream, opções aceitas, caminhos permitidos e APIs de planejamento serão fechados no design com evidência da versão escolhida.
 - PKG-11 cobre TypeScript estrito, build bloqueado por erro de tipo, distribuição compilada e validação runtime. O compilador pertence à automação central, não às aplicações consumidoras.
-- YAML continua a orquestrar os jobs; Bash limita-se aos entrypoints necessários. Interfaces/classes e composição organizam a lógica, sem impor classe base única.
+- YAML continua a orquestrar jobs e permissões; os comandos centrais chamam Node diretamente. O shell usado pelo runner para lançar um processo e os launchers nativos de ferramentas não são scripts próprios da pipeline. Interfaces/classes e composição organizam a lógica, sem impor classe base única.
 - O design prevê src e dist no mesmo SHA e CI de correspondência. Não executar compilador ou loader TS no escritor privilegiado.
+- No fluxo com PR técnico, milestone e override continuam vinculados ao PR funcional de origem; a revisão do PR técnico valida adicionalmente o bundle no head atual. Metadados ausentes no PR técnico não apagam o contrato funcional.
 
 ### Alternativas do aditivo
 

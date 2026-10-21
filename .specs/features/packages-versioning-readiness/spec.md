@@ -10,8 +10,8 @@ O aditivo de 2026-10-19 inclui Release Please como quinto adaptador e a organiza
 
 Na mesma data, o usuário escolheu TypeScript como linguagem da automação central para facilitar manutenção, contratos e encapsulamento. Essa escolha acrescenta PKG-11 e substitui apenas a decisão técnica anterior de implementar os módulos novos em JavaScript.
 
-**Status:** PKG-01 a PKG-10 e seus defaults aprovados expressamente pelo usuário em 2026-10-19, com solicitação de implementação local. PKG-11 registra a escolha adicional de TypeScript. Design atualizado em design.md aguarda seu gate de revisão TLC antes de Tasks/Execute; aprovação da spec não significa comportamento já implementado.
-**Data:** 2026-10-16; aditivo em 2026-10-19. **Issue:** [#4](https://github.com/aplicacoesBoilerplate/.github/issues/4).
+**Status:** planejamento consolidado em spec/context/design/tasks; execução não iniciada. Requisitos e direção arquitetural anteriores aprovados pelo usuário; refinamentos desta rodada estão identificados abaixo. Em 2026-10-20 o usuário limitou expressamente esta retomada a completar a especificação TLC e parar antes de Execute. Nenhum critério está marcado como implementado por causa da validação documental.
+**Data:** 2026-10-16; aditivos em 2026-10-19 e 2026-10-20. **Issue:** [#4](https://github.com/aplicacoesBoilerplate/.github/issues/4).
 **Continuidade:** complementa `reconcile-native-profiles` e a feature `changesets-turbo` do PR #13; não invalida suas evidências nos respectivos SHAs.
 
 ## Goals
@@ -22,7 +22,7 @@ Na mesma data, o usuário escolheu TypeScript como linguagem da automação cent
 - [ ] Produzir evidências remotas, de recuperação e de consumo externo antes de propor o encerramento da issue #4.
 - [ ] Acrescentar release-please como opção explícita, preservando standard-version sem migração automática.
 - [ ] Organizar scripts por responsabilidade e contratos reutilizáveis, sem duplicar policy ou comprometer a separação read/write.
-- [ ] Implementar módulos centrais novos/migrados em TypeScript com tipagem estrita, distribuição compilada e compatibilidade dos consumidores.
+- [ ] Migrar toda a automação central de versionamento em escopo para TypeScript, com tipagem estrita, distribuição compilada e compatibilidade dos consumidores; retirar seus scripts Shell do fluxo final.
 
 ## Out of Scope
 
@@ -41,6 +41,8 @@ Na mesma data, o usuário escolheu TypeScript como linguagem da automação cent
 | Remover standard-version ou migrar aplicações automaticamente | O usuário mantém aplicações legadas e pediu coexistência dos adaptadores |
 | Habilitar todos os release-types, plugins e monorepos do Release Please de uma vez | O primeiro perfil proposto é Node/npm com um componente; ampliação exige testes e contrato próprios |
 | Reescrita integral de uma vez, framework de plugins dinâmicos ou hierarquias obrigatórias de classes | TypeScript foi escolhido; a migração continua incremental e baseada em composição/contratos |
+| Distribuir um produto CLI separado ou exigir sua instalação nas aplicações | Os entrypoints Node são internos ao checkout da pipeline central |
+| Remover o shell do runner, launchers nativos de Maven/npm ou scripts de outros assuntos | A retirada abrange a implementação Shell própria de versionamento; YAML e ferramentas nativas continuam existindo |
 
 ## Assumptions & Open Questions
 
@@ -66,19 +68,24 @@ Na mesma data, o usuário escolheu TypeScript como linguagem da automação cent
 | Reuso semelhante a POO | Interfaces por contrato, encapsulamento, composição e dependências explícitas; classes apenas se trouxerem benefício demonstrável | Reaproveitar módulos JavaScript existentes sem construir uma hierarquia artificial | Aprovado com a spec completa 2026-10-19 |
 | Ordem das adições | Consolidar pontos comuns durante a conciliação; depois incluir Release Please; caracterizar e verificar cada extração separadamente | Separar regressão de refatoração e comportamento novo, sem reescrita em bloco | Aprovado com a spec completa 2026-10-19 |
 | Piloto Release Please | Sem aplicação piloto nova escolhida; validar primeiro em fixture Node real no .github | Não alterar aplicações ou inferir escolha de piloto nesta solicitação | Aprovado com a spec completa 2026-10-19 |
-| Linguagem central | TypeScript para módulos novos e migração dos existentes conforme reorganização; YAML e entrypoints compatíveis permanecem | Manutenção próxima da programação habitual da equipe, sem reescrever aplicações consumidoras | Escolha explícita do usuário 2026-10-19 |
+| Linguagem central | Toda lógica central em escopo termina em TypeScript; migração incremental, YAML mantido e chamadas finais diretas ao compilado Node | A última direção do usuário inclui o trabalho de master, PRs e local, substituindo Shell sem criar produto CLI | Escolha explícita, consolidada em 2026-10-20 |
 | Distribuição TypeScript | Fontes e JavaScript compilado versionados juntos no repositório central; CI verifica correspondência e consumidores executam somente o compilado | Não exigir compilador/loader TS no consumidor ou no escritor privilegiado | Default técnico registrado no design |
+| Compatibilidade de entrada | Preservar contratos workflow_call, outputs, efeitos e erros; caminhos internos .sh são retirados após atualizar todos os usos versionados | Caller não depende de caminho de script interno; pin antigo mantém sua implementação antiga | Refinamento da retirada de Shell solicitada pelo usuário |
+| Metadados entre fases | PR funcional fornece milestone/override; PR técnico acrescenta revisão do bundle no head atual, sem apagar o contrato funcional | Evitar perda de governança quando existe PR técnico sem milestone | Precisão técnica da governança já aprovada |
+| Limite desta rodada | Editar e validar apenas os artefatos TLC; parar antes de implementar ou publicar | Pedido explícito após a troca de modelo | Confirmado em 2026-10-20 |
 
-**Open questions:** none — especificação e defaults do aditivo aprovados pelo usuário. A escolha de versão upstream e do conjunto exato de opções foi fundamentada em design.md e depende do gate de revisão desse documento antes de implementar.
+**Open questions:** none — decisões de produto resolvidas ou defaults registrados. Design e tarefas tornam essas decisões revisáveis; esta rodada termina com o planejamento, sem autorizar sua execução automaticamente.
 
 ## Evidence Baseline
 
-Observado em 2026-10-16, sujeito a nova leitura no início da execução:
+Pilotos observados em 2026-10-16; refs centrais reconfirmadas somente por leitura em 2026-10-20. Revalidar no início da execução:
 
 | Fonte | Estado constatado | Implicação |
 | --- | --- | --- |
 | PR #12 | Aberto, sem merge, HEAD c7e610117edfbe8a6338ec0d3b6703156026ef70; CI 38837059222 aprovada nesse SHA | Base de implementação, não prova dos pilotos |
 | PR #13 | Aberto, base codex/versioning-profiles, HEAD b1b2ec51906306c7afa5129f6557b30b9528f6b5 | Reconciliar contra o HEAD atual do #12; aprovação/CI antiga não cobre a conciliação |
+| master central | 3511b1f1266a35d43ff12a81306514c44cc65fc5 | Inventariar diferenças relevantes para versionamento; não incorporar PRs de LLM/triagem/code review por proximidade |
+| Planejamento local | codex/reconcile-native-profiles, HEAD 93f72bf antes desta rodada | Preservar os commits documentais e mudanças do usuário; nenhum código novo nesta rodada |
 | PackagesVue/master | Root privado; npm workspaces e Turbo; ui 1.1.1, utils/composables 0.0.1; tags por package nessas versões | Não reiniciar o versionamento; respeitar histórico por package |
 | PackagesVue/release.yml | Fluxo próprio Changesets de preparação e publicação | Definir uma única autoridade para tags/Releases na migração |
 | PackagesJava/master | Parent/BOM/core/starter; revision 0.0.1; tag 0.0.1; deploy acionado por push de v* | Alinhar prefixo e configuração nativa; não presumir que o deploy atual acompanhará a publicação central |
@@ -90,7 +97,7 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 **User Story**: Como mantenedor da pipeline, quero integrar Changesets ao registro modular existente sem criar outro fluxo concorrente.
 
 **Acceptance Criteria**:
-1. WHEN iniciar a conciliação THEN a entrega SHALL registrar os SHAs reais do #12 e #13 e identificar os pontos de integração antes de alterar código.
+1. WHEN iniciar a conciliação THEN a entrega SHALL registrar os SHAs reais de master, #12, #13 e trabalho local relevante, identificando os pontos de integração antes de alterar código e excluindo mudanças alheias ao versionamento.
 2. WHEN selecionar changesets THEN o registro SHALL resolver o quarto adaptador pelo mesmo contrato de dependências explícitas utilizado pelos demais perfis.
 3. WHEN executar os testes após a conciliação THEN a suíte SHALL preservar os cenários aprovados de Go, standard-version e jgitver sem reduzir assertions ou desabilitar casos.
 4. IF o remoto avançar desde a base registrada THEN a entrega SHALL parar o envio até reconciliar e repetir os gates do novo intervalo, sem force-push.
@@ -124,6 +131,7 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 5. IF o bundle incluir path fora do workspace, symlink, arquivo não permitido ou alteração de código-fonte THEN o escritor SHALL rejeitá-lo antes de aplicar arquivos.
 6. WHEN publicar após merge técnico THEN a validação SHALL exigir aprovação humana válida no head revisado e vínculo verificável com o SHA funcional e o plano de origem.
 7. IF uma nova entrega funcional invalidar a origem do PR técnico THEN a publicação SHALL bloquear até regeneração e nova revisão conforme o contrato técnico existente.
+8. WHEN consumir artifacts no escritor THEN a validação SHALL conferir repositório, run/job produtor, SHA central, SHA funcional e identidade do plano contra a execução esperada, sem aceitar apenas hashes fornecidos pelo próprio artifact como prova de origem.
 
 **Independent Test**: Bundle adulterado, aprovação dismissed/bot/head antigo, origem avançada e binário nativo sentinela que falha se for chamado no escritor.
 
@@ -140,6 +148,7 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 6. IF um lote Changesets com mais de um release possuir milestone THEN a policy SHALL bloquear com diagnóstico de contrato não suportado e não selecionar arbitrariamente um package nem aceitar override de formato.
 7. WHEN gerar prévia para develop THEN o guia Markdown/JSON SHALL derivar do relatório/changelog nativo e identificar packages, versões candidatas, PR e checklist sem afirmar que a homologação ocorreu.
 8. WHERE publication_environment estiver configurado o fluxo SHALL respeitar seu gate antes da escrita; sem essa configuração, não haverá aprovação adicional de environment.
+9. WHEN existir PR técnico THEN a policy SHALL revalidar milestone e override no PR funcional de origem e exigir separadamente a revisão do head técnico, sem usar a ausência de milestone no PR técnico para dispensar a validação funcional.
 
 **Independent Test**: Matriz de rotas, milestones, override, remoção/troca de metadados, environment informado e omitido; validação do payload do guia.
 
@@ -237,7 +246,7 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 4. WHEN avaliar governança THEN todos os adaptadores SHALL usar a policy compartilhada de milestone/override e os validadores comuns de proveniência, sem manter uma segunda implementação dessas regras no adaptador.
 5. WHEN compartilhar preparo de PR técnico, bundle ou publicação THEN os serviços comuns SHALL receber dados validados e capacidades explícitas, mantendo os formatos nativos dentro de seus próprios adaptadores.
 6. WHEN um módulo de domínio ou adaptador for importado THEN ele SHALL permanecer sem efeitos de processo, filesystem ou rede até uma chamada explícita com o contexto e dependências necessários.
-7. WHEN executar entrypoints Bash THEN eles SHALL limitar-se a traduzir entradas e invocar a orquestração testável, sem duplicar decisões de versão, override ou publicação.
+7. WHEN concluir a migração central THEN os workflows de versionamento SHALL chamar entrypoints Node compilados diretamente, sem executar ou importar os scripts .sh próprios de versionamento e sem regras de negócio Shell embutidas no YAML.
 8. IF uma capacidade ausente, um resultado inválido ou um path fora do escopo for recebido THEN a camada comum SHALL falhar antes de qualquer escrita, sem fallback para outro adaptador.
 9. WHEN extrair um comportamento compartilhado THEN a tarefa SHALL incluir testes de caracterização antes da mudança e testes de contrato após a extração, preservando outputs públicos, códigos de erro e as proteções existentes.
 10. WHEN provar extensibilidade THEN um adaptador substituto registrado no teste SHALL executar pelo contrato comum sem alterar a policy ou os publicadores, mantendo rejeitados IDs arbitrários fornecidos pelo caller.
@@ -251,15 +260,16 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 **User Story**: Como mantenedor, quero trabalhar em TypeScript para explicitar contratos, encapsular responsabilidades e detectar incompatibilidades durante o desenvolvimento sem aumentar as exigências dos consumidores.
 
 **Acceptance Criteria**:
-1. WHEN criar módulos centrais novos ou migrar módulos durante a reorganização THEN a implementação SHALL usar fontes TypeScript com strict habilitado e contratos explícitos de adaptadores, contexto, planos, portas e resultados.
+1. WHEN concluir a reorganização THEN toda a lógica central de versionamento em escopo SHALL possuir fontes TypeScript com strict habilitado e contratos explícitos de adaptadores, contexto, planos, portas e resultados, sem implementação de negócio paralela em Shell ou JavaScript manual.
 2. WHEN compilar a automação THEN o build SHALL bloquear emissão em caso de erro de tipo e produzir JavaScript ESM para o runtime Node central, sem exigir um loader TypeScript em execução.
 3. WHEN entregar uma revisão central THEN a CI SHALL verificar que o JavaScript distribuído corresponde aos fontes TypeScript e lockfile da mesma revisão, rejeitando saídas ausentes, divergentes ou extras.
 4. WHEN um consumidor executar o workflow central THEN o job SHALL usar o JavaScript distribuído no SHA selecionado sem instalar TypeScript ou compilar os fontes da automação nesse job.
 5. WHEN o escritor privilegiado executar THEN o job SHALL permanecer sem compilação, instalação de dependências ou execução de ferramentas nativas do consumidor, preservando a fronteira read/write.
-6. WHEN migrar um módulo legado THEN a compatibilidade SHALL preservar caminhos dos entrypoints, exports públicos utilizados, outputs e códigos de erro já suportados, com testes de caracterização.
+6. WHEN migrar um módulo legado THEN a compatibilidade SHALL preservar inputs/outputs dos workflows, exports JS utilizados e códigos de erro já suportados, com testes de caracterização; caminhos internos .sh serão substituídos em todos os usos versionados e documentados como retirados.
 7. WHEN receber JSON de ferramenta, arquivo, artifact ou API THEN o sistema SHALL validar os dados em runtime antes de tratá-los como contrato de domínio, sem usar cast de TypeScript como validação.
 8. WHEN verificar contratos TypeScript THEN os testes SHALL demonstrar rejeição de capacidades/contextos incompatíveis e executar as fixtures comportamentais contra o JavaScript efetivamente distribuído.
 9. WHEN documentar a automação THEN os READMEs SHALL distinguir fontes editáveis, saídas geradas, comandos de typecheck/build/testes e responsabilidades das classes/interfaces, sem apresentar o compilado como fonte de manutenção manual.
+10. WHEN verificar o encerramento da migração THEN o gate SHALL conferir o inventário de módulos/entrypoints e rejeitar lógica legada ativa, referências a .sh centrais ou fachadas JS com regras próprias, mantendo os entrypoints Node como recurso interno sem distribuição de CLI independente.
 
 **Independent Test**: Testes de compilação positivos/negativos, fixture de dist divergente/ausente/extra rejeitada, contratos de workflow sem compilador nos jobs consumidores, validação runtime de JSON inválido e regressões contra o compilado. Classes são permitidas para encapsular comportamento; composição continua preferida à herança obrigatória.
 
@@ -291,25 +301,25 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PKG-01 | Conciliação sem regressão | Design | In Design |
-| PKG-02 | Plano nativo do monorepo | Design | In Design |
-| PKG-03 | PR técnico e confiança | Design | In Design |
-| PKG-04 | Governança e homologação | Design | In Design |
-| PKG-05 | Publicação recuperável | Design | In Design |
-| PKG-06 | Callers e prontidão | Design | In Design |
-| PKG-07 | Distribuição e consumo externo | Design | In Design |
-| PKG-08 | Evidências e encerramento | Design | In Design |
-| PKG-09 | Release Please coexistente | Design | In Design |
-| PKG-10 | Contratos e composição dos scripts | Design | In Design |
-| PKG-11 | TypeScript e distribuição compilada | Design | In Design |
+| PKG-01 | Conciliação sem regressão | Tasks | In Tasks |
+| PKG-02 | Plano nativo do monorepo | Tasks | In Tasks |
+| PKG-03 | PR técnico e confiança | Tasks | In Tasks |
+| PKG-04 | Governança e homologação | Tasks | In Tasks |
+| PKG-05 | Publicação recuperável | Tasks | In Tasks |
+| PKG-06 | Callers e prontidão | Tasks | In Tasks |
+| PKG-07 | Distribuição e consumo externo | Tasks | In Tasks |
+| PKG-08 | Evidências e encerramento | Tasks | In Tasks |
+| PKG-09 | Release Please coexistente | Tasks | In Tasks |
+| PKG-10 | Contratos e composição dos scripts | Tasks | In Tasks |
+| PKG-11 | TypeScript e distribuição compilada | Tasks | In Tasks |
 
-**Coverage:** PKG-01 a PKG-10 aprovados e PKG-11 acrescentado pela escolha de TypeScript em 2026-10-19; todos mapeados ao design. Tarefas ainda não derivadas. In Design não significa implementação verificada.
+**Coverage:** 11 requisitos mapeados ao design e às tarefas. A matriz por critério está em [tasks.md](tasks.md). In Tasks indica planejamento, não implementação ou teste aprovado.
 
 ## Delivery Boundaries
 
 | Resultado | Trabalho previsto | Gate e autoridade |
 | --- | --- | --- |
-| A: Central pronta | Conciliar #13/#12, organizar serviços comuns, acrescentar Release Please, fixtures reais, exemplos e documentação no repositório .github | Escopo anterior aprovado; revisar defaults novos -> design -> tarefas; implementação local; verificador independente obrigatório; push só autorizado |
+| A: Central pronta | Conciliar master/#13/#12/local, migrar toda a lógica central em escopo para TS, acrescentar Release Please, fixtures reais, exemplos e documentação no .github | Planejada nesta rodada; futura execução local, verificador independente e CI no SHA publicado; nenhuma implementação agora |
 | B: Consumidores homologados | Adoção remota nos pilotos, rotas/gates e identidade do SHA | Autorizar alterações/publicação nas branches dos pilotos; revisão humana e runs do GitHub; não usar checkout local como substituto do called remoto |
 | C: Packages consumíveis | Distribuição npm/Maven e instalação externa | Autorizar credenciais/destino/publicação real; validar coordenadas e conteúdo; registrar falhas parciais |
 | Encerramento da issue | Consolidar A/B e a evidência de C quando aprovada como parte do aceite ponta a ponta | Decisão humana com diferenças de escopo e pendências explícitas; não encerrar só por CI verde |
@@ -327,6 +337,7 @@ Observado em 2026-10-16, sujeito a nova leitura no início da execução:
 - [ ] Release Please preserva os gates centrais e o fluxo de PR técnico; standard-version continua selecionável e testado sem migração forçada.
 - [ ] Serviços compartilhados são verificados por contrato, possuem dependências explícitas e estão documentados; adaptadores não duplicam regras centrais.
 - [ ] Typecheck estrito, compilação e verificação de correspondência dos arquivos distribuídos passam; os consumidores não precisam de compilador TypeScript.
+- [ ] O inventário da migração não possui lógica legada ativa nem chamadas a .sh centrais; a pipeline executa os entrypoints internos Node sem exigir um produto CLI nas aplicações.
 
 ## Sources
 

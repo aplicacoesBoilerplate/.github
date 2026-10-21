@@ -2,9 +2,9 @@
 
 **Spec:** [spec.md](spec.md).
 **Context:** [context.md](context.md).
-**Status:** Draft, aguardando revisão do design antes de Tasks/Execute.
-**Data:** 2026-10-19.
-**Autorização atual:** especificação completa aprovada e implementação local solicitada. Este desenho concretiza os contratos; não há autorização nova de push, merge, edição dos pilotos ou publicação em registry.
+**Status:** desenho consolidado e tarefas derivadas; implementação não iniciada.
+**Data:** 2026-10-19; consolidação em 2026-10-20.
+**Autorização atual:** concluir somente os artefatos TLC e parar. A direção de composição/TypeScript e os requisitos anteriores estão aprovados. Este documento concretiza essa direção, sem executar código, workflows, pilotos ou publicação remota nesta rodada.
 
 ## Architecture Overview
 
@@ -41,20 +41,21 @@ Para perfis com PR técnico, o caminho direto H -> K só existe após a integra�
 
 ## Baseline and Integration Order
 
-Confirmado por consultas read-only em 2026-10-19:
+Confirmado por consultas read-only, reconfirmadas em 2026-10-20:
 
-- Worktree local `versioning-reconciled/.github`, branch `codex/reconcile-native-profiles`, HEAD `47910e8` antes deste desenho; árvore limpa.
+- Worktree local `versioning-reconciled/.github`, branch `codex/reconcile-native-profiles`, HEAD `93f72bf` antes desta consolidação; mudança de handoff conhecida em STATE.md.
+- master central: `3511b1f1266a35d43ff12a81306514c44cc65fc5`. Inventariar seu delta relevante antes da reconciliação; não incorporar os PRs #14/#15/#16 de LLM/triagem/code review.
 - PR #12: `codex/versioning-profiles` -> `master`, aberto, HEAD `c7e610117edfbe8a6338ec0d3b6703156026ef70`.
 - PR #13: `codex/changesets-turbo` -> `codex/versioning-profiles`, aberto, HEAD `b1b2ec51906306c7afa5129f6557b30b9528f6b5`.
 - Registro atual possui três adaptadores; Changesets ainda não está nesse registro. O PR #13 acrescenta comportamento ao fluxo anterior e não deve ser aplicado em bloco sobre o escritor atual.
 
-A implementação deve continuar em um worktree próprio da branch do PR #13. Preservar a base remota como ancestral, incorporar o #12 por merge local sem reescrever histórico e resolver conflitos por comportamento. Transportar os commits documentais locais de planejamento, sem enviá-los automaticamente ao PR #12. Conferir novamente SHAs antes de qualquer ação de publicação autorizada posteriormente.
+A futura implementação deve continuar em um worktree próprio a partir da branch do PR #13. Preservar a base remota como ancestral, incorporar o #12 e o delta pertinente de master sem reescrever histórico e resolver conflitos por comportamento. Transportar os commits documentais locais de planejamento. Se a integração de master trouxer assunto alheio, documentar e selecionar somente o delta pertinente, sem misturar trabalho do checkout principal. Conferir novamente SHAs antes de qualquer publicação autorizada. Nenhuma dessas operações Git é executada na rodada documental.
 
-Ordem técnica: caracterização -> toolchain TypeScript e distribuição -> contratos/portas -> integração Changesets -> serviços compartilhados de arquivos/PR/publicação -> Release Please -> callers/documentação -> verificador independente. As tarefas serão derivadas após aprovação deste design. Não remover testes do #12 ou #13 para acomodar a conciliação.
+Ordem técnica: caracterização -> toolchain e contratos/portas TypeScript -> governança -> cinco adaptadores -> serviços compartilhados de arquivos/PR/publicação -> entrypoints/workflows -> distribuição, callers e documentação -> verificador independente. [tasks.md](tasks.md) contém a sequência, os gates e a rastreabilidade. Não remover cenários ou enfraquecer assertions do #12/#13 para acomodar a conciliação; testes estruturais que verificam Bash devem passar a verificar o equivalente Node, preservando o requisito.
 
 ## TypeScript Build and Distribution
 
-Fontes editáveis ficam em `scripts/versioning/src/`, com contratos/interfaces, adaptadores, serviços, portas e CLIs. Compilar para `scripts/versioning/dist/` como JavaScript ESM; manter os caminhos públicos `.mjs` atuais como fachadas de compatibilidade para os módulos migrados. Os arquivos legados ainda não migrados continuam funcionando. Não manter duas implementações ativas da mesma regra em TS e JS.
+Fontes editáveis ficam em `scripts/versioning/src/`, com contratos/interfaces, adaptadores, serviços, portas e entrypoints internos. Compilar para `scripts/versioning/dist/` como JavaScript ESM; fachadas `.mjs` preservam exports usados, sem regras próprias. Durante a migração o legado pode funcionar; na entrega central final toda lógica em escopo tem fonte TS. Não manter duas implementações ativas da mesma regra. Não publicar pacote npm global, binário ou produto CLI para os consumidores.
 
 Adicionar package.json/lockfile próprios em `scripts/versioning/` com type module e scripts typecheck/build/test/check-dist. O compilador e os tipos de Node serão fixados no lockfile da tarefa de toolchain. O package.json da aplicação consumidora não recebe esses pacotes. O SDK Release Please conserva sua instalação isolada no leitor, conforme a seção própria; não deve ser carregado transitivamente pelo grafo de imports do escritor.
 
@@ -62,7 +63,7 @@ Configuração projetada: strict true, noEmitOnError true, module/moduleResoluti
 
 Versionar fontes, config, lockfile e saída compilada na mesma revisão central. A CI instala o toolchain pelo lockfile, executa typecheck, recompila em diretório temporário isolado e compara a lista completa de arquivos e seus bytes com dist. Rejeitar arquivos ausentes, extras, divergentes ou symlinks. A verificação não se limita a git diff, que não detectaria sozinho arquivos novos não rastreados.
 
-O workflow consumidor faz checkout do SHA central e executa dist por meio dos entrypoints compatíveis. Nenhum job consumidor compila TypeScript, baixa artifacts de compilação de outro PR ou executa ts-node/tsx. O escritor privilegiado não instala toolchain nem SDK. Isso evita transferir a construção do executável para a etapa com escrita.
+O workflow central faz checkout do próprio SHA e chama diretamente os entrypoints de dist via Node. Nenhum job consumidor compila TypeScript, baixa artifacts de compilação de outro PR ou executa ts-node/tsx. O escritor privilegiado não instala toolchain nem SDK. Inputs do caller entram por env/arquivos validados, sem interpolação de texto de PR em comandos.
 
 Fontes são a única entrada de manutenção; dist é gerado e revisado junto, nunca editado manualmente. Testar o compilado que será entregue, além dos testes de tipos. Um teste com erro de tipo deve falhar no typecheck; um artifact/JSON malformado deve continuar sendo rejeitado em runtime mesmo quando o programa compilou.
 
@@ -101,11 +102,40 @@ Assinaturas abaixo são contratos TypeScript, com interfaces e uniões discrimin
 | `src/adapters/release-please.ts` | `collect(context, ports)`, `prepare(context, nativePlan, ports)` | SDK Release Please fixado; serializar plano/arquivos e notas nativos sem chamar métodos de escrita |
 | `src/adapters/release-please/snapshot-scm.ts` | `createSnapshotScm(context, snapshot, ports)` | Porta nativa específica da ferramenta, restrita à origem observada; métodos mutantes sempre rejeitados |
 
-Os adaptadores Go, jgitver e standard-version mantêm seus módulos e assinaturas públicas. A orquestração usa `await` para aceitar tanto implementações síncronas existentes quanto o SDK assíncrono novo. `collect-version-report.mjs` e `verify-version-files.mjs` deixam de executar no import; a CLI fica sob guarda de entrypoint explícita.
+Os adaptadores Go, jgitver e standard-version migram para src e mantêm suas assinaturas públicas por fachadas sem lógica. A orquestração usa `await` para aceitar tanto implementações síncronas existentes quanto o SDK assíncrono novo. `collect-version-report.mjs` e `verify-version-files.mjs` deixam de executar no import; entrypoints internos têm guarda explícita.
 
 Ao migrar cada módulo, mover a implementação para src e fazer sua fachada pública reexportar o compilado. Tipar as dependências de leitura e de escrita separadamente, sem tratar tipagem como mecanismo de segurança suficiente. As portas e os jobs continuam aplicando as restrições efetivas em runtime.
 
-O Bash permanece como compatibilidade para os caminhos usados pelos workflows e fixtures. Ele prepara entradas/saídas e chama a orquestração. Decisões de versão, autorização, identidade e publicação ficam em serviços testáveis, não em cópias condicionadas ao ID do adaptador.
+O Bash próprio sai do fluxo final. Wrappers transitórios, se necessários durante commits intermediários, são removidos depois de migrar workflows, testes e referências documentais. `run: node ...` ainda é lançado pelo shell do runner; Maven/npm podem ter launchers próprios. O critério de retirada mede scripts e regras que mantemos, não a ausência de shell em todas as dependências.
+
+### Inventário obrigatório da migração
+
+T1 confere este inventário contra master/#12/#13/local. Cada caminho em escopo precisa de destino TS e gate; eventual novo arquivo encontrado entra no inventário antes da implementação.
+
+| Origem central | Destino por responsabilidade | Tarefas |
+| --- | --- | --- |
+| paths.sh, process-runner.mjs | src/ports/process.ts: argv, paths, ambiente, limites | T4 |
+| git-inputs.mjs, collect-origin-report.sh | src/ports/git.ts: origem, refs, snapshot e retry | T5 |
+| collect-pr-policy.sh | src/ports/github.ts e src/services/pr-evidence.ts: API, timeline, reviews | T6, T9 |
+| version-report.mjs, adapter-registry.mjs, resolve-adapter.sh | src/adapter-contract.ts e src/adapter-registry.ts: normalização/validação, registro | T7 |
+| version.mjs, validate-sprint.sh | Retirar funções antigas de cálculo paralelo/issues-épicas sem reproduzi-las; portar apenas validações ainda necessárias e redirecionar testes de tagged SHA para o contrato nativo | T7, T11, T27 |
+| release-policy.mjs, release-gates.sh | src/services/release-policy.ts e pr-evidence.ts: policy e CI/SHA | T8, T9 |
+| homologation-guide.mjs/.sh | src/services/homologation-guide.ts | T10 |
+| adapters/go-gitsemver.mjs | src/adapters/go-gitsemver.ts | T11 |
+| adapters/jgitver.mjs, java-properties.mjs, install-maven.sh | src/adapters/jgitver.ts, parser e instalação Maven com checksum | T12 |
+| adapters/standard-version.mjs, install-node.sh, sync-npm-lock.mjs | src/adapters/standard-version.ts e preparo npm reutilizável | T13 |
+| Coletor e preparação Changesets do PR #13 | src/adapters/changesets.ts | T14 |
+| Novo perfil Release Please | src/adapters/release-please/snapshot-scm.ts e release-please.ts | T15, T16 |
+| version-bundle.mjs, verify-version-files.mjs, changesets-version-pr.mjs | src/services/version-files.ts e políticas puras de arquivos por perfil | T17 |
+| prepare-version-pr.sh, version-pr.mjs, validate-version-pr.sh | src/services/technical-release.ts e technical-merge.ts | T18, T19 |
+| publish.sh, publish-changesets.mjs | src/services/publication.ts | T20 |
+| prepare-release.sh | Casos Go de SHA/tag migram para coletor/publicador TS; não preservar seleção antiga de package nem algoritmo paralelo | T11, T20, T27 |
+| collect-version-report.mjs/.sh, preview.sh | src/services/versioning.ts e src/entrypoints/preview.ts | T21 |
+| prepare-publication.sh | src/entrypoints/prepare-publication.ts | T22 |
+| Invocação de escrita, outputs e artifacts | src/entrypoints/publish.ts | T23 |
+| Referências YAML/testes/docs a esses caminhos | Chamadas Node e contratos comportamentais preservados | T24–T27, T30–T32 |
+
+Os arquivos auxiliares estritamente necessários a um componente e seus testes acompanham a mesma tarefa. O inventário não inclui automações de LLM, SonarQube, triagem ou code review. Scripts históricos OpenSpec permanecem como histórico, sem serem executados pelo fluxo central.
 
 ### Capacidades por adaptador
 
@@ -136,6 +166,14 @@ O `report` preserva a evidência nativa e o schema de cada perfil. O envelope n�
 Limites iniciais dos novos bundles: 10MiB de bytes totais, 16MiB serializados, 100 releases e 1000 operações. Limite excedido gera falha antes de aplicar qualquer operação. Todos os paths são relativos/confinados; rejeitar duplicatas, symlinks inclusive em diretórios ancestrais, paths absolutos, traversal e arquivos não regulares. Validar toda a lista antes da primeira aplicação. Os testes cobrem cada limite e igualdade na fronteira.
 
 `PublicationResult` contém outcome, `publishedSha` somente após sucesso completo, entradas por status `existing|created|pending|conflict` e URLs verificadas. Falha parcial preserva evidência local por entrada, mas não exporta `published_sha` de sucesso nem libera distribuição.
+
+### Identidades e governança entre fases
+
+Nomear separadamente `functionalSha` (origem do cálculo), `reviewedHeadSha` (head técnico aprovado) e `publishedSha` (commit integrado efetivamente publicado). Nunca preencher um com outro por conveniência. Validar árvore/diff e relação de merge para o método suportado; a CI precisa corresponder ao SHA integrado publicado.
+
+O `functionalPrNumber` liga o plano à origem. Milestone/override são coletados desse PR novamente antes da escrita. Alteração ou remoção de milestone é reavaliada pelas regras atuais; ausência continua aceitando cálculo nativo. Qualquer mudança invalida o snapshot anterior; se houver PR técnico preparado, regenerar a evidência e exigir revisão atualizada em vez de reaproveitar uma autorização antiga. A aprovação técnica comprova o conteúdo do bundle e não substitui as duas pessoas do override funcional. Títulos, labels ou metadados ausentes no PR técnico não mudam a origem dessa policy.
+
+Artifact confiável pertence ao mesmo repositório, run/job leitor esperado e SHA central verificado. Conferir essas identidades pela API/contexto confiável e registrar SHA funcional, hash de config/lockfile e digest do plano. O hash contido no próprio arquivo só prova integridade interna, não autenticidade. Capacidades privilegiadas sempre vêm do registro do checkout central, nunca do caller/artifact.
 
 ## Release Please Profile
 
@@ -264,16 +302,16 @@ Gates documentais agora: `validate_spec.py --strict` e `git diff --check`. Eles 
 
 | Decision | Choice | Rationale |
 | --- | --- | --- |
-| Runtime/linguagem | Fontes TypeScript estritas, JavaScript ESM compilado e Bash fino | Escolha do usuário para manutenção; não exigir compilação no consumidor |
+| Runtime/linguagem | Toda lógica central em TypeScript estrito e entrypoints Node compilados, sem .sh próprios no fluxo final | Escolha do usuário para manutenção; YAML continua a orquestrar sem instalar CLI na aplicação |
 | Distribuição | src e dist versionados juntos, lockfile central e CI de correspondência | Runtime disponível no SHA selecionado sem instalar toolchain no escritor |
 | POO | Contratos, encapsulamento e composição; sem classe base obrigatória | Ferramentas têm ciclos e capacidades distintos |
 | Release Please | SDK17.11.2 fixado, isolado no checkout confiável | Reprodutibilidade e nenhum requisito de instalar SDK em toda aplicação |
 | Escrita | Somente serviços centrais após policy e validação de evidência | Preservar AD-001/002/003 e evitar bot concorrente |
-| Compatibilidade | Schema/output/entrypoints legados preservados; modelo interno único/lote | Refatoração não obriga migração de consumidores |
+| Compatibilidade | Schema/inputs/outputs/erros preservados; fachadas JS sem lógica, scripts Shell internos retirados | Caller usa workflow_call; pins antigos conservam o código antigo, sem manter legado ativo no pin novo |
 | Migração | Incremental com caracterização por etapa | Separar regressão da refatoração de comportamento novo |
 | Ship gate | Evidência local, revisão independente, CI hospedada e piloto são resultados distintos | Não encerrar issue nem afirmar homologação por CI central verde |
 
-Não é necessário superseder AD-001/002/003. O desenho segue essas decisões. A escolha TypeScript foi registrada como AD-004, sem mudar as fronteiras centrais de autorização. Escolhas específicas de versão/perfil/bundle desta entrega permanecem neste documento.
+AD-001/002/003 permanecem ativos. AD-005 amplia AD-004 para a migração completa em escopo e explicita que não há produto CLI independente. Escolhas específicas de versão/perfil/bundle desta entrega permanecem neste documento.
 
 ## Official Research References
 
@@ -285,7 +323,8 @@ Context7 indisponível nesta sessão. Conferidos código/docs do tag fixado, nã
 - [Node strategy](https://github.com/googleapis/release-please/blob/v17.11.2/src/strategies/node.ts) e [BaseStrategy](https://github.com/googleapis/release-please/blob/v17.11.2/src/strategies/base.ts): arquivos atualizáveis e bootstrap nativo.
 - [Changesets3 CLI](https://changesets.dev/guide/cli): plano, versionamento e distribuição são fases distintas. Compatibilidade2/3 precisa dos testes reais citados.
 - [TypeScript módulos Node](https://www.typescriptlang.org/docs/handbook/modules/reference.html), [strict](https://www.typescriptlang.org/tsconfig/strict.html) e [noEmitOnError](https://www.typescriptlang.org/tsconfig/noEmitOnError.html): referências oficiais do desenho de compilação; gates ainda não executados nesta etapa documental.
+- [GitHub Actions run e shell](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idstepsrun): lançar Node por run não elimina o shell de lançamento do runner. A retirada é da implementação Shell própria, não de mecanismos internos das ferramentas.
 
 ## Approval Gate
 
-A spec e seus defaults estão aprovados. Este design ainda precisa de revisão antes de gerar o tasks.md formal, conforme TLC. Após aprovação, derivar tarefas pequenas com testes no mesmo commit e preservar execução neste chat; não delegar lotes sem solicitação. Ao final da implementação local, executar automaticamente o verificador independente exigido pelo TLC/AGENTS.md.
+A direção e os requisitos aprovados foram consolidados em tarefas atômicas com testes no mesmo commit. A instrução mais recente exige parar ao completar estes documentos. Nenhuma tarefa será iniciada nesta rodada. Na futura retomada, preservar execução neste chat e o verificador independente ao final da implementação; validação documental não é o PASS de implementação exigido pelo TLC/AGENTS.md.
