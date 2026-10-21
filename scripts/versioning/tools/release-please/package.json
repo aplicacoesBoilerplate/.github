@@ -1,0 +1,12 @@
+{
+  "name": "@aplicacoes-boilerplate/release-please-tool",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "release-please": "17.11.2"
+  }
+}

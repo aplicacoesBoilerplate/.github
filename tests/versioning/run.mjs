@@ -64,8 +64,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const mode = process.argv[2];
   if (mode === '--local') process.exitCode = runFixtures(localFixtures);
   else if (mode === '--real-go') process.exitCode = runFixtures(['real-go-gitsemver.mjs']);
+  else if (mode === '--real-release-please') process.exitCode = runFixtures(['real-release-please.mjs']);
   else {
-    console.error('Usage: node tests/versioning/run.mjs --local|--real-go');
+    console.error('Usage: node tests/versioning/run.mjs --local|--real-go|--real-release-please');
     process.exitCode = 2;
   }
 }

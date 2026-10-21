@@ -285,7 +285,10 @@ export async function createSnapshotScm(context: AdapterContext, options: Snapsh
         const newline = row.indexOf('\n');
         const sha = row.slice(0, newline);
         if (!shaPattern.test(sha)) throw new Error('Commit Git inválido');
-        yield { sha, message: row.slice(newline + 1).trim() };
+        const files = gitText(repositoryPath, context.workspace,
+          ['diff-tree', '--root', '--no-commit-id', '--name-only', '-r', sha])
+          .split(/\r?\n/).filter(Boolean);
+        yield { sha, message: row.slice(newline + 1).trim(), files };
       }
     },
     async commitsSince(branch: string, filter: (commit: { sha: string; message: string }) => boolean,
