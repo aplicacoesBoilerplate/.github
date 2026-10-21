@@ -5,7 +5,7 @@
 Usar a skill `tlc-spec-driven` e seguir seu fluxo Execute e Critical Rules. Se a skill não puder ser carregada, parar e informar o usuário. Testes derivam da spec; cada tarefa futura inclui seus testes, gate, status e commit atômico. Nunca enfraquecer testes para acomodar a implementação. O verificador final é distinto do autor.
 
 **Design:** [design.md](design.md). **Spec:** [spec.md](spec.md).
-**Status:** Execução em andamento; 10/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
+**Status:** Execução em andamento; 11/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
 **Escopo da execução:** implementar neste chat, uma tarefa por vez, conforme preferência já registrada. A revisão independente documental anterior não substitui o Verifier de implementação.
 
 T1–T33 são preparação e verificação locais da entrega A. T34–T35 completam sua disponibilidade remota. T36–T37 produzem B; T38–T39 produzem C. T40 consolida o aceite completo. Etapas remotas ficam pendentes sem execução autorizada. Autorizações anteriores devem ser conferidas pelo alvo/ação antes de pedir nova permissão; esta rodada não as exerce.
@@ -265,8 +265,8 @@ Ferramentas previstas por tarefa: TLC como protocolo; Git/filesystem para trabal
 **Tools**: ferramentas previstas acima; execução local, sem publicação remota.
 **Done when**:
 
-- [ ] 6 casos mínimos: bootstrap 0.0.1, base estável, JSON/SHA inválido, retry de commit tagueado com Sha nativo vazio e prefixo fora de escopo; nenhum algoritmo alternativo.
-- [ ] Gate Native-Go passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
+- [x] 6 casos mínimos: bootstrap 0.0.1, base estável, JSON/SHA inválido, retry de commit tagueado com Sha nativo vazio e prefixo fora de escopo; nenhum algoritmo alternativo.
+- [x] Gate Native-Go passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
 
 **Tests**: integration + native: go-adapter.mjs, go-version.mjs e --real-go; substituir invocação .sh no mesmo teste mantendo os resultados esperados.
 **Gate**: Native-Go (Gate Check Commands).

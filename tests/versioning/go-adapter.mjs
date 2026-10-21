@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { calculateGo } from '../../scripts/versioning/adapters/go-gitsemver.mjs';
+import { collectGoVersion } from '../../scripts/versioning/dist/adapters/go-gitsemver.js';
 const repo=mkdtempSync(join(tmpdir(),'go-adapter-'));
 const git=(...args)=>execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();
 try {
@@ -22,5 +23,26 @@ try {
   assert.throws(()=>calculateGo(context,{run:()=>({stdout:'not json',stderr:''})}),/JSON nativo inválido/);
   assert.throws(()=>calculateGo(context,{run:()=>({stdout:JSON.stringify({SemVer:'0.0.1',Sha:'a'.repeat(40)}),stderr:''})}),/SHA calculado diverge/);
   assert.throws(()=>calculateGo(context,{run:()=>{throw Error('timeout');}}),/timeout/);
+  const typedContext={repository:repo,workspace:repo,projectPath:'.',targetBranch:'master',sha,
+    tagPrefix:'v',configuration:{adapterBin:'go-tool'}};
+  const typed=collectGoVersion(typedContext,{run:request=>{
+    invoked=request;return {stdout:JSON.stringify({SemVer:'0.0.1',Sha:sha}),stderr:'native evidence'};
+  }});
+  assert.equal(typed.candidateVersion,'0.0.1');
+  assert.deepEqual(invoked.args,['--branch','master','--commit',sha,'-o','json','--explain']);
+  assert.equal(invoked.cwd,repo);
+  assert.throws(()=>collectGoVersion(typedContext,{run:()=>({stdout:'bad json',stderr:''})}),/JSON nativo inválido/);
+  assert.throws(()=>collectGoVersion(typedContext,{run:()=>({stdout:JSON.stringify({SemVer:'0.0.1',Sha:'b'.repeat(40)}),stderr:''})}),/SHA calculado diverge/);
+  assert.throws(()=>collectGoVersion(typedContext,{run:()=>({stdout:JSON.stringify({SemVer:'0.0.2',Sha:sha}),stderr:''})}),/somente 0.0.1/);
+  assert.throws(()=>collectGoVersion({...typedContext,tagPrefix:'release-'},{run:()=>{throw Error('should not run')}}),/prefixo v/);
+  assert.throws(()=>collectGoVersion(typedContext,{run:()=>({stdout:JSON.stringify({SemVer:'0.0.1',Sha:''}),stderr:''})}),/SHA nativo vazio/);
+  git('tag','v0.0.1',sha);
+  const retry=collectGoVersion(typedContext,{run:()=>({stdout:JSON.stringify({SemVer:'0.0.1',Sha:''}),stderr:''})});
+  assert.equal(retry.candidateVersion,'0.0.1');
+  git('commit','--allow-empty','-qm','fix: subsequent');
+  const nextSha=git('rev-parse','HEAD');
+  const next=collectGoVersion({...typedContext,sha:nextSha},{run:()=>({stdout:JSON.stringify({SemVer:'0.0.2',Sha:nextSha}),stderr:''})});
+  assert.equal(next.baseVersion,'0.0.1');
+  assert.equal(next.candidateVersion,'0.0.2');
   console.log('Go adapter composition contract passed');
 } finally {rmSync(repo,{recursive:true,force:true});}

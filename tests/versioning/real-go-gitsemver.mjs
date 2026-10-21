@@ -56,10 +56,9 @@ branches:
     writeFileSync(path, readFileSync(path, 'utf8').replaceAll('\r\n', '\n'));
   }
   const reportPath = join(repo, 'version-report.json');
-  execFileSync(bash, ['scripts/versioning/collect-version-report.sh', reportPath], {
-    cwd: repo, encoding: 'utf8', env: { ...process.env,
-      ADAPTER_BIN: tool, ADAPTER: 'go-gitsemver', PROJECT_PATH: '.', GITHUB_WORKSPACE: repo,
-      TARGET_BRANCH: 'master', GITHUB_SHA: publishedSha },
+  execFileSync(process.execPath, ['scripts/versioning/collect-version-report.mjs',
+    'go-gitsemver', '.', 'master', publishedSha, repo, tool, reportPath], {
+    cwd: repo, encoding: 'utf8', env: process.env,
   });
   const taggedReport = JSON.parse(readFileSync(reportPath, 'utf8'));
   assert.equal(taggedReport.sha, publishedSha, 'collector reconciles the tagged commit SHA');
