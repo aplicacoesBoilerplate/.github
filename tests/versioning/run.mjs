@@ -7,6 +7,7 @@ const localFixtures = [
   'adapter-report.mjs',
   'adapter-contract.mjs',
   'changesets-adapter.mjs',
+  'release-please-snapshot.mjs',
   'changesets-flow.mjs',
   'changesets-publish.mjs',
   'install-node.mjs',
