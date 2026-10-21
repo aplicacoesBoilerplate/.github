@@ -45,11 +45,11 @@
 ## Handoff
 
 - **Feature**: packages-versioning-readiness, cinco adaptadores e automação central TypeScript sem produto CLI independente.
-- **Phase / Task**: Planejamento TLC consolidado em spec/context/design/tasks. Ordem atual de 2026-10-20: SOMENTE ESPECIFICAÇÃO, parar antes de Execute. 0/40 tarefas implementadas nesta feature.
-- **Completed**: Inventário remoto reconfirmado; retirada final dos .sh e governança funcional/técnica explicitadas; matriz de cobertura dos 11 requisitos/93 ACs e 7 edge cases, 40 tarefas em 9 fases. validate_spec/validate_tasks --strict: 0 erros/avisos; rastreabilidade e diff-check aprovados. Revisão documental independente sem lacunas restantes.
-- **In-progress** (file:line): Nenhuma tarefa em execução. Parado após completar a especificação TLC conforme instrução; nenhum código, workflow, dependência ou piloto alterado.
-- **Next step**: Após nova instrução para implementar, reconciliar refs/status e começar T1. Manter execução neste chat; revisão independente central T33 e aceite completo T40 são distintos.
-- **Blockers**: Nenhum para o planejamento. Context7 indisponível, referências oficiais usadas. Publicação central, pilotos e registry têm etapas futuras específicas; nenhum aceite remoto presumido.
-- **Uncommitted files**: .specs/STATE.md e spec/context/design/tasks de packages-versioning-readiness. HEAD 93f72bf; nenhuma publicação, merge ou commit novo nesta rodada.
+- **Phase / Task**: Execute autorizado em 2026-10-21; T1–T13 concluídas (13/40), próxima T14 Changesets. A contagem representa tarefas, não percentual de homologação remota.
+- **Completed**: Baselines #12/#13 conciliadas; toolchain TypeScript estrita com dist verificado; portas de processo/Git/GitHub, contratos, policy, evidência auditável e guia de homologação; adaptadores Go, jgitver/Maven e standard-version migrados para serviços tipados. O histórico e os comandos/resultados de cada tarefa estão em packages-versioning-readiness/implementation-log.md; todas as 38 fixtures locais passaram após T13, assim como as suítes nativas executadas para Go, Maven e standard-version.
+- **In-progress** (file:line): Nenhuma tarefa aberta parcialmente neste checkpoint. Os workflows ainda invocam pontos legados; novos serviços não equivalem à migração final sem Shell. Changesets e Release Please tipados ainda não foram implementados.
+- **Next step**: Executar T14 Changesets, T15 Release Please e tarefas subsequentes na ordem validada em tasks.md. Verificador independente final e aceite remoto são gates separados; não declarar issue concluída antes deles.
+- **Blockers**: Nenhum para T14 local. Context7 indisponível nesta sessão; referências oficiais foram registradas no design. Publicação central, pilotos e registry exigem etapas posteriores próprias; nenhum aceite hospedado presumido.
+- **Uncommitted files**: Somente esta atualização de STATE no momento do registro; HEAD 05a7ce6 antes do commit de checkpoint. Nenhuma publicação remota nesta iteração.
 - **Branch**: codex/reconcile-native-profiles, worktree versioning-reconciled/.github. Preservar sujeira do checkout principal develop em .specify/.agents/docs; PRs #14/#15/#16 não fazem parte deste escopo.
 - **Documentation / PR**: Em 2026-10-20, master 3511b1f1266a35d43ff12a81306514c44cc65fc5; #12 aberto c7e610117edfbe8a6338ec0d3b6703156026ef70 -> master; #13 aberto b1b2ec51906306c7afa5129f6557b30b9528f6b5 -> codex/versioning-profiles. Preservar histórico OpenSpec, evidências anteriores e registro do incidente npm.
