@@ -5,7 +5,7 @@
 Usar a skill `tlc-spec-driven` e seguir seu fluxo Execute e Critical Rules. Se a skill não puder ser carregada, parar e informar o usuário. Testes derivam da spec; cada tarefa futura inclui seus testes, gate, status e commit atômico. Nunca enfraquecer testes para acomodar a implementação. O verificador final é distinto do autor.
 
 **Design:** [design.md](design.md). **Spec:** [spec.md](spec.md).
-**Status:** Execução em andamento; 17/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
+**Status:** Execução em andamento; 18/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
 **Escopo da execução:** implementar neste chat, uma tarefa por vez, conforme preferência já registrada. A revisão independente documental anterior não substitui o Verifier de implementação.
 
 T1–T33 são preparação e verificação locais da entrega A. T34–T35 completam sua disponibilidade remota. T36–T37 produzem B; T38–T39 produzem C. T40 consolida o aceite completo. Etapas remotas ficam pendentes sem execução autorizada. Autorizações anteriores devem ser conferidas pelo alvo/ação antes de pedir nova permissão; esta rodada não as exerce.
@@ -386,8 +386,8 @@ Ferramentas previstas por tarefa: TLC como protocolo; Git/filesystem para trabal
 **Tools**: ferramentas previstas acima; execução local, sem publicação remota.
 **Done when**:
 
-- [ ] 7 casos mínimos: criar, retry sem duplicação, atualizar RP por repo/branch/componente, pais antigos/novos coerentes, head manual, artifact de outra origem e corrida; sem force-push.
-- [ ] Gate Quick passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
+- [x] 7 casos mínimos: criar, retry sem duplicação, atualizar RP por repo/branch/componente, pais antigos/novos coerentes, head manual, artifact de outra origem e corrida; sem force-push.
+- [x] Gate Quick passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
 
 **Tests**: integration: nova technical-release.mjs; sentinelas impedem npm/Maven/SDK no escritor, conferir trees/commits/refs/corpo PR.
 **Gate**: Quick (Gate Check Commands).
