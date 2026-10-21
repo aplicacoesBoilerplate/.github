@@ -3,6 +3,7 @@ import { bumpBetween } from '../adapter-contract.js';
 import type { AdapterContext } from '../adapter-contract.js';
 import { createGitPort } from '../ports/git.js';
 import { runProcess, type ProcessRequest, type ProcessResult } from '../ports/process.js';
+import { selectReachableStableTag } from '../services/version-baseline.js';
 
 const stableSemver = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 const shaPattern = /^[0-9a-f]{40}$/i;
@@ -25,19 +26,6 @@ function version(value: unknown): string {
     throw new Error(`SemVer estável inválido: ${String(value)}`);
   }
   return value;
-}
-
-function latestReachableTag(repository: string, workspace: string, sha: string): string | null {
-  const output = runProcess({ command: 'git', args: ['tag', '--merged', sha], cwd: repository,
-    workspace }).stdout;
-  const versions = output.split(/\r?\n/).filter(tag => /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(tag))
-    .map(tag => tag.slice(1));
-  versions.sort((left, right) => {
-    const a = left.split('.').map(Number);
-    const b = right.split('.').map(Number);
-    return (a[0]! - b[0]!) || (a[1]! - b[1]!) || (a[2]! - b[2]!);
-  });
-  return versions.at(-1) ?? null;
 }
 
 export function collectGoVersion(context: AdapterContext,
@@ -69,7 +57,7 @@ export function collectGoVersion(context: AdapterContext,
   } else if (typeof data.Sha !== 'string' || data.Sha.toLowerCase() !== context.sha.toLowerCase()) {
     throw new Error(`SHA calculado diverge do SHA avaliado: ${String(data.Sha ?? '<ausente>')} != ${context.sha}`);
   }
-  const reachable = latestReachableTag(repository, context.workspace, context.sha);
+  const reachable = selectReachableStableTag(repository, context.workspace, context.sha, 'v');
   const baseVersion = reachable ?? '0.0.0';
   if (!reachable && candidateVersion !== '0.0.1') {
     throw new Error(`Sem tag estável, somente 0.0.1 é publicável; recebido ${candidateVersion}`);

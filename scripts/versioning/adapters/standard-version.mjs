@@ -1,10 +1,15 @@
-import {runProcess} from '../process-runner.mjs';
-import {normalizeStandardVersionReport} from '../version-report.mjs';
+import { relative } from 'node:path';
+import { runProcess } from '../process-runner.mjs';
+import { collectStandardVersion } from '../dist/adapters/standard-version.js';
+import { validateVersionReport } from '../version-report.mjs';
 
-export function calculateStandardVersion(context,{run=runProcess}={}){
-  const result=run({command:context.adapterBin,
-    args:['--dry-run','--skip.commit','--skip.tag','--tag-prefix',context.tagPrefix??'v'],
-    cwd:context.projectDirectory,workspace:context.workspace,env:context.env});
-  return normalizeStandardVersionReport({nativeOutput:result.stdout+result.stderr,branch:context.targetBranch,
-    sha:context.sha,repository:context.projectDirectory,tagPrefix:context.tagPrefix??'v'});
+export function calculateStandardVersion(context, { run = runProcess } = {}) {
+  const report = collectStandardVersion({ repository: context.projectDirectory,
+    workspace: context.workspace,
+    projectPath: context.projectPath ?? (relative(context.workspace, context.projectDirectory) || '.'),
+    targetBranch: context.targetBranch, sha: context.sha, tagPrefix: context.tagPrefix ?? 'v',
+    configuration: { adapterBin: context.adapterBin } }, {
+    run: request => run({ ...request, env: context.env }),
+  });
+  return validateVersionReport(report);
 }
