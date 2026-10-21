@@ -4,6 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'node:
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { collectJgitver } from '../../scripts/versioning/adapters/jgitver.mjs';
+import { collectJgitver as collectTypedJgitver } from '../../scripts/versioning/dist/adapters/jgitver.js';
 const repo=mkdtempSync(join(tmpdir(),'jgitver-contract-'));
 try {
   mkdirSync(join(repo,'.mvn')); writeFileSync(join(repo,'pom.xml'),'<project/>');
@@ -22,6 +23,10 @@ try {
   assert.equal(request.args.includes('-Djgitver.branch=master'),true);
   assert.equal(request.args.includes('-N'),true);
   assert.equal(existsSync(exported),false,'temporary export removed');
+  const typed=collectTypedJgitver({repository:repo,workspace:repo,projectPath:'.',targetBranch:'master',
+    sha:context.sha,tagPrefix:'v',configuration:{adapterBin:'mvn'}},{run:execute('')});
+  assert.equal(typed.version,'0.0.1');
+  assert.equal(typed.sha,context.sha);
   assert.throws(()=>collectJgitver(context,{run:r=>{
     const file=r.args.find(a=>a.startsWith('-Djgitver.export-properties-path=')).split('=')[1];
     writeFileSync(file,'jgitver.used_version=9.0.0\njgitver.calculated_version=0.0.1\n');

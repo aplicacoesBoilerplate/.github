@@ -9,6 +9,7 @@ const localFixtures = [
   'changesets-flow.mjs',
   'changesets-publish.mjs',
   'install-node.mjs',
+  'typed-maven-install.mjs',
   'version-report.mjs',
   'version-pr.mjs',
   'go-version.mjs',

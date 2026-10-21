@@ -6,10 +6,11 @@ import {join,resolve} from 'node:path';
 import {runProcess} from '../../scripts/versioning/process-runner.mjs';
 const scratch=mkdtempSync(join(tmpdir(),'maven-setup-'));
 const script=resolve(import.meta.dirname,'../../scripts/versioning/install-maven.sh');
+const typedInstaller=resolve(import.meta.dirname,'../../scripts/versioning/install-maven.mjs');
 const bash=process.platform==='win32'?'C:/Program Files/Git/bin/bash.exe':'bash';
 const env={...process.env,RUNNER_TEMP:scratch.replaceAll('\\','/'),GITHUB_PATH:join(scratch,'path.txt').replaceAll('\\','/')};
 try {
-  const installed=spawnSync(bash,[script],{env,encoding:'utf8',timeout:180000});
+  const installed=spawnSync(process.execPath,[typedInstaller],{env,encoding:'utf8',timeout:180000});
   assert.equal(installed.status,0,installed.stderr);
   const bin=readFileSync(join(scratch,'path.txt'),'utf8').trim();
   const command=join(bin,process.platform==='win32'?'mvn.cmd':'mvn');
