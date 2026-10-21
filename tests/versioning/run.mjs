@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 const directory = dirname(fileURLToPath(import.meta.url));
 const localFixtures = [
   'adapter-report.mjs',
+  'adapter-contract.mjs',
   'changesets-flow.mjs',
   'changesets-publish.mjs',
   'install-node.mjs',
@@ -34,6 +35,7 @@ const localFixtures = [
   'annotated-publish.mjs',
   'standard-precomputed.mjs',
   'typescript-build.mjs',
+  'type-contracts.mjs',
   'dist-integrity.mjs',
   'native-workflows.mjs',
   'jgitver-report.mjs',

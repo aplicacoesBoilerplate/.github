@@ -1,7 +1,7 @@
 # Contexto: versionamento de packages
 
 **Data:** 2026-10-16; aditivos em 2026-10-19 e 2026-10-20.
-**Status:** requisitos e direção anteriores aprovados; planejamento completo em spec/design/tasks. A instrução mais recente limita esta rodada à especificação TLC, com parada obrigatória antes de implementar. Tarefas apenas planejadas; código não iniciado.
+**Status:** requisitos aprovados; planejamento completo em spec/design/tasks e execução iniciada após nova autorização do usuário. A rodada documental anterior parou antes da implementação conforme solicitado; progresso atual em [tasks.md](tasks.md).
 **Spec:** [spec.md](spec.md).
 
 ## Feature Boundary

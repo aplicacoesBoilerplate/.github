@@ -2,9 +2,9 @@
 
 **Spec:** [spec.md](spec.md).
 **Context:** [context.md](context.md).
-**Status:** desenho consolidado e tarefas derivadas; implementação não iniciada.
+**Status:** desenho consolidado e aprovado; implementação incremental em andamento, rastreada em [tasks.md](tasks.md).
 **Data:** 2026-10-19; consolidação em 2026-10-20.
-**Autorização atual:** concluir somente os artefatos TLC e parar. A direção de composição/TypeScript e os requisitos anteriores estão aprovados. Este documento concretiza essa direção, sem executar código, workflows, pilotos ou publicação remota nesta rodada.
+**Autorização atual:** o usuário aprovou a especificação e autorizou iniciar a implementação após a rodada documental. Este desenho não comprova, por si só, testes hospedados, adoção dos pilotos ou publicação remota.
 
 ## Architecture Overview
 

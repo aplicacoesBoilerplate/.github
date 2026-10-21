@@ -10,7 +10,7 @@ O aditivo de 2026-10-19 inclui Release Please como quinto adaptador e a organiza
 
 Na mesma data, o usuário escolheu TypeScript como linguagem da automação central para facilitar manutenção, contratos e encapsulamento. Essa escolha acrescenta PKG-11 e substitui apenas a decisão técnica anterior de implementar os módulos novos em JavaScript.
 
-**Status:** planejamento consolidado em spec/context/design/tasks; execução não iniciada. Requisitos e direção arquitetural anteriores aprovados pelo usuário; refinamentos desta rodada estão identificados abaixo. Em 2026-10-20 o usuário limitou expressamente esta retomada a completar a especificação TLC e parar antes de Execute. Nenhum critério está marcado como implementado por causa da validação documental.
+**Status:** especificação aprovada; implementação iniciada posteriormente a pedido do usuário. Critérios concluídos e evidências por tarefa estão em [tasks.md](tasks.md) e [implementation-log.md](implementation-log.md). A limitação de 2026-10-20 a apenas especificar foi cumprida naquela rodada e revogada pela autorização seguinte de implementação.
 **Data:** 2026-10-16; aditivos em 2026-10-19 e 2026-10-20. **Issue:** [#4](https://github.com/aplicacoesBoilerplate/.github/issues/4).
 **Continuidade:** complementa `reconcile-native-profiles` e a feature `changesets-turbo` do PR #13; não invalida suas evidências nos respectivos SHAs.
 
