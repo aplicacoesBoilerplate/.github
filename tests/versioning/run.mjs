@@ -30,6 +30,7 @@ const localFixtures = [
   'version-bundle.mjs',
   'git-inputs.mjs',
   'git-port.mjs',
+  'github-port.mjs',
   'annotated-publish.mjs',
   'standard-precomputed.mjs',
   'typescript-build.mjs',
