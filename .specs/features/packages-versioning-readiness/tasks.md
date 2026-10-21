@@ -5,7 +5,7 @@
 Usar a skill `tlc-spec-driven` e seguir seu fluxo Execute e Critical Rules. Se a skill não puder ser carregada, parar e informar o usuário. Testes derivam da spec; cada tarefa futura inclui seus testes, gate, status e commit atômico. Nunca enfraquecer testes para acomodar a implementação. O verificador final é distinto do autor.
 
 **Design:** [design.md](design.md). **Spec:** [spec.md](spec.md).
-**Status:** Execução em andamento; 13/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
+**Status:** Execução em andamento; 14/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
 **Escopo da execução:** implementar neste chat, uma tarefa por vez, conforme preferência já registrada. A revisão independente documental anterior não substitui o Verifier de implementação.
 
 T1–T33 são preparação e verificação locais da entrega A. T34–T35 completam sua disponibilidade remota. T36–T37 produzem B; T38–T39 produzem C. T40 consolida o aceite completo. Etapas remotas ficam pendentes sem execução autorizada. Autorizações anteriores devem ser conferidas pelo alvo/ação antes de pedir nova permissão; esta rodada não as exerce.
@@ -316,8 +316,8 @@ Ferramentas previstas por tarefa: TLC como protocolo; Git/filesystem para trabal
 **Tools**: ferramentas previstas acima; execução local, sem publicação remota.
 **Done when**:
 
-- [ ] 7 casos mínimos por matriz CLI: core 2.0.0 major =>3.0.0 e cli dependente 1.0.0 =>1.0.1, vazio, privado/ignorado, erro, prerelease, lock divergente e namespace; pins 2.29.5/3.0.3.
-- [ ] Gate Native-Changesets passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
+- [x] 7 casos mínimos por matriz CLI: core 2.0.0 major =>3.0.0 e cli dependente 1.0.0 =>1.0.1, vazio, privado/ignorado, erro, prerelease, lock divergente e namespace; pins 2.29.5/3.0.3.
+- [x] Gate Native-Changesets passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
 
 **Tests**: integration + native: changesets-flow.mjs e real-changesets.mjs ampliados; dependentes/lock/arquivos verificados, sem executar gerador no escritor.
 **Gate**: Native-Changesets (Gate Check Commands).
@@ -926,12 +926,12 @@ Usar branches/versões autorizadas e fixtures isoladas para falhas destrutivas; 
 
 Cada evidência deve registrar: repositório, PR, SHA central, SHA funcional, head revisado quando houver, SHA integrado, configuração/pins, URL/run, outputs esperados/obtidos, resultado e causa da falha. Retenção de artifacts segue configuração/default; o relatório durável guarda identidades e links, sem inventar disponibilidade permanente.
 
-## Limites do planejamento e parada
+## Histórico dos limites da rodada documental de 2026-10-20
 
-- Nenhum checkbox de implementação está concluído. Validação dos documentos não é build, teste nativo, publicação ou homologação.
+- Na rodada documental original, nenhum checkbox de implementação estava concluído. A execução posterior está registrada acima e no diário; validação documental não é build, teste nativo, publicação ou homologação.
 - Não criar validation.md com PASS agora. T33 cria parecer central restrito; T40 só conclui o relatório global quando houver evidência aplicável de A/B/C.
-- O ponto de retomada será T1 após nova instrução para implementar, reconciliando novamente o remoto e preservando mudanças locais.
-- Não executar sequer T1 nesta rodada: a entrega solicitada termina nos artefatos TLC e na validação documental.
+- O ponto de retomada daquela rodada era T1 após nova instrução para implementar, reconciliando novamente o remoto e preservando mudanças locais.
+- Naquela rodada, T1 não foi executada: a entrega solicitada terminava nos artefatos TLC e na validação documental.
 
 ## Validação documental — 2026-10-20
 

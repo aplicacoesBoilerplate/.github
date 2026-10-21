@@ -6,6 +6,7 @@ const directory = dirname(fileURLToPath(import.meta.url));
 const localFixtures = [
   'adapter-report.mjs',
   'adapter-contract.mjs',
+  'changesets-adapter.mjs',
   'changesets-flow.mjs',
   'changesets-publish.mjs',
   'install-node.mjs',
