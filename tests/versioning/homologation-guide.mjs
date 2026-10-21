@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { buildHomologationGuide } from '../../scripts/versioning/homologation-guide.mjs';
 import { normalizeChangesetsReport } from '../../scripts/versioning/version-report.mjs';
+import { buildHomologationGuide as buildCompiledGuide } from '../../scripts/versioning/dist/services/homologation-guide.js';
+import { planFromReport, validateDescriptor } from '../../scripts/versioning/dist/adapter-contract.js';
 
 const root = resolve(import.meta.dirname, '../..');
 const workspace = mkdtempSync(join(tmpdir(), 'homologation-guide-'));
@@ -12,6 +14,29 @@ const output = mkdtempSync(join(tmpdir(), 'homologation-output-'));
 const reportPath = join(workspace, 'report.json');
 const snapshotPath = join(workspace, 'snapshot.json');
 const sha = 'a'.repeat(40);
+
+function makeReleasePlan({ adapter, sha: commit, branch, entries }) {
+  const capabilities = {
+    'go-gitsemver': { runtime: 'go', reportKind: 'single', needsVersionPr: false, tagKind: 'lightweight' },
+    changesets: { runtime: 'node', reportKind: 'batch', needsVersionPr: true, tagKind: 'lightweight' },
+    'release-please': { runtime: 'node', reportKind: 'single', needsVersionPr: true, tagKind: 'lightweight' },
+  };
+  const capability = capabilities[adapter];
+  const descriptor = validateDescriptor({ id: adapter, ...capability, collect() {},
+    ...(capability.needsVersionPr ? { prepare() {} } : {}) });
+  const report = { schemaVersion: 1, adapter, sha: commit, branch,
+    status: entries.length ? 'release' : 'no-release',
+    native: { explanation: entries.map(item => item.notes).join('\n') },
+    ...(capability.reportKind === 'batch' ? { releases: entries.map(item => ({
+      name: item.package, oldVersion: item.baseVersion, version: item.version,
+      bump: item.bump, tag: item.tag,
+    })) } : entries.length ? {
+      baseVersion: entries[0].baseVersion, candidateVersion: entries[0].version,
+      bump: entries[0].bump, tag: entries[0].tag,
+    } : {}),
+  };
+  return planFromReport(report, descriptor, entries[0]?.projectPath ?? '.');
+}
 
 try {
   const git = (...args) => execFileSync('git', args, { cwd: workspace, encoding: 'utf8' }).trim();
@@ -66,6 +91,34 @@ try {
     ['@lab/cli@1.0.1', '@lab/core@3.0.0']);
   assert.match(batch.markdown, /@lab\/cli@1\.0\.1/);
   assert.match(batch.markdown, /@lab\/core@3\.0\.0/);
+
+  const plans = [
+    makeReleasePlan({ adapter: 'go-gitsemver', sha, branch: 'develop', entries: [{
+      package: null, projectPath: '.', baseVersion: '0.0.0', version: '0.0.1', bump: 'patch',
+      tag: 'v0.0.1', tagKind: 'lightweight', notes: 'Native changelog: fix <safe>',
+    }] }),
+    makeReleasePlan({ adapter: 'changesets', sha, branch: 'develop', entries: [
+      { package: '@lab/core', projectPath: '.', baseVersion: '2.0.0', version: '3.0.0', bump: 'major', tag: '@lab/core@3.0.0', tagKind: 'lightweight', notes: 'Core change' },
+      { package: '@lab/cli', projectPath: '.', baseVersion: '1.0.0', version: '1.0.1', bump: 'patch', tag: '@lab/cli@1.0.1', tagKind: 'lightweight', notes: 'Dependent change' },
+    ] }),
+    makeReleasePlan({ adapter: 'release-please', sha, branch: 'develop', entries: [] }),
+  ];
+  const planSnapshot = { repository: 'owner/repo', number: 44, headSha: sha,
+    changes: ['fix: `quoted` <script>'], suggestedChecks: [{ id: 'manual', description: 'Validate package', status: 'done' }] };
+  const singleGuide = buildCompiledGuide(plans[0], planSnapshot);
+  assert.deepEqual(singleGuide.guide.facts.releases.map(item => item.tag), ['v0.0.1']);
+  assert.match(singleGuide.markdown, /Native changelog: fix/);
+  assert.doesNotMatch(singleGuide.markdown, /<script>|<safe>/);
+  assert.deepEqual(singleGuide.guide.suggestedChecks.map(item => item.status), ['pending']);
+  assert.doesNotMatch(singleGuide.markdown, /approved|homologated/i);
+  const batchGuide = buildCompiledGuide(plans[1], planSnapshot);
+  assert.deepEqual(batchGuide.guide.facts.releases.map(item => item.package), ['@lab/cli', '@lab/core']);
+  assert.match(batchGuide.markdown, /Dependent change/);
+  const emptyGuide = buildCompiledGuide(plans[2], planSnapshot);
+  assert.equal(emptyGuide.guide.facts.status, 'no-release');
+  assert.deepEqual(emptyGuide.guide.facts.releases, []);
+  assert.match(emptyGuide.markdown, /No release/);
+  assert.throws(() => buildCompiledGuide(plans[0], { ...planSnapshot, headSha: 'b'.repeat(40) }), /SHA/);
 
   const missing = spawnSync(process.execPath,
     [join(root, 'scripts/versioning/homologation-guide.mjs'), join(workspace, 'missing.json'), snapshotPath, output],
