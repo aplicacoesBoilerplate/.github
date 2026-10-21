@@ -40,13 +40,13 @@ validate_release_gates() {
   version_pr_number=$(node -e '
     const items=JSON.parse(process.argv[1]);const sha=process.argv[2],target=process.argv[3];
     const matches=items.filter(p=>p.merged_at&&p.merge_commit_sha===sha&&p.base?.ref===target&&
-      /^versioning\/standard-version\//.test(p.head?.ref??""));
+      /^versioning\/(standard-version|changesets)\//.test(p.head?.ref??""));
     if(matches.length>1)process.exit(1);
     if(matches.length)process.stdout.write(String(matches[0].number));
   ' "$associated" "$GITHUB_SHA" "$TARGET_BRANCH") || return 1
   PUBLISH_PHASE=functional
   if [[ -n "$version_pr_number" ]]; then
-    [[ "$ADAPTER" == standard-version ]] || { echo 'PR de versão não corresponde ao adaptador' >&2; return 1; }
+    [[ "$ADAPTER" == standard-version || "$ADAPTER" == changesets ]] || { echo 'PR de versão não corresponde ao adaptador' >&2; return 1; }
     REQUIRE_MERGED=1 bash "$script_dir/validate-version-pr.sh" "$version_pr_number" \
       "$report_path" "$snapshot_path" "$gate_dir/version-pr-context.json" || return 1
     PUBLISH_PHASE=version-pr

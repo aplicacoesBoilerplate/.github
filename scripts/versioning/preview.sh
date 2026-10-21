@@ -17,7 +17,7 @@ event_json=$(node -e '
   if(pr.base.ref==="develop"&&pr.head.ref!=="develop") phase="release-to-develop";
   else if(pr.head.ref==="develop"&&pr.base.ref===target) phase="develop-to-main";
   else if(/^hotfix\/.+$/.test(pr.head.ref)&&pr.base.ref===target) phase="hotfix-to-main";
-  else if(/^versioning\/standard-version\//.test(pr.head.ref)&&pr.base.ref===target) phase="versioning-to-main";
+  else if(/^versioning\/(standard-version|changesets)\//.test(pr.head.ref)&&pr.base.ref===target) phase="versioning-to-main";
   else {console.error(`Transição de PR não suportada: ${pr.head.ref} -> ${pr.base.ref}`);process.exit(1)}
   process.stdout.write(JSON.stringify({number:pr.number,headSha:pr.head.sha,baseSha:pr.base.sha,phase}));
 ' "$(as_node_path "$GITHUB_EVENT_PATH")" "$TARGET_BRANCH")
@@ -89,8 +89,24 @@ else
   summary="Política de release $policy_outcome para a versão $version"
 fi
 
+releases_json='[]'
+if [[ "$ADAPTER" == changesets ]]; then
+  releases_json=$(node -p 'JSON.stringify(JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).releases)' \
+    "$(as_node_path "$report_path")")
+  release_count=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).releases.length' \
+    "$(as_node_path "$report_path")")
+  if [[ "$release_count" -gt 1 ]]; then
+    version=''
+    bump=''
+    if [[ "$phase" == release-to-develop ]]; then
+      summary="Lote Changesets com $release_count pacotes; guia de homologação gerado"
+    else
+      summary="Política de release $policy_outcome para lote Changesets com $release_count pacotes"
+    fi
+  fi
+fi
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-  printf 'phase=%s\nversion=%s\nbump=%s\npolicy_outcome=%s\nsummary=%s\n' \
-    "$phase" "$version" "$bump" "$policy_outcome" "$summary" >>"$GITHUB_OUTPUT"
+  printf 'phase=%s\nversion=%s\nbump=%s\npolicy_outcome=%s\nsummary=%s\nreleases_json=%s\n' \
+    "$phase" "$version" "$bump" "$policy_outcome" "$summary" "$releases_json" >>"$GITHUB_OUTPUT"
 fi
 printf '%s\n' "$summary"

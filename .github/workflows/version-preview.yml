@@ -40,6 +40,9 @@ on:
       summary:
         description: Human-readable preview result
         value: ${{ jobs.preview.outputs.summary }}
+      releases_json:
+        description: Changesets package release plan as a JSON array
+        value: ${{ jobs.preview.outputs.releases_json }}
 
 jobs:
   preview:
@@ -55,6 +58,7 @@ jobs:
       bump: ${{ steps.preview.outputs.bump }}
       policy_outcome: ${{ steps.preview.outputs.policy_outcome }}
       summary: ${{ steps.preview.outputs.summary }}
+      releases_json: ${{ steps.preview.outputs.releases_json }}
     steps:
       - name: Checkout consumer repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -78,7 +82,7 @@ jobs:
           node-version: '24'
 
       - name: Install consumer Node dependencies without lifecycle scripts
-        if: inputs.adapter == 'standard-version'
+        if: inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'
         working-directory: consumer
         env:
           PROJECT_PATH: ${{ inputs.project_path }}

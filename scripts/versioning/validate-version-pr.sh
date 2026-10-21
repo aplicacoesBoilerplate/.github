@@ -9,13 +9,15 @@ number="${1:?Número do PR de versão obrigatório}"
 report_path="${2:?Relatório obrigatório}"
 snapshot_path="${3:?Snapshot obrigatório}"
 context_path="${4:?Contexto obrigatório}"
-[[ "$ADAPTER" == standard-version ]] || { echo 'PR técnico disponível somente para standard-version' >&2; exit 1; }
+[[ "$ADAPTER" == standard-version || "$ADAPTER" == changesets ]] || {
+  echo 'PR técnico disponível somente para adaptadores Node' >&2; exit 1;
+}
 pr_path=$(mktemp)
 reviews_path=$(mktemp)
 trap 'rm -f -- "$pr_path" "$reviews_path"' EXIT
 gh api "repos/$GITHUB_REPOSITORY/pulls/$number" >"$pr_path"
 node "$script_dir/version-pr.mjs" parse "$(as_node_path "$pr_path")" \
-  "$TARGET_BRANCH" "${PROJECT_PATH:-.}" "${TAG_PREFIX:-v}" >"$context_path"
+  "$TARGET_BRANCH" "${PROJECT_PATH:-.}" "${TAG_PREFIX:-v}" "$ADAPTER" >"$context_path"
 origin_pr=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).originPr' "$(as_node_path "$context_path")")
 origin_sha=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).originSha' "$(as_node_path "$context_path")")
 expected_version=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).version' "$(as_node_path "$context_path")")
@@ -63,5 +65,16 @@ native_version=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.arg
 [[ "$native_version" == "$expected_version" ]] || {
   echo "Versão do PR ($expected_version) diverge do cálculo nativo ($native_version)" >&2; exit 1;
 }
-node "$script_dir/version-pr.mjs" verify-files "$(as_node_path "${GITHUB_WORKSPACE:-$(pwd)}")" \
-  "${PROJECT_PATH:-.}" "$expected_version" "$diff_base" "$diff_head"
+if [[ "$ADAPTER" == changesets ]]; then
+  expected_digest=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).planSha256' \
+    "$(as_node_path "$context_path")")
+  actual_digest=$(node "$script_dir/changesets-version-pr.mjs" digest '' "$(as_node_path "$report_path")")
+  [[ "$expected_digest" == "$actual_digest" ]] || {
+    echo 'Plano Changesets do PR diverge do SHA homologado' >&2; exit 1;
+  }
+  node "$script_dir/changesets-version-pr.mjs" pr "$(as_node_path "${GITHUB_WORKSPACE:-$(pwd)}")" \
+    "$(as_node_path "$report_path")" "$diff_base" "$diff_head" >/dev/null
+else
+  node "$script_dir/version-pr.mjs" verify-files "$(as_node_path "${GITHUB_WORKSPACE:-$(pwd)}")" \
+    "${PROJECT_PATH:-.}" "$expected_version" "$diff_base" "$diff_head"
+fi

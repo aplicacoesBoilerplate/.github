@@ -3,6 +3,8 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { buildHomologationGuide } from '../../scripts/versioning/homologation-guide.mjs';
+import { normalizeChangesetsReport } from '../../scripts/versioning/version-report.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
 const workspace = mkdtempSync(join(tmpdir(), 'homologation-guide-'));
@@ -52,6 +54,18 @@ try {
   assert.doesNotMatch(markdown, /<script>|javascript:/, 'untrusted Markdown must be neutralized');
   assert.match(markdown, /Suggested checks \(pending\)/);
   assert.equal(git('status', '--porcelain'), before, 'renderer must not mutate the consumer working tree');
+  const batchReport = normalizeChangesetsReport({ branch: 'develop', sha, explanation: '',
+    nativeJson: JSON.stringify({ changesets: [{ id: 'batch', releases: [] }], releases: [
+      { name: '@lab/core', oldVersion: '2.0.0', newVersion: '3.0.0' },
+      { name: '@lab/cli', oldVersion: '1.0.0', newVersion: '1.0.1' }] }) });
+  const batch = buildHomologationGuide(batchReport,
+    { repository: 'owner/repo', number: 43, headSha: sha });
+  assert.equal(batch.guide.facts.candidateVersion, null, 'multi-package batch has no scalar version');
+  assert.equal(batch.guide.facts.bump, null);
+  assert.deepEqual(batch.guide.facts.releases.map(item => item.tag),
+    ['@lab/cli@1.0.1', '@lab/core@3.0.0']);
+  assert.match(batch.markdown, /@lab\/cli@1\.0\.1/);
+  assert.match(batch.markdown, /@lab\/core@3\.0\.0/);
 
   const missing = spawnSync(process.execPath,
     [join(root, 'scripts/versioning/homologation-guide.mjs'), join(workspace, 'missing.json'), snapshotPath, output],

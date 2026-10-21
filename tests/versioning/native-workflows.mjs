@@ -24,7 +24,7 @@ for(const job of [preview,read]) {
   assert.equal(java.with['java-version'],'21');
   assert.equal(job.steps.find(s=>s.run?.includes('install-maven.sh')).if,"inputs.adapter == 'jgitver'");
   const npm=job.steps.find(s=>s.run?.includes('install-node.sh'));
-  assert.equal(npm.if,"inputs.adapter == 'standard-version'");
+  assert.equal(npm.if,"inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'");
   assert.equal(npm['working-directory'],'consumer');
   assert.equal(npm.env.NODE_PACKAGE_MANAGER,'npm');
   assert.match(npm.run,/export GITHUB_WORKSPACE="\$PWD"/);
@@ -34,7 +34,7 @@ for(const job of [preview,read]) {
 assert.deepEqual(write.permissions,{contents:'write','pull-requests':'read',issues:'read'});
 assert.equal(write.steps.some(s=>/setup-java|setup-go/.test(s.uses??'')||/install-node|install-maven|go install|npm ci|mvn /.test(s.run??'')),false);
 const token=write.steps.find(s=>s.uses?.includes('create-github-app-token'));
-assert.equal(token.if,"inputs.adapter == 'standard-version' && needs.validate-publication.outputs.phase == 'functional'");
+assert.equal(token.if,"(inputs.adapter == 'standard-version' || inputs.adapter == 'changesets') && needs.validate-publication.outputs.phase == 'functional'");
 assert.equal(token.with['permission-contents'],'write');
 assert.equal(token.with['permission-pull-requests'],'write');
 assert.equal(read.outputs.phase,'${{ steps.report.outputs.phase }}');

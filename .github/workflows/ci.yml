@@ -79,6 +79,8 @@ jobs:
         run: node tests/versioning/real-standard-version.mjs
       - name: Run real standard-version bootstrap and rejection fixtures
         run: node tests/versioning/real-standard-bootstrap.mjs
+      - name: Run real Changesets fixture
+        run: node tests/versioning/real-changesets.mjs
       - name: Set up Java for real jgitver fixture
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:

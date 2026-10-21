@@ -6,10 +6,11 @@ import { parseStableVersion, validateTagPrefix } from './version-report.mjs';
 const sha = /^[0-9a-f]{40}$/i;
 const positive = /^[1-9][0-9]*$/;
 
-export function parseVersionPr(pr, { targetBranch, projectPath, tagPrefix }) {
+export function parseVersionPr(pr, { targetBranch, projectPath, tagPrefix, adapter = 'standard-version' }) {
   if (!pr || pr.base?.ref !== targetBranch ||
-      !/^versioning\/standard-version\//.test(pr.head?.ref ?? '')) {
-    throw Error('PR de versão precisa partir de versioning/standard-version/ para a principal');
+      !['standard-version', 'changesets'].includes(adapter) ||
+      !pr.head?.ref?.startsWith(`versioning/${adapter}/`)) {
+    throw Error(`PR de versão precisa partir de versioning/${adapter}/ para a principal`);
   }
   const body = pr.body ?? '';
   const field = key => new RegExp(`^${key}: (.+)$`, 'm').exec(body)?.[1]?.trim();
@@ -17,7 +18,7 @@ export function parseVersionPr(pr, { targetBranch, projectPath, tagPrefix }) {
   const originSha = field('Origin-SHA');
   const version = field('Version');
   if (!positive.test(originPr ?? '') || !sha.test(originSha ?? '') ||
-      field('Adapter') !== 'standard-version' || field('Project') !== projectPath ||
+      field('Adapter') !== adapter || field('Project') !== projectPath ||
       field('Tag-Prefix') !== validateTagPrefix(tagPrefix) ||
       parseStableVersion(version).text !== version) {
     throw Error('Metadados do PR de versão inválidos ou divergentes do caller');
@@ -25,7 +26,11 @@ export function parseVersionPr(pr, { targetBranch, projectPath, tagPrefix }) {
   if (!pr.head.ref.endsWith(`/${originSha.slice(0, 12)}`)) {
     throw Error('Branch do PR de versão não corresponde ao SHA de origem');
   }
-  return { originPr: Number(originPr), originSha: originSha.toLowerCase(), version };
+  if (adapter === 'changesets' && !/^[0-9a-f]{64}$/.test(field('Plan-SHA256') ?? '')) {
+    throw Error('Digest do plano Changesets ausente ou inválido');
+  }
+  return { originPr: Number(originPr), originSha: originSha.toLowerCase(), version,
+    ...(adapter === 'changesets' ? { planSha256: field('Plan-SHA256') } : {}) };
 }
 
 export function validateHumanReview(pr, reviewPages) {
@@ -80,9 +85,9 @@ if (process.argv[1] && import.meta.filename === process.argv[1]) {
   try {
     const [command, ...args] = process.argv.slice(2);
     if (command === 'parse') {
-      const [prPath, targetBranch, projectPath, tagPrefix] = args;
+      const [prPath, targetBranch, projectPath, tagPrefix, adapter] = args;
       process.stdout.write(`${JSON.stringify(parseVersionPr(JSON.parse(readFileSync(prPath, 'utf8')),
-        { targetBranch, projectPath, tagPrefix }))}\n`);
+        { targetBranch, projectPath, tagPrefix, adapter }))}\n`);
     } else if (command === 'validate-human-review') {
       const [prPath, reviewsPath] = args;
       process.stdout.write(`${validateHumanReview(JSON.parse(readFileSync(prPath, 'utf8')),

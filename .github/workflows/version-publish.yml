@@ -47,6 +47,8 @@ on:
         value: ${{ jobs.publish.outputs.outcome }}
       version_pr_url:
         value: ${{ jobs.publish.outputs.version_pr_url }}
+      releases_json:
+        value: ${{ jobs.publish.outputs.releases_json }}
 
 jobs:
   validate-publication:
@@ -79,7 +81,7 @@ jobs:
         with:
           node-version: '24'
       - name: Install consumer Node dependencies without lifecycle scripts
-        if: inputs.adapter == 'standard-version'
+        if: inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'
         working-directory: consumer
         env:
           PROJECT_PATH: ${{ inputs.project_path }}
@@ -158,6 +160,7 @@ jobs:
       release_url: ${{ steps.publish.outputs.release_url }}
       outcome: ${{ steps.publish.outputs.outcome }}
       version_pr_url: ${{ steps.publish.outputs.version_pr_url }}
+      releases_json: ${{ steps.publish.outputs.releases_json }}
     steps:
       - name: Checkout consumer repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -184,7 +187,7 @@ jobs:
           path: ${{ runner.temp }}/versioning-publication
       - name: Emitir token efêmero para o PR técnico Node
         id: versioning-app-token
-        if: inputs.adapter == 'standard-version' && needs.validate-publication.outputs.phase == 'functional'
+        if: (inputs.adapter == 'standard-version' || inputs.adapter == 'changesets') && needs.validate-publication.outputs.phase == 'functional'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           app-id: ${{ secrets.versioning_app_id }}

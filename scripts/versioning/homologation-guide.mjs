@@ -32,14 +32,16 @@ export function buildHomologationGuide(reportInput, snapshot) {
   const suggestedChecks = (snapshot.suggestedChecks ?? []).map(item => ({
     id: String(item.id), description: String(item.description), status: 'pending',
   }));
+  const batch = report.adapter === 'changesets' && report.releases.length > 1;
   const guide = {
     schemaVersion: 1,
     facts: {
       repository: snapshot.repository,
       pullRequest: snapshot.number,
       sha: report.sha,
-      candidateVersion: report.candidateVersion,
-      bump: report.bump,
+      candidateVersion: batch ? null : report.candidateVersion,
+      bump: batch ? null : report.bump,
+      releases: report.adapter === 'changesets' ? report.releases : [],
       nativeExplanation: report.native.explanation,
       changes: (snapshot.changes ?? []).map(String),
       checks: (snapshot.checks ?? []).map(check => ({
@@ -59,8 +61,10 @@ export function buildHomologationGuide(reportInput, snapshot) {
     `- Repository: \`${codeText(guide.facts.repository)}\``,
     `- Pull request: \`${guide.facts.pullRequest}\``,
     `- SHA: \`${codeText(guide.facts.sha)}\``,
-    `- Candidate version: \`${codeText(guide.facts.candidateVersion)}\``,
-    `- Increment: \`${codeText(guide.facts.bump)}\``, '',
+    ...(batch ? ['- Package releases:',
+      ...guide.facts.releases.map(item => `  - \`${codeText(item.tag)}\` (${codeText(item.bump)})`)] : [
+      `- Candidate version: \`${codeText(guide.facts.candidateVersion)}\``,
+      `- Increment: \`${codeText(guide.facts.bump)}\``]), '',
     ...(propertiesEvidence?[
       '## Native jgitver properties','',
       ...Object.entries(guide.facts.nativeEvidence.properties).map(([key,value])=>
