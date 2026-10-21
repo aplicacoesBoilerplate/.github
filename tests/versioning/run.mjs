@@ -12,6 +12,7 @@ const localFixtures = [
   'changesets-publish.mjs',
   'install-node.mjs',
   'npm-project.mjs',
+  'multi-version-bundle.mjs',
   'typed-maven-install.mjs',
   'version-report.mjs',
   'version-pr.mjs',

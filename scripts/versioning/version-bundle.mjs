@@ -93,6 +93,11 @@ export function applyVersionBundle({repository,bundle,report,projectPath}){
   for(const [path,bytes] of records)writeFileSync(allowedPath(root,path,selected),bytes);
   return [...records.keys()];
 }
+export function validateVersionBundle({repository,bundle,report,projectPath}){
+  const root=realpathSync(repository),selected=identity(root,report,projectPath);
+  validateFiles(root,bundle,report,selected,false);
+  return true;
+}
 if(process.argv[1]&&import.meta.filename===process.argv[1]){
   try{
     const [mode,repository,projectPath,reportPath,bundlePath,adapterBin]=process.argv.slice(2);

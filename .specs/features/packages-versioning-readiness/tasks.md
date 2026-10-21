@@ -5,7 +5,7 @@
 Usar a skill `tlc-spec-driven` e seguir seu fluxo Execute e Critical Rules. Se a skill não puder ser carregada, parar e informar o usuário. Testes derivam da spec; cada tarefa futura inclui seus testes, gate, status e commit atômico. Nunca enfraquecer testes para acomodar a implementação. O verificador final é distinto do autor.
 
 **Design:** [design.md](design.md). **Spec:** [spec.md](spec.md).
-**Status:** Execução em andamento; 16/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
+**Status:** Execução em andamento; 17/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
 **Escopo da execução:** implementar neste chat, uma tarefa por vez, conforme preferência já registrada. A revisão independente documental anterior não substitui o Verifier de implementação.
 
 T1–T33 são preparação e verificação locais da entrega A. T34–T35 completam sua disponibilidade remota. T36–T37 produzem B; T38–T39 produzem C. T40 consolida o aceite completo. Etapas remotas ficam pendentes sem execução autorizada. Autorizações anteriores devem ser conferidas pelo alvo/ação antes de pedir nova permissão; esta rodada não as exerce.
@@ -369,8 +369,8 @@ Ferramentas previstas por tarefa: TLC como protocolo; Git/filesystem para trabal
 **Tools**: ferramentas previstas acima; execução local, sem publicação remota.
 **Done when**:
 
-- [ ] 12 casos mínimos: schemas válidos, hash/semântica/base alterados, paths absolutos/traversal, symlink ancestral, duplicata, delete não autorizado, limites 10MiB/16MiB/100 releases/1000 operações e igualdade nas fronteiras; zero escrita nos negativos.
-- [ ] Gate Quick passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
+- [x] 12 casos mínimos: schemas válidos, hash/semântica/base alterados, paths absolutos/traversal, symlink ancestral, duplicata, delete não autorizado, limites 10MiB/16MiB/100 releases/1000 operações e igualdade nas fronteiras; zero escrita nos negativos.
+- [x] Gate Quick passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
 
 **Tests**: integration: version-bundle.mjs e nova multi-version-bundle.mjs, com bytes/árvore verificados antes e depois.
 **Gate**: Quick (Gate Check Commands).

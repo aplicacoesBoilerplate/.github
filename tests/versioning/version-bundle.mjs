@@ -5,6 +5,7 @@ import {mkdtempSync,readFileSync,writeFileSync,rmSync,symlinkSync} from 'node:fs
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {captureVersionBundle,applyVersionBundle} from '../../scripts/versioning/version-bundle.mjs';
+import {validateLegacyVersionFiles} from '../../scripts/versioning/dist/services/version-files.js';
 const repository=mkdtempSync(join(tmpdir(),'version-bundle-'));
 const git=(...args)=>execFileSync('git',args,{cwd:repository,encoding:'utf8'}).trim();
 try{
@@ -17,6 +18,7 @@ try{
   writeFileSync(join(repository,'package.json'),next);writeFileSync(join(repository,'package-lock.json'),next);
   writeFileSync(join(repository,'CHANGELOG.md'),'## 1.0.1\n');
   const bundle=captureVersionBundle({repository,projectPath:'.',report});
+  assert.equal(await validateLegacyVersionFiles({repository,projectPath:'.',report,bundle}),true);
   assert.deepEqual({schema:bundle.schemaVersion,adapter:bundle.adapter,sha:bundle.sha,version:bundle.version,
     prefix:bundle.tagPrefix,project:bundle.projectPath},{schema:1,adapter:'standard-version',sha,version:'1.0.1',prefix:'v',project:'.'});
   const packageEntry=bundle.files.find(f=>f.path==='package.json');
