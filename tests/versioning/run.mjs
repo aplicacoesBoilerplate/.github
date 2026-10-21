@@ -14,6 +14,7 @@ const localFixtures = [
   'go-version.mjs',
   'release-policy.mjs',
   'pr-policy.mjs',
+  'pr-evidence.mjs',
   'homologation-guide.mjs',
   'pr-check.mjs',
   'post-merge.mjs',

@@ -62,7 +62,7 @@ export function createReadApi(transport, apiBase = 'https://api.github.com/') {
     const base = baseUrl(apiBase);
     const get = async (endpoint) => (await request(transport, 'GET', endpointUrl(base, endpoint)))?.body;
     const getOptional = async (endpoint) => (await request(transport, 'GET', endpointUrl(base, endpoint), undefined, true))?.body ?? null;
-    const list = async (endpoint) => {
+    const paginate = async (endpoint, field) => {
         let url = endpointUrl(base, endpoint);
         const originalPath = url.pathname;
         const seen = new Set();
@@ -72,9 +72,13 @@ export function createReadApi(transport, apiBase = 'https://api.github.com/') {
                 throw new Error('GitHub pagination cycle or limit');
             seen.add(url.href);
             const response = await request(transport, 'GET', url);
-            if (!response || !Array.isArray(response.body))
+            if (!response)
+                throw new Error('GitHub list response ausente');
+            const page = field && response.body && typeof response.body === 'object' &&
+                !Array.isArray(response.body) ? response.body[field] : response.body;
+            if (!Array.isArray(page))
                 throw new Error('GitHub list response inválida');
-            items.push(...response.body);
+            items.push(...page);
             const candidate = nextPage(response, url, base);
             if (candidate && candidate.pathname !== originalPath)
                 throw new Error('GitHub pagination path changed');
@@ -82,7 +86,12 @@ export function createReadApi(transport, apiBase = 'https://api.github.com/') {
         }
         return items;
     };
-    return Object.freeze({ get, getOptional, list });
+    return Object.freeze({ get, getOptional, list: (endpoint) => paginate(endpoint),
+        listField: (endpoint, field) => {
+            if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(field))
+                throw new Error('GitHub list field inválido');
+            return paginate(endpoint, field);
+        } });
 }
 export function createWriteApi(transport, apiBase = 'https://api.github.com/') {
     const base = baseUrl(apiBase);

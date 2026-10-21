@@ -28,6 +28,7 @@ export interface ReadApi {
   get(endpoint: string): Promise<unknown>;
   getOptional(endpoint: string): Promise<unknown | null>;
   list(endpoint: string): Promise<unknown[]>;
+  listField(endpoint: string, field: string): Promise<unknown[]>;
 }
 
 export interface WriteApi {
@@ -94,7 +95,7 @@ export function createReadApi(transport: GitHubTransport,
     (await request(transport, 'GET', endpointUrl(base, endpoint)))?.body;
   const getOptional = async (endpoint: string): Promise<unknown | null> =>
     (await request(transport, 'GET', endpointUrl(base, endpoint), undefined, true))?.body ?? null;
-  const list = async (endpoint: string): Promise<unknown[]> => {
+  const paginate = async (endpoint: string, field?: string): Promise<unknown[]> => {
     let url: URL | null = endpointUrl(base, endpoint);
     const originalPath = url.pathname;
     const seen = new Set<string>();
@@ -103,15 +104,22 @@ export function createReadApi(transport: GitHubTransport,
       if (seen.has(url.href) || seen.size >= 1000) throw new Error('GitHub pagination cycle or limit');
       seen.add(url.href);
       const response = await request(transport, 'GET', url);
-      if (!response || !Array.isArray(response.body)) throw new Error('GitHub list response inválida');
-      items.push(...response.body);
+      if (!response) throw new Error('GitHub list response ausente');
+      const page = field && response.body && typeof response.body === 'object' &&
+        !Array.isArray(response.body) ? (response.body as Record<string, unknown>)[field] : response.body;
+      if (!Array.isArray(page)) throw new Error('GitHub list response inválida');
+      items.push(...page);
       const candidate: URL | null = nextPage(response, url, base);
       if (candidate && candidate.pathname !== originalPath) throw new Error('GitHub pagination path changed');
       url = candidate;
     }
     return items;
   };
-  return Object.freeze({ get, getOptional, list });
+  return Object.freeze({ get, getOptional, list: (endpoint: string) => paginate(endpoint),
+    listField: (endpoint: string, field: string) => {
+      if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(field)) throw new Error('GitHub list field inválido');
+      return paginate(endpoint, field);
+    } });
 }
 
 export function createWriteApi(transport: GitHubTransport,

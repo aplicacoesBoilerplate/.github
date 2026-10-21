@@ -18,6 +18,12 @@ assert.deepEqual(await reader.list(path), [{ id: 1 }, { id: 2 }], 'All pages mus
 assert.equal(observed.length, 2);
 assert.deepEqual(observed.map(item => item.method), ['GET', 'GET']);
 assert.equal(reader.post, undefined, 'ReadApi must not expose mutations');
+const objectPages = createReadApi(async request => ({ status: 200,
+  headers: request.url.includes('page=2') ? {} :
+    { link: `<${request.url}&page=2>; rel="next"` },
+  body: { check_runs: [{ id: request.url.includes('page=2') ? 2 : 1 }] } }));
+assert.deepEqual(await objectPages.listField('repos/example/repo/commits/abc/check-runs?per_page=100', 'check_runs'),
+  [{ id: 1 }, { id: 2 }]);
 assert.equal(await reader.getOptional('repos/example/repo/releases/tags/missing'), null);
 await assert.rejects(() => reader.list('repos/example/repo/missing'), error => error instanceof GitHubHttpError && error.status === 404);
 
