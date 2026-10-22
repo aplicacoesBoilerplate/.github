@@ -2,8 +2,10 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { existsSync, lstatSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, relative } from 'node:path';
-import { validateReleasePlan, type ReleasePlan } from '../adapter-contract.js';
+import { adapterCapabilities, planFromReport, validateDescriptor, validateReleasePlan,
+  type ReleasePlan } from '../adapter-contract.js';
 import { createGitPort } from '../ports/git.js';
+import { validateLegacyBundle } from './legacy-technical-merge.js';
 
 const BYTE_LIMIT = 10 * 1024 * 1024;
 const SERIALIZED_LIMIT = 16 * 1024 * 1024;
@@ -40,6 +42,40 @@ export interface VersionFilesRequest {
 export interface CaptureVersionFilesRequest extends VersionFilesRequest {
   readonly operations: readonly ({ op: 'write'; path: string; content: string } |
     { op: 'delete'; path: string })[];
+}
+
+/** Allowed Changesets writes come from the functional SHA's lockfile, not the artifact. */
+export function allowedVersionWrites(plan: ReleasePlan, repository: string): string[] {
+  if (plan.adapter !== 'changesets') return [];
+  const source = JSON.parse(createGitPort(repository).readBlob(plan.sha,
+    'package-lock.json').toString('utf8')) as unknown;
+  if (!source || typeof source !== 'object' || Array.isArray(source)) {
+    throw new Error('Lockfile Changesets inválido');
+  }
+  const packages = (source as Record<string, unknown>).packages;
+  if (!packages || typeof packages !== 'object' || Array.isArray(packages)) {
+    throw new Error('Workspaces do lockfile inválidos');
+  }
+  const paths = ['package-lock.json'];
+  for (const entry of plan.entries) {
+    const matches = Object.entries(packages).filter(([, value]) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        throw new Error('Package do lockfile inválido');
+      }
+      const item = value as Record<string, unknown>;
+      return item.name === entry.package && item.link !== true;
+    });
+    if (matches.length !== 1) throw new Error(`Lockfile não identifica ${entry.package} uma vez`);
+    const path = matches[0]![0];
+    if (path.startsWith('/') || path.includes('\\') || path.includes(':') ||
+      path.split('/').some(part => part === '.' || part === '..') ||
+      path === 'node_modules' || path.startsWith('node_modules/')) {
+      throw new Error('Workspace Changesets inválido');
+    }
+    const prefix = path ? `${path}/` : '';
+    paths.push(`${prefix}package.json`, `${prefix}CHANGELOG.md`);
+  }
+  return paths;
 }
 
 export function withinVersionFileLimits(value: { bytes: number; serialized: number;
@@ -279,7 +315,10 @@ export function applyVersionFiles(request: VersionFilesRequest & { bundle: Versi
 
 export async function validateLegacyVersionFiles(request: { repository: string; projectPath: string;
   report: unknown; bundle: unknown }): Promise<true> {
-  const module = await import(new URL('../../version-bundle.mjs', import.meta.url).href) as
-    { validateVersionBundle: (value: typeof request) => true };
-  return module.validateVersionBundle(request);
+  const descriptor = validateDescriptor({ id: 'standard-version',
+    ...adapterCapabilities['standard-version'], collect: () => request.report,
+    prepare: () => request.bundle });
+  const plan = planFromReport(request.report, descriptor, request.projectPath);
+  if (createGitPort(request.repository).headSha() !== plan.sha) throw new Error('Bundle SHA divergente');
+  return validateLegacyBundle(request.bundle, plan, request.repository);
 }

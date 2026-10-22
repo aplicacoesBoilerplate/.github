@@ -24,6 +24,7 @@ const localFixtures = [
   'pr-policy.mjs',
   'preview-entrypoint.mjs',
   'prepare-publication.mjs',
+  'publish-entrypoint.mjs',
   'pr-evidence.mjs',
   'homologation-guide.mjs',
   'pr-check.mjs',

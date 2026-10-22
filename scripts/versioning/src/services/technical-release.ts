@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { createReadApi, createWriteApi, type GitHubTransport } from '../ports/github.js';
 import { validateReleasePlan, type ReleasePlan } from '../adapter-contract.js';
 import { validateVersionFiles, type VersionFilesBundle } from './version-files.js';
+import { validateLegacyBundle, type LegacyBundle } from './legacy-technical-merge.js';
 
 const shaPattern = /^[0-9a-f]{40}$/i;
 const namePattern = /^[A-Za-z0-9_.-]+$/;
@@ -60,7 +61,7 @@ export interface TechnicalPrRequest {
   readonly originPrNumber: number;
   readonly botLogin: string;
   readonly plan: ReleasePlan;
-  readonly bundle: VersionFilesBundle;
+  readonly bundle: VersionFilesBundle | LegacyBundle;
   readonly trustedAllowedWrites?: readonly string[];
   readonly transport: GitHubTransport;
 }
@@ -87,15 +88,22 @@ export async function prepareTechnicalPr(request: TechnicalPrRequest): Promise<T
     throw new Error('Identidade do PR técnico inválida');
   }
   if (plan.status !== 'release' ||
-    (plan.adapter !== 'changesets' && plan.adapter !== 'release-please')) {
+    (plan.adapter !== 'changesets' && plan.adapter !== 'release-please' &&
+      plan.adapter !== 'standard-version')) {
     throw new Error('PR técnico exige plano com arquivos nativos');
   }
   const targetBranch = branch(plan.branch);
-  validateVersionFiles({ repository: request.repository, plan, bundle: request.bundle,
-    ...(request.trustedAllowedWrites && { trustedAllowedWrites: request.trustedAllowedWrites }) }, true);
+  if (plan.adapter === 'standard-version') {
+    validateLegacyBundle(request.bundle, plan, request.repository);
+  } else {
+    validateVersionFiles({ repository: request.repository, plan,
+      bundle: request.bundle as VersionFilesBundle,
+      ...(request.trustedAllowedWrites && { trustedAllowedWrites: request.trustedAllowedWrites }) }, true);
+  }
   const component = plan.entries[0]!.projectPath;
-  const technicalBranch = technicalBranchName(request.owner, request.repo, targetBranch,
-    plan.adapter, component);
+  const technicalBranch = plan.adapter === 'standard-version' ?
+    `versioning/standard-version/${plan.sha.slice(0, 12)}` :
+    technicalBranchName(request.owner, request.repo, targetBranch, plan.adapter, component);
   const scope = `repos/${request.owner}/${request.repo}`;
   const read = createReadApi(request.transport);
   const write = createWriteApi(request.transport);
@@ -109,24 +117,28 @@ export async function prepareTechnicalPr(request: TechnicalPrRequest): Promise<T
     'Objeto da ref técnica').sha, 'Head técnico') : null;
   const prs = await read.list(`${scope}/pulls?state=all&head=${encodeURIComponent(`${request.owner}:${technicalBranch}`)}` +
     `&base=${encodeURIComponent(targetBranch)}&per_page=100`);
-  const matches = prs.map(value => record(value, 'PR técnico')).filter(value =>
-    value.state === 'open' &&
+  const scoped = prs.map(value => record(value, 'PR técnico')).filter(value =>
     record(value.head, 'Head do PR').ref === technicalBranch &&
     record(value.base, 'Base do PR').ref === targetBranch);
-  if (matches.length > 1 || (!remoteHead && matches.length) || (remoteHead && !matches.length)) {
+  const matches = scoped.filter(value => value.state === 'open');
+  const predecessors = scoped.filter(value => value.state === 'closed' && value.merged_at &&
+    record(value.head, 'Head do PR').sha === remoteHead);
+  if (matches.length > 1 || (!remoteHead && matches.length) ||
+    (remoteHead && !matches.length && predecessors.length !== 1)) {
     throw new Error('PR técnico/ref ambíguo; intervenção humana necessária');
   }
   const current = matches[0];
+  const prior = current ?? (remoteHead ? predecessors[0] : undefined);
   const bundleDigest = digest(request.bundle);
   let oldHead: string | null = null;
-  if (current) {
-    if (record(current.user, 'Autor do PR').login !== request.botLogin ||
-      !Number.isSafeInteger(current.number) || Number(current.number) <= 0) {
+  if (prior) {
+    if (record(prior.user, 'Autor do PR').login !== request.botLogin ||
+      !Number.isSafeInteger(prior.number) || Number(prior.number) <= 0) {
       throw new Error('PR técnico não pertence à automação ou está fechado');
     }
-    const previous = parseTechnicalPrProvenance(current.body);
-    oldHead = sha(record(current.head, 'Head do PR').sha, 'Head do PR');
-    if (previous.originPrNumber !== request.originPrNumber || oldHead !== remoteHead ||
+    const previous = parseTechnicalPrProvenance(prior.body);
+    oldHead = sha(record(prior.head, 'Head do PR').sha, 'Head do PR');
+    if ((previous.originPrNumber !== request.originPrNumber && previous.functionalSha === plan.sha) || oldHead !== remoteHead ||
       oldHead !== previous.headSha) throw new Error('Head manual ou proveniência do PR técnico divergente');
     const commit = record(await read.get(`${scope}/git/commits/${oldHead}`), 'Commit técnico');
     const treeSha = sha(record(commit.tree, 'Árvore técnica').sha, 'Árvore técnica');
@@ -135,7 +147,7 @@ export async function prepareTechnicalPr(request: TechnicalPrRequest): Promise<T
       !commit.message.includes(`Functional-SHA: ${previous.functionalSha}`)) {
       throw new Error('Head técnico contém alteração manual ou proveniência inválida');
     }
-    if (previous.planDigest === plan.planDigest && previous.functionalSha === plan.sha &&
+    if (current && previous.planDigest === plan.planDigest && previous.functionalSha === plan.sha &&
       previous.bundleDigest === bundleDigest) {
       if (typeof current.html_url !== 'string') throw new Error('URL do PR técnico inválida');
       return { outcome: 'existing', number: Number(current.number), url: current.html_url,
@@ -145,7 +157,11 @@ export async function prepareTechnicalPr(request: TechnicalPrRequest): Promise<T
   const functionalCommit = record(await read.get(`${scope}/git/commits/${plan.sha}`), 'Commit funcional');
   const baseTree = sha(record(functionalCommit.tree, 'Árvore funcional').sha, 'Árvore funcional');
   const treeEntries: Array<{ path: string; mode: '100644'; type: 'blob'; sha: string | null }> = [];
-  for (const operation of request.bundle.operations) {
+  const operations = plan.adapter === 'standard-version' ?
+    (request.bundle as LegacyBundle).files.map(file => ({ op: 'write' as const,
+      path: file.path, content: file.content })) :
+    (request.bundle as VersionFilesBundle).operations;
+  for (const operation of operations) {
     if (operation.op === 'delete') {
       treeEntries.push({ path: operation.path, mode: '100644', type: 'blob', sha: null });
       continue;
@@ -169,6 +185,9 @@ export async function prepareTechnicalPr(request: TechnicalPrRequest): Promise<T
     planDigest: plan.planDigest, bundleDigest, headSha, treeSha };
   const title = `chore(release): ${plan.adapter} ${plan.entries.map(entry => entry.tag).join(', ')}`;
   const body = `Origin-PR: #${request.originPrNumber}\nOrigin-SHA: ${plan.sha}\nAdapter: ${plan.adapter}` +
+    (plan.adapter === 'standard-version' ? `\nProject: ${(request.bundle as LegacyBundle).projectPath}` +
+      `\nTag-Prefix: ${(request.bundle as LegacyBundle).tagPrefix}` +
+      `\nVersion: ${(request.bundle as LegacyBundle).version}` : '') +
     `\nPlan-SHA256: ${plan.planDigest}\n\n${plan.entries.map(entry => entry.notes).join('\n\n')}` +
     `\n\n<!-- central-versioning\n${JSON.stringify(details)}\n-->`;
   if (oldHead) {
@@ -177,20 +196,24 @@ export async function prepareTechnicalPr(request: TechnicalPrRequest): Promise<T
     if (sha(record(value.object, 'Ref técnica').sha, 'Ref técnica') !== headSha) {
       throw new Error('Ref técnica não confirmou o novo head');
     }
-    const valuePr = record(await write.patch(`${scope}/pulls/${current!.number}`, { title, body }),
+  }
+  if (current) {
+    const valuePr = record(await write.patch(`${scope}/pulls/${current.number}`, { title, body }),
       'PR técnico atualizado');
     if (typeof valuePr.html_url !== 'string' ||
       sha(record(valuePr.head, 'Head do PR atualizado').sha, 'Head do PR atualizado') !== headSha ||
       parseTechnicalPrProvenance(valuePr.body).headSha !== headSha) {
       throw new Error('PR técnico não confirmou novo head e proveniência');
     }
-    return { outcome: 'updated', number: Number(current!.number), url: valuePr.html_url,
+    return { outcome: 'updated', number: Number(current.number), url: valuePr.html_url,
       branch: technicalBranch, headSha, functionalSha: plan.sha };
   }
-  const newRef = record(await write.post(`${scope}/git/refs`,
-    { ref: `refs/heads/${technicalBranch}`, sha: headSha }), 'Ref técnica criada');
-  if (sha(record(newRef.object, 'Ref técnica').sha, 'Ref técnica') !== headSha) {
-    throw new Error('Ref técnica não confirmou o novo head');
+  if (!oldHead) {
+    const newRef = record(await write.post(`${scope}/git/refs`,
+      { ref: `refs/heads/${technicalBranch}`, sha: headSha }), 'Ref técnica criada');
+    if (sha(record(newRef.object, 'Ref técnica').sha, 'Ref técnica') !== headSha) {
+      throw new Error('Ref técnica não confirmou o novo head');
+    }
   }
   const valuePr = record(await write.post(`${scope}/pulls`,
     { title, body, head: technicalBranch, base: targetBranch }), 'PR técnico criado');

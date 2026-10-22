@@ -8,9 +8,11 @@ import { createReadApi } from '../ports/github.js';
 import { runProcess } from '../ports/process.js';
 import { collectPrEvidence } from '../services/pr-evidence.js';
 import { evaluateReleasePolicy } from '../services/release-policy.js';
+import { publicationPayloadDigest } from '../services/publication-payload.js';
 import { verifyLegacyTechnicalMerge } from '../services/legacy-technical-merge.js';
 import { verifyTechnicalMerge } from '../services/technical-merge.js';
-import { captureVersionFiles, validateVersionFiles } from '../services/version-files.js';
+import { allowedVersionWrites, captureVersionFiles, validateVersionFiles } from '../services/version-files.js';
+export { allowedVersionWrites } from '../services/version-files.js';
 const shaPattern = /^[0-9a-f]{40}$/i;
 const partPattern = /^[A-Za-z0-9_.-]+$/;
 const branchPattern = /^[A-Za-z0-9._/-]+$/;
@@ -34,29 +36,6 @@ function checkedProducer(value, repository) {
 }
 function isFunctional(ref) {
     return ref === 'develop' || typeof ref === 'string' && /^hotfix\/.+/.test(ref);
-}
-export function allowedVersionWrites(plan, repository) {
-    if (plan.adapter !== 'changesets')
-        return [];
-    const lock = record(JSON.parse(createGitPort(repository).readBlob(plan.sha, 'package-lock.json').toString('utf8')), 'Lockfile Changesets');
-    const packages = record(lock.packages, 'Workspaces do lockfile');
-    const paths = ['package-lock.json'];
-    for (const entry of plan.entries) {
-        const matches = Object.entries(packages).filter(([, value]) => {
-            const item = record(value, 'Package do lockfile');
-            return item.name === entry.package && item.link !== true;
-        });
-        if (matches.length !== 1)
-            throw new Error(`Lockfile não identifica ${entry.package} uma vez`);
-        const path = matches[0][0];
-        if (path.startsWith('/') || path.includes('\\') || path.includes(':') ||
-            path.split('/').some(part => part === '.' || part === '..') ||
-            path.startsWith('node_modules/'))
-            throw new Error('Workspace Changesets inválido');
-        const prefix = path ? `${path}/` : '';
-        paths.push(`${prefix}package.json`, `${prefix}CHANGELOG.md`);
-    }
-    return paths;
 }
 function validateOriginArtifact(origin, context, adapter) {
     const plan = validateReleasePlan(origin.plan);
@@ -326,15 +305,18 @@ export async function preparePublicationMain(env = process.env, dependencies = {
         writeFileSync(join(directory, 'pr-policy.json'), json(result.snapshot));
         writeFileSync(join(directory, 'release-policy.json'), json(result.policy));
         writeFileSync(join(directory, 'git-inputs.json'), json(result.gitInputs));
-        writeFileSync(join(directory, 'publication-evidence.json'), json({ phase: result.phase,
+        const publicationEvidence = { phase: result.phase,
             producer: result.producer, functionalSha: result.functionalSha,
             publishedSha: result.publishedSha, originPrNumber: result.originPrNumber,
             technicalPrNumber: result.technicalPrNumber, planDigest: result.plan.planDigest,
-            technicalMerge: result.technicalMerge }));
+            technicalMerge: result.technicalMerge };
+        writeFileSync(join(directory, 'publication-evidence.json'), json(publicationEvidence));
         if (result.bundle)
             writeFileSync(join(directory, 'version-bundle.json'), json(result.bundle));
         if (env.GITHUB_OUTPUT)
-            appendFileSync(env.GITHUB_OUTPUT, `phase=${result.phase}\nartifact_name=publication-${result.producer.runId}-${result.producer.runAttempt}\n`);
+            appendFileSync(env.GITHUB_OUTPUT, `phase=${result.phase}\nartifact_name=publication-${result.producer.runId}-${result.producer.runAttempt}\n` +
+                `plan_digest=${result.plan.planDigest}\npayload_digest=${publicationPayloadDigest({ ...result,
+                    publicationEvidence })}\n`);
         return 0;
     }
     catch (error) {

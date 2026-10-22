@@ -10,8 +10,8 @@ import type { TechnicalMergeEvidence } from './technical-merge.js';
 const hash = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
 const shaPattern = /^[0-9a-f]{40}$/i;
 const digestPattern = /^[0-9a-f]{64}$/i;
-type LegacyFile = { path: string; before: string | null; hash: string; content: string };
-type LegacyBundle = { schemaVersion: 1; adapter: 'standard-version'; sha: string;
+export type LegacyFile = { path: string; before: string | null; hash: string; content: string };
+export type LegacyBundle = { schemaVersion: 1; adapter: 'standard-version'; sha: string;
   version: string; tagPrefix: string; projectPath: string; files: LegacyFile[] };
 function object(value: unknown, label: string): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${label} inválido`);
@@ -88,6 +88,10 @@ function checkedBundle(value: unknown, plan: ReleasePlan, root: string): LegacyB
     throw new Error('Changelog standard-version diverge da versão');
   }
   return bundle as LegacyBundle;
+}
+export function validateLegacyBundle(value: unknown, plan: ReleasePlan, repository: string): true {
+  checkedBundle(value, plan, realpathSync(repository));
+  return true;
 }
 function evidenceSignature(value: PrEvidence): string {
   return JSON.stringify({ repository: value.repository, number: value.number, headSha: value.headSha,

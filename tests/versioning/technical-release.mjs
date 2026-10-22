@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -123,10 +124,11 @@ try {
   const nextSha = git('rev-parse', 'HEAD');
   api.refs.set('master', nextSha);
   api.commits.set(nextSha, { sha: nextSha, tree: { sha: objectSha(2) }, parents: [{ sha }] });
-  const updatedInput = { ...input, ...planFor(nextSha) };
+  const updatedInput = { ...input, ...planFor(nextSha), originPrNumber: 13 };
   const updated = await prepareTechnicalPr(updatedInput);
   assert.equal(updated.outcome, 'updated');
   assert.equal(api.pulls.length, 1);
+  assert.match(api.pulls[0].body, /Origin-PR: #13/);
   assert.deepEqual(api.commits.get(updated.headSha).parents.map(parent => parent.sha),
     [created.headSha, nextSha]);
   const trees = api.calls.filter(call => call.method === 'POST' && call.url.endsWith('/git/trees'));
@@ -153,5 +155,47 @@ try {
   const nextCycle = await prepareTechnicalPr(raceInput);
   assert.equal(nextCycle.outcome, 'created', 'a closed prior PR cannot block the next release');
   assert.equal(api.pulls.length, 2);
+  api.pulls[1].state = 'closed';
+  await assert.rejects(prepareTechnicalPr(raceInput), /ambíguo/i,
+    'a closed unmerged PR cannot authorize reuse of its preserved branch');
+  api.pulls[1].merged_at = '2026-10-22T10:00:00Z';
+  writeFileSync(join(cwd, 'cycle.txt'), 'next release\n');
+  git('add', '.'); git('commit', '-qm', 'fix: next cycle');
+  const cycleSha = git('rev-parse', 'HEAD');
+  api.refs.set('master', cycleSha);
+  api.commits.set(cycleSha, { sha: cycleSha, tree: { sha: objectSha(4) }, parents: [{ sha: raceSha }] });
+  const preservedBranch = await prepareTechnicalPr({ ...input, ...planFor(cycleSha), originPrNumber: 14 });
+  assert.equal(preservedBranch.outcome, 'created');
+  assert.equal(preservedBranch.branch, nextCycle.branch);
+  assert.equal(api.pulls.length, 3);
+  assert.deepEqual(api.commits.get(preservedBranch.headSha).parents.map(parent => parent.sha),
+    [nextCycle.headSha, cycleSha]);
+  const standardDescriptor = validateDescriptor({ id: 'standard-version', runtime: 'node',
+    reportKind: 'single', needsVersionPr: true, tagKind: 'lightweight',
+    collect() {}, prepare() {} });
+  const standardReport = { schemaVersion: 1, adapter: 'standard-version', sha: cycleSha,
+    branch: 'master', baseVersion: '1.0.0', candidateVersion: '1.0.1', bump: 'patch',
+    tag: 'v1.0.1', tagPrefix: 'v', native: { explanation: 'native fix' } };
+  const standardPlan = planFromReport(standardReport, standardDescriptor, '.');
+  const hash = value => createHash('sha256').update(value).digest('hex');
+  const versionContents = {
+    'package.json': '{"name":"app","version":"1.0.1"}\n',
+    'package-lock.json': '{"name":"app","version":"1.0.1","packages":{"":{"version":"1.0.1"}}}\n',
+    'CHANGELOG.md': '## 1.0.1\n\nFix output\n',
+  };
+  const files = Object.entries(versionContents).map(([path, content]) => ({ path,
+    before: path === 'CHANGELOG.md' ? null : hash(execFileSync('git',
+      ['show', `${cycleSha}:${path}`], { cwd })),
+    hash: hash(content), content: Buffer.from(content).toString('base64') }));
+  const standardBundle = { schemaVersion: 1, adapter: 'standard-version', sha: cycleSha,
+    version: '1.0.1', tagPrefix: 'v', projectPath: '.', files };
+  const standardInput = { ...input, plan: standardPlan, bundle: standardBundle };
+  const standardCreated = await prepareTechnicalPr(standardInput);
+  assert.equal(standardCreated.branch, `versioning/standard-version/${cycleSha.slice(0, 12)}`);
+  assert.match(api.pulls.at(-1).body, /Project: \.\nTag-Prefix: v\nVersion: 1\.0\.1/);
+  const standardWrites = api.calls.length;
+  const standardRetry = await prepareTechnicalPr(standardInput);
+  assert.equal(standardRetry.outcome, 'existing');
+  assert.equal(api.calls.slice(standardWrites).some(call => call.method !== 'GET'), false);
   console.log('Technical PR: create, retry, update, two parents, manual head, foreign bundle and target race');
 } finally { rmSync(cwd, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }); }

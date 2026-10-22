@@ -170,6 +170,17 @@ try {
   assert.equal(JSON.parse(readFileSync(join(artifacts, 'version-report.json'))).native.explanation,
     'fix: native result');
   assert.match(readFileSync(output, 'utf8'), /phase=functional/);
+  const emitted = Object.fromEntries(readFileSync(output, 'utf8').trim().split('\n')
+    .map(line => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]));
+  assert.equal(emitted.plan_digest,
+    JSON.parse(readFileSync(join(artifacts, 'release-plan.json'))).planDigest);
+  const { publicationPayloadDigest } = await import('../../scripts/versioning/dist/services/publication-payload.js');
+  const payloadFile = name => JSON.parse(readFileSync(join(artifacts, name)));
+  assert.equal(emitted.payload_digest, publicationPayloadDigest({
+    report: payloadFile('version-report.json'), plan: payloadFile('release-plan.json'),
+    snapshot: payloadFile('pr-policy.json'), gitInputs: payloadFile('git-inputs.json'),
+    bundle: null, publicationEvidence: payloadFile('publication-evidence.json'),
+  }));
   for (const name of ['version-report.json', 'release-plan.json', 'pr-policy.json',
     'release-policy.json',
     'git-inputs.json', 'publication-evidence.json']) {

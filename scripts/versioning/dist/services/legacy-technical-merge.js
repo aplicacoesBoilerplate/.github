@@ -87,6 +87,10 @@ function checkedBundle(value, plan, root) {
     }
     return bundle;
 }
+export function validateLegacyBundle(value, plan, repository) {
+    checkedBundle(value, plan, realpathSync(repository));
+    return true;
+}
 function evidenceSignature(value) {
     return JSON.stringify({ repository: value.repository, number: value.number, headSha: value.headSha,
         headBranch: value.headBranch, baseBranch: value.baseBranch,
