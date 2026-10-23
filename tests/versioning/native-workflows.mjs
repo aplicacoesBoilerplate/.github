@@ -8,7 +8,7 @@ const preview=yaml('.github/workflows/version-preview.yml').jobs.preview;
 const publication=yaml('.github/workflows/version-publish.yml');
 const read=publication.jobs['validate-publication'],write=publication.jobs.publish;
 assert.ok(read,'REC-04 requires a read-only native job before privileged publication');
-assert.deepEqual(read.permissions,{contents:'read','pull-requests':'read',issues:'read'});
+assert.deepEqual(read.permissions,{contents:'read','pull-requests':'read',issues:'read',checks:'read',actions:'read'});
 assert.deepEqual(write.needs,['validate-publication','environment-gate']);
 assert.match(write.if,/needs\.validate-publication\.result == 'success'/);
 assert.equal(publication.jobs['environment-gate'].needs,'validate-publication');
@@ -22,19 +22,13 @@ for(const job of [preview,read]) {
   const java=job.steps.find(s=>s.uses?.startsWith('actions/setup-java@'));
   assert.equal(java.if,"inputs.adapter == 'jgitver'");
   assert.equal(java.with['java-version'],'21');
-  assert.equal(job.steps.find(s=>s.run?.includes(job===preview?'installPinnedMaven':'install-maven.sh')).if,"inputs.adapter == 'jgitver'");
-  const npm=job.steps.find(s=>s.run?.includes(job===preview?'installNpmDependencies':'install-node.sh'));
-  assert.equal(npm.if,job===preview?
-    "(inputs.adapter == 'standard-version' || inputs.adapter == 'changesets') && steps.origin.outputs.technical != 'true'":
-    "inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'");
+  assert.equal(job.steps.find(s=>s.run?.includes('installPinnedMaven')).if,"inputs.adapter == 'jgitver'");
+  const npm=job.steps.find(s=>s.run?.includes('installNpmDependencies'));
+  assert.equal(npm.if,
+    "(inputs.adapter == 'standard-version' || inputs.adapter == 'changesets') && steps.origin.outputs.technical != 'true'");
   assert.equal(npm['working-directory'],'consumer');
-  if(job===preview) {
-    assert.equal(npm.env.VERSIONING_WORKSPACE,'${{ github.workspace }}/consumer');
-    assert.match(npm.run,/installNpmDependencies/);
-  } else {
-    assert.equal(npm.env.NODE_PACKAGE_MANAGER,'npm');
-    assert.match(npm.run,/export GITHUB_WORKSPACE="\$PWD"/);
-  }
+  assert.equal(npm.env.VERSIONING_WORKSPACE,'${{ github.workspace }}/consumer');
+  assert.match(npm.run,/installNpmDependencies/);
   assert.equal(job.steps.some(s=>s.uses?.includes('create-github-app-token')),false);
   assert.doesNotMatch(JSON.stringify(job),/secrets\.|VERSIONING_TOKEN/);
 }
@@ -61,21 +55,23 @@ for(const adapter of ['go-gitsemver','jgitver','standard-version','changesets','
   const npm=preview.steps.find(step=>step.run?.includes('installNpmDependencies'));
   assert.equal(Boolean(selected(npm)),adapter==='standard-version'||adapter==='changesets');
 }
-assert.deepEqual(write.permissions,{contents:'write','pull-requests':'read',issues:'read'});
+assert.deepEqual(write.permissions,{contents:'write','pull-requests':'read',issues:'read',checks:'read',actions:'read'});
 assert.equal(write.steps.some(s=>/setup-java|setup-go/.test(s.uses??'')||/install-node|install-maven|go install|npm ci|mvn /.test(s.run??'')),false);
 const token=write.steps.find(s=>s.uses?.includes('create-github-app-token'));
-assert.equal(token.if,"(inputs.adapter == 'standard-version' || inputs.adapter == 'changesets') && needs.validate-publication.outputs.phase == 'functional'");
+assert.equal(token.if,"needs.validate-publication.outputs.needs_version_pr == 'true'");
 assert.equal(token.with['permission-contents'],'write');
 assert.equal(token.with['permission-pull-requests'],'write');
 assert.equal(read.outputs.phase,'${{ steps.report.outputs.phase }}');
-assert.equal(write.steps.find(s=>s.uses?.includes('download-artifact')).with.name,'${{ needs.validate-publication.outputs.artifact_name }}');
+assert.equal(write.steps.find(s=>s.uses?.includes('download-artifact')).with['artifact-ids'],'${{ needs.validate-publication.outputs.artifact_id }}');
 const writer=write.steps.find(s=>s.id==='publish');
-assert.equal(writer.env.VERSIONING_REQUIRE_PRECOMPUTED,'1');
-for(const [key,file] of Object.entries({VERSIONING_PRECOMPUTED_REPORT:'version-report.json',VERSIONING_INPUTS_SNAPSHOT:'git-inputs.json',VERSIONING_PRECOMPUTED_BUNDLE:'version-bundle.json'})) assert.ok(writer.env[key].endsWith('/'+file));
+assert.equal(writer.env.VERSIONING_ARTIFACT_DIR,'${{ runner.temp }}/versioning-publication');
+assert.equal(writer.env.VERSIONING_PLAN_DIGEST,'${{ needs.validate-publication.outputs.plan_digest }}');
+assert.equal(writer.env.VERSIONING_PAYLOAD_DIGEST,'${{ needs.validate-publication.outputs.payload_digest }}');
 assert.equal(writer['working-directory'],'consumer');
-assert.match(writer.run,/export GITHUB_WORKSPACE="\$PWD"/);
+assert.equal(writer.env.VERSIONING_WORKSPACE,'${{ github.workspace }}/consumer');
+assert.match(writer.run,/node .*dist\/entrypoints\/publish\.js/);
 assert.equal(read.steps.find(s=>s.id==='report')['working-directory'],'consumer');
-assert.match(read.steps.find(s=>s.id==='report').run,/prepare-publication.sh/);
+assert.match(read.steps.find(s=>s.id==='report').run,/node .*dist\/entrypoints\/prepare-publication\.js/);
 assert.match(read.steps.find(s=>s.uses?.includes('upload-artifact')).with.path,/versioning\/\*/);
 for(const output of ['version','tag','published_sha','release_url','outcome','version_pr_url']) assert.equal(publication.on.workflow_call.outputs[output].value,'${{ jobs.publish.outputs.'+output+' }}');
 console.log('Native workflows: isolated read/write, tools, artifacts, identity and existing outputs passed');

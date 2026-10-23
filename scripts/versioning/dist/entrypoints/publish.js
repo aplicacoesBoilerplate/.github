@@ -9,6 +9,7 @@ import { validateLegacyBundle, verifyLegacyTechnicalMerge } from '../services/le
 import { prepareTechnicalPr } from '../services/technical-release.js';
 import { verifyTechnicalMerge } from '../services/technical-merge.js';
 import { publishReleasePlan } from '../services/publication.js';
+import { readChangelog } from '../services/release-notes.js';
 import { verifyPlan, verifyProducer, loadArtifact } from '../services/publication-artifact.js';
 import { allowedVersionWrites, validateVersionFiles } from '../services/version-files.js';
 const partPattern = /^[A-Za-z0-9_.-]+$/;
@@ -68,7 +69,7 @@ export async function runPublish(request) {
         await verifyProducer(request.read, trust, artifact.publicationEvidence.producer);
         if (request.git.headSha() !== trust.publishedSha)
             throw new Error('Checkout difere do SHA publicado');
-        request.git.verifyInputs(artifact.gitInputs, trust.publishedSha, plan.status === 'release' ? plan.entries[0].tag : '', trust.adapter);
+        request.git.verifyInputs(artifact.gitInputs, trust.publishedSha, plan.entries.map(entry => entry.tag), trust.adapter);
         if (evidence.phase === 'functional') {
             const current = await collectPrEvidence(request.read, { repository: `${trust.owner}/${trust.repo}`,
                 targetBranch: trust.targetBranch, commitSha: trust.publishedSha,
@@ -128,7 +129,8 @@ export async function runPublish(request) {
     }
     const publication = await (request.services?.publishPlan ?? publishReleasePlan)({
         owner: trust.owner, repo: trust.repo, plan, publishedSha: trust.publishedSha,
-        read: request.read, write: request.write, verify: verifyLive
+        read: request.read, write: request.write, verify: verifyLive,
+        ...(request.additionalNotes ? { additionalNotes: request.additionalNotes } : {})
     });
     return { outcome: publication.outcome,
         outputs: outputs(plan, publication.outcome, publication, null), publication, technicalPr: null };
@@ -161,7 +163,7 @@ export async function publishMain(env = process.env, dependencies = {}) {
         if (env.GITHUB_EVENT_NAME !== 'push' || env.GITHUB_REF_NAME !== env.TARGET_BRANCH) {
             throw new Error('Escritor exige push na branch principal');
         }
-        const workspace = realpathSync(required(env.GITHUB_WORKSPACE, 'GITHUB_WORKSPACE'));
+        const workspace = realpathSync(required(env.VERSIONING_WORKSPACE ?? env.GITHUB_WORKSPACE, 'VERSIONING_WORKSPACE'));
         const [owner, repo, extra] = required(env.GITHUB_REPOSITORY, 'GITHUB_REPOSITORY').split('/');
         if (!owner || !repo || extra)
             throw new Error('Repositório inválido');
@@ -171,8 +173,8 @@ export async function publishMain(env = process.env, dependencies = {}) {
             tagPrefix: env.TAG_PREFIX ?? 'v', publishedSha: required(env.GITHUB_SHA, 'GITHUB_SHA'),
             centralSha: required(env.CENTRAL_SHA, 'CENTRAL_SHA'),
             ...(env.CENTRAL_REPOSITORY ? { centralRepository: env.CENTRAL_REPOSITORY } : {}),
-            runId: envNumber(env.GITHUB_RUN_ID, 'GITHUB_RUN_ID'),
-            runAttempt: envNumber(env.GITHUB_RUN_ATTEMPT, 'GITHUB_RUN_ATTEMPT'),
+            runId: envNumber(env.VERSIONING_PRODUCER_RUN_ID ?? env.GITHUB_RUN_ID, 'VERSIONING_PRODUCER_RUN_ID'),
+            runAttempt: envNumber(env.VERSIONING_PRODUCER_RUN_ATTEMPT ?? env.GITHUB_RUN_ATTEMPT, 'VERSIONING_PRODUCER_RUN_ATTEMPT'),
             artifactId: envNumber(env.VERSIONING_ARTIFACT_ID, 'VERSIONING_ARTIFACT_ID'),
             expectedProducerJob: 'validate-publication',
             planDigest: required(env.VERSIONING_PLAN_DIGEST, 'VERSIONING_PLAN_DIGEST'),
@@ -186,7 +188,8 @@ export async function publishMain(env = process.env, dependencies = {}) {
             requiredChecks: (env.REQUIRED_CHECKS ?? 'build').split(',').map(item => item.trim()).filter(Boolean),
             ...(dependencies.technicalTransport || env.VERSIONING_TOKEN ? {
                 technicalTransport: dependencies.technicalTransport ?? fetchTransport(env.VERSIONING_TOKEN),
-            } : {}), repository: workspace });
+            } : {}), repository: workspace,
+            additionalNotes: readChangelog(workspace, env.CHANGELOG_PATH ?? '') });
         if (env.GITHUB_OUTPUT)
             appendFileSync(env.GITHUB_OUTPUT, Object.entries(result.outputs).map(([key, value]) => `${key}=${value}`).join('\n') + '\n');
         if (env.GITHUB_STEP_SUMMARY)

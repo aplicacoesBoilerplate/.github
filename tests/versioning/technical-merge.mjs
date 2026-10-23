@@ -10,6 +10,7 @@ import { collectPrEvidence } from '../../scripts/versioning/dist/services/pr-evi
 import { planFromReport, validateDescriptor } from '../../scripts/versioning/dist/adapter-contract.js';
 import { previewMain, runTechnicalPreview } from '../../scripts/versioning/dist/entrypoints/preview.js';
 import { publicationPayloadDigest } from '../../scripts/versioning/dist/services/publication-payload.js';
+import { preparePublicationMain } from '../../scripts/versioning/dist/entrypoints/prepare-publication.js';
 
 const root = mkdtempSync(join(tmpdir(), 'technical-merge-'));
 const descriptor = validateDescriptor({ id: 'release-please', runtime: 'node', reportKind: 'single',
@@ -81,6 +82,8 @@ function scenario(method) {
     async get(endpoint) {
       if (endpoint.endsWith('/pulls/99')) return pr();
       if (endpoint.endsWith('/pulls/12')) return functional();
+      if (endpoint === 'repos/acme/app') return {default_branch:'master'};
+      if (endpoint.endsWith('/git/ref/heads/master')) return {object:{sha:publishedSha}};
       if (endpoint.endsWith('/actions/artifacts/500')) return {id:500,name:'publication-77-1',
         expired:false,size_in_bytes:400,workflow_run:{id:77,head_sha:functionalSha}};
       if (endpoint.endsWith('/actions/runs/77/attempts/1')) return {id:77,run_attempt:1,
@@ -89,6 +92,7 @@ function scenario(method) {
       throw Error(`unexpected get ${endpoint}`);
     },
     async list(endpoint) {
+      if (endpoint.includes('/commits/') && endpoint.endsWith('/pulls?per_page=100')) return [pr()];
       if (endpoint.endsWith('/pulls/99/reviews?per_page=100')) return state.reviews;
       if (endpoint.endsWith('/pulls/12/reviews?per_page=100') ||
         endpoint.endsWith('/issues/12/timeline?per_page=100')) return [];
@@ -131,7 +135,8 @@ try {
       assert.equal(preview.planDigest, fixture.plan.planDigest);
       assert.equal(preview.approvalBy, undefined, 'preview cannot claim human approval');
       const centralSha='c'.repeat(40);
-      const origin={report:fixture.plan.report,plan:fixture.plan,bundle:fixture.bundle,
+      const origin={report:Object.fromEntries(Object.entries(fixture.plan.report).reverse()),
+        plan:fixture.plan,bundle:fixture.bundle,
         snapshot:expectedFunctionalEvidence,gitInputs:{schemaVersion:1,adapter:'release-please',sha:fixture.functionalSha,refs:{}},
         publicationEvidence:{phase:'functional',functionalSha:fixture.functionalSha,publishedSha:fixture.functionalSha,
           originPrNumber:12,technicalPrNumber:null,planDigest:fixture.plan.planDigest,technicalMerge:null,
@@ -180,6 +185,23 @@ try {
       fixture.state.milestone = 'v1.0.1';
       fixture.state.reviews = reviews; fixture.state.preview = false;
       fixture.git('checkout', 'master');
+      writeFileSync(join(originDirectory,'publication-evidence.json'),JSON.stringify(origin.publicationEvidence));
+      const readerOutput=join(root,'reader-outputs.txt'),readerDirectory=join(root,'publication');
+      const readerEnv={...env,GITHUB_EVENT_NAME:'push',GITHUB_REF_NAME:'master',
+        GITHUB_SHA:fixture.publishedSha,GITHUB_RUN_ID:'88',GITHUB_RUN_ATTEMPT:'1',
+        GITHUB_JOB:'validate-publication',VERSIONING_OUTPUT_DIR:readerDirectory,GITHUB_OUTPUT:readerOutput};
+      assert.equal(await preparePublicationMain(readerEnv,{read:fixture.read,error:value=>{error=value;}}),0,error);
+      const integratedEvidence=JSON.parse(readFileSync(join(readerDirectory,'publication-evidence.json'),'utf8'));
+      assert.equal(integratedEvidence.phase,'technical');
+      assert.equal(integratedEvidence.functionalSha,fixture.functionalSha);
+      assert.equal(integratedEvidence.publishedSha,fixture.publishedSha);
+      assert.equal(integratedEvidence.producer.runId,88);
+      assert.match(readFileSync(readerOutput,'utf8'),/needs_version_pr=false/);
+      assert.match(readFileSync(readerOutput,'utf8'),/bot_login=version-bot\[bot\]/);
+      writeFileSync(join(originDirectory,'publication-evidence.json'),JSON.stringify({
+        ...origin.publicationEvidence,originPrNumber:13}));
+      assert.equal(await preparePublicationMain(readerEnv,{read:fixture.read,error:value=>{error=value;}}),1);
+      assert.match(error,/identidade|confiáve|artifact/i);
     }
     if (method !== 'merge') {
       fixture.state.commits = 2;

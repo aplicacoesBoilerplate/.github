@@ -58,9 +58,18 @@ jobs:
       contents: read
       pull-requests: read
       issues: read
+      checks: read
+      actions: read
     outputs:
       phase: ${{ steps.report.outputs.phase }}
       artifact_name: ${{ steps.report.outputs.artifact_name }}
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      plan_digest: ${{ steps.report.outputs.plan_digest }}
+      payload_digest: ${{ steps.report.outputs.payload_digest }}
+      needs_version_pr: ${{ steps.report.outputs.needs_version_pr }}
+      bot_login: ${{ steps.report.outputs.bot_login }}
+      producer_run_id: ${{ steps.report.outputs.producer_run_id }}
+      producer_run_attempt: ${{ steps.report.outputs.producer_run_attempt }}
     steps:
       - name: Checkout consumer repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -80,33 +89,66 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24'
+      - name: Resolve functional evidence for technical PR
+        id: origin
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ADAPTER: ${{ inputs.adapter }}
+          TARGET_BRANCH: ${{ inputs.target_branch }}
+          CENTRAL_SHA: ${{ job.workflow_sha }}
+          CENTRAL_REPOSITORY: ${{ job.workflow_repository }}
+        run: node .shared-versioning/scripts/versioning/dist/entrypoints/resolve-origin.js
+
+      - name: Download validated functional evidence
+        if: steps.origin.outputs.technical == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ steps.origin.outputs.artifact_id }}
+          run-id: ${{ steps.origin.outputs.run_id }}
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/versioning-origin
+
       - name: Install consumer Node dependencies without lifecycle scripts
-        if: inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'
+        if: (inputs.adapter == 'standard-version' || inputs.adapter == 'changesets') && steps.origin.outputs.technical != 'true'
         working-directory: consumer
         env:
           PROJECT_PATH: ${{ inputs.project_path }}
-          NODE_PACKAGE_MANAGER: npm
-        run: |
-          export GITHUB_WORKSPACE="$PWD"
-          bash ../.shared-versioning/scripts/versioning/install-node.sh
-      - name: Set up Go for go-gitsemver
-        if: inputs.adapter == 'go-gitsemver'
-        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
-        with:
-          go-version: '1.27.0'
-          cache: false
-      - name: Install pinned go-gitsemver
-        if: inputs.adapter == 'go-gitsemver'
-        run: go install github.com/MyCarrier-DevOps/go-gitsemver@680c1c12d9a4f573a8da1b2e3ccebb3571b1cab6
+          VERSIONING_WORKSPACE: ${{ github.workspace }}/consumer
+        run: >-
+          node --input-type=module -e "const { installNpmDependencies } = await import('../.shared-versioning/scripts/versioning/dist/adapters/npm-project.js');
+          installNpmDependencies({ workspace: process.env.VERSIONING_WORKSPACE, projectPath: process.env.PROJECT_PATH });"
+
+      - name: Install central Release Please SDK
+        if: inputs.adapter == 'release-please' && steps.origin.outputs.technical != 'true'
+        working-directory: .shared-versioning/scripts/versioning/tools/release-please
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
       - name: Set up Java for jgitver
         if: inputs.adapter == 'jgitver'
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           distribution: temurin
           java-version: '21'
+
       - name: Install pinned Maven
         if: inputs.adapter == 'jgitver'
-        run: bash .shared-versioning/scripts/versioning/install-maven.sh
+        run: >-
+          node --input-type=module -e "const { installPinnedMaven } = await import('./.shared-versioning/scripts/versioning/dist/adapters/maven-installer.js');
+          installPinnedMaven({ runnerTemp: process.env.RUNNER_TEMP, githubPath: process.env.GITHUB_PATH });"
+
+      - name: Set up Go for go-gitsemver
+        if: inputs.adapter == 'go-gitsemver'
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Install pinned go-gitsemver
+        if: inputs.adapter == 'go-gitsemver'
+        run: go install github.com/MyCarrier-DevOps/go-gitsemver@680c1c12d9a4f573a8da1b2e3ccebb3571b1cab6
+
       - name: Calculate native report and validate publication
         id: report
         working-directory: consumer
@@ -116,11 +158,15 @@ jobs:
           PROJECT_PATH: ${{ inputs.project_path }}
           TARGET_BRANCH: ${{ inputs.target_branch }}
           TAG_PREFIX: ${{ inputs.tag_prefix }}
+          VERSIONING_WORKSPACE: ${{ github.workspace }}/consumer
           VERSIONING_OUTPUT_DIR: ${{ runner.temp }}/versioning
-        run: |
-          export GITHUB_WORKSPACE="$PWD"
-          bash ../.shared-versioning/scripts/versioning/prepare-publication.sh
+          VERSIONING_ORIGIN_DIR: ${{ steps.origin.outputs.technical == 'true' && format('{0}/versioning-origin', runner.temp) || '' }}
+          VERSIONING_BOT_LOGIN: ${{ steps.origin.outputs.bot_login }}
+          CENTRAL_SHA: ${{ job.workflow_sha }}
+          CENTRAL_REPOSITORY: ${{ job.workflow_repository }}
+        run: node ../.shared-versioning/scripts/versioning/dist/entrypoints/prepare-publication.js
       - name: Upload validated publication report
+        id: upload
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ${{ steps.report.outputs.artifact_name }}
@@ -153,6 +199,8 @@ jobs:
       contents: write
       pull-requests: read
       issues: read
+      checks: read
+      actions: read
     outputs:
       version: ${{ steps.publish.outputs.version }}
       tag: ${{ steps.publish.outputs.tag }}
@@ -183,11 +231,15 @@ jobs:
       - name: Download validated publication report
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: ${{ needs.validate-publication.outputs.artifact_name }}
+          artifact-ids: ${{ needs.validate-publication.outputs.artifact_id }}
+          run-id: ${{ github.run_id }}
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
           path: ${{ runner.temp }}/versioning-publication
       - name: Emitir token efêmero para o PR técnico Node
         id: versioning-app-token
-        if: (inputs.adapter == 'standard-version' || inputs.adapter == 'changesets') && needs.validate-publication.outputs.phase == 'functional'
+        if: needs.validate-publication.outputs.needs_version_pr == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         with:
           app-id: ${{ secrets.versioning_app_id }}
@@ -205,11 +257,14 @@ jobs:
           CHANGELOG_PATH: ${{ inputs.changelog_path }}
           TAG_PREFIX: ${{ inputs.tag_prefix }}
           VERSIONING_TOKEN: ${{ steps.versioning-app-token.outputs.token }}
-          VERSIONING_BOT_SLUG: ${{ steps.versioning-app-token.outputs.app-slug }}
-          VERSIONING_REQUIRE_PRECOMPUTED: '1'
-          VERSIONING_PRECOMPUTED_BUNDLE: ${{ runner.temp }}/versioning-publication/version-bundle.json
-          VERSIONING_PRECOMPUTED_REPORT: ${{ runner.temp }}/versioning-publication/version-report.json
-          VERSIONING_INPUTS_SNAPSHOT: ${{ runner.temp }}/versioning-publication/git-inputs.json
-        run: |
-          export GITHUB_WORKSPACE="$PWD"
-          bash ../.shared-versioning/scripts/versioning/publish.sh
+          VERSIONING_BOT_LOGIN: ${{ needs.validate-publication.outputs.needs_version_pr == 'true' && format('{0}[bot]', steps.versioning-app-token.outputs.app-slug) || needs.validate-publication.outputs.bot_login }}
+          VERSIONING_WORKSPACE: ${{ github.workspace }}/consumer
+          VERSIONING_ARTIFACT_DIR: ${{ runner.temp }}/versioning-publication
+          VERSIONING_ARTIFACT_ID: ${{ needs.validate-publication.outputs.artifact_id }}
+          VERSIONING_PLAN_DIGEST: ${{ needs.validate-publication.outputs.plan_digest }}
+          VERSIONING_PAYLOAD_DIGEST: ${{ needs.validate-publication.outputs.payload_digest }}
+          VERSIONING_PRODUCER_RUN_ID: ${{ needs.validate-publication.outputs.producer_run_id }}
+          VERSIONING_PRODUCER_RUN_ATTEMPT: ${{ needs.validate-publication.outputs.producer_run_attempt }}
+          CENTRAL_SHA: ${{ job.workflow_sha }}
+          CENTRAL_REPOSITORY: ${{ job.workflow_repository }}
+        run: node ../.shared-versioning/scripts/versioning/dist/entrypoints/publish.js

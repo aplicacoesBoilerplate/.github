@@ -19,14 +19,16 @@ function entryResult(entry, status, releaseUrl, reason) {
 function result(outcome, entries, publishedSha = '', error) {
     return { outcome, publishedSha, entries, ...(error && { error }) };
 }
-function notes(plan, entry) {
+function notes(plan, entry, additionalNotes = '') {
     return [`${entry.tag} calculada pelo adaptador ${plan.adapter} no commit ${plan.sha}.`, '',
         entry.notes.trim(), ...(plan.adapter === 'changesets' ? ['', 'Lote coordenado:',
-            ...plan.entries.map(item => `- ${item.tag} (${item.bump})`)] : [])].join('\n');
+            ...plan.entries.map(item => `- ${item.tag} (${item.bump})`)] : []),
+        ...(additionalNotes ? ['', additionalNotes] : [])].join('\n');
 }
 export async function publishReleasePlan(request) {
     if (!repoPart.test(request.owner) || !repoPart.test(request.repo) ||
-        typeof request.verify !== 'function')
+        typeof request.verify !== 'function' || request.additionalNotes !== undefined &&
+        typeof request.additionalNotes !== 'string')
         throw new Error('Contexto de publicação inválido');
     const plan = validateReleasePlan(request.plan);
     const publishedSha = sha(request.publishedSha, 'SHA publicado');
@@ -161,7 +163,7 @@ export async function publishReleasePlan(request) {
                 try {
                     const created = record(await request.write.post(`${scope}/releases`, {
                         tag_name: entry.tag, target_commitish: publishedSha,
-                        name: entry.tag, body: notes(plan, entry),
+                        name: entry.tag, body: notes(plan, entry, request.additionalNotes),
                     }), 'Release criada');
                     if (created.tag_name !== entry.tag || created.target_commitish !== publishedSha ||
                         typeof created.html_url !== 'string' || !created.html_url.startsWith('https://')) {

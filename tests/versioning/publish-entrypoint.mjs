@@ -9,6 +9,7 @@ import { planFromReport, validateDescriptor } from '../../scripts/versioning/dis
 import { collectPrEvidence } from '../../scripts/versioning/dist/services/pr-evidence.js';
 import { publishMain, runPublish } from '../../scripts/versioning/dist/entrypoints/publish.js';
 import { publicationPayloadDigest } from '../../scripts/versioning/dist/services/publication-payload.js';
+import {createGitPort} from '../../scripts/versioning/dist/ports/git.js';
 
 const sha = 'a'.repeat(40);
 const centralSha = 'c'.repeat(40);
@@ -104,9 +105,14 @@ const batchPublished = { outcome: 'published', publishedSha: sha, entries: [
   { package: '@lab/cli', tag: '@lab/cli@1.0.1', status: 'created', releaseUrl: 'https://example.test/cli' },
   { package: '@lab/core', tag: '@lab/core@1.0.1', status: 'created', releaseUrl: 'https://example.test/core' },
 ] };
+const batchGit=createGitPort(process.cwd(),{text(args) {
+  if(args[0]==='rev-parse')return sha;
+  if(args[0]==='for-each-ref')return batchPlan.entries.map(entry=>`refs/tags/${entry.tag}\t${sha}`).join('\n');
+  throw Error('unexpected batch Git command '+args.join(' '));
+},bytes(){throw Error('unexpected batch blob');}});
 const batch = await runPublish({ ...request(), trust: { ...trust, adapter: 'changesets',
   planDigest: batchPlan.planDigest, payloadDigest: publicationPayloadDigest(batchArtifact) },
-  artifact: batchArtifact, services: { ...services, async publishPlan(input) {
+  artifact: batchArtifact, git:batchGit, services: { ...services, async publishPlan(input) {
     await input.verify(); return batchPublished;
   }, async verifyTechnical() { return { functionalSha: 'e'.repeat(40),
     reviewedHeadSha: 'f'.repeat(40), publishedSha: sha,
@@ -197,6 +203,7 @@ const originalProcesses = Object.fromEntries(processMethods.map(name => [name, c
 for (const name of processMethods) childProcess[name] = () => { throw Error(`Native process sentinel: ${name}`); };
 syncBuiltinESMExports();
 try {
+  writeFileSync(join(workspace,'CHANGELOG.md'),'## Homologação\nGuia complementar');
   for (const [name, value] of Object.entries({ 'version-report.json': report,
     'release-plan.json': plan, 'pr-policy.json': snapshot, 'git-inputs.json': artifact.gitInputs,
     'publication-evidence.json': evidence })) {
@@ -213,6 +220,7 @@ try {
       return value;
     }
     if (endpoint === 'repos/acme/app/releases') {
+      assert.match(payload.body,/Guia complementar/);
       assert.equal(payload.tag_name, 'v0.0.1');
       assert.equal(payload.target_commitish, sha);
       const value = { ...payload, html_url: 'https://example.test/release' };
@@ -222,7 +230,8 @@ try {
     throw Error(`Unexpected default writer POST ${endpoint}`);
   } };
   const env = { GITHUB_EVENT_NAME: 'push', GITHUB_REF_NAME: 'master', TARGET_BRANCH: 'master',
-    GITHUB_WORKSPACE: workspace, GITHUB_REPOSITORY: 'acme/app', ADAPTER: 'go-gitsemver',
+    VERSIONING_WORKSPACE: workspace, GITHUB_WORKSPACE: 'must-not-use-this-workspace',
+    CHANGELOG_PATH:'./CHANGELOG.md',GITHUB_REPOSITORY: 'acme/app', ADAPTER: 'go-gitsemver',
     GITHUB_SHA: sha, CENTRAL_SHA: centralSha, GITHUB_RUN_ID: '77', GITHUB_RUN_ATTEMPT: '1',
     VERSIONING_ARTIFACT_ID: '500', VERSIONING_ARTIFACT_DIR: workspace,
     VERSIONING_PLAN_DIGEST: trust.planDigest, VERSIONING_PAYLOAD_DIGEST: trust.payloadDigest,
@@ -242,6 +251,9 @@ try {
   assert.equal(readFileSync(env.GITHUB_OUTPUT, 'utf8').includes('secret-sentinel'), false);
   assert.equal(await publishMain(env, dependencies), 0, 'default publisher retry succeeds');
   assert.match(readFileSync(env.GITHUB_OUTPUT, 'utf8'), /outcome=already-published/);
+  assert.equal(await publishMain({...env,GITHUB_RUN_ATTEMPT:'2',
+    VERSIONING_PRODUCER_RUN_ID:'77',VERSIONING_PRODUCER_RUN_ATTEMPT:'1'},dependencies),0,
+  'writer-only retry uses the successful reader attempt, not its own attempt');
   state.artifactExpired = true;
   const errors = [];
   assert.equal(await publishMain(env, { ...dependencies, error: message => errors.push(message) }), 1);

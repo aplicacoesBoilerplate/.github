@@ -16,7 +16,7 @@ function checkedBlobPath(value) {
     return value;
 }
 function checkedTagRef(value) {
-    if (!/^refs\/tags\/[A-Za-z0-9][A-Za-z0-9._/@+-]*$/.test(value) || value.includes('..')) {
+    if (!/^refs\/tags\/[A-Za-z0-9@][A-Za-z0-9._/@+-]*$/.test(value) || value.includes('..')) {
         throw new Error('Git tag ref inválida');
     }
     return value;
@@ -56,7 +56,7 @@ export function createGitPort(repository, execute = defaultExecutor(repository))
         }
         return { schemaVersion: 1, adapter, sha: headSha(), refs };
     };
-    const verifyInputs = (snapshot, sha, tag, adapter) => {
+    const verifyInputs = (snapshot, sha, tags, adapter) => {
         if (snapshot?.schemaVersion !== 1 || snapshot.adapter !== adapter || snapshot.sha !== sha ||
             !snapshot.refs || typeof snapshot.refs !== 'object' || Array.isArray(snapshot.refs)) {
             throw new Error('Snapshot Git diverge de SHA/adaptador');
@@ -66,7 +66,7 @@ export function createGitPort(repository, execute = defaultExecutor(repository))
             throw new Error('Checkout Git diverge do SHA avaliado');
         const expected = { ...snapshot.refs };
         const actual = { ...current.refs };
-        if (tag) {
+        for (const tag of typeof tags === 'string' ? tags ? [tags] : [] : tags) {
             const candidate = checkedTagRef(`refs/tags/${tag}`);
             if (!Object.hasOwn(expected, candidate) && Object.hasOwn(actual, candidate) &&
                 resolveCommit(candidate) === sha) {
@@ -84,6 +84,6 @@ export function createGitPort(repository, execute = defaultExecutor(repository))
 export function captureGitInputs(repository, adapter) {
     return createGitPort(repository).captureInputs(adapter);
 }
-export function verifyGitInputs(repository, snapshot, sha, tag, adapter) {
-    return createGitPort(repository).verifyInputs(snapshot, sha, tag, adapter);
+export function verifyGitInputs(repository, snapshot, sha, tags, adapter) {
+    return createGitPort(repository).verifyInputs(snapshot, sha, tags, adapter);
 }

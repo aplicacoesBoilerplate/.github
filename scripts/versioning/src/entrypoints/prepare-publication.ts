@@ -1,7 +1,7 @@
 import { appendFileSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { planFromReport, validateReleasePlan, type AdapterContext, type AdapterId,
+import { adapterCapabilities, planFromReport, validateReleasePlan, type AdapterContext, type AdapterId,
   type ReleasePlan } from '../adapter-contract.js';
 import { resolveAdapter, type AdapterImplementation } from '../adapter-registry.js';
 import { createGitPort, type GitInputsSnapshot, type GitPort } from '../ports/git.js';
@@ -10,6 +10,8 @@ import { runProcess } from '../ports/process.js';
 import { collectPrEvidence, type PrEvidence } from '../services/pr-evidence.js';
 import { evaluateReleasePolicy, type ReleasePolicyDecision } from '../services/release-policy.js';
 import { publicationPayloadDigest } from '../services/publication-payload.js';
+import { loadArtifact, verifyPlan, verifyProducer } from '../services/publication-artifact.js';
+import { resolvePushOrigin } from './resolve-origin.js';
 import { verifyLegacyTechnicalMerge } from '../services/legacy-technical-merge.js';
 import { verifyTechnicalMerge, type TechnicalMergeEvidence } from '../services/technical-merge.js';
 import { allowedVersionWrites, captureVersionFiles, validateVersionFiles,
@@ -91,8 +93,7 @@ function validateOriginArtifact(origin: OriginArtifact, context: AdapterContext,
   adapter: AdapterId): { plan: ReleasePlan; bundle: Bundle } {
   const plan = validateReleasePlan(origin.plan);
   if (plan.adapter !== adapter || plan.branch !== context.targetBranch ||
-    plan.status !== 'release' || !origin.bundle || !origin.report || !origin.snapshot ||
-    JSON.stringify(plan.report) !== JSON.stringify(origin.report)) {
+    plan.status !== 'release' || !origin.bundle || !origin.report || !origin.snapshot) {
     throw new Error('Artifact de origem incompleto ou divergente');
   }
   const descriptor = resolveAdapter(adapter, { [adapter]: { collect: () => origin.report,
@@ -197,7 +198,7 @@ export async function preparePublication(request: PreparePublicationRequest): Pr
   if (plan.status === 'release' && descriptor.needsVersionPr && !bundle) {
     throw new Error('Artifact de bundle incompleto');
   }
-  request.git.verifyInputs(gitInputs, publishedSha, plan.status === 'release' ? plan.entries[0].tag : '',
+  request.git.verifyInputs(gitInputs, publishedSha, plan.entries.map(entry => entry.tag),
     request.adapter);
   return { phase: 'functional', producer, functionalSha: publishedSha, publishedSha,
     originPrNumber: snapshot.number, technicalPrNumber: null, report, plan, bundle, snapshot,
@@ -234,7 +235,7 @@ async function nativeImplementations(adapter: AdapterId, owner: string, repo: st
     case 'go-gitsemver': { const module = await import('../adapters/go-gitsemver.js');
       return { [adapter]: { collect: context => module.collectGoVersion(context) } }; }
     case 'jgitver': { const module = await import('../adapters/jgitver.js');
-      return { [adapter]: { collect: context => module.collectJgitver(context) } }; }
+      return { [adapter]: { collect: context => module.collectJgitverReport(context) } }; }
     case 'standard-version': { const module = await import('../adapters/standard-version.js');
       return { [adapter]: { collect: context => module.collectStandardVersion(context),
         prepare: () => { throw new Error('Preparação acontece no leitor após o cálculo'); } } }; }
@@ -274,8 +275,8 @@ async function nativeBundle(context: AdapterContext, plan: ReleasePlan, owner: s
     // Transitional bridge: T27 removes the legacy schema1 implementation after workflow cutover.
     const legacy = await import(new URL('../../version-bundle.mjs', import.meta.url).href) as
       { captureVersionBundle(request: { repository: string; projectPath: string; report: unknown }): Bundle };
-    const binary = context.configuration.adapterBin;
-    runProcess({ command: typeof binary === 'string' && binary ? binary : 'standard-version',
+    const standard = await import('../adapters/standard-version.js');
+    runProcess({ command: standard.standardVersionBinary(context),
       args: ['--skip.commit', '--skip.tag', '--tag-prefix', context.tagPrefix],
       cwd: join(context.workspace, context.projectPath), workspace: context.workspace });
     return legacy.captureVersionBundle({ repository: context.repository,
@@ -284,20 +285,12 @@ async function nativeBundle(context: AdapterContext, plan: ReleasePlan, owner: s
   throw new Error('Adaptador não gera bundle técnico');
 }
 
-function originFromDirectory(directory: string): OriginArtifact {
-  const file = (name: string): unknown => {
-    try { return JSON.parse(readFileSync(join(directory, name), 'utf8')) as unknown; }
-    catch { throw new Error(`Artifact de origem incompleto ou expirado: ${name}`); }
-  };
-  const metadata = record(file('publication-evidence.json'), 'Evidência de origem');
-  if (metadata.phase !== 'functional') throw new Error('Artifact de origem não é funcional');
-  const plan = file('release-plan.json') as ReleasePlan;
-  if (metadata.planDigest !== plan.planDigest || metadata.functionalSha !== plan.sha) {
-    throw new Error('Artifact de origem tem identidade divergente');
-  }
-  return { report: file('version-report.json'), plan,
-    bundle: file('version-bundle.json') as Bundle, snapshot: file('pr-policy.json') as PrEvidence,
-    producer: metadata.producer as ProducerIdentity };
+export function publicationNeedsVersionPr(result: {
+  readonly phase: PublicationEvidence['phase'];
+  readonly plan: Pick<ReleasePlan, 'adapter' | 'status'>;
+}): boolean {
+  return result.phase === 'functional' && result.plan.status === 'release' &&
+    adapterCapabilities[result.plan.adapter].needsVersionPr;
 }
 
 /** CLI boundary. T24–T25 wire the hosted workflow and the technical-origin artifact. */
@@ -307,11 +300,11 @@ export async function preparePublicationMain(env: NodeJS.ProcessEnv = process.en
     if (env.GITHUB_EVENT_NAME !== 'push' || env.GITHUB_REF_NAME !== env.TARGET_BRANCH) {
       throw new Error('Publicação exige push na branch principal');
     }
-    const workspace = realpathSync(required(env.GITHUB_WORKSPACE, 'GITHUB_WORKSPACE'));
+    const workspace = realpathSync(required(env.VERSIONING_WORKSPACE ?? env.GITHUB_WORKSPACE, 'VERSIONING_WORKSPACE'));
     const [owner, repo, extra] = required(env.GITHUB_REPOSITORY, 'GITHUB_REPOSITORY').split('/');
     if (!owner || !repo || extra) throw new Error('Repositório inválido');
     const adapter = required(env.ADAPTER, 'ADAPTER') as AdapterId;
-    const api = dependencies.transport ?? transport(dependencies.read && dependencies.implementations ? '' :
+    const api = dependencies.transport ?? transport(dependencies.read && (dependencies.implementations || env.VERSIONING_ORIGIN_DIR) ? '' :
       required(env.GH_TOKEN ?? env.GITHUB_TOKEN, 'GH_TOKEN'));
     const context: AdapterContext = { repository: workspace, workspace,
       projectPath: env.PROJECT_PATH ?? '.', targetBranch: required(env.TARGET_BRANCH, 'TARGET_BRANCH'),
@@ -322,17 +315,43 @@ export async function preparePublicationMain(env: NodeJS.ProcessEnv = process.en
       context.projectPath.split('/').some(part => !part || part === '..')) {
       throw new Error('projectPath fora do workspace');
     }
+    const read = dependencies.read ?? createReadApi(api);
+    let origin: OriginArtifact | undefined;
+    let botLogin = env.VERSIONING_BOT_LOGIN;
+    if (env.VERSIONING_ORIGIN_DIR) {
+      const reference = await resolvePushOrigin({ owner, repo, adapter, read,
+        targetBranch: context.targetBranch, publishedSha: context.sha,
+        centralSha: required(env.CENTRAL_SHA, 'CENTRAL_SHA'),
+        centralRepository: required(env.CENTRAL_REPOSITORY, 'CENTRAL_REPOSITORY') });
+      if (!reference) throw new Error('Artifact técnico inesperado no merge funcional');
+      if (botLogin && botLogin !== reference.botLogin) throw new Error('Identidade do bot técnico diverge');
+      botLogin = reference.botLogin;
+      const artifact = loadArtifact(env.VERSIONING_ORIGIN_DIR), source = reference.source;
+      const trust = { owner, repo, adapter, projectPath: context.projectPath,
+        targetBranch: context.targetBranch, tagPrefix: context.tagPrefix,
+        publishedSha: reference.functionalSha, centralSha: source.centralSha,
+        centralRepository: required(env.CENTRAL_REPOSITORY, 'CENTRAL_REPOSITORY'),
+        runId: source.runId, runAttempt: source.runAttempt, artifactId: source.artifactId,
+        expectedProducerJob: 'validate-publication', planDigest: source.planDigest, payloadDigest: source.payloadDigest };
+      verifyPlan(artifact, trust);
+      await verifyProducer(read, trust, artifact.publicationEvidence.producer);
+      if (artifact.publicationEvidence.phase !== 'functional' || !artifact.bundle) {
+        throw new Error('Artifact de origem não é funcional ou não contém bundle');
+      }
+      origin = { report: artifact.report, plan: artifact.plan, bundle: artifact.bundle as Bundle,
+        snapshot: artifact.snapshot, producer: artifact.publicationEvidence.producer as ProducerIdentity };
+    }
     const result = await preparePublication({ owner, repo, adapter, context,
       producer: { repository: `${owner}/${repo}`, runId: positive(env.GITHUB_RUN_ID, 'GITHUB_RUN_ID'),
         runAttempt: positive(env.GITHUB_RUN_ATTEMPT, 'GITHUB_RUN_ATTEMPT'),
         job: required(env.GITHUB_JOB, 'GITHUB_JOB'),
         centralSha: required(env.CENTRAL_SHA, 'CENTRAL_SHA') },
-      read: dependencies.read ?? createReadApi(api), git: dependencies.git ?? createGitPort(workspace),
-      implementations: dependencies.implementations ?? await nativeImplementations(adapter, owner, repo, api),
+      read, git: dependencies.git ?? createGitPort(workspace),
+      implementations: origin ? {} : dependencies.implementations ?? await nativeImplementations(adapter, owner, repo, api),
       requiredChecks: (env.REQUIRED_CHECKS ?? 'build').split(',').map(item => item.trim()).filter(Boolean),
       prepareBundle: dependencies.prepareBundle ?? (plan => nativeBundle(context, plan, owner, repo, api)),
-      ...(env.VERSIONING_ORIGIN_DIR ? { origin: originFromDirectory(env.VERSIONING_ORIGIN_DIR) } : {}),
-      ...(env.VERSIONING_BOT_LOGIN ? { botLogin: env.VERSIONING_BOT_LOGIN } : {}),
+      ...(origin ? { origin } : {}),
+      ...(botLogin ? { botLogin } : {}),
     });
     const directory = env.VERSIONING_OUTPUT_DIR ?? join(env.RUNNER_TEMP ?? workspace, 'versioning');
     mkdirSync(directory, { recursive: true });
@@ -351,6 +370,8 @@ export async function preparePublicationMain(env: NodeJS.ProcessEnv = process.en
     if (result.bundle) writeFileSync(join(directory, 'version-bundle.json'), json(result.bundle));
     if (env.GITHUB_OUTPUT) appendFileSync(env.GITHUB_OUTPUT,
       `phase=${result.phase}\nartifact_name=publication-${result.producer.runId}-${result.producer.runAttempt}\n` +
+      `needs_version_pr=${publicationNeedsVersionPr(result)}\nbot_login=${botLogin ?? ''}\n` +
+      `producer_run_id=${result.producer.runId}\nproducer_run_attempt=${result.producer.runAttempt}\n` +
       `plan_digest=${result.plan.planDigest}\npayload_digest=${publicationPayloadDigest({ ...result,
         publicationEvidence })}\n`);
     return 0;

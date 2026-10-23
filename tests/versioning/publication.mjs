@@ -81,10 +81,12 @@ function fixture(plan) {
 }
 
 const go = fixture(single());
-let result = await publishReleasePlan(go.request);
+let result = await publishReleasePlan({...go.request,additionalNotes:'## Homologação\nTeste manual aprovado'});
 assert.equal(result.outcome, 'published'); assert.equal(result.publishedSha, sha);
 assert.deepEqual(result.entries.map(item => item.status), ['created']);
 assert.equal(go.writes.length, 2);
+assert.match(go.writes.find(item=>item.endpoint.endsWith('/releases')).body.body,
+  /fix: release[\s\S]*## Homologação\nTeste manual aprovado/);
 result = await publishReleasePlan(go.request);
 assert.equal(result.outcome, 'already-published'); assert.equal(go.writes.length, 2);
 go.state.branch = other;

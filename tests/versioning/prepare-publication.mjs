@@ -174,6 +174,9 @@ try {
     .map(line => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]));
   assert.equal(emitted.plan_digest,
     JSON.parse(readFileSync(join(artifacts, 'release-plan.json'))).planDigest);
+  assert.equal(emitted.producer_run_id,'77');
+  assert.equal(emitted.producer_run_attempt,'1');
+  assert.equal(emitted.needs_version_pr,'false');
   const { publicationPayloadDigest } = await import('../../scripts/versioning/dist/services/publication-payload.js');
   const payloadFile = name => JSON.parse(readFileSync(join(artifacts, name)));
   assert.equal(emitted.payload_digest, publicationPayloadDigest({

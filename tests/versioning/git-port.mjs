@@ -29,6 +29,18 @@ try {
   git('tag', '-d', 'v9.0.0');
   git('tag', '-a', 'v0.0.2', '-m', 'partial retry');
   assert.equal(port.verifyInputs(baseline, first, 'v0.0.2', 'jgitver'), true, 'Own tag permits retry');
+  const batchBaseline=port.captureInputs('changesets');
+  assert.equal(port.verifyInputs(batchBaseline,first,'@lab/core@1.0.1','changesets'),true);
+  git('tag','@lab/core@1.0.1');git('tag','@lab/cli@1.0.1');
+  assert.equal(port.resolveCommit('refs/tags/@lab/core@1.0.1'),first);
+  assert.equal(port.verifyInputs(batchBaseline,first,['@lab/core@1.0.1','@lab/cli@1.0.1'],'changesets'),true,
+    'retry accepts all own partial batch tags at the published SHA');
+  assert.throws(()=>port.verifyInputs(batchBaseline,first,['@lab/core@1.0.1'],'changesets'),/referências Git mudaram/);
+  const foreignCommit=git('commit-tree',`${first}^{tree}`,'-p',first,'-m','other delivery');
+  git('tag','-f','@lab/cli@1.0.1',foreignCommit);
+  assert.throws(()=>port.verifyInputs(batchBaseline,first,['@lab/core@1.0.1','@lab/cli@1.0.1'],'changesets'),
+    /referências Git mudaram/,'planned tag at a foreign SHA must still block');
+  git('tag','-d','@lab/core@1.0.1','@lab/cli@1.0.1');
   const afterOwnTag = port.captureInputs('jgitver');
   git('tag', '-fa', 'v0.0.2', '-m', 'moved tag');
   assert.throws(() => port.verifyInputs(afterOwnTag, first, 'v0.0.2', 'jgitver'), /referências Git mudaram/);

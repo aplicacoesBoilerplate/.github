@@ -26,6 +26,7 @@ export interface PublicationRequest {
   readonly publishedSha: string;
   readonly read: ReadApi;
   readonly write: WriteApi;
+  readonly additionalNotes?: string;
   /** Runs live policy, PR/CI/provenance and artifact checks after any environment wait. */
   readonly verify: () => Promise<{ readonly publishedSha: string }>;
 }
@@ -53,15 +54,17 @@ function result(outcome: Outcome, entries: readonly PublicationEntry[], publishe
   error?: string): PublicationResult {
   return { outcome, publishedSha, entries, ...(error && { error }) };
 }
-function notes(plan: ReleasePlan, entry: ReleaseEntry): string {
+function notes(plan: ReleasePlan, entry: ReleaseEntry, additionalNotes = ''): string {
   return [`${entry.tag} calculada pelo adaptador ${plan.adapter} no commit ${plan.sha}.`, '',
     entry.notes.trim(), ...(plan.adapter === 'changesets' ? ['', 'Lote coordenado:',
-      ...plan.entries.map(item => `- ${item.tag} (${item.bump})`)] : [])].join('\n');
+      ...plan.entries.map(item => `- ${item.tag} (${item.bump})`)] : []),
+    ...(additionalNotes ? ['', additionalNotes] : [])].join('\n');
 }
 
 export async function publishReleasePlan(request: PublicationRequest): Promise<PublicationResult> {
   if (!repoPart.test(request.owner) || !repoPart.test(request.repo) ||
-    typeof request.verify !== 'function') throw new Error('Contexto de publicação inválido');
+    typeof request.verify !== 'function' || request.additionalNotes !== undefined &&
+    typeof request.additionalNotes !== 'string') throw new Error('Contexto de publicação inválido');
   const plan = validateReleasePlan(request.plan);
   const publishedSha = sha(request.publishedSha, 'SHA publicado');
   if (plan.status === 'no-release') return result('no-release', []);
@@ -171,7 +174,7 @@ export async function publishReleasePlan(request: PublicationRequest): Promise<P
         try {
           const created = record(await request.write.post(`${scope}/releases`, {
             tag_name: entry.tag, target_commitish: publishedSha,
-            name: entry.tag, body: notes(plan, entry),
+            name: entry.tag, body: notes(plan, entry, request.additionalNotes),
           }), 'Release criada');
           if (created.tag_name !== entry.tag || created.target_commitish !== publishedSha ||
             typeof created.html_url !== 'string' || !created.html_url.startsWith('https://')) {

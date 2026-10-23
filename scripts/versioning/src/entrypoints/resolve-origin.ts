@@ -68,11 +68,22 @@ export async function resolveOriginArtifact(request: OriginRequest): Promise<Ori
     technicalPrNumber: request.prNumber, botLogin: author.login };
 }
 
+export async function resolvePushOrigin(request: Omit<OriginRequest, 'prNumber' | 'expectedHeadSha'> &
+  { readonly publishedSha: string }): Promise<OriginReference | null> {
+  if (!/^[0-9a-f]{40}$/.test(request.publishedSha)) throw new Error('SHA integrado inválido');
+  const associated = await request.read.list(`repos/${request.owner}/${request.repo}/commits/${request.publishedSha}/pulls?per_page=100`);
+  const matches = associated.map(object).filter(pr => pr.merged_at &&
+    pr.merge_commit_sha === request.publishedSha && object(pr.base).ref === request.targetBranch);
+  if (matches.length !== 1) throw new Error('Associação do PR integrado ausente ou ambígua');
+  const pr = matches[0]!;
+  return resolveOriginArtifact({ ...request, prNumber: Number(pr.number),
+    expectedHeadSha: String(object(pr.head).sha ?? '') });
+}
+
 export async function resolveOriginMain(env: NodeJS.ProcessEnv = process.env,
   dependencies: { read?: ReadApi; error?: (message: string) => void } = {}): Promise<number> {
   try {
     const event = object(JSON.parse(readFileSync(env.GITHUB_EVENT_PATH ?? '', 'utf8')));
-    const pr = object(event.pull_request), head = object(pr.head);
     const [owner, repo, extra] = (env.GITHUB_REPOSITORY ?? '').split('/');
     if (!owner || !repo || extra) throw new Error('Repositório inválido');
     const token = env.GH_TOKEN ?? env.GITHUB_TOKEN;
@@ -84,13 +95,21 @@ export async function resolveOriginMain(env: NodeJS.ProcessEnv = process.env,
       return { status: response.status, headers: Object.fromEntries(response.headers.entries()),
         body: await response.json() };
     };
-    const origin = await resolveOriginArtifact({ owner, repo,
+    const common = { owner, repo,
       targetBranch: env.TARGET_BRANCH ?? '', adapter: env.ADAPTER as AdapterId,
       centralSha: env.CENTRAL_SHA ?? '', centralRepository: env.CENTRAL_REPOSITORY ?? '',
-      prNumber: Number(pr.number), expectedHeadSha: String(head.sha ?? ''),
-      read: dependencies.read ?? createReadApi(transport) });
+      read: dependencies.read ?? createReadApi(transport) };
+    let origin: OriginReference | null;
+    if (env.GITHUB_EVENT_NAME === 'push') {
+      if (env.GITHUB_REF_NAME !== common.targetBranch) throw new Error('Push fora da branch alvo');
+      origin = await resolvePushOrigin({ ...common, publishedSha: env.GITHUB_SHA ?? '' });
+    } else {
+      const pr = object(event.pull_request), head = object(pr.head);
+      origin = await resolveOriginArtifact({ ...common, prNumber: Number(pr.number),
+        expectedHeadSha: String(head.sha ?? '') });
+    }
     if (env.GITHUB_OUTPUT) appendFileSync(env.GITHUB_OUTPUT, `technical=${Boolean(origin)}\n` +
-      (origin ? `artifact_id=${origin.source.artifactId}\nrun_id=${origin.source.runId}\n` : ''));
+      (origin ? `artifact_id=${origin.source.artifactId}\nrun_id=${origin.source.runId}\nbot_login=${origin.botLogin}\n` : ''));
     return 0;
   } catch (error) {
     (dependencies.error ?? console.error)(error instanceof Error ? error.message : String(error));

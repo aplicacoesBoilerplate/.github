@@ -26,6 +26,8 @@ const localFixtures = [
   'prepare-publication.mjs',
   'publish-entrypoint.mjs',
   'origin-artifact.mjs',
+  'workflow-five-adapters.mjs',
+  'release-notes.mjs',
   'pr-evidence.mjs',
   'homologation-guide.mjs',
   'pr-check.mjs',
