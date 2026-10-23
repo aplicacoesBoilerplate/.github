@@ -30,3 +30,11 @@ Todas as asserções novas pertencem a RPSP-01 a RPSP-04. As asserções de cami
 - Autorização atual: publicar a branch de teste e executar o teste no GitHub Actions.
 - Não autorizado: merge em master, publicação de tags ou Releases, alterações de secrets/proteções.
 - A prova de PR/tag/Release persistidos no GitHub continua pendente de uma etapa posterior.
+
+## T2: Caller hospedado e CI reutilizável
+
+- RED observado: ENOENT ao ler version-release-please-test-caller.yml, antes de criar o workflow.
+- Caller de teste: push restrito a codex/release-please-self-pilot, contents:read, um único job usando ./.github/workflows/ci.yml no mesmo commit, sem secrets herdados.
+- CI existente: workflow_call aditivo e typecheck depois dos testes. Os gatilhos anteriores continuam preservados.
+- O mesmo fluxo funcional verifica o caller e a CI reais, sem novo arquivo de teste. A fixture version.txt continua temporária.
+- Gate local: 7 testes aprovados, 0 falhas/skip; typecheck e git diff --check aprovados. Execução hospedada ainda pendente do push após o Verifier.

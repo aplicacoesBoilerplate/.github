@@ -58,6 +58,24 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
 
     // Caller adaptado como um consumidor real: só mudamos os inputs do exemplo.
     const repository = path.resolve(SCRIPTS_DIR, '..');
+    const hostedCaller = parse(fs.readFileSync(path.join(repository, '.github/workflows/version-release-please-test-caller.yml'), 'utf8'));
+    assert.deepEqual(hostedCaller.on.push.branches, ['codex/release-please-self-pilot']);
+    assert.deepEqual(Object.keys(hostedCaller.on).sort(), ['push', 'workflow_dispatch']);
+    assert.deepEqual(hostedCaller.permissions, { contents: 'read' });
+    assert.deepEqual(Object.keys(hostedCaller.jobs), ['functional-pilot']);
+    const hostedJob = hostedCaller.jobs['functional-pilot'];
+    assert.equal(hostedJob.uses, './.github/workflows/ci.yml', 'CI e caller devem vir da mesma revisão');
+    assert.equal(hostedJob.secrets, undefined, 'O teste hospedado não herda secrets de publicação');
+    assert.equal(hostedJob.permissions, undefined, 'O job não pode ampliar as permissões de leitura');
+    const ci = parse(fs.readFileSync(path.join(repository, hostedJob.uses), 'utf8'));
+    assert.ok(Object.hasOwn(ci.on, 'workflow_call'));
+    assert.deepEqual(ci.permissions, { contents: 'read' });
+    assert.deepEqual(Object.keys(ci.jobs), ['validate']);
+    assert.equal(ci.jobs.validate['runs-on'], 'ubuntu-latest');
+    for (const command of ['npm test', 'npm run typecheck']) {
+      assert.ok(ci.jobs.validate.steps.some((step: { run?: string; 'working-directory'?: string }) =>
+        step.run === command && step['working-directory'] === 'ci-scripts'), `CI deve executar ${command}`);
+    }
     const caller = parse(fs.readFileSync(path.join(repository, '.github/workflows/examples/version-release-please-caller.yml'), 'utf8'));
     const call = caller.jobs['call-central-versioning'];
     call.with['project-type'] = 'simple';

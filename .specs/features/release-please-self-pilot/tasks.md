@@ -84,11 +84,11 @@ T1 -> T2 -> T3
 **Interfaces**: push restrito à branch codex/release-please-self-pilot; caller usa CI via referência local no mesmo commit, contents:read e nenhum secrets:inherit. version.txt é gerado apenas na fixture temporária.
 **Tools**: ferramentas locais, TLC, CI/CD, TDD e Entregas.
 
-- [ ] Acrescentar ao mesmo fluxo o carregamento do caller de teste real e da CI; observar RED pela ausência desses contratos.
-- [ ] Criar caller de teste para push na branch de trabalho, sem job de publicação; referência local da CI garante a mesma revisão.
-- [ ] Permitir workflow_call na CI e executar typecheck junto dos testes.
-- [ ] Rodar Build e confirmar 7 casos superiores preservados; execução hospedada somente após a revisão independente.
-- [ ] Atualizar rastreabilidade e registrar commit local `ci(versioning): run functional pilot through reusable checks`.
+- [x] Acrescentar ao mesmo fluxo o carregamento do caller de teste real e da CI; observar RED pela ausência desses contratos.
+- [x] Criar caller de teste para push na branch de trabalho, sem job de publicação; referência local da CI garante a mesma revisão.
+- [x] Permitir workflow_call na CI e executar typecheck junto dos testes.
+- [x] Rodar Build e confirmar 7 casos superiores preservados; execução hospedada somente após a revisão independente.
+- [x] Atualizar rastreabilidade e registrar commit local `ci(versioning): run functional pilot through reusable checks`.
 
 **Tests**: contrato integrado no mesmo fluxo de T1.
 **Gate**: Build.

@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   pull_request:
   push:
     branches:
@@ -39,3 +40,7 @@ jobs:
       - name: Run TypeScript tests
         working-directory: ci-scripts
         run: npm test
+
+      - name: Check TypeScript types
+        working-directory: ci-scripts
+        run: npm run typecheck
