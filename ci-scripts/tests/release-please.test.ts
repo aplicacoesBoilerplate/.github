@@ -1,19 +1,26 @@
 import { test } from 'node:test';
 import * as assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parse } from 'yaml';
+import { GitHub } from 'release-please';
+// API interna presa em 17.3.0 e usada somente neste teste de integração.
+import { Simple } from 'release-please/build/src/strategies/simple.js';
+import { parseConventionalCommits } from 'release-please/build/src/commit.js';
 
 const SCRIPTS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ORCHESTRATOR_PATH = path.resolve(SCRIPTS_DIR, 'scripts/release-orchestrator.ts');
 const CALLED_WORKFLOW_PATH = path.resolve(SCRIPTS_DIR, '../.github/workflows/version-release-please-called.yml');
 const TSX_CLI_PATH = path.resolve(SCRIPTS_DIR, 'node_modules/tsx/dist/cli.mjs');
+const SAFE_ENVIRONMENT = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
+  /^(PATH|SYSTEMROOT|WINDIR|COMSPEC|PATHEXT|TEMP|TMP|USERPROFILE|APPDATA|LOCALAPPDATA)$/i.test(key)));
 
 function runOrchestrator(pEnvVars: Record<string, string | undefined>, pWorkDir: string) {
   execFileSync(process.execPath, [TSX_CLI_PATH, ORCHESTRATOR_PATH], {
     cwd: pWorkDir,
-    env: { ...process.env, ...pEnvVars },
+    env: { ...SAFE_ENVIRONMENT, ...pEnvVars },
     stdio: 'pipe',
   });
   const CONFIG_PATH = path.join(pWorkDir, 'release-please-config.json');
@@ -21,7 +28,7 @@ function runOrchestrator(pEnvVars: Record<string, string | undefined>, pWorkDir:
 }
 
 // 1. ÚNICO TESTE DO FLUXO DO ORQUESTRADOR TS
-test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e liberar merge do PR do Release Please', () => {
+test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e liberar merge do PR do Release Please', async (t) => {
   const TEMP_DIR = fs.mkdtempSync(path.join(SCRIPTS_DIR, 'tmp-flow-'));
 
   try {
@@ -48,6 +55,130 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
     );
     assert.equal(releasePrConfig.packages['.']['release-type'], 'node');
     assert.equal(releasePrConfig.packages['.']['release-as'], undefined);
+
+    // Caller adaptado como um consumidor real: só mudamos os inputs do exemplo.
+    const repository = path.resolve(SCRIPTS_DIR, '..');
+    const caller = parse(fs.readFileSync(path.join(repository, '.github/workflows/examples/version-release-please-caller.yml'), 'utf8'));
+    const call = caller.jobs['call-central-versioning'];
+    call.with['project-type'] = 'simple';
+    const calledPath = call.uses.split('@')[0].split('/').slice(2).join('/');
+    assert.ok(fs.existsSync(path.join(repository, calledPath)), `Caller referencia workflow inexistente: ${calledPath}`);
+    const workflow = parse(fs.readFileSync(path.join(repository, calledPath), 'utf8'));
+    const job = workflow.jobs['release-please'];
+    const centralCheckout = job.steps.find((step: { with?: { repository?: string } }) => step.with?.repository);
+    const central = path.join(TEMP_DIR, centralCheckout.with.path, 'ci-scripts');
+    fs.mkdirSync(central, { recursive: true });
+    fs.cpSync(path.join(SCRIPTS_DIR, 'scripts'), path.join(central, 'scripts'), { recursive: true });
+    fs.copyFileSync(path.join(SCRIPTS_DIR, 'package.json'), path.join(central, 'package.json'));
+    fs.symlinkSync(path.join(SCRIPTS_DIR, 'node_modules'), path.join(central, 'node_modules'), 'junction');
+
+    const orchestrator = job.steps.find((step: { name?: string }) => step.name === 'Executar Orquestrador TS');
+    const action = job.steps.find((step: { uses?: string }) => step.uses === 'googleapis/release-please-action@v4');
+    const [executable, ...args] = orchestrator.run.trim().split(/\s+/);
+    assert.equal(executable, 'node', 'O teste executa o mesmo comando Node do called, sem baixar CLIs pela rede');
+    assert.equal(orchestrator.id, 'orchestrator');
+    assert.equal(job.if, 'github.event.pull_request.merged == true');
+    assert.equal(centralCheckout.with.ref, '${{ inputs.central-ref }}');
+    const distribution = job.steps.filter((step: { name?: string }) => step.name?.startsWith('Adaptador '));
+    assert.equal(distribution.length, 3);
+    for (const [index, type] of ['go', 'node', 'maven'].entries()) {
+      assert.equal(distribution[index].if, `\${{ steps.release.outputs.release_created == 'true' && inputs.project-type == '${type}' }}`);
+      assert.notEqual(call.with['project-type'], type, 'O caller simple não seleciona publicadores de pacotes');
+    }
+
+    // Resolver apenas referências de dados do contrato, não emular o runner Actions.
+    const resolveInput = (value: string, context: Record<string, unknown>): string => {
+      const match = /^\$\{\{\s*([\w.-]+)\s*\}\}$/.exec(value);
+      assert.ok(match, `Expressão de entrada não suportada neste contrato: ${value}`);
+      let result: unknown = context;
+      for (const key of match[1].split('.')) result = (result as Record<string, unknown> | null)?.[key];
+      return result == null ? '' : String(result);
+    };
+    let invocation = 0;
+    const runCaller = (branch: string, milestone: string, projectType = 'simple') => {
+      const context = {
+        inputs: { ...call.with, 'project-type': projectType },
+        github: { event: { pull_request: { head: { ref: branch }, milestone: { title: milestone } } } },
+      };
+      const outputPath = path.join(TEMP_DIR, `caller-${++invocation}.outputs`);
+      const env = Object.fromEntries(Object.entries(orchestrator.env as Record<string, string>)
+        .map(([key, value]) => [key, resolveInput(value, context)]));
+      const result = spawnSync(process.execPath, args, {
+        cwd: TEMP_DIR,
+        env: { ...SAFE_ENVIRONMENT, ...env, GITHUB_OUTPUT: outputPath },
+        encoding: 'utf8',
+      });
+      assert.ifError(result.error);
+      const outputs = fs.existsSync(outputPath)
+        ? Object.fromEntries(fs.readFileSync(outputPath, 'utf8').trim().split(/\r?\n/).map(line => line.split('=')))
+        : {};
+      const engineInputs = result.status === 0
+        ? Object.fromEntries(['release-type', 'release-as'].map(key => [key,
+            resolveInput(action.with[key], { steps: { orchestrator: { outputs } } })]))
+        : {};
+      return { result, outputs, engineInputs };
+    };
+
+    const preparation = runCaller('feature/piloto-local', 'v0.0.1');
+    assert.equal(preparation.result.status, 0, preparation.result.stderr);
+    assert.deepEqual(preparation.outputs, { release_type: 'simple', release_as: '0.0.1' });
+    assert.deepEqual(preparation.engineInputs, { 'release-type': 'simple', 'release-as': '0.0.1' });
+
+    // Motor verdadeiro; qualquer tentativa de consultar ou escrever no GitHub falha.
+    const github = await GitHub.create({
+      owner: 'aplicacoesBoilerplate', repo: '.github', defaultBranch: 'master',
+      fetch: async () => { throw new Error('Rede proibida no teste funcional local'); },
+    });
+    const strategy = new Simple({
+      github, targetBranch: 'master', includeComponentInTag: false,
+      releaseAs: preparation.engineInputs['release-as'],
+    });
+    const commits = parseConventionalCommits([{
+      sha: 'a'.repeat(40), message: 'fix: valida o caller centralizado', files: ['README.md'],
+    }]);
+    const candidate = await strategy.buildReleasePullRequest(commits);
+    assert.ok(candidate, 'O motor real deve preparar o PR da entrega funcional');
+    assert.equal(candidate.version?.toString(), '0.0.1');
+    assert.deepEqual(candidate.updates.map(update => update.path).sort(), ['CHANGELOG.md', 'version.txt']);
+    fs.writeFileSync(path.join(TEMP_DIR, 'version.txt'), '0.0.0\n');
+    for (const update of candidate.updates) {
+      const destination = path.join(TEMP_DIR, update.path);
+      const before = fs.existsSync(destination) ? fs.readFileSync(destination, 'utf8') : undefined;
+      fs.writeFileSync(destination, update.updater.updateContent(before));
+    }
+    assert.equal(fs.readFileSync(path.join(TEMP_DIR, 'version.txt'), 'utf8').trim(), '0.0.1');
+    assert.match(fs.readFileSync(path.join(TEMP_DIR, 'CHANGELOG.md'), 'utf8'), /valida o caller centralizado/);
+
+    const publication = runCaller(candidate.headRefName, '');
+    assert.equal(publication.result.status, 0, publication.result.stderr);
+    assert.deepEqual(publication.outputs, { release_type: 'simple', release_as: '' });
+    assert.deepEqual(publication.engineInputs, { 'release-type': 'simple', 'release-as': '' });
+    const publisher = new Simple({
+      github, targetBranch: 'master', includeComponentInTag: false,
+      releaseAs: publication.engineInputs['release-as'] || undefined,
+    });
+    const releases = await publisher.buildReleases({
+      number: 123, headBranchName: candidate.headRefName, baseBranchName: 'master',
+      title: candidate.title.toString(), body: candidate.body.toString(),
+      labels: candidate.labels, files: candidate.updates.map(update => update.path), sha: 'b'.repeat(40),
+    });
+    assert.equal(releases.length, 1);
+    assert.equal(releases[0].tag.toString(), 'v0.0.1');
+    assert.equal(releases[0].sha, 'b'.repeat(40));
+    assert.match(releases[0].notes, /valida o caller centralizado/);
+    t.diagnostic(`Motor real: versão ${candidate.version}, tag proposta ${releases[0].tag}, SHA alvo ${releases[0].sha}; nenhuma publicação executada`);
+
+    // Negativos essenciais permanecem dentro do mesmo fluxo, sem novos arquivos.
+    for (const [milestone, type, error] of [
+      ['', 'simple', /sem uma Milestone/],
+      ['invalida', 'simple', /não segue o padrão SemVer/],
+      ['v0.0.1', 'nao-suportado', /Adaptador não suportado/],
+    ] as const) {
+      const invalid = runCaller('feature/piloto-local', milestone, type);
+      assert.equal(invalid.result.status, 1);
+      assert.match(invalid.result.stderr, error);
+      assert.deepEqual(invalid.outputs, {}, 'Falha não pode fornecer parâmetros para publicação');
+    }
   } finally {
     fs.rmSync(TEMP_DIR, { recursive: true, force: true });
   }

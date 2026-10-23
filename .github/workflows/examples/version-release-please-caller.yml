@@ -10,7 +10,7 @@ on:
 jobs:
   call-central-versioning:
     # Chama a pipeline centralizada no seu repositório de boilerplate
-    uses: aplicacoesBoilerplate/.github/workflows/version-release-please-called.yml@master
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@master
     with:
       # Define o adaptador/tipo de projeto (ex: node, go, maven, gradle)
       project-type: 'node'
