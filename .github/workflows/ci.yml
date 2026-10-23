@@ -25,12 +25,17 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: .github/ci-scripts/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            ci-scripts/package-lock.json
 
-      - name: Install CI Scripts dependencies
-        working-directory: .github/ci-scripts
+      - name: Install Commitlint dependencies
         run: npm ci
 
-      - name: Run Release Please Orchestrator & Pipeline Tests
-        working-directory: .github/ci-scripts
+      - name: Install CI Scripts dependencies
+        working-directory: ci-scripts
+        run: npm ci
+
+      - name: Run TypeScript tests
+        working-directory: ci-scripts
         run: npm test

@@ -3,13 +3,15 @@ import * as assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const SCRIPTS_DIR = path.resolve(__dirname, '..');
+const SCRIPTS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ORCHESTRATOR_PATH = path.resolve(SCRIPTS_DIR, 'scripts/release-orchestrator.ts');
-const CALLED_WORKFLOW_PATH = path.resolve(SCRIPTS_DIR, '../workflows/version-release-please-called.yml');
+const CALLED_WORKFLOW_PATH = path.resolve(SCRIPTS_DIR, '../.github/workflows/version-release-please-called.yml');
+const TSX_CLI_PATH = path.resolve(SCRIPTS_DIR, 'node_modules/tsx/dist/cli.mjs');
 
 function runOrchestrator(pEnvVars: Record<string, string | undefined>, pWorkDir: string) {
-  execFileSync('npx', ['tsx', ORCHESTRATOR_PATH], {
+  execFileSync(process.execPath, [TSX_CLI_PATH, ORCHESTRATOR_PATH], {
     cwd: pWorkDir,
     env: { ...process.env, ...pEnvVars },
     stdio: 'pipe',
