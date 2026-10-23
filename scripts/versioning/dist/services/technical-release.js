@@ -3,6 +3,7 @@ import { createReadApi, createWriteApi } from '../ports/github.js';
 import { validateReleasePlan } from '../adapter-contract.js';
 import { validateVersionFiles } from './version-files.js';
 import { validateLegacyBundle } from './legacy-technical-merge.js';
+import { validateSourceArtifact } from './publication-artifact.js';
 const shaPattern = /^[0-9a-f]{40}$/i;
 const namePattern = /^[A-Za-z0-9_.-]+$/;
 const branchPattern = /^[A-Za-z0-9._/-]+$/;
@@ -45,7 +46,8 @@ export function parseTechnicalPrProvenance(body) {
         typeof value.bundleDigest !== 'string' || !/^[0-9a-f]{64}$/.test(value.bundleDigest)) {
         throw new Error('Proveniência do PR técnico incompleta');
     }
-    return { originPrNumber: Number(value.originPrNumber),
+    return { ...(value.sourceArtifact ? { sourceArtifact: validateSourceArtifact(value.sourceArtifact) } : {}),
+        originPrNumber: Number(value.originPrNumber),
         functionalSha: sha(value.functionalSha, 'Origem funcional'),
         planDigest: value.planDigest, bundleDigest: value.bundleDigest,
         headSha: sha(value.headSha, 'Head técnico'), treeSha: sha(value.treeSha, 'Árvore técnica') };
@@ -56,6 +58,10 @@ export function technicalBranchName(owner, repo, targetBranch, adapter, componen
 }
 export async function prepareTechnicalPr(request) {
     const plan = validateReleasePlan(request.plan);
+    const sourceArtifact = request.sourceArtifact ? validateSourceArtifact(request.sourceArtifact) : undefined;
+    if (sourceArtifact && (sourceArtifact.repository !== `${request.owner}/${request.repo}` ||
+        sourceArtifact.planDigest !== plan.planDigest))
+        throw new Error('Artifact de origem diverge do plano técnico');
     if (!namePattern.test(request.owner) || !namePattern.test(request.repo) ||
         typeof request.botLogin !== 'string' || !/^[A-Za-z0-9_.-]+\[bot\]$/.test(request.botLogin) ||
         !Number.isSafeInteger(request.originPrNumber) || request.originPrNumber <= 0) {
@@ -126,6 +132,16 @@ export async function prepareTechnicalPr(request) {
             previous.bundleDigest === bundleDigest) {
             if (typeof current.html_url !== 'string')
                 throw new Error('URL do PR técnico inválida');
+            if (sourceArtifact && JSON.stringify(sourceArtifact) !== JSON.stringify(previous.sourceArtifact)) {
+                const refreshedBody = String(current.body).replace(marker, `<!-- central-versioning\n${JSON.stringify({ ...previous, sourceArtifact })}\n-->`);
+                const refreshed = record(await write.patch(`${scope}/pulls/${current.number}`, { body: refreshedBody }), 'Artifact de origem atualizado');
+                if (sha(record(refreshed.head, 'Head técnico').sha, 'Head técnico') !== oldHead ||
+                    JSON.stringify(parseTechnicalPrProvenance(refreshed.body).sourceArtifact) !== JSON.stringify(sourceArtifact)) {
+                    throw new Error('PR técnico não confirmou a nova evidência de origem');
+                }
+                return { outcome: 'updated', number: Number(current.number), url: current.html_url,
+                    branch: technicalBranch, headSha: oldHead, functionalSha: plan.sha };
+            }
             return { outcome: 'existing', number: Number(current.number), url: current.html_url,
                 branch: technicalBranch, headSha: oldHead, functionalSha: plan.sha };
         }
@@ -155,8 +171,11 @@ export async function prepareTechnicalPr(request) {
     const headSha = sha(commitValue.sha, 'Commit técnico');
     if (await targetRef() !== plan.sha)
         throw new Error('Branch-alvo avançou durante preparo técnico');
-    const details = { originPrNumber: request.originPrNumber, functionalSha: plan.sha,
-        planDigest: plan.planDigest, bundleDigest, headSha, treeSha };
+    const details = {
+        ...(sourceArtifact ? { sourceArtifact } : {}),
+        originPrNumber: request.originPrNumber, functionalSha: plan.sha,
+        planDigest: plan.planDigest, bundleDigest, headSha, treeSha
+    };
     const title = `chore(release): ${plan.adapter} ${plan.entries.map(entry => entry.tag).join(', ')}`;
     const body = `Origin-PR: #${request.originPrNumber}\nOrigin-SHA: ${plan.sha}\nAdapter: ${plan.adapter}` +
         (plan.adapter === 'standard-version' ? `\nProject: ${request.bundle.projectPath}` +

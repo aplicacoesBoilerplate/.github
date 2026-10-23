@@ -108,9 +108,13 @@ try {
   api.commits.set(sha, { sha, tree: { sha: objectSha(1) }, parents: [] });
   const { plan, bundle } = planFor(sha);
   const input = { repository: cwd, owner: 'acme', repo: 'app', originPrNumber: 12,
+    sourceArtifact:{repository:'acme/app',artifactId:500,runId:77,runAttempt:1,
+      centralSha:'a'.repeat(40),planDigest:plan.planDigest,payloadDigest:'b'.repeat(64)},
     botLogin: 'version-bot[bot]', plan, bundle, transport };
   const created = await prepareTechnicalPr(input);
   assert.equal(created.outcome, 'created');
+  const emittedSource=JSON.parse(/<!-- central-versioning\n([^\n]+)\n-->/.exec(api.pulls[0].body)[1]).sourceArtifact;
+  assert.deepEqual(emittedSource,input.sourceArtifact);
   assert.equal(api.pulls.length, 1);
   assert.equal(api.commits.get(created.headSha).parents[0].sha, sha);
   assert.equal(api.calls.some(call => call.method === 'POST' && call.url.endsWith('/git/trees') &&
@@ -119,12 +123,23 @@ try {
   const retry = await prepareTechnicalPr(input);
   assert.equal(retry.outcome, 'existing');
   assert.equal(api.calls.slice(writes).some(call => call.method !== 'GET'), false);
+  const refreshStart=api.calls.length;
+  const refreshedSource={...input.sourceArtifact,artifactId:501,runId:78,payloadDigest:'c'.repeat(64)};
+  const refreshed=await prepareTechnicalPr({...input,sourceArtifact:refreshedSource});
+  assert.equal(refreshed.outcome,'updated');
+  assert.equal(refreshed.headSha,created.headSha,'refreshing equal evidence must preserve the reviewed head');
+  assert.deepEqual(JSON.parse(/<!-- central-versioning\n([^\n]+)\n-->/.exec(api.pulls[0].body)[1]).sourceArtifact,
+    refreshedSource);
+  assert.equal(api.calls.slice(refreshStart).filter(call=>call.method!=='GET')
+    .every(call=>call.method==='PATCH'&&call.url.endsWith('/pulls/1')),true);
   writeFileSync(join(cwd, 'feature.txt'), 'new feature\n');
   git('add', '.'); git('commit', '-qm', 'feat: next');
   const nextSha = git('rev-parse', 'HEAD');
   api.refs.set('master', nextSha);
   api.commits.set(nextSha, { sha: nextSha, tree: { sha: objectSha(2) }, parents: [{ sha }] });
-  const updatedInput = { ...input, ...planFor(nextSha), originPrNumber: 13 };
+  const updatedNative = planFor(nextSha);
+  const updatedInput = { ...input, ...updatedNative, originPrNumber: 13,
+    sourceArtifact: { ...input.sourceArtifact, planDigest: updatedNative.plan.planDigest } };
   const updated = await prepareTechnicalPr(updatedInput);
   assert.equal(updated.outcome, 'updated');
   assert.equal(api.pulls.length, 1);
@@ -145,7 +160,9 @@ try {
   const raceSha = git('rev-parse', 'HEAD');
   api.refs.set('master', raceSha);
   api.commits.set(raceSha, { sha: raceSha, tree: { sha: objectSha(3) }, parents: [{ sha: nextSha }] });
-  const raceInput = { ...input, ...planFor(raceSha) };
+  const raceNative = planFor(raceSha);
+  const raceInput = { ...input, ...raceNative,
+    sourceArtifact: { ...input.sourceArtifact, planDigest: raceNative.plan.planDigest } };
   await assert.rejects(prepareTechnicalPr(raceInput), /avançou|corrida|branch-alvo/i);
   assert.equal(api.refs.get(created.branch), updated.headSha, 'race cannot update technical ref');
   api.advanceOnCheck = false;
@@ -164,7 +181,9 @@ try {
   const cycleSha = git('rev-parse', 'HEAD');
   api.refs.set('master', cycleSha);
   api.commits.set(cycleSha, { sha: cycleSha, tree: { sha: objectSha(4) }, parents: [{ sha: raceSha }] });
-  const preservedBranch = await prepareTechnicalPr({ ...input, ...planFor(cycleSha), originPrNumber: 14 });
+  const cycleNative = planFor(cycleSha);
+  const preservedBranch = await prepareTechnicalPr({ ...input, ...cycleNative, originPrNumber: 14,
+    sourceArtifact: { ...input.sourceArtifact, planDigest: cycleNative.plan.planDigest } });
   assert.equal(preservedBranch.outcome, 'created');
   assert.equal(preservedBranch.branch, nextCycle.branch);
   assert.equal(api.pulls.length, 3);
@@ -189,7 +208,8 @@ try {
     hash: hash(content), content: Buffer.from(content).toString('base64') }));
   const standardBundle = { schemaVersion: 1, adapter: 'standard-version', sha: cycleSha,
     version: '1.0.1', tagPrefix: 'v', projectPath: '.', files };
-  const standardInput = { ...input, plan: standardPlan, bundle: standardBundle };
+  const standardInput = { ...input, plan: standardPlan, bundle: standardBundle,
+    sourceArtifact: { ...input.sourceArtifact, planDigest: standardPlan.planDigest } };
   const standardCreated = await prepareTechnicalPr(standardInput);
   assert.equal(standardCreated.branch, `versioning/standard-version/${cycleSha.slice(0, 12)}`);
   assert.match(api.pulls.at(-1).body, /Project: \.\nTag-Prefix: v\nVersion: 1\.0\.1/);

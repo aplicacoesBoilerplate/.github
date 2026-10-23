@@ -34,7 +34,15 @@ function functionalSignature(value) {
         mergedAt: value.mergedAt, mergeCommitSha: value.mergeCommitSha,
         milestone: value.milestone, override: value.override });
 }
-export async function verifyTechnicalMerge(request) {
+export function verifyTechnicalMerge(request) {
+    return verifyTechnicalState(request, false);
+}
+export async function verifyTechnicalPreview(request) {
+    const evidence = await verifyTechnicalState({ ...request, publishedSha: request.headSha }, true);
+    return { functionalSha: evidence.functionalSha, reviewedHeadSha: evidence.reviewedHeadSha,
+        planDigest: evidence.planDigest };
+}
+async function verifyTechnicalState(request, preview) {
     if (!repoPart.test(request.owner) || !repoPart.test(request.repo) ||
         typeof request.botLogin !== 'string' || !/^[A-Za-z0-9_.-]+\[bot\]$/.test(request.botLogin) ||
         !Number.isSafeInteger(request.originPrNumber) || request.originPrNumber <= 0 ||
@@ -80,8 +88,9 @@ export async function verifyTechnicalMerge(request) {
     if (technicalAuthor.type !== 'Bot' || technicalAuthor.login !== request.botLogin) {
         throw new Error('Identidade do bot autor do PR técnico diverge da automação');
     }
-    if (pr.number !== request.technicalPrNumber || !pr.merged_at ||
-        pr.merge_commit_sha !== publishedSha || base.ref !== plan.branch ||
+    if (pr.number !== request.technicalPrNumber ||
+        (preview ? pr.state !== 'open' || pr.merged_at != null || reviewedHeadSha !== publishedSha :
+            !pr.merged_at || pr.merge_commit_sha !== publishedSha) || base.ref !== plan.branch ||
         head.ref !== expectedBranch) {
         throw new Error('PR técnico não corresponde ao merge integrado');
     }
@@ -101,15 +110,17 @@ export async function verifyTechnicalMerge(request) {
         throw new Error('Head técnico não descende da origem funcional');
     const releaseParents = git(root, ['rev-list', '--parents', '-n', '1', publishedSha])
         .split(' ').slice(1);
-    let method;
-    if (releaseParents.length === 2 && releaseParents[0] === plan.sha &&
-        releaseParents[1] === reviewedHeadSha)
-        method = 'merge';
-    else if (releaseParents.length === 1 && releaseParents[0] === plan.sha && pr.commits === 1) {
-        method = 'single-parent';
+    let method = 'single-parent';
+    if (!preview) {
+        if (releaseParents.length === 2 && releaseParents[0] === plan.sha &&
+            releaseParents[1] === reviewedHeadSha)
+            method = 'merge';
+        else if (releaseParents.length === 1 && releaseParents[0] === plan.sha && pr.commits === 1) {
+            method = 'single-parent';
+        }
+        else
+            throw new Error('Rebase multi-commit ou relação de merge técnico não comprovada');
     }
-    else
-        throw new Error('Rebase multi-commit ou relação de merge técnico não comprovada');
     if (git(root, ['rev-parse', `${publishedSha}^{tree}`]) !== technicalTree) {
         throw new Error('Árvore integrada diverge da árvore técnica revisada');
     }
@@ -136,30 +147,34 @@ export async function verifyTechnicalMerge(request) {
             }
         }
     }
-    const reviews = await request.read.list(`${scope}/pulls/${request.technicalPrNumber}/reviews?per_page=100`);
-    const effective = new Map();
-    for (const value of reviews.map(item => record(item, 'Review técnico'))
-        .sort((a, b) => Date.parse(String(a.submitted_at)) - Date.parse(String(b.submitted_at)) ||
-        Number(a.id ?? 0) - Number(b.id ?? 0))) {
-        const user = record(value.user, 'Reviewer');
-        if (!Number.isSafeInteger(value.id) || !Number.isFinite(Date.parse(String(value.submitted_at)))) {
-            throw new Error('Review técnico sem ordem auditável');
+    let approvalBy = '';
+    if (!preview) {
+        const reviews = await request.read.list(`${scope}/pulls/${request.technicalPrNumber}/reviews?per_page=100`);
+        const effective = new Map();
+        for (const value of reviews.map(item => record(item, 'Review técnico'))
+            .sort((a, b) => Date.parse(String(a.submitted_at)) - Date.parse(String(b.submitted_at)) ||
+            Number(a.id ?? 0) - Number(b.id ?? 0))) {
+            const user = record(value.user, 'Reviewer');
+            if (!Number.isSafeInteger(value.id) || !Number.isFinite(Date.parse(String(value.submitted_at)))) {
+                throw new Error('Review técnico sem ordem auditável');
+            }
+            if (typeof user.login === 'string' && value.state !== 'PENDING')
+                effective.set(user.login, value);
         }
-        if (typeof user.login === 'string' && value.state !== 'PENDING')
-            effective.set(user.login, value);
+        if ([...effective.values()].some(value => value.state === 'CHANGES_REQUESTED')) {
+            throw new Error('Review técnico solicitou alterações');
+        }
+        const author = record(pr.user, 'Autor técnico').login;
+        const approval = [...effective.values()].find(value => {
+            const user = record(value.user, 'Reviewer');
+            return value.state === 'APPROVED' && value.commit_id === reviewedHeadSha &&
+                user.type === 'User' && user.login !== author &&
+                typeof user.login === 'string' && !user.login.endsWith('[bot]');
+        });
+        if (!approval)
+            throw new Error('Aprovação humana vigente do head técnico ausente');
+        approvalBy = String(record(approval.user, 'Reviewer').login);
     }
-    if ([...effective.values()].some(value => value.state === 'CHANGES_REQUESTED')) {
-        throw new Error('Review técnico solicitou alterações');
-    }
-    const author = record(pr.user, 'Autor técnico').login;
-    const approval = [...effective.values()].find(value => {
-        const user = record(value.user, 'Reviewer');
-        return value.state === 'APPROVED' && value.commit_id === reviewedHeadSha &&
-            user.type === 'User' && user.login !== author &&
-            typeof user.login === 'string' && !user.login.endsWith('[bot]');
-    });
-    if (!approval)
-        throw new Error('Aprovação humana vigente do head técnico ausente');
     const checkRuns = await request.read.listField(`${scope}/commits/${publishedSha}/check-runs?per_page=100`, 'check_runs');
     const checks = checkRuns.map(value => record(value, 'Check run')).sort((a, b) => Number(a.id) - Number(b.id));
     if (checks.some(value => !Number.isSafeInteger(value.id)))
@@ -173,5 +188,5 @@ export async function verifyTechnicalMerge(request) {
         }
     }
     return { functionalSha: plan.sha, reviewedHeadSha, publishedSha,
-        method, approvalBy: String(record(approval.user, 'Reviewer').login), planDigest: plan.planDigest };
+        method, approvalBy, planDigest: plan.planDigest };
 }

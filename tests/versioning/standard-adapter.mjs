@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {mkdtempSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {calculateStandardVersion} from '../../scripts/versioning/adapters/standard-version.mjs';
@@ -29,5 +29,18 @@ try{
     {run:()=>{throw Error('should not execute')}}),/Prefixo/);
   assert.throws(()=>collectStandardVersion({...typedContext,configuration:{releaseAs:'9.0.0'}},
     {run:()=>{throw Error('should not execute')}}),/Configuração/);
+  const binName=process.platform==='win32'?'standard-version.cmd':'standard-version';
+  const rootBin=join(repo,'node_modules','.bin',binName);
+  const projectBin=join(repo,'nested','node_modules','.bin',binName);
+  mkdirSync(join(repo,'node_modules','.bin'),{recursive:true});
+  mkdirSync(join(repo,'nested','node_modules','.bin'),{recursive:true});
+  writeFileSync(rootBin,'fixture');writeFileSync(projectBin,'fixture');
+  const localContext={...typedContext,projectPath:'nested',configuration:{}};
+  const localRun=r=>{request=r;return {stdout:'bumping version in package.json from 1.0.0 to 1.0.1',stderr:''};};
+  collectStandardVersion(localContext,{run:localRun});
+  assert.equal(request.command,rootBin,'workspace binary has the same precedence as the previous resolver');
+  rmSync(rootBin);
+  collectStandardVersion(localContext,{run:localRun});
+  assert.equal(request.command,projectBin,'nested project binary is supported without global CLI');
   console.log('Standard adapter contract passed');
 }finally{rmSync(repo,{recursive:true,force:true});}

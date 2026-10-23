@@ -52,6 +52,7 @@ jobs:
       pull-requests: read
       issues: read
       checks: read
+      actions: read
     outputs:
       phase: ${{ steps.preview.outputs.phase }}
       version: ${{ steps.preview.outputs.version }}
@@ -81,15 +82,41 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Resolve functional evidence for technical PR
+        id: origin
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ADAPTER: ${{ inputs.adapter }}
+          TARGET_BRANCH: ${{ inputs.target_branch }}
+          CENTRAL_SHA: ${{ job.workflow_sha }}
+          CENTRAL_REPOSITORY: ${{ job.workflow_repository }}
+        run: node .shared-versioning/scripts/versioning/dist/entrypoints/resolve-origin.js
+
+      - name: Download validated functional evidence
+        if: steps.origin.outputs.technical == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ steps.origin.outputs.artifact_id }}
+          run-id: ${{ steps.origin.outputs.run_id }}
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/versioning-origin
+
       - name: Install consumer Node dependencies without lifecycle scripts
-        if: inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'
+        if: (inputs.adapter == 'standard-version' || inputs.adapter == 'changesets') && steps.origin.outputs.technical != 'true'
         working-directory: consumer
         env:
           PROJECT_PATH: ${{ inputs.project_path }}
-          NODE_PACKAGE_MANAGER: npm
-        run: |
-          export GITHUB_WORKSPACE="$PWD"
-          bash ../.shared-versioning/scripts/versioning/install-node.sh
+          VERSIONING_WORKSPACE: ${{ github.workspace }}/consumer
+        run: >-
+          node --input-type=module -e "const { installNpmDependencies } = await import('../.shared-versioning/scripts/versioning/dist/adapters/npm-project.js');
+          installNpmDependencies({ workspace: process.env.VERSIONING_WORKSPACE, projectPath: process.env.PROJECT_PATH });"
+
+      - name: Install central Release Please SDK
+        if: inputs.adapter == 'release-please' && steps.origin.outputs.technical != 'true'
+        working-directory: .shared-versioning/scripts/versioning/tools/release-please
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Set up Java for jgitver
         if: inputs.adapter == 'jgitver'
@@ -100,7 +127,9 @@ jobs:
 
       - name: Install pinned Maven
         if: inputs.adapter == 'jgitver'
-        run: bash .shared-versioning/scripts/versioning/install-maven.sh
+        run: >-
+          node --input-type=module -e "const { installPinnedMaven } = await import('./.shared-versioning/scripts/versioning/dist/adapters/maven-installer.js');
+          installPinnedMaven({ runnerTemp: process.env.RUNNER_TEMP, githubPath: process.env.GITHUB_PATH });"
 
       - name: Set up Go for go-gitsemver
         if: inputs.adapter == 'go-gitsemver'
@@ -123,9 +152,11 @@ jobs:
           PROJECT_PATH: ${{ inputs.project_path }}
           TAG_PREFIX: ${{ inputs.tag_prefix }}
           VERSIONING_OUTPUT_DIR: ${{ runner.temp }}/versioning
-        run: |
-          export GITHUB_WORKSPACE="$PWD"
-          bash ../.shared-versioning/scripts/versioning/preview.sh
+          VERSIONING_WORKSPACE: ${{ github.workspace }}/consumer
+          VERSIONING_ORIGIN_DIR: ${{ steps.origin.outputs.technical == 'true' && format('{0}/versioning-origin', runner.temp) || '' }}
+          CENTRAL_SHA: ${{ job.workflow_sha }}
+          CENTRAL_REPOSITORY: ${{ job.workflow_repository }}
+        run: node ../.shared-versioning/scripts/versioning/dist/entrypoints/preview.js
 
       - name: Upload homologation guide
         if: steps.preview.outputs.phase == 'release-to-develop'

@@ -6,6 +6,8 @@ import { join, resolve } from 'node:path';
 import { normalizeGoReport, normalizeJgitverReport, validateVersionReport } from '../../scripts/versioning/version-report.mjs';
 import { evaluateReleasePolicy } from '../../scripts/versioning/release-policy.mjs';
 import { buildHomologationGuide } from '../../scripts/versioning/homologation-guide.mjs';
+import { normalizeJgitverReport as normalizeTypedJgitver } from '../../scripts/versioning/dist/adapters/jgitver.js';
+import { adapterCapabilities, planFromReport, validateDescriptor } from '../../scripts/versioning/dist/adapter-contract.js';
 const repo=mkdtempSync(join(tmpdir(),'jgitver-report-'));
 const git=(...args)=>execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();
 try {
@@ -16,6 +18,12 @@ try {
     'jgitver.git_sha1_full':sha,'jgitver.plugin-version':'1.9.0'},explanation:'derived native evidence'};
   const context={native,branch:'master',sha,repository:repo};
   const report=normalizeJgitverReport(context);
+  const typedReport=normalizeTypedJgitver(context);
+  assert.deepEqual(typedReport, report);
+  const typedPlan=planFromReport(typedReport,validateDescriptor({id:'jgitver',
+    ...adapterCapabilities.jgitver,collect(){}}),'.');
+  assert.equal(typedPlan.entries[0].tagKind,'annotated');
+  assert.equal(typedPlan.entries[0].version,'0.0.1');
   const input=join(repo,'native.json');
   writeFileSync(input,JSON.stringify(native));
   const cli=JSON.parse(execFileSync(process.execPath,[resolve(import.meta.dirname,'../../scripts/versioning/version-report.mjs'),
@@ -60,6 +68,9 @@ try {
   assert.ok(mavenGuide.markdown.includes('jgitver\\.plugin\\-version: 1\\.9\\.0'));
   assert.throws(()=>normalizeJgitverReport({...context,native:{...native,version:'0.0.1-SNAPSHOT'}}),/SemVer estável/);
   assert.throws(()=>normalizeJgitverReport({...context,native:{...native,sha:'b'.repeat(40)}}),/SHA/);
+  assert.throws(()=>normalizeTypedJgitver({...context,native:{...native,version:'0.0.1-SNAPSHOT'}}),/SemVer estável/);
+  assert.throws(()=>normalizeTypedJgitver({...context,native:{...native,sha:'b'.repeat(40)}}),/SHA/);
+  assert.throws(()=>normalizeTypedJgitver({...context,native:{...native,version:'1.0.0'}}),/somente 0.0.1/);
   assert.throws(()=>validateVersionReport({...report,native:{...report.native,format:'json'}}),/native/);
   assert.throws(()=>validateVersionReport({...report,tagKind:'lightweight'}),/anotada/);
   git('tag','v0.0.1');
@@ -79,5 +90,11 @@ try {
   git('tag','-a','v1.0.0','-m','release');
   assert.equal(normalizeJgitverReport(majorContext).baseVersion,'1.0.0');
   assert.equal(normalizeJgitverReport(majorContext).bump,'none','same published version permits reconciliation');
+  assert.deepEqual(normalizeTypedJgitver(majorContext),normalizeJgitverReport(majorContext));
+  const reconciledPlan=planFromReport(normalizeTypedJgitver(majorContext),
+    validateDescriptor({id:'jgitver',...adapterCapabilities.jgitver,collect(){}}),'.');
+  assert.equal(reconciledPlan.status,'release');
+  assert.equal(reconciledPlan.entries[0].bump,'none');
+  assert.equal(reconciledPlan.entries[0].tag,'v1.0.0');
   console.log('Jgitver report, policy and guide contract passed');
 } finally {rmSync(repo,{recursive:true,force:true});}

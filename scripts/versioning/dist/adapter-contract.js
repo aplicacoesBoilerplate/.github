@@ -107,7 +107,11 @@ function checkedEntry(value, descriptor) {
     const baseVersion = checkedVersion(entry.baseVersion);
     if (typeof entry.bump !== 'string' || !bumps.has(entry.bump))
         throw new Error('Bump inválido');
-    if (entry.bump !== bumpBetween(baseVersion, version) || entry.bump === 'none') {
+    // Native tag-based adapters may return the version already attached to this SHA.
+    // Keep its release entry for idempotent reconciliation, never for a downgrade or
+    // an unchanged file-based version. The publisher still verifies the remote tag.
+    const reconciliation = !descriptor.needsVersionPr && baseVersion === version;
+    if (entry.bump !== bumpBetween(baseVersion, version) || entry.bump === 'none' && !reconciliation) {
         throw new Error('Bump diverge das versões');
     }
     if (typeof entry.tag !== 'string' || !entry.tag ||

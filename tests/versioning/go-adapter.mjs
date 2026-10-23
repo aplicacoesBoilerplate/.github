@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { calculateGo } from '../../scripts/versioning/adapters/go-gitsemver.mjs';
 import { collectGoVersion } from '../../scripts/versioning/dist/adapters/go-gitsemver.js';
+import { adapterCapabilities, planFromReport, validateDescriptor } from '../../scripts/versioning/dist/adapter-contract.js';
 const repo=mkdtempSync(join(tmpdir(),'go-adapter-'));
 const git=(...args)=>execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();
 try {
@@ -39,6 +40,10 @@ try {
   git('tag','v0.0.1',sha);
   const retry=collectGoVersion(typedContext,{run:()=>({stdout:JSON.stringify({SemVer:'0.0.1',Sha:''}),stderr:''})});
   assert.equal(retry.candidateVersion,'0.0.1');
+  const retriedPlan=planFromReport(retry,validateDescriptor({id:'go-gitsemver',
+    ...adapterCapabilities['go-gitsemver'],collect(){}}),'.');
+  assert.equal(retriedPlan.entries[0].bump,'none');
+  assert.equal(retriedPlan.status,'release');
   git('commit','--allow-empty','-qm','fix: subsequent');
   const nextSha=git('rev-parse','HEAD');
   const next=collectGoVersion({...typedContext,sha:nextSha},{run:()=>({stdout:JSON.stringify({SemVer:'0.0.2',Sha:nextSha}),stderr:''})});

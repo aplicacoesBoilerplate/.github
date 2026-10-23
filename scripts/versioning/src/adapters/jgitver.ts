@@ -1,7 +1,8 @@
 import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join, relative } from 'node:path';
-import type { AdapterContext } from '../adapter-contract.js';
+import { bumpBetween, type AdapterContext } from '../adapter-contract.js';
+import { selectReachableStableTag, validateTagPrefix } from '../services/version-baseline.js';
 import { runProcess, type ProcessRequest, type ProcessResult } from '../ports/process.js';
 import { parseJavaProperties } from './java-properties.js';
 
@@ -13,6 +14,32 @@ export interface JgitverNative {
   readonly sha: string;
   readonly properties: Readonly<Record<string, string>>;
   readonly explanation: string;
+}
+
+export function normalizeJgitverReport(request: { native: JgitverNative; branch: string;
+  sha: string; repository: string; workspace?: string; tagPrefix?: string }) {
+  const { native } = request;
+  if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(native.version)) {
+    throw new Error('SemVer estável jgitver inválido');
+  }
+  if (native.sha.toLowerCase() !== request.sha.toLowerCase()) throw new Error('SHA jgitver divergente');
+  const prefix = validateTagPrefix(request.tagPrefix ?? 'v');
+  const reachable = selectReachableStableTag(request.repository,
+    request.workspace ?? request.repository, request.sha, prefix);
+  if (!reachable && native.version !== '0.0.1') throw new Error('Sem tag estável, somente 0.0.1 é publicável');
+  const baseVersion = reachable ?? '0.0.0';
+  return { schemaVersion: 1 as const, adapter: 'jgitver' as const, sha: request.sha.toLowerCase(),
+    branch: request.branch, tagPrefix: prefix, baseVersion, candidateVersion: native.version,
+    tag: prefix + native.version, tagKind: 'annotated' as const,
+    bump: bumpBetween(baseVersion, native.version), native: { format: 'java-properties' as const,
+      result: native.properties, explanation: native.explanation } };
+}
+
+export function collectJgitverReport(context: AdapterContext,
+  dependencies: Parameters<typeof collectJgitver>[1] = {}) {
+  return normalizeJgitverReport({ native: collectJgitver(context, dependencies),
+    branch: context.targetBranch, sha: context.sha, repository: projectDirectory(context),
+    workspace: context.workspace, tagPrefix: context.tagPrefix });
 }
 
 function projectDirectory(context: AdapterContext): string {

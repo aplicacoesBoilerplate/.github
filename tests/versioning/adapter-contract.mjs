@@ -63,6 +63,14 @@ assert.throws(() => validateReleasePlan({ ...singlePlan, planDigest: '0'.repeat(
 assert.throws(() => validateReleasePlan({ ...singlePlan, command: 'unsafe' }), /campo não permitido/);
 assert.throws(() => validateReleasePlan({ ...singlePlan, entries: [{ ...singlePlan.entries[0], command: 'unsafe' }] }), /campo não permitido/);
 assert.throws(() => planFromReport({ ...single, bump: 'major' }, go, '.'), /Bump diverge/);
+const reconciled = planFromReport({ ...single, baseVersion: '0.0.1', bump: 'none' }, go, '.');
+assert.equal(reconciled.status, 'release', 'an existing native tag must still reconcile its Release');
+assert.equal(reconciled.entries[0].bump, 'none');
+assert.throws(() => planFromReport({ ...single, baseVersion: '0.0.2', bump: 'none' }, go, '.'), /Bump diverge/);
+const fileAdapter = resolveAdapter('standard-version', {
+  'standard-version': { collect() {}, prepare() {} } });
+assert.throws(() => planFromReport({ ...single, adapter: 'standard-version',
+  baseVersion: '0.0.1', bump: 'none' }, fileAdapter, '.'), /Bump diverge/);
 assert.throws(() => planFromReport(single, go, 'C:/outside'), /projectPath/);
 assert.throws(() => planFromReport({ ...single, unexpected: () => null }, go, '.'), /não serializável/);
 

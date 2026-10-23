@@ -1,9 +1,18 @@
 import { join } from 'node:path';
+import { existsSync } from 'node:fs';
 import { bumpBetween, type AdapterContext } from '../adapter-contract.js';
 import { runProcess, type ProcessRequest, type ProcessResult } from '../ports/process.js';
 import { selectReachableStableTag, validateTagPrefix } from '../services/version-baseline.js';
 
 const stable = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+
+export function standardVersionBinary(context: AdapterContext): string {
+  const configured = context.configuration.adapterBin;
+  if (typeof configured === 'string' && configured) return configured;
+  const name = process.platform === 'win32' ? 'standard-version.cmd' : 'standard-version';
+  const root = join(context.workspace, 'node_modules', '.bin', name);
+  return existsSync(root) ? root : join(context.workspace, context.projectPath, 'node_modules', '.bin', name);
+}
 
 export interface StandardVersionReport {
   readonly schemaVersion: 1;
@@ -26,8 +35,7 @@ export function collectStandardVersion(context: AdapterContext,
   if (Object.keys(context.configuration).some(key => key !== 'adapterBin')) {
     throw new Error('Configuração standard-version não permitida');
   }
-  const binary = typeof context.configuration.adapterBin === 'string' &&
-    context.configuration.adapterBin ? context.configuration.adapterBin : 'standard-version';
+  const binary = standardVersionBinary(context);
   const repository = join(context.workspace, context.projectPath);
   const run = dependencies.run ?? runProcess;
   const result = run({ command: binary,

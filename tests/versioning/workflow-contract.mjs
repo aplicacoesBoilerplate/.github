@@ -63,9 +63,9 @@ publishMatches(/publish:\s*\n\s+needs: \[validate-publication, environment-gate\
   'publish must accept only a successful or skipped environment gate');
 publishMatches(/concurrency:\s*\n\s+group: version-publish-[^\n]+\n\s+cancel-in-progress: false/,
   'publication concurrency must serialize without cancellation');
-matches(/actions\/setup-node@[0-9a-f]{40}[\s\S]*?if: inputs\.adapter == 'standard-version'[\s\S]*?install-node\.sh/,
+matches(/actions\/setup-node@[0-9a-f]{40}[\s\S]*?if: \(inputs\.adapter == 'standard-version'[\s\S]*?installNpmDependencies/,
   'standard-version preview must install Node dependencies');
-matches(/NODE_PACKAGE_MANAGER: npm/, 'standard-version preview must select npm lockfile mode');
+matches(/installNpmDependencies/, 'standard-version preview must select the typed npm-only installer');
 matches(/if: inputs\.adapter == 'jgitver'[\s\S]*?actions\/setup-java@[0-9a-f]{40}/,
   'jgitver preview must prepare Java');
 publishMatches(/validate-publication:[\s\S]*?actions\/setup-node@[0-9a-f]{40}[\s\S]*?if: inputs\.adapter == 'standard-version'[\s\S]*?install-node\.sh/,

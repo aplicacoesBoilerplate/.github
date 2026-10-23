@@ -22,14 +22,44 @@ for(const job of [preview,read]) {
   const java=job.steps.find(s=>s.uses?.startsWith('actions/setup-java@'));
   assert.equal(java.if,"inputs.adapter == 'jgitver'");
   assert.equal(java.with['java-version'],'21');
-  assert.equal(job.steps.find(s=>s.run?.includes('install-maven.sh')).if,"inputs.adapter == 'jgitver'");
-  const npm=job.steps.find(s=>s.run?.includes('install-node.sh'));
-  assert.equal(npm.if,"inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'");
+  assert.equal(job.steps.find(s=>s.run?.includes(job===preview?'installPinnedMaven':'install-maven.sh')).if,"inputs.adapter == 'jgitver'");
+  const npm=job.steps.find(s=>s.run?.includes(job===preview?'installNpmDependencies':'install-node.sh'));
+  assert.equal(npm.if,job===preview?
+    "(inputs.adapter == 'standard-version' || inputs.adapter == 'changesets') && steps.origin.outputs.technical != 'true'":
+    "inputs.adapter == 'standard-version' || inputs.adapter == 'changesets'");
   assert.equal(npm['working-directory'],'consumer');
-  assert.equal(npm.env.NODE_PACKAGE_MANAGER,'npm');
-  assert.match(npm.run,/export GITHUB_WORKSPACE="\$PWD"/);
+  if(job===preview) {
+    assert.equal(npm.env.VERSIONING_WORKSPACE,'${{ github.workspace }}/consumer');
+    assert.match(npm.run,/installNpmDependencies/);
+  } else {
+    assert.equal(npm.env.NODE_PACKAGE_MANAGER,'npm');
+    assert.match(npm.run,/export GITHUB_WORKSPACE="\$PWD"/);
+  }
   assert.equal(job.steps.some(s=>s.uses?.includes('create-github-app-token')),false);
   assert.doesNotMatch(JSON.stringify(job),/secrets\.|VERSIONING_TOKEN/);
+}
+assert.deepEqual(preview.permissions,{contents:'read','pull-requests':'read',issues:'read',checks:'read',actions:'read'});
+const previewRun=preview.steps.find(step=>step.id==='preview');
+assert.match(previewRun.run,/node .*dist\/entrypoints\/preview\.js/);
+assert.equal(previewRun.env.VERSIONING_WORKSPACE,'${{ github.workspace }}/consumer');
+assert.equal(previewRun.env.CENTRAL_SHA,'${{ job.workflow_sha }}');
+assert.doesNotMatch(JSON.stringify(preview),/\.sh(?:\s|"|')/);
+const originStep=preview.steps.find(step=>step.id==='origin');
+assert.match(originStep.run,/dist\/entrypoints\/resolve-origin\.js/);
+const originDownload=preview.steps.find(step=>step.uses?.includes('download-artifact'));
+assert.equal(originDownload.if,"steps.origin.outputs.technical == 'true'");
+assert.equal(originDownload.with['artifact-ids'],'${{ steps.origin.outputs.artifact_id }}');
+assert.equal(originDownload.with['run-id'],'${{ steps.origin.outputs.run_id }}');
+assert.equal(originDownload.with.repository,'${{ github.repository }}');
+assert.equal(originDownload.with['merge-multiple'],'true');
+const sdk=preview.steps.find(step=>step.name==='Install central Release Please SDK');
+assert.equal(sdk['working-directory'],'.shared-versioning/scripts/versioning/tools/release-please');
+assert.equal(sdk.run,'npm ci --ignore-scripts --no-audit --no-fund');
+for(const adapter of ['go-gitsemver','jgitver','standard-version','changesets','release-please','invalid']) {
+  const selected=step=>step.if&&Function('inputs','steps',`return (${step.if})`)({adapter},{origin:{outputs:{technical:'false'}}});
+  assert.equal(Boolean(selected(sdk)),adapter==='release-please');
+  const npm=preview.steps.find(step=>step.run?.includes('installNpmDependencies'));
+  assert.equal(Boolean(selected(npm)),adapter==='standard-version'||adapter==='changesets');
 }
 assert.deepEqual(write.permissions,{contents:'write','pull-requests':'read',issues:'read'});
 assert.equal(write.steps.some(s=>/setup-java|setup-go/.test(s.uses??'')||/install-node|install-maven|go install|npm ci|mvn /.test(s.run??'')),false);

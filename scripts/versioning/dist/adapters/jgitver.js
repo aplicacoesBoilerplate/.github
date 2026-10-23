@@ -1,10 +1,35 @@
 import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join, relative } from 'node:path';
+import { bumpBetween } from '../adapter-contract.js';
+import { selectReachableStableTag, validateTagPrefix } from '../services/version-baseline.js';
 import { runProcess } from '../ports/process.js';
 import { parseJavaProperties } from './java-properties.js';
 const fields = ['used_version', 'calculated_version', 'git_sha1_full', 'plugin-version',
     'base_tag', 'base_tag_type', 'base_version', 'branch_name', 'provided_branch_name', 'dirty'];
+export function normalizeJgitverReport(request) {
+    const { native } = request;
+    if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(native.version)) {
+        throw new Error('SemVer estável jgitver inválido');
+    }
+    if (native.sha.toLowerCase() !== request.sha.toLowerCase())
+        throw new Error('SHA jgitver divergente');
+    const prefix = validateTagPrefix(request.tagPrefix ?? 'v');
+    const reachable = selectReachableStableTag(request.repository, request.workspace ?? request.repository, request.sha, prefix);
+    if (!reachable && native.version !== '0.0.1')
+        throw new Error('Sem tag estável, somente 0.0.1 é publicável');
+    const baseVersion = reachable ?? '0.0.0';
+    return { schemaVersion: 1, adapter: 'jgitver', sha: request.sha.toLowerCase(),
+        branch: request.branch, tagPrefix: prefix, baseVersion, candidateVersion: native.version,
+        tag: prefix + native.version, tagKind: 'annotated',
+        bump: bumpBetween(baseVersion, native.version), native: { format: 'java-properties',
+            result: native.properties, explanation: native.explanation } };
+}
+export function collectJgitverReport(context, dependencies = {}) {
+    return normalizeJgitverReport({ native: collectJgitver(context, dependencies),
+        branch: context.targetBranch, sha: context.sha, repository: projectDirectory(context),
+        workspace: context.workspace, tagPrefix: context.tagPrefix });
+}
 function projectDirectory(context) {
     const workspace = realpathSync(context.workspace);
     const project = realpathSync(join(workspace, context.projectPath));

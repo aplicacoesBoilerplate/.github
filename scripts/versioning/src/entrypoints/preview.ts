@@ -1,6 +1,7 @@
 import { appendFileSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
 import { planFromReport, type AdapterContext, type AdapterId, type ReleasePlan } from '../adapter-contract.js';
 import { resolveAdapter, type AdapterImplementation } from '../adapter-registry.js';
 import { createGitPort, type GitPort } from '../ports/git.js';
@@ -8,8 +9,14 @@ import { createReadApi, type GitHubTransport, type ReadApi } from '../ports/gith
 import { buildHomologationGuide } from '../services/homologation-guide.js';
 import { collectPrEvidence, type PrEvidence } from '../services/pr-evidence.js';
 import { evaluateReleasePolicy, type PolicyOutcome } from '../services/release-policy.js';
+import { loadArtifact, verifyPlan, type PublicationArtifact } from '../services/publication-artifact.js';
+import { parseTechnicalPrProvenance } from '../services/technical-release.js';
+import { verifyTechnicalPreview } from '../services/technical-merge.js';
+import { verifyLegacyTechnicalPreview } from '../services/legacy-technical-merge.js';
+import { allowedVersionWrites, type VersionFilesBundle } from '../services/version-files.js';
+import { resolveOriginArtifact } from './resolve-origin.js';
 
-type Phase = 'release-to-develop' | 'develop-to-main' | 'hotfix-to-main';
+type Phase = 'release-to-develop' | 'develop-to-main' | 'hotfix-to-main' | 'versioning-to-main';
 type Guide = ReturnType<typeof buildHomologationGuide>;
 const namePart = /^[A-Za-z0-9_.-]+$/;
 const shaPattern = /^[0-9a-f]{40}$/i;
@@ -105,6 +112,53 @@ export async function runPreview(request: PreviewRequest): Promise<PreviewResult
     policyOutcome, summary, releasesJson } };
 }
 
+export async function runTechnicalPreview(request: Omit<PreviewRequest, 'implementations'> & {
+  readonly origin: PublicationArtifact; readonly centralSha: string; readonly centralRepository: string;
+}, dependencies: { resolveOrigin?: typeof resolveOriginArtifact } = {}): Promise<PreviewResult> {
+  if (request.git.headSha() !== request.context.sha) throw new Error('Checkout difere do head técnico');
+  const reference = await (dependencies.resolveOrigin ?? resolveOriginArtifact)({
+    owner: request.owner, repo: request.repo, targetBranch: request.context.targetBranch,
+    adapter: request.adapter, centralSha: request.centralSha, centralRepository: request.centralRepository,
+    prNumber: request.prNumber, expectedHeadSha: request.context.sha, read: request.read });
+  if (!reference) throw new Error('Artifact técnico informado em PR funcional');
+  const source = reference.source;
+  const plan = verifyPlan(request.origin, { owner: request.owner, repo: request.repo,
+    adapter: request.adapter, projectPath: request.context.projectPath,
+    targetBranch: request.context.targetBranch, tagPrefix: request.context.tagPrefix,
+    publishedSha: reference.functionalSha, centralSha: request.centralSha,
+    centralRepository: request.centralRepository, runId: source.runId, runAttempt: source.runAttempt,
+    artifactId: source.artifactId, expectedProducerJob: 'validate-publication',
+    planDigest: source.planDigest, payloadDigest: source.payloadDigest });
+  if (request.baseSha !== plan.sha || request.origin.snapshot.number !== reference.originPrNumber) {
+    throw new Error('Origem funcional avançou ou diverge do plano técnico');
+  }
+  const pr = await request.read.get(`repos/${request.owner}/${request.repo}/pulls/${request.prNumber}`) as
+    { body?: unknown };
+  const marker = parseTechnicalPrProvenance(pr.body);
+  const bundleDigest = createHash('sha256').update(JSON.stringify(request.origin.bundle)).digest('hex');
+  if (marker.bundleDigest !== bundleDigest || !request.origin.bundle) throw new Error('Bundle técnico diverge da origem');
+  const common = { repository: request.context.workspace, owner: request.owner, repo: request.repo,
+    plan, bundle: request.origin.bundle, technicalPrNumber: request.prNumber,
+    requiredChecks: request.requiredChecks, read: request.read, botLogin: reference.botLogin,
+    headSha: request.context.sha };
+  if (request.adapter === 'standard-version') {
+    await verifyLegacyTechnicalPreview({ ...common, origin: request.origin.snapshot });
+  } else {
+    await verifyTechnicalPreview({ ...common, bundle: request.origin.bundle as VersionFilesBundle,
+      trustedAllowedWrites: allowedVersionWrites(plan, request.context.workspace),
+      originPrNumber: reference.originPrNumber, expectedFunctionalEvidence: request.origin.snapshot });
+  }
+  const policy = evaluateReleasePolicy({ report: plan.report, snapshot: request.origin.snapshot, phase: 'publication' });
+  if (policy.outcome === 'blocked') throw new Error('Policy funcional bloqueou prévia técnica');
+  const single = plan.entries.length === 1 ? plan.entries[0] : null;
+  const sourceReport = plan.report as { releases?: unknown[] };
+  return { report: plan.report, plan, snapshot: request.origin.snapshot, guide: null, outputs: {
+    phase: 'versioning-to-main', version: single?.version ?? '', bump: single?.bump ?? '',
+    policyOutcome: policy.outcome, summary: `Prévia técnica validada para ${plan.entries.length} release(s)`,
+    releasesJson: JSON.stringify(sourceReport.releases ?? []),
+  } };
+}
+
 type PreviewDependencies = {
   readonly read?: ReadApi;
   readonly git?: Pick<GitPort, 'headSha' | 'subjectsBetween'>;
@@ -138,7 +192,7 @@ async function defaultImplementation(adapter: AdapterId, owner: string, repo: st
     }
     case 'jgitver': {
       const java = await import('../adapters/jgitver.js');
-      return { jgitver: { collect: context => java.collectJgitver(context) } };
+      return { jgitver: { collect: context => java.collectJgitverReport(context) } };
     }
     case 'standard-version': {
       const standard = await import('../adapters/standard-version.js');
@@ -164,7 +218,7 @@ async function defaultImplementation(adapter: AdapterId, owner: string, repo: st
 export async function previewMain(env: NodeJS.ProcessEnv = process.env,
   dependencies: PreviewDependencies = {}): Promise<number> {
   try {
-    const workspace = realpathSync(required(env.GITHUB_WORKSPACE, 'GITHUB_WORKSPACE'));
+    const workspace = realpathSync(required(env.VERSIONING_WORKSPACE ?? env.GITHUB_WORKSPACE, 'VERSIONING_WORKSPACE'));
     const event = JSON.parse(readFileSync(required(env.GITHUB_EVENT_PATH, 'GITHUB_EVENT_PATH'), 'utf8')) as
       { pull_request?: { number?: number; head?: { sha?: string }; base?: { sha?: string } } };
     const pull = event.pull_request;
@@ -172,13 +226,11 @@ export async function previewMain(env: NodeJS.ProcessEnv = process.env,
     const repositoryName = required(env.GITHUB_REPOSITORY, 'GITHUB_REPOSITORY').split('/');
     if (repositoryName.length !== 2) throw new Error('Identidade do repositório inválida');
     const [owner, repo] = repositoryName as [string, string];
-    const token = dependencies.read && dependencies.implementations ? '' :
+    const token = dependencies.read && (dependencies.implementations || env.VERSIONING_ORIGIN_DIR) ? '' :
       required(env.GH_TOKEN ?? env.GITHUB_TOKEN, 'GH_TOKEN');
     const transport = dependencies.transport ?? fetchTransport(token);
     const read = dependencies.read ?? createReadApi(transport);
     const adapter = required(env.ADAPTER, 'ADAPTER') as AdapterId;
-    const implementations = dependencies.implementations ??
-      await defaultImplementation(adapter, owner, repo, transport);
     const projectPath = env.PROJECT_PATH ?? '.';
     const context: AdapterContext = {
       repository: join(workspace, projectPath), workspace, projectPath,
@@ -187,10 +239,13 @@ export async function previewMain(env: NodeJS.ProcessEnv = process.env,
       configuration: env.ADAPTER_BIN ? { adapterBin: env.ADAPTER_BIN } : {},
     };
     const checks = (env.REQUIRED_CHECKS ?? 'build').split(',').map(value => value.trim()).filter(Boolean);
-    const output = await runPreview({ owner, repo, prNumber: pull.number,
-      adapter, context,
-      implementations, read, git: dependencies.git ?? createGitPort(workspace),
-      baseSha: pull.base.sha, requiredChecks: checks });
+    const common = { owner, repo, prNumber: pull.number, adapter, context, read,
+      git: dependencies.git ?? createGitPort(workspace), baseSha: pull.base.sha, requiredChecks: checks };
+    const output = env.VERSIONING_ORIGIN_DIR ? await runTechnicalPreview({ ...common,
+      origin: loadArtifact(env.VERSIONING_ORIGIN_DIR), centralSha: required(env.CENTRAL_SHA, 'CENTRAL_SHA'),
+      centralRepository: required(env.CENTRAL_REPOSITORY, 'CENTRAL_REPOSITORY') }) :
+      await runPreview({ ...common, implementations: dependencies.implementations ??
+        await defaultImplementation(adapter, owner, repo, transport) });
     const directory = env.VERSIONING_OUTPUT_DIR ?? join(env.RUNNER_TEMP ?? workspace, 'versioning');
     mkdirSync(directory, { recursive: true });
     writeFileSync(join(directory, 'version-report.json'), json(output.report));

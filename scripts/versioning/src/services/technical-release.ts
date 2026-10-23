@@ -3,6 +3,7 @@ import { createReadApi, createWriteApi, type GitHubTransport } from '../ports/gi
 import { validateReleasePlan, type ReleasePlan } from '../adapter-contract.js';
 import { validateVersionFiles, type VersionFilesBundle } from './version-files.js';
 import { validateLegacyBundle, type LegacyBundle } from './legacy-technical-merge.js';
+import { validateSourceArtifact, type SourceArtifact } from './publication-artifact.js';
 
 const shaPattern = /^[0-9a-f]{40}$/i;
 const namePattern = /^[A-Za-z0-9_.-]+$/;
@@ -29,6 +30,7 @@ function digest(value: unknown): string {
 }
 
 export interface TechnicalPrProvenance {
+  readonly sourceArtifact?: SourceArtifact;
   readonly originPrNumber: number;
   readonly functionalSha: string;
   readonly planDigest: string;
@@ -48,13 +50,15 @@ export function parseTechnicalPrProvenance(body: unknown): TechnicalPrProvenance
     typeof value.bundleDigest !== 'string' || !/^[0-9a-f]{64}$/.test(value.bundleDigest)) {
     throw new Error('Proveniência do PR técnico incompleta');
   }
-  return { originPrNumber: Number(value.originPrNumber),
+  return { ...(value.sourceArtifact ? { sourceArtifact: validateSourceArtifact(value.sourceArtifact) } : {}),
+    originPrNumber: Number(value.originPrNumber),
     functionalSha: sha(value.functionalSha, 'Origem funcional'),
     planDigest: value.planDigest, bundleDigest: value.bundleDigest,
     headSha: sha(value.headSha, 'Head técnico'), treeSha: sha(value.treeSha, 'Árvore técnica') };
 }
 
 export interface TechnicalPrRequest {
+  readonly sourceArtifact?: SourceArtifact;
   readonly repository: string;
   readonly owner: string;
   readonly repo: string;
@@ -82,6 +86,9 @@ export function technicalBranchName(owner: string, repo: string, targetBranch: s
 
 export async function prepareTechnicalPr(request: TechnicalPrRequest): Promise<TechnicalPrResult> {
   const plan = validateReleasePlan(request.plan);
+  const sourceArtifact = request.sourceArtifact ? validateSourceArtifact(request.sourceArtifact) : undefined;
+  if (sourceArtifact && (sourceArtifact.repository !== `${request.owner}/${request.repo}` ||
+    sourceArtifact.planDigest !== plan.planDigest)) throw new Error('Artifact de origem diverge do plano técnico');
   if (!namePattern.test(request.owner) || !namePattern.test(request.repo) ||
     typeof request.botLogin !== 'string' || !/^[A-Za-z0-9_.-]+\[bot\]$/.test(request.botLogin) ||
     !Number.isSafeInteger(request.originPrNumber) || request.originPrNumber <= 0) {
@@ -150,6 +157,18 @@ export async function prepareTechnicalPr(request: TechnicalPrRequest): Promise<T
     if (current && previous.planDigest === plan.planDigest && previous.functionalSha === plan.sha &&
       previous.bundleDigest === bundleDigest) {
       if (typeof current.html_url !== 'string') throw new Error('URL do PR técnico inválida');
+      if (sourceArtifact && JSON.stringify(sourceArtifact) !== JSON.stringify(previous.sourceArtifact)) {
+        const refreshedBody = String(current.body).replace(marker,
+          `<!-- central-versioning\n${JSON.stringify({ ...previous, sourceArtifact })}\n-->`);
+        const refreshed = record(await write.patch(`${scope}/pulls/${current.number}`,
+          { body: refreshedBody }), 'Artifact de origem atualizado');
+        if (sha(record(refreshed.head, 'Head técnico').sha, 'Head técnico') !== oldHead ||
+          JSON.stringify(parseTechnicalPrProvenance(refreshed.body).sourceArtifact) !== JSON.stringify(sourceArtifact)) {
+          throw new Error('PR técnico não confirmou a nova evidência de origem');
+        }
+        return { outcome: 'updated', number: Number(current.number), url: current.html_url,
+          branch: technicalBranch, headSha: oldHead, functionalSha: plan.sha };
+      }
       return { outcome: 'existing', number: Number(current.number), url: current.html_url,
         branch: technicalBranch, headSha: oldHead, functionalSha: plan.sha };
     }
@@ -181,7 +200,9 @@ export async function prepareTechnicalPr(request: TechnicalPrRequest): Promise<T
     { message, tree: treeSha, parents }), 'Commit técnico');
   const headSha = sha(commitValue.sha, 'Commit técnico');
   if (await targetRef() !== plan.sha) throw new Error('Branch-alvo avançou durante preparo técnico');
-  const details: TechnicalPrProvenance = { originPrNumber: request.originPrNumber, functionalSha: plan.sha,
+  const details: TechnicalPrProvenance = {
+    ...(sourceArtifact ? { sourceArtifact } : {}),
+    originPrNumber: request.originPrNumber, functionalSha: plan.sha,
     planDigest: plan.planDigest, bundleDigest, headSha, treeSha };
   const title = `chore(release): ${plan.adapter} ${plan.entries.map(entry => entry.tag).join(', ')}`;
   const body = `Origin-PR: #${request.originPrNumber}\nOrigin-SHA: ${plan.sha}\nAdapter: ${plan.adapter}` +
