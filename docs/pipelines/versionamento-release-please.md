@@ -89,6 +89,8 @@ Roteiro posterior, não executado pelo teste:
 
 Conclusão de milestones em 100%, fechamento automático, concorrência, rejeição de versões conflitantes e identificação mais forte do PR técnico permanecem evoluções futuras. Nenhuma aplicação piloto externa foi modificada.
 
+O [PR de entrega do piloto](https://github.com/aplicacoesBoilerplate/.github/pull/17) tem milestone v0.0.1 e aguarda os merges humanos do roteiro. O piloto atual é **o próprio aplicacoesBoilerplate/.github**: fornecedor do called e consumidor via self-caller. Após validar esse ciclo interno, o usuário determinou testar pelo menos um repositório consumidor distinto antes de avaliar o fechamento da issue #4. A escolha e as alterações desse consumidor ficam para a próxima etapa; não fazem parte deste PR.
+
 Referências: [inputs oficiais da Action](https://github.com/googleapis/release-please-action/blob/v4/README.md#action-inputs), [estratégia Simple usada pelo teste](https://github.com/googleapis/release-please/blob/v17.3.0/src/strategies/simple.ts), [referências locais de workflows no mesmo commit](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows#calling-a-reusable-workflow), [requisito da default branch para workflow_dispatch](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
 
 ---

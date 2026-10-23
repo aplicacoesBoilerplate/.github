@@ -80,3 +80,10 @@ Todas as asserções novas pertencem a RPSP-01 a RPSP-04. As asserções de cami
 - Duas mutações de wiring detectadas (dependência da CI removida e central-ref mutável). Controle positivo com version.txt 0.0.1 e baseline restaurada aprovados.
 - Milestone v0.0.1 criada em https://github.com/aplicacoesBoilerplate/.github/milestone/2. A v1.0.0 e a issue #4 permanecem inalteradas. A API confirmou gersonfribeiro como administrador para a revisão humana; a conta ativa do agente é agentegersonfribeiro-AI.
 - Autorizado publicar a mesma branch e abrir PR de entrega, com solicitação de revisão ao mantenedor. Sem merge, tag ou Release pelo agente.
+
+### PR de entrega aberto
+
+- https://github.com/aplicacoesBoilerplate/.github/pull/17 — fix(versioning): habilita o piloto real do Release Please.
+- Autor agentegersonfribeiro-AI, branch codex/release-please-self-pilot para master, milestone v0.0.1 e revisão solicitada a gersonfribeiro. Artifact anexado a este chat. SHA inicial do PR 0667b4a06a11cdf7959512d9339fe217b4e1ac56.
+- Na criação, a CI, o teste hospedado e o build da documentação estavam em execução; a validação do título já estava aprovada. Nenhum merge foi executado.
+- Critério adicional confirmado pelo usuário após a revisão: concluir piloto interno e testar em pelo menos um consumidor distinto antes de avaliar o fechamento da issue #4. A spec foi atualizada; isso não autoriza alterar um consumidor externo nesta iteração.

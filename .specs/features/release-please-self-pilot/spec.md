@@ -138,6 +138,7 @@ Essa é uma regra da nossa orquestração. Não é uma exigência universal do R
 3. WHEN o PR de release autorizado e com CI aprovada for integrado THEN a tag publicada SHALL apontar para o SHA integrado daquele PR de release.
 4. WHEN a tag e a Release forem publicadas THEN a evidência SHALL registrar os links do PR, da execução e da Release, além da versão e do SHA alvo.
 5. IF a CI do PR automatizado exigir aprovação de execução THEN o roteiro SHALL orientar a ação humana necessária sem dispensar a CI.
+6. IF o piloto interno passar mas ainda não houver validação em pelo menos um repositório consumidor distinto THEN o processo SHALL manter a issue #4 aberta até essa validação e avaliação final do usuário.
 
 **Independent Test**: Executar o roteiro manual no GitHub após autorização; antes disso, todos os critérios que exigem escrita remota permanecem não verificados.
 
@@ -208,6 +209,7 @@ O PR de entrega será aberto na mesma branch, sem palavra-chave de fechamento da
 - [x] O roteiro de teste diferencia preparação local de execução remota autorizada.
 - [ ] Após autorização específica, há evidência de PR de release, merge humano, tag no SHA correto e Release.
 - [x] Não há alterações nas aplicações externas nem fechamento automático da issue de versionamento.
+- [ ] Depois do piloto interno, validar o fluxo em outro repositório consumidor antes de avaliar o fechamento da issue #4. O consumidor e sua alteração exigem autorização posterior.
 
 ## Evidence and References
 
