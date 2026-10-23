@@ -17,7 +17,7 @@ const local=steps.findIndex(step=>step.run==='node tests/versioning/run.mjs --lo
 assert.ok(install<typecheck&&typecheck<integrity&&integrity<local,'validate received dist before any execution/build rewrite');
 for(const step of steps.slice(0,integrity))assert.doesNotMatch(step.run??'',/run build|\btsc\b/);
 for(const command of ['real-standard-version.mjs','real-standard-bootstrap.mjs','real-changesets.mjs',
-  'maven-setup.mjs','real-jgitver.mjs','real-maven-reactor.mjs','real-jgitver-prefix.mjs','real-release-please.mjs']) {
+  'maven-setup.mjs','real-jgitver.mjs','real-maven-reactor.mjs','real-jgitver-prefix.mjs','real-release-please.mjs','real-maven-artifacts.mjs']) {
   assert.ok(steps.some(step=>(step.run??'').includes('node tests/versioning/'+command)),command+' is mandatory');
 }
 assert.ok(steps.some(step=>step.run==='node tests/versioning/run.mjs --real-go'));

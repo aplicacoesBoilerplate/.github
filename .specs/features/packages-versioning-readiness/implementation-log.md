@@ -1,5 +1,28 @@
 # Diário de implementação — versionamento central em TypeScript
 
+## T28 — verificação de distribuição Maven (2026-10-23)
+
+Predecessor persistido: T27 `a90a94d4cb5b475eeabe6a0dc0c40c2df06efc4e`, HEAD igual ao ls-remote e árvore limpa. Premissas: versão única nativa, checkout/tag/build no published_sha; POMs instalados em staging são os bytes distribuíveis, não o effective-pom isolado. Nenhum deploy, credencial de registry ou alteração do piloto. Skill packages orienta inventário e consumo imutável; TLC exige RED/GREEN e Native-Maven antes de concluir.
+
+Componente entregue: distribution/maven-artifacts.ts e auxiliares compartilhados de identidade/arquivos, testes determinísticos e reactor real com install local. XML inspecionado por fast-xml-parser 5.11.2 fixado no pacote central, sem parser artesanal, Python no runtime ou dependência de manifest consumidor. Essa dependência só é importada no verificador de distribuição, nunca pelo escritor. Context7 indisponível (nenhuma ferramenta exposta); APIs e limites conferidos nas fontes oficiais do parser, no layout Maven e no código jgitver 1.9.0. Versão/referência/digest/SHA/tag incorretos são rejeitados antes de consulta ao registry; relatório por coordenada bloqueia conflito, identidade não comprovada e retry parcial indiscriminado.
+
+RED: a fixture nova falhou pela ausência do módulo compilado. GREEN: 52 assertions determinísticas cobrem os seis casos exigidos e negativos de paths, symlink, XML malformado/DOCTYPE, duplicidade, inventário incompleto, propriedades cíclicas e referências gerenciadas por BOM. O teste real detectou listas de texto em configuração de plugins que o primeiro leitor não aceitava; corrigida a travessia e acrescentado caso de regressão, sem remover rejeições. A ferramenta jar não estava no PATH do Windows: a fixture agora localiza o JDK real, sem substituir o teste por mock nem alterar o ambiente do usuário.
+
+Native-Maven aprovado, todos exit0: maven-setup, real-jgitver, real-maven-reactor (118 assertions), real-jgitver-prefix e novo real-maven-artifacts. O novo teste instala em repositório local temporário vazio, com settings vazios e ambiente sem credenciais; verifica seis arquivos reais dos quatro módulos, classes compiladas nos JARs, propriedades jgitver/SHA, modelo efetivo e POMs efetivamente instalados. Adulterar o POM instalado com ${revision} não resolvido bloqueia. Retry idêntico retorna already-distributed; não houve deploy. Java local22.0.1/Maven3.9.9; fonte compilada com release21. Linux/Java21 hospedados permanecem T34.
+
+Gate Build complementar aprovado na configuração final: 55 fixtures locais (baseline preservada), typecheck, check-dist, diff --check, validate_spec/validate_tasks --strict (0/0) e check_commit. A suíte foi reiniciada depois da correção XML e terminou exit0. npm audit --omit=dev --audit-level=high: zero vulnerabilidades reportadas. A CI ganhou o teste nativo, verificado pelo contrato semântico; execução hospedada não foi presumida.
+
+Check A/C — rastreabilidade bidirecional:
+
+| Critério / requisito | Assertions | Esperado |
+| --- | --- | --- |
+| SHA/tag/build / PKG-07.1,4–5 | maven-artifacts.mjs:70–72,73–78; real-maven-artifacts.mjs:41,51,53 | Checkout, tag com peeling, run e digest coerentes; entradas inválidas fazem zero lookups |
+| POM/modelo/ref / PKG-07.2 | maven-artifacts.mjs:68–69,79–98; real-maven-artifacts.mjs:65–78 | Quatro módulos e versões alinhados; dependência antiga, revision residual, ciclo e modelo incompleto rejeitados; BOM válido aceito |
+| Registry imutável / PKG-07.6 | maven-artifacts.mjs:56–66 | Bytes idênticos dispensam envio; conflito/indisponibilidade bloqueiam sem vazar mensagem upstream |
+| Parcial / PKG-07.9 | maven-artifacts.mjs:58–61 | Seis situações listadas, duas existentes; distributionAllowed falso e reconciliação explícita necessária |
+
+Check B: node:assert compara valores concretos, zero consultas nos negativos locais, bytes e classes de ferramentas reais; transporte de registry controlado só certifica o contrato local, não a entrega C. Check D: testes colocalizados, import Node compilado, parsing XML mantido por biblioteca fixada; nenhuma lógica Shell nova. Fontes: [parser e tipos](https://github.com/NaturalIntelligence/fast-xml-parser), [layout Maven](https://maven.apache.org/repositories/layout.html), [POM temporário jgitver1.9.0](https://raw.githubusercontent.com/jgitver/jgitver-maven-plugin/1.9.0/src/main/java/fr/brouillard/oss/jgitver/JGitverUtils.java). A instalação global da skill não foi alterada.
+
 ## T1 — conciliação da base (2026-10-21)
 
 Referências verificadas com `git show`: master `3511b1f1266a35d43ff12a81306514c44cc65fc5`, PR #12 `c7e610117edfbe8a6338ec0d3b6703156026ef70`, PR #13 `b1b2ec51906306c7afa5129f6557b30b9528f6b5`, ancestral comum `fcf31e08165156a5938eec7577bbf1be945f365f`. A base de trabalho vinha do #12; o delta pertinente do #13 foi integrado em merge local, mantendo as especificações anteriores como histórico.

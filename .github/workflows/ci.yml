@@ -109,6 +109,8 @@ jobs:
         run: |
           node tests/versioning/real-maven-reactor.mjs
           node tests/versioning/real-jgitver-prefix.mjs
+      - name: Validate real distributable Maven POMs and JARs without deploy
+        run: node tests/versioning/real-maven-artifacts.mjs
       - name: Set up Go
         uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:

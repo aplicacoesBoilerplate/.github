@@ -19,6 +19,7 @@ const localFixtures = [
   'legacy-technical-merge.mjs',
   'legacy-typescript.mjs',
   'migration-inventory.mjs',
+  'maven-artifacts.mjs',
   'version-report.mjs',
   'version-pr.mjs',
   'go-version.mjs',

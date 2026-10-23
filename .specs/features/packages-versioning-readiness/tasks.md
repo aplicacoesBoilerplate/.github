@@ -5,7 +5,7 @@
 Usar a skill `tlc-spec-driven` e seguir seu fluxo Execute e Critical Rules. Se a skill não puder ser carregada, parar e informar o usuário. Testes derivam da spec; cada tarefa futura inclui seus testes, gate, status e commit atômico. Nunca enfraquecer testes para acomodar a implementação. O verificador final é distinto do autor.
 
 **Design:** [design.md](design.md). **Spec:** [spec.md](spec.md).
-**Status:** Execução em andamento; 27/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
+**Status:** Execução em andamento; 28/40 tarefas concluídas. Evidências em [implementation-log.md](implementation-log.md).
 **Escopo da execução:** implementar neste chat, uma tarefa por vez, conforme preferência já registrada. A revisão independente documental anterior não substitui o Verifier de implementação.
 
 T1–T33 são preparação e verificação locais da entrega A. T34–T35 completam sua disponibilidade remota. T36–T37 produzem B; T38–T39 produzem C. T40 consolida o aceite completo. Etapas remotas ficam pendentes sem execução autorizada. Autorizações anteriores devem ser conferidas pelo alvo/ação antes de pedir nova permissão; esta rodada não as exerce.
@@ -40,7 +40,7 @@ Amostras lidas: adapter-registry, release-policy, version-bundle, native-workflo
 | Quick | Cada tarefa com código | `node tests/versioning/run.mjs --local` + `npm --prefix scripts/versioning run typecheck` (NOVO T2); rodar diretamente a fixture afetada quando ainda na preparação RED |
 | Build | Configuração, workflow, tipos e fim de fase, a partir de T3 | Quick + `npm --prefix scripts/versioning run check-dist` (NOVO T3) + `git diff --check`; check-dist compila isoladamente sem alterar dist. Ao editar fontes, gerar dist com `npm --prefix scripts/versioning run build` antes de preparar o commit. Na CI, conferir o dist recebido ANTES de qualquer build que o sobrescreva |
 | Native-Go | T11 e regressão final | Quick + `node tests/versioning/run.mjs --real-go` |
-| Native-Maven | T12/T28 e regressão final | Quick + `node tests/versioning/maven-setup.mjs`, `node tests/versioning/real-jgitver.mjs`, `node tests/versioning/real-maven-reactor.mjs`, `node tests/versioning/real-jgitver-prefix.mjs`; T28 acrescenta `node tests/versioning/maven-artifacts.mjs` (NOVO) |
+| Native-Maven | T12/T28 e regressão final | Quick + `node tests/versioning/maven-setup.mjs`, `node tests/versioning/real-jgitver.mjs`, `node tests/versioning/real-maven-reactor.mjs`, `node tests/versioning/real-jgitver-prefix.mjs`; T28 acrescenta `node tests/versioning/maven-artifacts.mjs` (contrato no runner local) e `node tests/versioning/real-maven-artifacts.mjs` (install nativo sem deploy) |
 | Native-Standard | T13 e regressão final | Quick + `node tests/versioning/real-standard-version.mjs` + `node tests/versioning/real-standard-bootstrap.mjs` |
 | Native-Changesets | T14 e regressão final | Quick + `node tests/versioning/real-changesets.mjs`; ampliar o mesmo comando para testar os dois lockfiles fixados 2.29.5/3.0.3 |
 | Native-ReleasePlease | T16 e regressão final | Quick + `node tests/versioning/real-release-please.mjs` (NOVO T16), SDK real 17.11.2 com transporte controlado |
@@ -560,8 +560,8 @@ Ferramentas previstas por tarefa: TLC como protocolo; Git/filesystem para trabal
 **Tools**: ferramentas previstas acima; execução local, sem publicação remota.
 **Done when**:
 
-- [ ] 6 casos mínimos: BOM/parent/core/starter alinhados, revision residual, dependência antiga, SHA/tag divergente, coordenada já divergente e estado parcial; nenhuma publicação na fixture.
-- [ ] Gate Native-Maven passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
+- [x] 6 casos mínimos: BOM/parent/core/starter alinhados, revision residual, dependência antiga, SHA/tag divergente, coordenada já divergente e estado parcial; nenhuma publicação na fixture.
+- [x] Gate Native-Maven passa, com comandos/resultados e contagens registrados; status e rastreabilidade acompanham o commit.
 
 **Tests**: integration + native: nova maven-artifacts.mjs; verificar POM distribuível e digest, não só effective-pom do build.
 **Gate**: Native-Maven (Gate Check Commands).
