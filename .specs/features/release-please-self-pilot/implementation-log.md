@@ -53,3 +53,14 @@ Todas as asserções novas pertencem a RPSP-01 a RPSP-04. As asserções de cami
 - Sensor: 3/3 mutações detectadas, com baseline da cópia restaurada aprovada e checkout real preservado.
 - Auditoria adicional: npm audit --prefix ci-scripts --omit=dev --audit-level=high retornou 0 vulnerabilidades.
 - Autorização conferida: conta agentegersonfribeiro-AI com WRITE; somente push da branch de teste e seu run. Antes do push, master continua e05a76a, e a API não retornou tags nem Releases.
+
+## Execução hospedada: PASS
+
+- [Release Please Functional Pilot: run 40033980369](https://github.com/aplicacoesBoilerplate/.github/actions/runs/40033980369).
+- SHA executado: b6493740679134fc540c27344e4d8ec28cc23004; evento push, branch codex/release-please-self-pilot.
+- Job: Caller to real release engine (no publication) / Validate repository; conclusão success. Setup Node confirmou v22.23.3; permissões confirmaram Contents: read.
+- Run TypeScript tests: 7 testes, 7 aprovados, 0 falhas, 0 skips. Diagnóstico do SDK: versão 0.0.1, tag proposta v0.0.1, SHA simulado b repetido 40 vezes, nenhuma publicação executada.
+- Check TypeScript types: tsc --noEmit aprovado.
+- Limites preservados: master e05a76a; nenhuma tag ou Release retornada pela API após o run; nenhum PR criado, nenhum pacote publicado, nenhuma aplicação externa alterada.
+- O primeiro push usou também o transporte SSH configurado no origin, e o actor desse run foi gersonfribeiro. A credencial ativa da CLI continua agentegersonfribeiro-AI; o push deste registro usa URL HTTPS direta e o helper da CLI, sem alterar configuração global.
+- O resultado hospedado confirma T1-T3 no runner real. Não confirma RPSP-05 nem os critérios de produção marcados PENDENTES no relatório independente.

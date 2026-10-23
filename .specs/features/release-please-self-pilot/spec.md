@@ -13,11 +13,11 @@ O próprio `aplicacoesBoilerplate/.github` será o primeiro consumidor da pipeli
 
 ## Goals
 
-- [ ] Preparar um caller de teste do próprio repositório que reutilize a CI e exercite o contrato do workflow central disponível aos demais projetos.
-- [ ] Disponibilizar o modo nativo `simple` do Release Please para atualizar `version.txt` e `CHANGELOG.md`, sem distribuição de pacotes.
-- [ ] Cobrir localmente os caminhos reais de checkout, a configuração efetivamente entregue à Action e os limites de escrita.
-- [ ] Definir um roteiro verificável para o ciclo PR funcional, PR de release, merge humano, tag e GitHub Release.
-- [ ] Executar o mesmo teste funcional no runner hospedado, distinguindo essa evidência da publicação real de PR/tag/Release, ainda pendente.
+- [x] Preparar um caller de teste do próprio repositório que reutilize a CI e exercite o contrato do workflow central disponível aos demais projetos.
+- [x] Disponibilizar o modo nativo `simple` do Release Please para atualizar `version.txt` e `CHANGELOG.md`, sem distribuição de pacotes.
+- [x] Cobrir localmente os caminhos reais de checkout, a configuração efetivamente entregue à Action e os limites de escrita.
+- [x] Definir um roteiro verificável para o ciclo PR funcional, PR de release, merge humano, tag e GitHub Release.
+- [x] Executar o mesmo teste funcional no runner hospedado, distinguindo essa evidência da publicação real de PR/tag/Release, ainda pendente.
 
 ## Out of Scope
 
@@ -186,11 +186,13 @@ Essa é uma regra da nossa orquestração. Não é uma exigência universal do R
 | RPSP-01 | Piloto simple sem publicação de pacotes | Execute | Implementing: contrato e SDK; publicação real pendente |
 | RPSP-02 | Contrato real entre caller, checkout e Action | Execute | Implementing: paths e bindings; Action hospedada pendente |
 | RPSP-03 | Milestone e limites de merge | Execute | Implementing: eventos simulados; merges reais pendentes |
-| RPSP-04 | Evidência local e separação de cobertura | Execute | Verified locally by independent review; hosted run pending |
+| RPSP-04 | Evidência local e separação de cobertura | Execute | Verified by independent review and hosted run 40033980369 |
 | RPSP-05 | Ciclo remoto autorizado e rastreável | Specify | Pending |
 | RPSP-06 | Retry, concorrência e falhas: evolução fora do MVP | Future | Pending |
 
 **Coverage:** 6 requisitos identificados. T1 executa o contrato e o SDK real sem rede; T2/T3 entregam o caller de teste hospedado e o roteiro. RPSP-05 permanece pendente de autorização para o ciclo real de publicação; RPSP-06 é futuro.
+
+**Evidência hospedada:** [run 40033980369](https://github.com/aplicacoesBoilerplate/.github/actions/runs/40033980369), SHA `b6493740679134fc540c27344e4d8ec28cc23004`: sete testes aprovados, zero skips e typecheck aprovado. Não houve execução da Action com escrita nem publicação real; os resultados pendentes no relatório independente continuam pendentes.
 
 ## Success Criteria
 
