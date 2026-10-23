@@ -7,7 +7,8 @@ import { join, resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '../..');
 const workspace = mkdtempSync(join(tmpdir(), 'go-version-'));
 const bin = join(workspace, 'bin');
-const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
+import { collectGoVersion } from '../../scripts/versioning/dist/adapters/go-gitsemver.js';
+import { runProcess } from '../../scripts/versioning/dist/ports/process.js';
 
 try {
   mkdirSync(bin);
@@ -30,15 +31,15 @@ console.log(JSON.stringify({SemVer:process.env.TEST_VERSION,Sha:process.env.TEST
 `);
   chmodSync(tool, 0o755);
 
-  const run = (version, sha) => spawnSync(bash, [join(root, 'scripts/versioning/prepare-release.sh')], {
-    cwd: workspace,
-    encoding: 'utf8',
-    env: { ...process.env,
-      PATH: `${bin}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH}`,
-      RELEASE_GATES_VALIDATED: '1', ADAPTER: 'go-gitsemver', PROJECT_PATH: '.',
-      GITHUB_WORKSPACE: workspace, TARGET_BRANCH: 'master', GITHUB_SHA: commit,
-      TEST_VERSION: version, TEST_SHA: sha },
-  });
+  const run = (version, nativeSha) => {
+    const env={...process.env,GITHUB_SHA:commit,TEST_VERSION:version,TEST_SHA:nativeSha};
+    try {
+      const report=collectGoVersion({repository:workspace,workspace,projectPath:'.',targetBranch:'master',
+        sha:commit,tagPrefix:'v',configuration:{adapterBin:tool}},
+        {run:request=>runProcess({...request,env})});
+      return {status:0,stdout:report.candidateVersion,stderr:report.native.explanation};
+    } catch(error) { return {status:1,stdout:'',stderr:error.message}; }
+  };
 
   const valid = run('0.0.1', commit);
   assert.equal(valid.status, 0, valid.stderr);
@@ -61,8 +62,9 @@ console.log(JSON.stringify({SemVer:process.env.TEST_VERSION,Sha:process.env.TEST
   const artifactDirectory = mkdtempSync(join(tmpdir(), 'version-report-output-'));
   const reportPath = join(artifactDirectory, 'version-report.json');
   const marker = join(bin, 'adapter-executed');
-  const runCollector = (extraEnv = {}, projectPath = '.') => spawnSync(bash,
-    [join(root, 'scripts/versioning/collect-version-report.sh'), reportPath], {
+  const runCollector = (extraEnv = {}, projectPath = '.') => spawnSync(process.execPath,
+    [join(root, 'scripts/versioning/collect-version-report.mjs'), extraEnv.ADAPTER ?? 'go-gitsemver',
+      resolve(workspace, projectPath), 'master', commit, workspace, tool, reportPath], {
       cwd: workspace,
       encoding: 'utf8',
       env: { ...process.env,
@@ -84,11 +86,11 @@ console.log(JSON.stringify({SemVer:process.env.TEST_VERSION,Sha:process.env.TEST
   rmSync(marker, { force: true });
   const unknown = runCollector({ ADAPTER: 'shell-from-pr' });
   assert.notEqual(unknown.status, 0, 'unknown adapter must fail');
-  assert.equal(unknown.stderr.trim(), 'Adapter não suportado: shell-from-pr');
+  assert.equal(unknown.stderr.trim(), 'Adaptador não suportado: shell-from-pr');
   assert.equal(existsSync(marker), false, 'unknown adapter must fail before command execution');
   const unsafe = runCollector({}, '../outside');
   assert.notEqual(unsafe.status, 0, 'unsafe project path must fail');
-  assert.equal(unsafe.stderr.trim(), 'project_path deve ser relativo e não pode conter ..');
+  assert.match(unsafe.stderr, /fora do workspace/);
   assert.equal(existsSync(marker), false, 'unsafe path must fail before adapter execution');
   rmSync(artifactDirectory, { recursive: true, force: true });
   console.log('Go version: native JSON, commit identity and stable version validated');

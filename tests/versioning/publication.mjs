@@ -23,7 +23,7 @@ function fixture(plan) {
   const annotated = new Map();
   const releases = new Map();
   const writes = [];
-  const state = { branch: sha, fail: '', outage: false, race: '', ready: true,
+  const state = { branch: sha, fail: '', outage: false, race: '', raceRelease: false, ready: true,
     advanceAfterRelease: false, outageAfterRelease: false };
   const read = {
     async get(endpoint) {
@@ -65,6 +65,7 @@ function fixture(plan) {
         const release = { tag_name: body.tag_name, target_commitish: body.target_commitish,
           html_url: `https://github.com/acme/app/releases/tag/${encodeURIComponent(body.tag_name)}` };
         releases.set(body.tag_name, release);
+        if (state.raceRelease) throw Error('another execution created the release');
         if (state.advanceAfterRelease) state.branch = other;
         if (state.outageAfterRelease) state.outage = true;
         return release;
@@ -139,6 +140,12 @@ const race = fixture(single()); race.state.race = 'v0.0.1';
 result = await publishReleasePlan(race.request);
 assert.equal(result.outcome, 'published'); assert.equal(result.publishedSha, sha);
 const advancedMidBatch = fixture(batch()); advancedMidBatch.state.advanceAfterRelease = true;
+const releaseRace = fixture(single()); releaseRace.state.raceRelease = true;
+releaseRace.tags.set('v0.0.1', { object: { type: 'commit', sha } });
+const racedRelease = await publishReleasePlan(releaseRace.request);
+assert.equal(racedRelease.outcome, 'already-published', 'a competing publisher owns the successful creation');
+assert.equal(racedRelease.entries[0].status, 'existing');
+assert.equal(racedRelease.publishedSha, sha);
 result = await publishReleasePlan(advancedMidBatch.request);
 assert.equal(result.outcome, 'partial'); assert.equal(result.publishedSha, '');
 assert.deepEqual(result.entries.map(item => item.status), ['created', 'pending']);

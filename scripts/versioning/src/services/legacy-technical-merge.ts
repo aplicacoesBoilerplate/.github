@@ -122,6 +122,9 @@ async function verifyLegacyState(request: LegacyTechnicalRequest,
     throw new Error('Commit técnico standard-version inválido');
   }
   const bundle = checkedBundle(request.bundle, plan, root);
+  if (git(root, 'diff', '--name-only', published, '--', ...bundle.files.map(file => file.path))) {
+    throw new Error('Checkout dos manifests standard-version diverge do commit homologado');
+  }
   const repository = `${request.owner}/${request.repo}`;
   const current = await collectPrEvidence(request.read, { repository, targetBranch: plan.branch,
     prNumber: request.origin.number, requiredChecks: request.requiredChecks });

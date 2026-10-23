@@ -147,13 +147,13 @@ export async function publishReleasePlan(request) {
                     await request.write.post(`${scope}/git/refs`, {
                         ref: `refs/tags/${entry.tag}`, sha: referenceSha,
                     });
+                    wrote.add(entry.tag);
                 }
                 catch (error) {
                     const race = await inventory(entry);
                     if (race.conflict || race.tagSha !== publishedSha)
                         throw error;
                 }
-                wrote.add(entry.tag);
                 observed = await inventory(entry);
                 if (observed.conflict || observed.tagSha !== publishedSha)
                     throw new Error(`Tag ${entry.tag} não convergiu`);
@@ -177,7 +177,6 @@ export async function publishReleasePlan(request) {
                     if (race.conflict || !race.releaseUrl)
                         throw error;
                 }
-                wrote.add(entry.tag);
                 observed = await inventory(entry);
                 if (observed.conflict || !observed.releaseUrl)
                     throw new Error(`Release ${entry.tag} não convergiu`);

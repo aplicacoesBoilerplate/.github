@@ -16,12 +16,18 @@ try {
   writeFileSync(join(root, 'pom.xml'), '<project/>\n');
   writeFileSync(join(root, '.mvn', 'extensions.xml'), '<extensions><extension><groupId>fr.brouillard.oss</groupId><artifactId>jgitver-maven-plugin</artifactId><version>1.9.0</version></extension></extensions>\n');
   const standard = join(root, 'node_modules', '.bin', 'standard-version');
-  writeFileSync(standard, '#!/usr/bin/env bash\n[[ "$*" == *"--dry-run"* && "$*" == *"infra/v"* ]] || exit 9\necho "bumping version in package.json from 1.0.0 to 1.1.0"\n');
+  writeFileSync(standard, `#!/usr/bin/env node
+if(!process.argv.includes('--dry-run')||!process.argv.includes('infra/v'))process.exit(9);
+console.log('bumping version in package.json from 1.0.0 to 1.1.0');
+`);
   chmodSync(standard, 0o755);
   const maven = join(root, 'mvnw');
-  writeFileSync(maven, '#!/usr/bin/env bash\n[[ "$JGITVER_BRANCH" == master ]] || exit 8\n'+
-    'for arg in "$@"; do case "$arg" in -Djgitver.export-properties-path=*) output="${arg#*=}";; esac; done\n'+
-    'printf "jgitver.used_version=1.0.1\\njgitver.calculated_version=1.0.1\\njgitver.git_sha1_full=%s\\njgitver.plugin-version=1.9.0\\n" "$GITHUB_SHA" > "$output"\n');
+  writeFileSync(maven, `#!/usr/bin/env node
+if(process.env.JGITVER_BRANCH!=='master')process.exit(8);
+const path=process.argv.find(arg=>arg.startsWith('-Djgitver.export-properties-path=')).split('=').slice(1).join('=');
+require('node:fs').writeFileSync(path,['jgitver.used_version=1.0.1','jgitver.calculated_version=1.0.1',
+  'jgitver.git_sha1_full='+process.env.GITHUB_SHA,'jgitver.plugin-version=1.9.0'].join('\\n')+'\\n');
+`);
   chmodSync(maven, 0o755);
   if (process.platform !== 'win32') assert.equal(statSync(maven).mode & 0o111, 0o111,
     'the native Maven fixture must be executable on POSIX runners');
@@ -31,7 +37,8 @@ try {
     ['standard-version', 'infra/v', '1.1.0'], ['jgitver', 'v', '1.0.1'],
   ]) {
     const output = join(root, `${adapter}.json`);
-    const result = spawnSync('bash', [join(shared, 'scripts/versioning/collect-version-report.sh'), output], {
+    const result = spawnSync(process.execPath, [join(shared, 'scripts/versioning/collect-version-report.mjs'),
+      adapter, root, 'master', sha, root, adapter === 'jgitver' ? maven : standard, output, prefix], {
       cwd: root, encoding: 'utf8', env: { ...process.env, GITHUB_WORKSPACE: root,
         GITHUB_SHA: sha, ADAPTER: adapter, TARGET_BRANCH: 'master', PROJECT_PATH: '.', TAG_PREFIX: prefix },
     });

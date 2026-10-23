@@ -39,13 +39,13 @@ checkout, em vez de conter toda a lógica no YAML. Este trecho existe na prévia
     ADAPTER: ${{ inputs.adapter }}
     TARGET_BRANCH: ${{ inputs.target_branch }}
     PROJECT_PATH: ${{ inputs.project_path }}
+    VERSIONING_WORKSPACE: ${{ github.workspace }}/consumer
     VERSIONING_OUTPUT_DIR: ${{ runner.temp }}/versioning
   run: |
-    export GITHUB_WORKSPACE="$PWD"
-    bash ../.shared-versioning/scripts/versioning/preview.sh
+    node ../.shared-versioning/scripts/versioning/dist/entrypoints/preview.js
 ```
 
-`env` fornece os parâmetros ao processo; `bash` interpreta o arquivo; um
+`env` fornece os parâmetros ao processo; Node executa o JavaScript compilado; um
 retorno diferente de zero faz a etapa falhar. `run` não baixa arquivos nem
 transforma o script em outro workflow: os arquivos precisam estar disponíveis
 no runner. Essa abordagem também permite testar os scripts fora do Actions.

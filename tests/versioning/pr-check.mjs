@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { chmodSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -9,7 +9,9 @@ const temp = mkdtempSync(join(tmpdir(), 'version-pr-check-'));
 const bin = join(temp, 'bin');
 const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
 const baseSha = execFileSync('git', ['rev-parse', 'HEAD^'], { cwd: root, encoding: 'utf8' }).trim();
-const bash = process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
+import { previewMain } from '../../scripts/versioning/dist/entrypoints/preview.js';
+import { collectGoVersion } from '../../scripts/versioning/dist/adapters/go-gitsemver.js';
+import { runProcess } from '../../scripts/versioning/dist/ports/process.js';
 
 try {
   mkdirSync(bin);
@@ -19,49 +21,55 @@ console.error(process.env.TEST_EXPLANATION || 'native preview explanation');
 console.log(JSON.stringify({SemVer:process.env.TEST_VERSION,Sha:process.env.GITHUB_SHA}));
 `);
   chmodSync(goTool, 0o755);
-  const gh = join(bin, 'gh');
-  writeFileSync(gh, `#!/usr/bin/env node
-const fs=require('node:fs'),a=process.argv.slice(2),path=a[a.indexOf('api')+1],sha=process.env.GITHUB_SHA;
-fs.appendFileSync(process.env.GH_CALLS,path+'\\n');
-const milestone=process.env.TEST_MILESTONE?{title:process.env.TEST_MILESTONE}:null;
-const reviewMode=process.env.TEST_REVIEW_MODE;
-if(path.includes('/pulls/42/reviews')) { const reviews=reviewMode?[{state:'APPROVED',user:{login:'bob'},submitted_at:'2026-10-01T10:01:00Z',commit_id:reviewMode==='stale'?'e'.repeat(40):sha}]:[];
-  if(reviewMode==='dismissed') reviews.push({state:'DISMISSED',user:{login:'bob'},submitted_at:'2026-10-01T10:02:00Z',commit_id:sha});
-  console.log(JSON.stringify([reviews])); }
-else if(path.includes('/issues/42/timeline')) console.log(JSON.stringify(reviewMode?[[
-  {event:'labeled',label:{name:'versioning:override'},actor:{login:'alice'},created_at:'2026-10-01T10:00:00Z'}]]:[[]]));
-else if(path.includes('/collaborators/')) console.log(JSON.stringify({role_name:reviewMode==='unauthorized'?'triage':path.includes('/alice/')?'maintain':'admin'}));
-else if(path.includes('/commits/')&&path.includes('/check-runs')) console.log(JSON.stringify([[{name:'go-ci',status:'completed',conclusion:'success'}]]));
-else if(path.endsWith('/pulls/42')) console.log(JSON.stringify({number:42,head:{ref:process.env.TEST_HEAD,sha},base:{ref:process.env.TEST_BASE},merged_at:null,merge_commit_sha:null,milestone}));
-else {console.error('unexpected '+path);process.exit(2)}
-`);
-  chmodSync(gh, 0o755);
-
   const event = (head, base, milestone = null) => ({ pull_request: { number: 42,
     base: { ref: base, sha: baseSha }, head: { ref: head, sha }, milestone } });
-  const run = (payload, overrides = {}) => {
+  const run = async (payload, overrides = {}) => {
     const caseDir = mkdtempSync(join(temp, 'case-'));
     const eventPath = join(caseDir, 'event.json');
     const outputPath = join(caseDir, 'outputs.txt');
     const summaryPath = join(caseDir, 'step-summary.md');
     const callsPath = join(caseDir, 'gh.log');
     writeFileSync(eventPath, JSON.stringify(payload)); writeFileSync(outputPath, ''); writeFileSync(callsPath, '');
-    const result = spawnSync(bash, [join(root, 'scripts/versioning/preview.sh')], {
-      cwd: root, encoding: 'utf8', env: { ...process.env,
-        PATH: `${bin}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH}`,
-        GITHUB_EVENT_PATH: eventPath, GITHUB_WORKSPACE: root, GITHUB_REPOSITORY: 'owner/repo',
-        TARGET_BRANCH: 'master', ADAPTER: 'go-gitsemver', PROJECT_PATH: '.', GITHUB_OUTPUT: outputPath,
-        VERSIONING_OUTPUT_DIR: caseDir, GITHUB_STEP_SUMMARY: summaryPath,
-        GH_TOKEN: 'fixture', TEST_VERSION: '0.0.1',
-        TEST_HEAD: payload.pull_request.head.ref, TEST_BASE: payload.pull_request.base.ref,
-        TEST_MILESTONE: payload.pull_request.milestone?.title ?? '', GH_CALLS: callsPath, ...overrides },
-    });
-    return { result, caseDir, summaryPath, output: readFileSync(outputPath, 'utf8'), calls: readFileSync(callsPath, 'utf8') };
+    const env = { ...process.env, GITHUB_EVENT_PATH: eventPath, GITHUB_WORKSPACE: root,
+      GITHUB_SHA: sha, GITHUB_REPOSITORY: 'owner/repo', TARGET_BRANCH: 'master',
+      ADAPTER: 'go-gitsemver', ADAPTER_BIN: goTool, PROJECT_PATH: '.', REQUIRED_CHECKS: 'go-ci',
+      GITHUB_OUTPUT: outputPath, VERSIONING_OUTPUT_DIR: caseDir, GITHUB_STEP_SUMMARY: summaryPath,
+      GH_TOKEN: 'fixture', TEST_VERSION: '0.0.1', ...overrides };
+    const reviewMode = overrides.TEST_REVIEW_MODE;
+    const transport = async request => {
+      assert.equal(request.method, 'GET', 'preview cannot mutate the remote');
+      const endpoint = new URL(request.url).pathname;
+      const fs = await import('node:fs');
+      fs.appendFileSync(callsPath, endpoint + '\n');
+      let body;
+      if (endpoint.endsWith('/pulls/42/reviews')) {
+        body = reviewMode ? [{state:'APPROVED',user:{login:'bob',type:'User'},
+          submitted_at:'2026-10-01T10:01:00Z',commit_id:reviewMode==='stale'?'e'.repeat(40):sha}] : [];
+        if (reviewMode==='dismissed') body.push({state:'DISMISSED',user:{login:'bob',type:'User'},
+          submitted_at:'2026-10-01T10:02:00Z',commit_id:sha});
+      } else if (endpoint.endsWith('/issues/42/timeline')) body = reviewMode ? [
+        {event:'labeled',label:{name:'versioning:override'},actor:{login:'alice',type:'User'},created_at:'2026-10-01T10:00:00Z'}] : [];
+      else if (endpoint.includes('/collaborators/')) body = {
+        role_name:reviewMode==='unauthorized'?'triage':endpoint.includes('/alice/')?'maintain':'admin'};
+      else if (endpoint.includes('/commits/') && endpoint.endsWith('/check-runs')) body = {check_runs:[
+        {id:1,head_sha:sha,name:'go-ci',status:'completed',conclusion:'success'}]};
+      else if (endpoint.endsWith('/pulls/42')) body = {number:42,head:payload.pull_request.head,
+        base:payload.pull_request.base,user:{login:'developer',type:'User'},
+        merged_at:null,merge_commit_sha:null,milestone:payload.pull_request.milestone};
+      else throw Error('unexpected '+endpoint);
+      return {status:200,headers:{},body};
+    };
+    const errors=[];
+    const status = await previewMain(env,{transport,error:message=>errors.push(message),
+      implementations:{'go-gitsemver':{collect:context=>collectGoVersion(context,{
+        run:request=>runProcess({...request,env})})}}});
+    return { result:{status,stderr:errors.join('\n')}, caseDir, summaryPath,
+      output:readFileSync(outputPath,'utf8'), calls:readFileSync(callsPath,'utf8') };
   };
 
   const headBefore = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   const tagsBefore = execFileSync('git', ['tag'], { cwd: root, encoding: 'utf8' });
-  const develop = run(event('release/v0.0.1', 'develop'));
+  const develop = await run(event('release/v0.0.1', 'develop'));
   assert.equal(develop.result.status, 0, develop.result.stderr);
   assert.match(develop.output, /phase=release-to-develop/);
   assert.match(develop.output, /version=0\.0\.1/);
@@ -73,7 +81,7 @@ else {console.error('unexpected '+path);process.exit(2)}
     assert.ok(summary.includes(expected), `step summary must include ${expected}`);
   }
 
-  const master = run(event('develop', 'master', { title: 'v0.0.1' }));
+  const master = await run(event('develop', 'master', { title: 'v0.0.1' }));
   assert.equal(master.result.status, 0, master.result.stderr);
   assert.match(master.output, /phase=develop-to-main/);
   assert.match(master.output, /policy_outcome=matched/);
@@ -81,26 +89,26 @@ else {console.error('unexpected '+path);process.exit(2)}
   assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), headBefore);
   assert.equal(execFileSync('git', ['tag'], { cwd: root, encoding: 'utf8' }), tagsBefore);
 
-  const divergent = run(event('develop', 'master', { title: 'v1.0.0' }));
+  const divergent = await run(event('develop', 'master', { title: 'v1.0.0' }));
   assert.notEqual(divergent.result.status, 0, 'divergent milestone must block');
-  const dismissed = run(event('develop', 'master', { title: 'v1.0.0' }), { TEST_REVIEW_MODE: 'dismissed' });
+  const dismissed = await run(event('develop', 'master', { title: 'v1.0.0' }), { TEST_REVIEW_MODE: 'dismissed' });
   assert.notEqual(dismissed.result.status, 0, 'dismissed approval must fail the preview policy gate');
-  const oversized = run(event('release/v0.0.1', 'develop'), {
+  const oversized = await run(event('release/v0.0.1', 'develop'), {
     TEST_EXPLANATION: 'x'.repeat(256), VERSIONING_ARTIFACT_MAX_BYTES: '100',
   });
   assert.notEqual(oversized.result.status, 0, 'oversized homologation artifacts must fail');
   assert.match(oversized.result.stderr, /excedem o limite de 100 bytes/);
   assert.ok(readFileSync(oversized.summaryPath, 'utf8').includes('x'.repeat(32)),
     'step summary must remain available when artifact size validation fails');
-  const failedAdapter = run(event('release/v0.0.1', 'develop'), { TEST_VERSION: 'invalid' });
+  const failedAdapter = await run(event('release/v0.0.1', 'develop'), { TEST_VERSION: 'invalid' });
   assert.notEqual(failedAdapter.result.status, 0, 'calculation failure must fail the check');
-  const unsupported = run(event('feature/demo', 'master'));
+  const unsupported = await run(event('feature/demo', 'master'));
   assert.notEqual(unsupported.result.status, 0, 'unsupported PR phase must fail');
   for (const [milestone, reviewMode, expected] of [
     [null, '', 'adapter-authoritative'], [{ title: 'v0.0.1' }, '', 'matched'],
     [{ title: 'v1.0.0' }, 'approved', 'overridden'],
   ]) {
-    const hotfix = run(event('hotfix/correct-production', 'master', milestone), { TEST_REVIEW_MODE: reviewMode });
+    const hotfix = await run(event('hotfix/correct-production', 'master', milestone), { TEST_REVIEW_MODE: reviewMode });
     assert.equal(hotfix.result.status, 0, hotfix.result.stderr);
     assert.match(hotfix.output, /phase=hotfix-to-main/);
     assert.ok(hotfix.output.includes(`policy_outcome=${expected}`));
@@ -108,12 +116,12 @@ else {console.error('unexpected '+path);process.exit(2)}
   }
   for (const [title, reviewMode] of [['invalid', 'approved'], ['v1.0.0', ''],
     ['v1.0.0', 'stale'], ['v1.0.0', 'dismissed'], ['v1.0.0', 'unauthorized']]) {
-    const hotfix = run(event('hotfix/correct-production', 'master', { title }), { TEST_REVIEW_MODE: reviewMode });
+    const hotfix = await run(event('hotfix/correct-production', 'master', { title }), { TEST_REVIEW_MODE: reviewMode });
     assert.notEqual(hotfix.result.status, 0, `hotfix must enforce ${title}/${reviewMode}`);
     assert.equal(hotfix.calls.includes('/releases'), false);
   }
   for (const head of ['hotfix', 'hotfix/', 'hotfixes/demo', 'feature/hotfix/demo']) {
-    assert.notEqual(run(event(head, 'master')).result.status, 0, `reject ${head}`);
+    assert.notEqual((await run(event(head, 'master'))).result.status, 0, `reject ${head}`);
   }
   assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), headBefore);
   assert.equal(execFileSync('git', ['tag'], { cwd: root, encoding: 'utf8' }), tagsBefore);

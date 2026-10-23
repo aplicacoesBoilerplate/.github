@@ -1,9 +1,16 @@
 import assert from 'node:assert/strict';
-import { spawnSync,execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync,chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join,resolve } from 'node:path';
-import {captureGitInputs} from '../../scripts/versioning/git-inputs.mjs';
+import { preparePublicationMain } from '../../scripts/versioning/dist/entrypoints/prepare-publication.js';
+import { runPublish } from '../../scripts/versioning/dist/entrypoints/publish.js';
+import { collectJgitverReport } from '../../scripts/versioning/dist/adapters/jgitver.js';
+import { runProcess } from '../../scripts/versioning/dist/ports/process.js';
+import { createGitPort } from '../../scripts/versioning/dist/ports/git.js';
+import { createReadApi, createWriteApi } from '../../scripts/versioning/dist/ports/github.js';
+import { loadArtifact } from '../../scripts/versioning/dist/services/publication-artifact.js';
+import { producerTransport, writerTrust } from './publication-fixture.mjs';
 const root=resolve(import.meta.dirname,'../..'),temp=mkdtempSync(join(tmpdir(),'annotated-publish-'));
 const repo=join(temp,'repo'),bin=join(temp,'bin'),stateFile=join(temp,'state.json'),writesFile=join(temp,'writes.json'),output=join(temp,'output.txt');
 mkdirSync(repo);mkdirSync(bin);mkdirSync(join(repo,'.mvn'));
@@ -22,62 +29,80 @@ try{
     'const fs=require("fs"),a=process.argv.slice(2),p=a.find(v=>v.startsWith("-Djgitver.export-properties-path=")).split("=")[1];\n'+
     'fs.writeFileSync(p,"jgitver.used_version=0.0.1\\njgitver.calculated_version=0.0.1\\njgitver.plugin-version=1.9.0\\njgitver.git_sha1_full="+process.env.GITHUB_SHA+"\\n");\n');
   chmodSync(mvn,0o755);
-  const gh=join(bin,'gh');
-  const ghCode=[
-    '#!/usr/bin/env node',
-    'const fs=require("fs"),a=process.argv.slice(2),p=a.find(v=>v.startsWith("repos/")),s=JSON.parse(fs.readFileSync(process.env.STATE_FILE));',
-    'const sha=process.env.GITHUB_SHA,head=process.env.PR_HEAD;',
-    'const save=()=>fs.writeFileSync(process.env.STATE_FILE,JSON.stringify(s));',
-    'const write=()=>{const w=JSON.parse(fs.readFileSync(process.env.WRITES_FILE));w.push(a);fs.writeFileSync(process.env.WRITES_FILE,JSON.stringify(w));};',
-    'const emit=v=>{console.log(typeof v==="string"?v:JSON.stringify(v));process.exit(0)};',
-    'const absent=()=>{console.error("gh: Not Found (HTTP 404)");process.exit(1)};',
-    'const value=k=>a.find(v=>v.startsWith(k+"="))?.slice(k.length+1);',
-    'if(p==="repos/acme/java")emit("master");',
-    'if(p.endsWith("/git/ref/heads/master"))emit(sha);',
-    'if(p.includes("/commits/")&&p.includes("/pulls"))emit([[{number:42,head:{ref:"develop",sha:head},base:{ref:"master"},merged_at:"2026-10-12T00:00:00Z",merge_commit_sha:sha}]]);',
-    'if(p.endsWith("/pulls/42"))emit({number:42,head:{ref:"develop",sha:head},base:{ref:"master"},milestone:process.env.TEST_MILESTONE?{title:process.env.TEST_MILESTONE}:null,merged_at:"2026-10-12T00:00:00Z",merge_commit_sha:sha});',
-    'if(p.includes("/timeline")||p.includes("/reviews"))emit([[]]);',
-    'if(p.includes("/git/ref/tags/")){if(!s.tag)absent();emit({object:{type:s.object?"tag":"commit",sha:s.object??s.tag}})}',
-    'if(p.includes("/git/tags/"))emit({object:{type:"commit",sha:s.tag}});',
-    'if(p.includes("/releases/tags/")){if(!s.release)absent();emit(s.release)}',
-    'if(a.includes("POST")&&p.endsWith("/git/tags")){write();s.object="d".repeat(40);s.tag=value("object");save();emit({sha:s.object})}',
-    'if(a.includes("POST")&&p.endsWith("/git/refs")){write();if(value("sha")!==s.object)process.exit(3);save();emit({})}',
-    'if(a.includes("POST")&&p.endsWith("/releases")){write();s.release={tag_name:value("tag_name"),target_commitish:value("target_commitish"),html_url:"https://example.test/release"};save();emit(s.release)}',
-    'console.error("unexpected "+a.join(" "));process.exit(2);'
-  ].join('\n');
-  writeFileSync(gh,ghCode);chmodSync(gh,0o755);
-  writeFileSync(stateFile,JSON.stringify({tag:null,object:null,release:null}));writeFileSync(writesFile,'[]');
-  const shell=process.platform==='win32'?'C:/Program Files/Git/bin/bash.exe':'bash';
-  const run=(overrides={})=>spawnSync(shell,[join(root,'scripts/versioning/publish.sh')],{cwd:repo,encoding:'utf8',timeout:180000,
-    env:{...process.env,PATH:bin+(process.platform==='win32'?';':':')+process.env.PATH,ADAPTER:'jgitver',
-      PROJECT_PATH:'.',TARGET_BRANCH:'master',GITHUB_WORKSPACE:repo,GITHUB_REPOSITORY:'acme/java',
-      GITHUB_SHA:sha,GITHUB_REF_NAME:'master',GITHUB_EVENT_NAME:'push',GH_TOKEN:'fixture',
-      STATE_FILE:stateFile,WRITES_FILE:writesFile,PR_HEAD:head,GITHUB_OUTPUT:output,...overrides}});
-  const result=run();assert.equal(result.status,0,result.stderr);
+  writeFileSync(stateFile,JSON.stringify({tag:null,object:null,ref:false,release:null}));writeFileSync(writesFile,'[]');
+  const centralSha='c'.repeat(40);
+  let preparedArtifact=null,preparedTrust=null;
+  const run=async(overrides={})=>{
+    const env={...process.env,ADAPTER:'jgitver',ADAPTER_BIN:mvn,PROJECT_PATH:'.',TARGET_BRANCH:'master',
+      GITHUB_WORKSPACE:repo,GITHUB_REPOSITORY:'acme/java',GITHUB_SHA:sha,GITHUB_REF_NAME:'master',
+      GITHUB_EVENT_NAME:'push',GH_TOKEN:'fixture',GITHUB_RUN_ID:'77',GITHUB_RUN_ATTEMPT:'1',
+      GITHUB_JOB:'validate-publication',CENTRAL_SHA:centralSha,REQUIRED_CHECKS:'java-ci',...overrides};
+    const pr={number:42,head:{ref:'develop',sha:head},base:{ref:'master'},user:{login:'developer',type:'User'},
+      milestone:env.TEST_MILESTONE?{title:env.TEST_MILESTONE}:null,merged_at:'2026-10-12T00:00:00Z',merge_commit_sha:sha};
+    const api=producerTransport({repository:'acme/java',sha,centralSha},async request=>{
+      const path=new URL(request.url).pathname,s=JSON.parse(readFileSync(stateFile));
+      const save=()=>writeFileSync(stateFile,JSON.stringify(s));
+      let body,status=200;
+      if(request.method==='GET'){
+        if(path==='/repos/acme/java')body={default_branch:'master'};
+        else if(path.endsWith('/git/ref/heads/master'))body={object:{sha}};
+        else if(path.includes('/commits/')&&path.endsWith('/pulls'))body=[pr];
+        else if(path.endsWith('/pulls/42'))body=pr;
+        else if(path.endsWith('/timeline')||path.endsWith('/reviews'))body=[];
+        else if(path.endsWith('/check-runs'))body={check_runs:[{id:1,head_sha:sha,name:'java-ci',status:'completed',conclusion:'success'}]};
+        else if(path.includes('/git/ref/tags/')){
+          body=s.ref?{object:{type:s.object?'tag':'commit',sha:s.object??s.tag}}:null;if(!body)status=404;
+        } else if(path.includes('/git/tags/'))body={object:{type:'commit',sha:s.tag}};
+        else if(path.includes('/releases/tags/')){body=s.release;if(!body)status=404;}
+        else throw Error('Unexpected GET '+path);
+      } else if(request.method==='POST'){
+        const writes=JSON.parse(readFileSync(writesFile));writes.push({path,body:request.body});
+        writeFileSync(writesFile,JSON.stringify(writes));
+        if(path.endsWith('/git/tags')){s.object='d'.repeat(40);s.tag=request.body.object;save();body={sha:s.object};}
+        else if(path.endsWith('/git/refs')){assert.equal(request.body.sha,s.object);s.ref=true;save();body={};}
+        else if(path.endsWith('/releases')){s.release={...request.body,html_url:'https://example.test/release'};save();body=s.release;}
+        else throw Error('Unexpected POST '+path);
+      } else throw Error('Unexpected method '+request.method);
+      return {status,headers:{},body};
+    });
+    const read=createReadApi(api),errors=[];
+    if(!overrides.preparedPath){
+      env.VERSIONING_OUTPUT_DIR=mkdtempSync(join(temp,'artifact-'));
+      const status=await preparePublicationMain(env,{read,error:message=>errors.push(message),
+        implementations:{jgitver:{collect:context=>collectJgitverReport(context,{run:request=>runProcess({...request,env})})}}});
+      if(status!==0)return {status,stderr:errors.join('\n')};
+      preparedArtifact=loadArtifact(env.VERSIONING_OUTPUT_DIR);preparedTrust=writerTrust(preparedArtifact,'acme/java');
+    }
+    try {
+      const artifact=overrides.preparedPath?JSON.parse(readFileSync(overrides.preparedPath,'utf8')):preparedArtifact;
+      const result=await runPublish({repository:repo,trust:preparedTrust,artifact,read,write:createWriteApi(api),
+        git:createGitPort(repo),requiredChecks:['java-ci']});
+      writeFileSync(output,Object.entries(result.outputs).map(([key,value])=>key+'='+value).join('\n')+'\n');
+      return {status:['published','already-published'].includes(result.outcome)?0:1,stderr:result.publication?.error??result.outcome};
+    } catch(error){return {status:1,stderr:error.message};}
+  };
+  const result=await run();assert.equal(result.status,0,result.stderr);
   let state=JSON.parse(readFileSync(stateFile));assert.equal(state.tag,sha);assert.equal(state.object,'d'.repeat(40));
   assert.equal(state.release.tag_name,'v0.0.1');assert.equal(state.release.target_commitish,sha);
   const writes=readFileSync(writesFile,'utf8');assert.equal(JSON.parse(writes).length,3);
-  assert.equal(run().status,0);assert.equal(readFileSync(writesFile,'utf8'),writes);
+  assert.equal((await run()).status,0);assert.equal(readFileSync(writesFile,'utf8'),writes);
   assert.match(readFileSync(output,'utf8'),/outcome=already-published/);
   state={...state,tag:'b'.repeat(40)};writeFileSync(stateFile,JSON.stringify(state));
-  assert.notEqual(run().status,0);assert.equal(readFileSync(writesFile,'utf8'),writes);
+  assert.notEqual((await run()).status,0);assert.equal(readFileSync(writesFile,'utf8'),writes);
   state.tag=sha;writeFileSync(stateFile,JSON.stringify(state));
-  const prepared=join(temp,'validated-report.json');
-  const report={schemaVersion:1,adapter:'jgitver',sha,branch:'master',baseVersion:'0.0.0',candidateVersion:'0.0.1',
-    tag:'v0.0.1',tagKind:'annotated',bump:'patch',native:{format:'java-properties',explanation:'validated native evidence',
-      result:{'jgitver.used_version':'0.0.1','jgitver.calculated_version':'0.0.1','jgitver.git_sha1_full':sha,'jgitver.plugin-version':'1.9.0'}}};
-  writeFileSync(prepared,JSON.stringify(report));writeFileSync(mvn,'#!/usr/bin/env node\nprocess.exit(99);\n');
-  const snapshot=join(temp,'git-inputs.json');writeFileSync(snapshot,JSON.stringify(captureGitInputs(repo,'jgitver')));
-  const preparedConfig={VERSIONING_PRECOMPUTED_REPORT:prepared,VERSIONING_INPUTS_SNAPSHOT:snapshot};
-  assert.equal(run(preparedConfig).status,0,'write phase must not execute Maven');
+  const prepared=join(temp,'validated-artifact.json');
+  writeFileSync(prepared,JSON.stringify(preparedArtifact));
+  writeFileSync(mvn,'#!/usr/bin/env node\nprocess.exit(99);\n');
+  const preparedConfig={preparedPath:prepared};
+  assert.equal((await run(preparedConfig)).status,0,'write phase must not execute Maven');
   assert.equal(readFileSync(writesFile,'utf8'),writes);
   git('tag','1.0.0');
-  assert.notEqual(run(preparedConfig).status,0,'refs changed after calculation must block');
+  assert.notEqual((await run(preparedConfig)).status,0,'refs changed after calculation must block');
   assert.equal(readFileSync(writesFile,'utf8'),writes);git('tag','-d','1.0.0');
-  assert.notEqual(run({...preparedConfig,TEST_MILESTONE:'v1.0.0'}).status,0,'live policy still revalidated');
+  assert.notEqual((await run({...preparedConfig,TEST_MILESTONE:'v1.0.0'})).status,0,'live policy still revalidated');
   assert.equal(readFileSync(writesFile,'utf8'),writes);
-  writeFileSync(prepared,JSON.stringify({...report,sha:'c'.repeat(40)}));
-  assert.notEqual(run({VERSIONING_PRECOMPUTED_REPORT:prepared}).status,0,'tampered SHA rejected');
+  writeFileSync(prepared,JSON.stringify({...preparedArtifact,report:{...preparedArtifact.report,sha:'c'.repeat(40)}}));
+  assert.notEqual((await run(preparedConfig)).status,0,'tampered SHA rejected');
   assert.equal(readFileSync(writesFile,'utf8'),writes);
   console.log('Annotated Maven publication: creation, peeling, retry and conflict passed');
 }finally{rmSync(temp,{recursive:true,force:true});}

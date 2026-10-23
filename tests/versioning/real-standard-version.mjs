@@ -6,6 +6,9 @@ import { join,resolve } from 'node:path';
 import { normalizeStandardVersionReport } from '../../scripts/versioning/version-report.mjs';
 import {captureVersionBundle,applyVersionBundle} from '../../scripts/versioning/version-bundle.mjs';
 
+import { runProcess } from '../../scripts/versioning/dist/ports/process.js';
+import { collectStandardVersion } from '../../scripts/versioning/dist/adapters/standard-version.js';
+
 const cwd = mkdtempSync(join(tmpdir(), 'real-standard-version-'));
 const evidence = mkdtempSync(join(tmpdir(),'real-standard-evidence-'));
 const git = (...args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
@@ -28,16 +31,15 @@ try {
   git('commit', '-m', 'feat: add second feature');
   const sha = git('rev-parse', 'HEAD');
 
-  execFileSync('bash', ['-c', 'npm install --no-save --ignore-scripts --no-audit standard-version@9.5.0'],
-    { cwd, stdio: 'pipe', timeout: 120000 });
-  const preview = execFileSync('bash', ['-c', './node_modules/.bin/standard-version --dry-run --skip.commit --skip.tag'],
-    { cwd, encoding: 'utf8', timeout: 120000 });
+  runProcess({command:process.platform==='win32'?'npm.cmd':'npm',
+    args:['install','--no-save','--ignore-scripts','--no-audit','standard-version@9.5.0'],cwd,workspace:cwd});
+  const binary=join(cwd,'node_modules','.bin',process.platform==='win32'?'standard-version.cmd':'standard-version');
+  const preview = runProcess({command:binary,args:['--dry-run','--skip.commit','--skip.tag'],cwd,workspace:cwd}).stdout;
   const report = normalizeStandardVersionReport({ nativeOutput: preview, branch: 'main', sha, repository: cwd });
   assert.equal(report.candidateVersion, '1.1.0');
   assert.equal(report.baseVersion, '1.0.0');
   assert.equal(git('rev-parse', 'HEAD'), sha, 'Dry-run must preserve the approved SHA');
-  execFileSync('bash', ['-c', './node_modules/.bin/standard-version --skip.commit --skip.tag'],
-    { cwd, stdio: 'pipe', timeout: 120000 });
+  runProcess({command:binary,args:['--skip.commit','--skip.tag'],cwd,workspace:cwd});
   const pkg = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8'));
   assert.equal(pkg.version, '1.1.0');
   const lock = JSON.parse(readFileSync(join(cwd, 'package-lock.json'), 'utf8'));
@@ -60,9 +62,12 @@ try {
   assert.equal(readFileSync(join(cwd,'CHANGELOG.md'),'utf8'),nativeChangelog);
   git('add','.');git('commit','-qm','chore(release): 1.1.0');git('tag','-a','v1.1.0','-m','release');
   const originReport=join(evidence,'origin.json');
-  execFileSync('bash',[resolve(import.meta.dirname,'../../scripts/versioning/collect-origin-report.sh'),sha,originReport],
-    {cwd,encoding:'utf8',env:{...process.env,GITHUB_WORKSPACE:cwd,GITHUB_SHA:git('rev-parse','HEAD'),
-      TARGET_BRANCH:'main',ADAPTER:'standard-version',PROJECT_PATH:'.',TAG_PREFIX:'v'}});
+  const origin=join(evidence,'origin');
+  execFileSync('git',['clone','--local',cwd,origin],{stdio:'pipe'});
+  execFileSync('git',['checkout','--detach',sha],{cwd:origin,stdio:'pipe'});
+  const replay=collectStandardVersion({repository:origin,workspace:origin,projectPath:'.',
+    targetBranch:'main',sha,tagPrefix:'v',configuration:{adapterBin:binary}});
+  writeFileSync(originReport,JSON.stringify(replay));
   assert.equal(JSON.parse(readFileSync(originReport,'utf8')).candidateVersion,'1.1.0',
     'recalculating the functional SHA must not change after its release tag exists on the descendant merge');
   console.log('standard-version real: dois PRs, um bump 1.1.0, changelog sem commit/tag');

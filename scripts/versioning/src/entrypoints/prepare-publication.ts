@@ -272,15 +272,14 @@ async function nativeBundle(context: AdapterContext, plan: ReleasePlan, owner: s
       }) });
   }
   if (plan.adapter === 'standard-version') {
-    // Transitional bridge: T27 removes the legacy schema1 implementation after workflow cutover.
-    const legacy = await import(new URL('../../version-bundle.mjs', import.meta.url).href) as
-      { captureVersionBundle(request: { repository: string; projectPath: string; report: unknown }): Bundle };
+    const legacy = await import('../services/legacy-version-bundle.js');
+    const { validateVersionReport } = await import('../compat/version-report.js');
     const standard = await import('../adapters/standard-version.js');
     runProcess({ command: standard.standardVersionBinary(context),
       args: ['--skip.commit', '--skip.tag', '--tag-prefix', context.tagPrefix],
       cwd: join(context.workspace, context.projectPath), workspace: context.workspace });
     return legacy.captureVersionBundle({ repository: context.repository,
-      projectPath: context.projectPath, report: plan.report });
+      projectPath: context.projectPath, report: validateVersionReport(plan.report) });
   }
   throw new Error('Adaptador não gera bundle técnico');
 }

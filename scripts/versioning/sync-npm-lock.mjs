@@ -1,9 +1,3 @@
-import { synchronizeNpmLock } from './dist/adapters/npm-project.js';
-
-try {
-  const [lockPath, projectPath, packagePath] = process.argv.slice(2);
-  synchronizeNpmLock({ lockPath, projectPath, packagePath });
-} catch (error) {
-  console.error(error.message);
-  process.exitCode = 1;
-}
+import { syncLockMain as main } from './dist/compat/operations.js';
+import { runIfMain } from './dist/compat/cli.js';
+runIfMain(import.meta.url, main);

@@ -1,3 +1,18 @@
+# Automação central de versionamento — transição TypeScript
+
+A implementação executável atual está em [src](src/) e [dist](dist/). Os workflows centrais executam Node24 sobre os arquivos compilados, sem instalar uma CLI central no consumidor:
+
+- Prévia: [entrypoint compilado](dist/entrypoints/preview.js).
+- Leitor pós-merge: [preparação compilada](dist/entrypoints/prepare-publication.js).
+- Escritor isolado: [publicação compilada](dist/entrypoints/publish.js).
+- Serviços e contratos: [fontes TypeScript](src/); fachadas `.mjs` apenas reexportam o compilado e despacham chamadas explícitas, sem efeitos no import.
+
+Os 16 scripts Shell próprios e o calculador paralelo antigo foram retirados na T27. O shell do runner e launchers nativos de Maven/npm não são scripts de regras mantidos por esta automação. Cinco perfis estão implementados: Go, jgitver/Maven, standard-version legado, Changesets e Release Please. A entrega remota, pilotos e registries ainda dependem das etapas de aceite da [especificação ativa](../../.specs/features/packages-versioning-readiness/spec.md).
+
+Esta página será reorganizada nas tarefas T31–T32 após os callers finais. **O conteúdo abaixo foi preservado como referência histórica da implementação anterior; não execute seus exemplos Shell nem os trate como contrato vigente.** Para a operação atual, consulte os [workflows](../../.github/workflows/README.md) e os entrypoints acima.
+
+## Referência histórica preservada
+
 # Scripts da pipeline centralizada de versionamento
 
 Esta pasta implementa as regras executadas pelos
@@ -78,27 +93,27 @@ Não coloque PATs em YAML, documentação ou arquivos versionados.
 
 | Arquivo | Entrada principal | Responsabilidade |
 | --- | --- | --- |
-| [preview.sh](preview.sh) | Evento de PR e checkout do head | Selecionar a fase, calcular versão, coletar snapshot e gerar guia ou avaliar policy. |
-| [resolve-adapter.sh](resolve-adapter.sh) | Adaptador, caminho e workspace | Seleção permitida de ferramenta, confinamento do projeto e conversão de caminhos Windows/Node. Biblioteca carregada com `source`. |
-| [collect-version-report.sh](collect-version-report.sh) | Caminho de saída, adaptador, branch e SHA | Executar Go, standard-version, jgitver ou Changesets nativo e produzir relatório normalizado. |
+| `preview.sh` (retirado; disponível no histórico Git) | Evento de PR e checkout do head | Selecionar a fase, calcular versão, coletar snapshot e gerar guia ou avaliar policy. |
+| `resolve-adapter.sh` (retirado; disponível no histórico Git) | Adaptador, caminho e workspace | Seleção permitida de ferramenta, confinamento do projeto e conversão de caminhos Windows/Node. Biblioteca carregada com `source`. |
+| `collect-version-report.sh` (retirado; disponível no histórico Git) | Caminho de saída, adaptador, branch e SHA | Executar Go, standard-version, jgitver ou Changesets nativo e produzir relatório normalizado. |
 | [collect-version-report.mjs](collect-version-report.mjs) | Contexto explícito do cálculo | Compor o registro permitido e gravar o relatório; o Bash é um entrypoint fino. |
 | [adapter-registry.mjs](adapter-registry.mjs) | ID permitido | Descritores Go/Node/Maven com runtime, tipo de tag e implementação; sem carregar código arbitrário do caller. |
 | [adapters/](adapters/) | Contexto e process port injetável | Coletores nativos separados por ferramenta. |
 | [process-runner.mjs](process-runner.mjs) | command, argv, cwd, workspace, env | Executar processo com realpath, timeout120s, buffer1MiB e remoção de credenciais/opções de runtime. Não é sandbox. |
 | [java-properties.mjs](java-properties.mjs) | Bytes Properties | Parser com escapes, Unicode, continuação e rejeição de chaves ambíguas. |
-| [prepare-publication.sh](prepare-publication.sh) | Push e contexto somente leitura | Calcular relatório/policy, capturar refs, gerar bundle Node sem credenciais de escrita e materializar artifacts. |
+| `prepare-publication.sh` (retirado; disponível no histórico Git) | Push e contexto somente leitura | Calcular relatório/policy, capturar refs, gerar bundle Node sem credenciais de escrita e materializar artifacts. |
 | [git-inputs.mjs](git-inputs.mjs) | Snapshot e refs atuais | Detectar alteração das entradas Git, tolerando apenas a própria tag nova no mesmo SHA. |
 | [version-bundle.mjs](version-bundle.mjs) | Relatório e manifests nativos | Capturar bundle no leitor e aplicar bytes validados no escritor sem executar standard-version. |
 | [version-report.mjs](version-report.mjs) | Saída nativa e Git local | Validar SemVer/SHA/prefixo, encontrar a maior tag estável alcançável e normalizar `VersionReport`. |
-| [collect-origin-report.sh](collect-origin-report.sh) | SHA funcional e caminho de saída | Recalcular standard-version ou Changesets no commit homologado, sem tocar na principal. |
-| [validate-version-pr.sh](validate-version-pr.sh) | PR técnico Node | Conferir proveniência, versão nativa e manifests antes da tag. |
+| `collect-origin-report.sh` (retirado; disponível no histórico Git) | SHA funcional e caminho de saída | Recalcular standard-version ou Changesets no commit homologado, sem tocar na principal. |
+| `validate-version-pr.sh` (retirado; disponível no histórico Git) | PR técnico Node | Conferir proveniência, versão nativa e manifests antes da tag. |
 | [version-pr.mjs](version-pr.mjs) | PR técnico e arquivos de versão | Validar metadados, diff e versões persistidas. |
 | [changesets-version-pr.mjs](changesets-version-pr.mjs) | Plano Changesets e checkout | Conferir digest do lote, manifests, dependências, changelogs e lockfile npm. |
-| [collect-pr-policy.sh](collect-pr-policy.sh) | Número do PR ou `--commit <SHA>` | Coletar PR, milestone, timeline, reviews e papéis atuais; produzir snapshot. |
+| `collect-pr-policy.sh` (retirado; disponível no histórico Git) | Número do PR ou `--commit <SHA>` | Coletar PR, milestone, timeline, reviews e papéis atuais; produzir snapshot. |
 | [release-policy.mjs](release-policy.mjs) | Relatório, snapshot e fase | Avaliar milestone e override, sem chamadas externas ou publicação. |
 | [homologation-guide.mjs](homologation-guide.mjs) | Relatório, snapshot e diretório | Gerar Markdown/JSON distinguindo fatos de verificações ainda pendentes. |
-| [release-gates.sh](release-gates.sh) | Evento push, checkout e API | Validar branch padrão, SHA remoto, único PR integrado e policy antes de publicar. Biblioteca carregada com `source`. |
-| [publish.sh](publish.sh) | Gates validados e GitHub API | Reconciliar tag/Release, escrever apenas o necessário e retornar o resultado. |
+| `release-gates.sh` (retirado; disponível no histórico Git) | Evento push, checkout e API | Validar branch padrão, SHA remoto, único PR integrado e policy antes de publicar. Biblioteca carregada com `source`. |
+| `publish.sh` (retirado; disponível no histórico Git) | Gates validados e GitHub API | Reconciliar tag/Release, escrever apenas o necessário e retornar o resultado. |
 | [publish-changesets.mjs](publish-changesets.mjs) | Lote Changesets revisado | Pré-conferir todas as tags/Releases e publicar ou reconciliar por pacote. |
 
 ### Auxiliares e legado
@@ -108,12 +123,12 @@ anterior e não são os pontos de entrada dos calleds atuais.
 
 | Arquivo | Finalidade existente |
 | --- | --- |
-| [prepare-release.sh](prepare-release.sh) | Preparação anterior com seleção de perfis e avaliação de versão. |
-| [prepare-version-pr.sh](prepare-version-pr.sh) | Criar PR técnico de standard-version ou Changesets após merge funcional; exige token de GitHub App. |
-| [validate-sprint.sh](validate-sprint.sh) | Validações anteriores de branch de release, issues e épica. |
-| [homologation-guide.sh](homologation-guide.sh) | Guia provisório anterior baseado no log; diferente do renderer `.mjs` ativo. |
-| [version.mjs](version.mjs) | Utilitários SemVer do fluxo anterior; não confundir com `version-report.mjs`. |
-| [install-node.sh](install-node.sh) | Instalação de dependências Node com lockfile. |
+| `prepare-release.sh` (retirado; disponível no histórico Git) | Preparação anterior com seleção de perfis e avaliação de versão. |
+| `prepare-version-pr.sh` (retirado; disponível no histórico Git) | Criar PR técnico de standard-version ou Changesets após merge funcional; exige token de GitHub App. |
+| `validate-sprint.sh` (retirado; disponível no histórico Git) | Validações anteriores de branch de release, issues e épica. |
+| `homologation-guide.sh` (retirado; disponível no histórico Git) | Guia provisório anterior baseado no log; diferente do renderer `.mjs` ativo. |
+| `version.mjs` (retirado; histórico Git) | Calculador paralelo antigo, removido sem portar seu algoritmo. |
+| `install-node.sh` (retirado; disponível no histórico Git) | Instalação de dependências Node com lockfile. |
 | [verify-version-files.mjs](verify-version-files.mjs) | Restrição dos arquivos alterados em um PR técnico de versão. |
 | [sync-npm-lock.mjs](sync-npm-lock.mjs) | Sincronização de versão no lockfile npm. |
 

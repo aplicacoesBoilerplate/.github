@@ -12,6 +12,9 @@ try {
   assert.equal(unknown.status,1); assert.match(unknown.stderr,/Adaptador não suportado/);
   const escaped=spawnSync(process.execPath,[cli,'go-gitsemver',outside,'master',sha,workspace,'never-run',output],{encoding:'utf8'});
   assert.equal(escaped.status,1); assert.match(escaped.stderr,/fora do workspace/);
+  const nonexistent=spawnSync(process.execPath,[cli,'go-gitsemver',join(outside,'missing'),'master',sha,workspace,'never-run',output],{encoding:'utf8'});
+  assert.equal(nonexistent.status,1); assert.match(nonexistent.stderr,/fora do workspace/,
+    'reject a lexical escape before reading files or starting a native process');
   assert.equal(existsSync(output),false,'invalid context cannot produce report');
   console.log('Collector entrypoint boundaries passed');
 }finally{rmSync(workspace,{recursive:true,force:true});rmSync(outside,{recursive:true,force:true});}

@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { normalizeChangesetsReport } from '../../scripts/versioning/version-report.mjs';
-import { planDigest } from '../../scripts/versioning/changesets-version-pr.mjs';
+import { technicalFlowFixture } from './technical-flow-fixture.mjs';
+import { technicalBranchName } from '../../scripts/versioning/dist/services/technical-release.js';
 
 const temp = mkdtempSync(join(tmpdir(), 'changesets-flow-'));
 const workspace = join(temp, 'consumer');
@@ -71,80 +72,12 @@ fs.unlinkSync('.changeset/one.md');
     explanation: '', branch: 'master', sha: originSha });
   writeJson(reportPath, report); writeJson(policyPath, { number: 12 });
   writeJson(statePath, { originSha });
-  const gh = join(bin, 'gh');
-  writeFileSync(gh, `#!/usr/bin/env node
-const fs=require('node:fs'),cp=require('node:child_process'),a=process.argv.slice(2),p=process.env.MOCK_STATE;
-const s=JSON.parse(fs.readFileSync(p,'utf8'));const save=()=>fs.writeFileSync(p,JSON.stringify(s));
-const git=(...args)=>cp.execFileSync('git',['--git-dir='+process.env.MOCK_BARE,...args],{encoding:'utf8'}).trim();
-const url=a.find(x=>x.startsWith('repos/'))??'';
-const versionPr=()=>({number:13,merged_at:s.versionMergeSha?'2026-10-13T12:00:00Z':null,
- merge_commit_sha:s.versionMergeSha??null,head:{ref:s.pr?.branch,sha:s.versionHeadSha},
- base:{ref:'master',sha:s.originSha},user:{login:'test-app[bot]'},body:s.pr?.body});
-const functionalPr=()=>({number:12,head:{ref:'develop',sha:s.originSha},base:{ref:'master'},
- merged_at:'2026-10-13T11:00:00Z',merge_commit_sha:s.originSha,milestone:null});
-if(a[0]==='auth')process.exit(0);
-if(a[0]==='pr'&&a[1]==='view'){console.log('APPROVED');process.exit(0)}
-if(a[0]==='pr'&&a[1]==='list'){console.log(JSON.stringify(s.pr?[s.pr]:[]));process.exit(0)}
-if(a[0]==='pr'&&a[1]==='create'){
- s.pr={number:13,state:'OPEN',url:'https://example.test/pull/13',body:a[a.indexOf('--body')+1],
- branch:a[a.indexOf('--head')+1]};save();console.log(s.pr.url);process.exit(0);
-}
-if(a[0]==='api'&&a[1]==='repos/acme/consumer'){console.log('master');process.exit(0)}
-if(a[0]==='api'&&a[1].endsWith('/git/ref/heads/master')){console.log(git('rev-parse','refs/heads/master'));process.exit(0)}
-if(a[0]==='api'&&a[1]==='users/test-app[bot]'){console.log('12345');process.exit(0)}
-if(a[0]==='api'&&url.includes('/commits/')&&url.endsWith('/pulls?per_page=100')){
- const sha=url.split('/')[4],prs=sha===s.versionMergeSha?[versionPr()]:sha===s.originSha?[functionalPr()]:[];
- console.log(JSON.stringify(a.includes('--slurp')?[prs]:prs));process.exit(0);
-}
-if(a[0]==='api'&&url==='repos/acme/consumer/pulls/13'){
- console.log(JSON.stringify(versionPr()));process.exit(0);
-}
-if(a[0]==='api'&&url.includes('/pulls/13/reviews?')){
- const human=s.reviewMode==='human';
- console.log(JSON.stringify([[{state:'APPROVED',commit_id:s.versionHeadSha,
- user:{login:human?'maintainer':'other-app[bot]',type:human?'User':'Bot'}}]]));process.exit(0);
-}
-if(a[0]==='api'&&url==='repos/acme/consumer/pulls/12'){
- console.log(JSON.stringify(functionalPr()));process.exit(0);
-}
-if(a[0]==='api'&&url.includes('/issues/12/timeline?')){console.log('[[]]');process.exit(0)}
-if(a[0]==='api'&&url.includes('/pulls/12/reviews?')){console.log('[[]]');process.exit(0)}
-if(a[0]==='api'&&url.includes('/git/ref/tags/')){
- const tag=url.split('/git/ref/tags/')[1],sha=s.tags?.[tag];
- if(!sha){console.error('gh: Not Found (HTTP 404)');process.exit(1)}
- console.log(JSON.stringify({object:{type:'commit',sha}}));process.exit(0);
-}
-if(a[0]==='api'&&url.includes('/releases/tags/')){
- const tag=url.split('/releases/tags/')[1],release=s.releases?.[tag];
- if(!release){console.error('gh: Not Found (HTTP 404)');process.exit(1)}
- console.log(JSON.stringify(release));process.exit(0);
-}
-if(a[0]==='api'&&a.includes('POST')&&url.endsWith('/git/refs')){
- const tag=a.find(x=>x.startsWith('ref=refs/tags/')).slice(14),sha=a.find(x=>x.startsWith('sha=')).slice(4);
- s.tags??={};s.tags[tag]=sha;save();console.log('{}');process.exit(0);
-}
-if(a[0]==='api'&&a.includes('POST')&&url.endsWith('/releases')){
- const tag=a.find(x=>x.startsWith('tag_name=')).slice(9),sha=a.find(x=>x.startsWith('target_commitish=')).slice(17);
- s.releases??={};s.releases[tag]={tag_name:tag,target_commitish:sha,
- html_url:'https://example.test/releases/'+encodeURIComponent(tag)};
- save();console.log(JSON.stringify(s.releases[tag]));process.exit(0);
-}
-console.error('unexpected gh '+a.join(' '));process.exit(1);
-`);
-  chmodSync(gh, 0o755);
-  const env = { ...process.env, PATH: `${bin}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH}`,
-    MOCK_STATE: statePath, MOCK_BARE: bare, GITHUB_WORKSPACE: workspace, GITHUB_REPOSITORY: 'acme/consumer',
-    GITHUB_SHA: originSha, TARGET_BRANCH: 'master', ADAPTER: 'changesets', GH_TOKEN: 'mock-read',
-    PROJECT_PATH: '.', TAG_PREFIX: 'v', ORIGIN_SHA: originSha, PUBLISH_PHASE: 'functional',
-    RELEASE_GATES_VALIDATED: '1', VERSIONING_TOKEN: 'mock', VERSIONING_BOT_SLUG: 'test-app',
-    VERSION_REPORT_PATH: reportPath, PR_POLICY_PATH: policyPath, GITHUB_OUTPUT: outputPath,
-    VERSIONING_GH_BIN: gh };
-  let result = spawnSync('bash', [join(root, 'scripts/versioning/prepare-version-pr.sh')],
-    { cwd: workspace, encoding: 'utf8', env, timeout: 120000 });
-  assert.equal(result.status, 0, result.stderr);
+  const run=technicalFlowFixture({workspace,bare,temp,adapter:'changesets',binary:adapter,statePath,outputPath});
+  let result=await run();
+  assert.equal(result.status,0,result.stderr);
   const state = JSON.parse(readFileSync(statePath, 'utf8'));
-  assert.equal(state.pr.branch, `versioning/changesets/${originSha.slice(0, 12)}`);
-  assert.match(state.pr.body, new RegExp(`Plan-SHA256: ${planDigest(report)}`));
+  assert.equal(state.pr.branch, technicalBranchName('acme','consumer','master','changesets','.'));
+  assert.match(state.pr.body, new RegExp(`Plan-SHA256: ${result.artifact.plan.planDigest}`));
   assert.match(readFileSync(outputPath, 'utf8'), /outcome=pending-version-pr/);
   const outputs = Object.fromEntries(readFileSync(outputPath, 'utf8').trim().split(/\r?\n/)
     .map(line => line.split(/=(.*)/s).slice(0, 2)));
@@ -154,37 +87,31 @@ console.error('unexpected gh '+a.join(' '));process.exit(1);
     ['@lab/cli@1.0.1', '@lab/core@3.0.0']);
   assert.equal(git('rev-parse', 'master'), originSha);
   assert.equal(git('tag', '--list'), '');
+  git('switch',state.pr.branch);
   assert.equal(JSON.parse(readFileSync(join(workspace, 'packages/core/package.json'))).version, '3.0.0');
   assert.equal(JSON.parse(readFileSync(join(workspace, 'packages/cli/package.json'))).version, '1.0.1');
   const lock = JSON.parse(readFileSync(join(workspace, 'package-lock.json')));
   assert.equal(lock.packages['packages/core'].version, '3.0.0');
   assert.equal(lock.packages['packages/cli'].dependencies['@lab/core'], '^3.0.0');
-  const branch = `versioning/changesets/${originSha.slice(0, 12)}`;
+  const branch = technicalBranchName('acme','consumer','master','changesets','.');
   const versionHeadSha = git('rev-parse', branch);
   git('switch', 'master');
   git('merge', '--no-ff', branch, '-m', 'Merge coordinated Changesets version PR');
   const versionMergeSha = git('rev-parse', 'HEAD');
   git('push', 'origin', 'master');
   writeJson(statePath, { ...state, versionHeadSha, versionMergeSha, reviewMode: 'bot' });
-  const publish = () => {
-    writeFileSync(outputPath, '');
-    return spawnSync('bash', [join(root, 'scripts/versioning/publish.sh')], {
-      cwd: workspace, encoding: 'utf8', timeout: 120000,
-      env: { ...env, GITHUB_SHA: versionMergeSha, GITHUB_EVENT_NAME: 'push',
-        GITHUB_REF_NAME: 'master', RELEASE_GATES_VALIDATED: '' },
-    });
-  };
-  result = publish();
+  const publish=()=>run('publish',{GITHUB_SHA:versionMergeSha});
+  result = await publish();
   assert.notEqual(result.status, 0, 'bot approval cannot publish the batch');
   assert.equal(Object.keys(JSON.parse(readFileSync(statePath)).tags ?? {}).length, 0);
   const botState = JSON.parse(readFileSync(statePath));
   writeJson(statePath, { ...botState, reviewMode: 'human',
-    pr: { ...botState.pr, body: botState.pr.body.replace(planDigest(report), 'f'.repeat(64)) } });
-  result = publish();
+    pr: { ...botState.pr, body: botState.pr.body.replaceAll(/Plan-SHA256: ([0-9a-f]{64})/.exec(botState.pr.body)[1], 'f'.repeat(64)) } });
+  result = await publish();
   assert.notEqual(result.status, 0, 'changed native plan must fail before publication');
   assert.equal(Object.keys(JSON.parse(readFileSync(statePath)).tags ?? {}).length, 0);
   writeJson(statePath, { ...botState, reviewMode: 'human' });
-  result = publish();
+  result = await publish();
   assert.equal(result.status, 0, result.stderr);
   const published = JSON.parse(readFileSync(statePath));
   assert.deepEqual(Object.keys(published.tags).sort(), ['@lab/cli@1.0.1', '@lab/core@3.0.0']);
@@ -193,23 +120,23 @@ console.error('unexpected gh '+a.join(' '));process.exit(1);
   assert.match(readFileSync(outputPath, 'utf8'), /outcome=published/);
   assert.match(readFileSync(outputPath, 'utf8'), new RegExp(`published_sha=${versionMergeSha}`));
   const beforeRerun = readFileSync(statePath, 'utf8');
-  result = publish();
+  result = await publish();
   assert.equal(result.status, 0, result.stderr);
   assert.match(readFileSync(outputPath, 'utf8'), /outcome=already-published/);
   assert.equal(readFileSync(statePath, 'utf8'), beforeRerun, 'rerun must make no API writes');
   const partial = JSON.parse(readFileSync(statePath));
   delete partial.releases['@lab/cli@1.0.1'];
   writeJson(statePath, partial);
-  result = publish();
+  result = await publish();
   assert.equal(result.status, 0, result.stderr);
   assert.match(readFileSync(outputPath, 'utf8'), /outcome=published/);
   assert.equal(JSON.parse(readFileSync(statePath)).tags['@lab/cli@1.0.1'], versionMergeSha);
   const conflict = JSON.parse(readFileSync(statePath));
   conflict.tags['@lab/core@3.0.0'] = 'f'.repeat(40);
   writeJson(statePath, conflict);
-  result = publish();
+  result = await publish();
   assert.notEqual(result.status, 0, 'conflicting package tag must block the complete batch');
-  assert.match(result.stderr, /Conflito/);
+  assert.match(result.stderr, /conflit|conflict|outro commit/i);
   assert.deepEqual(JSON.parse(readFileSync(statePath)).tags, conflict.tags,
     'a conflict must not move any package tag');
   console.log('Changesets: one technical PR contains both packages, dependent range and npm lockfile');

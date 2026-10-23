@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {execFileSync} from 'node:child_process';
-import {mkdtempSync,readFileSync,writeFileSync,rmSync,symlinkSync} from 'node:fs';
+import {execFileSync,spawnSync} from 'node:child_process';
+import {mkdtempSync,mkdirSync,readFileSync,writeFileSync,rmSync,symlinkSync,existsSync,chmodSync} from 'node:fs';
 import {tmpdir} from 'node:os';
-import {join} from 'node:path';
+import {join,resolve} from 'node:path';
 import {captureVersionBundle,applyVersionBundle} from '../../scripts/versioning/version-bundle.mjs';
 import {validateLegacyVersionFiles} from '../../scripts/versioning/dist/services/version-files.js';
 const repository=mkdtempSync(join(tmpdir(),'version-bundle-'));
@@ -55,5 +55,20 @@ try{
   assert.equal(readFileSync(join(repository,'package-lock.json'),'utf8'),next);
   assert.equal(readFileSync(join(repository,'CHANGELOG.md'),'utf8'),'## 1.0.1\n');
   assert.equal(git('rev-parse','HEAD'),sha);assert.equal(git('tag','--list'),'');
+  const toolDirectory=join(repository,'.shared-versioning');mkdirSync(toolDirectory);
+  const native=join(toolDirectory,'standard-version'),marker=join(toolDirectory,'executed');
+  writeFileSync(native,'#!/usr/bin/env node\nrequire("node:fs").writeFileSync('+JSON.stringify(marker)+',"executed");');chmodSync(native,0o755);
+  const reportPath=join(toolDirectory,'report.json'),bundlePath=join(toolDirectory,'output.json');
+  const cli=resolve(import.meta.dirname,'../../scripts/versioning/version-bundle.mjs');
+  mkdirSync(join(repository,'invalid space'));
+  for(const [projectPath,selectedReport,diagnostic] of [
+    ['.',{...report,sha:'b'.repeat(40)},/SHA/],['invalid space',report,/project path inválido/],
+    ['../escape',report,/project path inválido/]]){
+    writeFileSync(reportPath,JSON.stringify(selectedReport));
+    const generated=spawnSync(process.execPath,[cli,'generate',repository,projectPath,reportPath,bundlePath,native],{encoding:'utf8'});
+    assert.notEqual(generated.status,0);assert.match(generated.stderr,diagnostic);
+    assert.equal(existsSync(marker),false,'invalid context must fail before executing the native adapter');
+    assert.equal(existsSync(bundlePath),false,'invalid context cannot materialize a bundle');
+  }
   console.log('Version bundle: bounded materialization, identity, hashes and no-write negatives passed');
 }finally{rmSync(repository,{recursive:true,force:true});}

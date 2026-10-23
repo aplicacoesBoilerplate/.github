@@ -17,6 +17,8 @@ const localFixtures = [
   'technical-release.mjs',
   'technical-merge.mjs',
   'legacy-technical-merge.mjs',
+  'legacy-typescript.mjs',
+  'migration-inventory.mjs',
   'version-report.mjs',
   'version-pr.mjs',
   'go-version.mjs',
