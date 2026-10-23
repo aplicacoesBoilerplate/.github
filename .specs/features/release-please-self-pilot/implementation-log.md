@@ -73,3 +73,10 @@ Todas as asserções novas pertencem a RPSP-01 a RPSP-04. As asserções de cami
 - version.txt inicia em 0.0.0 como base não publicada. O contrato permite que esse arquivo evolua no PR técnico; a fixture do teste continua isolada e previsível.
 - O fluxo funcional usa agora os inputs do caller de produção. As sete asserções/casos superiores permanecem, com 7/7 aprovados, zero skips e typecheck aprovado.
 - A revisão anterior permanece em validation-sdk.md com seu range imutável. Novo gate independente é exigido antes do push/PR desta extensão. Nenhuma publicação real foi presumida.
+
+### Gate independente de T4: PASS
+
+- Range fbc7c31..133f896, relatório canônico validation.md: 9/9 critérios com evidência; suíte 7/7, zero skips, typecheck e validadores aprovados.
+- Duas mutações de wiring detectadas (dependência da CI removida e central-ref mutável). Controle positivo com version.txt 0.0.1 e baseline restaurada aprovados.
+- Milestone v0.0.1 criada em https://github.com/aplicacoesBoilerplate/.github/milestone/2. A v1.0.0 e a issue #4 permanecem inalteradas. A API confirmou gersonfribeiro como administrador para a revisão humana; a conta ativa do agente é agentegersonfribeiro-AI.
+- Autorizado publicar a mesma branch e abrir PR de entrega, com solicitação de revisão ao mantenedor. Sem merge, tag ou Release pelo agente.
