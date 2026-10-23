@@ -268,3 +268,29 @@ Check A — suficiência:
 | Escritor isolado / PKG-11.5 | workflow-five-adapters.mjs:61–63 e publish-entrypoint.mjs:203,274–281 — sentinelas de processo/grafo | Sem build/install/SDK/nativo no job com escrita |
 
 Check C: novas assertions de workflow-five-adapters pertencem ao contrato (11–32), capacidade/fase/status (33–48), environment (50–59) e isolamento (61–63). origin-artifact acrescenta associação/CLI do push (34–48), preservando negativos da T24. technical-merge mantém review/CI/árvore e acrescenta reader composto (193–204). release-notes cobre exclusivamente o input legado. git-port e writer acrescentam scoped/multi-tag/tentativa real; demais assertions herdadas permanecem. Check B: valores, caminhos, hashes, payloads e efeitos reais, com negativos, e não somente contagem de chamadas. Check D: YAML semântico, node:assert/strict, Git temporário e sentinelas existentes. Nenhum piloto, pacote, tag/Release remota, PR novo ou merge foi realizado.
+
+T25 publicada: ls-remote confirmou c88e4789011f008bb60e8ef48381f21601e17b21 na mesma branch antes da T26.
+
+## T26 — CI dos cinco perfis TypeScript (2026-10-23)
+
+Premissas: verificar o dist recebido antes de qualquer sobrescrita; toolchain somente no manifest/lockfile central explícito; nenhuma falha silenciada em gates centrais. Escopo: ci.yml, runner, nova ci-five-adapters.mjs e registros TLC. Sucesso: preservar as 29 fixtures baseline e todas as novas, exigir os cinco perfis reais e Gate Full.
+
+A CI instala a toolchain com npm ci --ignore-scripts --no-audit --no-fund em scripts/versioning, roda typecheck sem emissão e check-dist isolado antes da suíte. Acrescenta o SDK Release Please real ao lado de Go, Maven, standard-version e Changesets2/3. O instalador Maven é chamado pelo Node compilado com runnerTemp e githubPath; não via .sh central. O --if-present do job genérico validate pertence a outro fluxo e foi preservado; o job versioning não permite esse bypass.
+
+RED→GREEN: a fixture semântica falhou primeiro pela ausência de instalação explícita da toolchain. A revisão independente encontrou que o bootstrap Maven novo omitia options obrigatórias. O guard foi fortalecido para extrair e executar o snippet YAML com import substituído por dependência controlada: reproduziu undefined em runnerTemp, depois passou verificando ambos os argumentos e a chamada efetiva. O código e a suíte local foram congelados/reiniciados após essa correção; revisão por leitura confirmou o fix e não apontou novo achado.
+
+Gate Full aprovado: toolchain instalada, typecheck/check-dist, contratos YAML, diff --check e validadores TLC passaram. A suíte local de 52 fixtures terminou com código 0 na configuração final. Nove fixtures nativas também concluíram com código 0: real-go-gitsemver; real-standard-version; real-standard-bootstrap; real-changesets (2.29.5 e 3.0.3); real-release-please (17.11.2 com transporte controlado); maven-setup; real-jgitver; real-maven-reactor; real-jgitver-prefix. Foram executadas em grupos independentes, com temporários separados e sem credencial de publicação. Erros propositais de configuração/arquivos inválidos fazem parte dos cenários de rejeição e terminaram aprovados.
+
+Ambiente local: Windows11, Node24.19.0, Go1.27.0 e binário go-gitsemver compilado do pin 680c1c12d9a4, Maven3.9.9, Java22.0.1 e Git Bash explícito no PATH. A CI continua fixando Java21; esta evidência local em Java22 não substitui o run hospedado T34. Nenhum pacote, piloto, tag/Release remota, PR novo ou merge foi realizado.
+
+Check A — suficiência:
+
+| Critério / requisito | Assertion exata | Resultado |
+| --- | --- | --- |
+| Toolchain no diretório certo / PKG-11.2–3 | ci-five-adapters.mjs:11–13 — nome, working-directory e comando npm exatos | Não instalar toolchain em manifest consumidor ou raiz errada |
+| Dist recebido antes de build / PKG-11.2–3 | ci-five-adapters.mjs:17–18 — install < typecheck < check-dist < local e sem build/tsc anterior | Alteração/ausência/extra/symlink detectadas por dist-integrity; erros TS impedem emissão em typescript-build/type-contracts |
+| Todos os nativos obrigatórios / PKG-01.3,08.1,10.12 | ci-five-adapters.mjs:19–24,48–50 — comandos de oito fixtures e Go, pins Changesets/RP, sem if-present/continue-on-error | Cinco perfis e rejeições nativas executados, não apenas mocks |
+| Bootstrap Maven executável / PKG-11.8 | ci-five-adapters.mjs:28–37 — snippet extraído do YAML, módulo compilado e stub conferindo os dois argumentos/invocação | Não aceitar mera presença textual de nome de função |
+| Baseline e cobertura nova / PKG-11.8 | ci-five-adapters.mjs:41,44–45 — sem duplicatas, presença dos 51 nomes anteriores e guard novo, arquivos existentes | Preservar baseline29 e todas as novas até T26 |
+
+Check C: assertions 11–18 protegem a ordem/lockfile; 19–24 e 48–50 protegem perfis reais/pins; 25–38 protegem bootstrap Maven e retirada do Shell nessa chamada; 41–45 protegem inventário/arquivos. Todas pertencem aos critérios T26. Check B: snippet executado com valores esperados, fixtures reais e mutações negativas existentes de tipos/dist, não apenas regex positivo. Check D: YAML semântico, node:assert/strict e os comandos Native da matriz. T27 ainda precisa remover a ponte schema1 e migrar fachadas/fixtures legadas; nenhum arquivo legado foi apagado nesta tarefa.
