@@ -2,15 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Follow tlc-spec-driven for gates, atomic commits and the independent final Verifier.
 
-**Goal:** Exercitar um caller simulado, o orquestrador e o motor real no mesmo fluxo funcional TypeScript, localmente e no runner do GitHub Actions, sem publicar PR/tag/Release.
-**Architecture:** Reaproveitar o teste de fluxo existente, executar o entrypoint definido no called num checkout temporário e passar suas saídas à estratégia real Simple. Um caller de teste na branch de trabalho reutiliza a CI no mesmo commit, sem invocar a Action com escrita.
+**Goal:** Exercitar o contrato e o motor real no mesmo fluxo funcional TypeScript e preparar o PR de entrega do caller de produção, sem executar merge/tag/Release.
+**Architecture:** O teste existente executa o entrypoint definido no called e passa suas saídas à estratégia real Simple. Um caller de teste reutiliza a CI; o caller de produção aguarda a mesma CI e usa o called local com central-ref do SHA integrado, somente após merge humano.
 **Tech Stack:** TypeScript, node:test, tsx, YAML e release-please 17.3.0 somente nos testes do motor.
 **Spec:** `.specs/features/release-please-self-pilot/spec.md` e `design.md`.
-**Status:** Approved: execução local, push da branch de teste e execução no GitHub Actions autorizados pelo usuário.
+**Status:** T1-T3 aprovadas localmente e no Actions. T4 autorizada: preparar caller de produção e abrir PR de entrega; merges humanos.
 
 ## Global Constraints
 
-- Push somente da branch de teste; nenhum PR de release, merge, secret, tag ou Release no GitHub.
+- Push e PR de entrega somente da branch atual; nenhum merge, secret, tag ou Release executado pelo agente. O PR técnico deverá ser criado depois pela Action.
 - Um único teste funcional ampliado no arquivo existente; preservar as sete asserções/casos existentes, sem skip.
 - Entradas dos callers e evento de merge simulados; cálculo, updaters e dados da Release produzidos pelo motor real.
 - Milestone obrigatória no PR funcional; não revalidada no segundo momento do PR técnico.
@@ -45,10 +45,10 @@ Guidelines: `AGENTS.md`; fontes e convenções observadas em `ci-scripts/tests/r
 
 ## Execution Plan
 
-### Phase 1: MVP local
+### Phase 1: Teste hospedado e preparação da entrega
 
 ```text
-T1 -> T2 -> T3
+T1 -> T2 -> T3 -> T4
 ```
 
 ## Task Breakdown
@@ -111,6 +111,24 @@ T1 -> T2 -> T3
 **Tests**: revisão documental com suíte existente como gate de não regressão; nenhum teste artificial de prosa.
 **Gate**: Build.
 
+### Task 4: Preparar o cenário real sem integrar a entrega
+
+#### T4: Conectar o caller de produção para o PR de entrega
+
+**Where**: `.github/workflows/version-release-please-self-caller.yml`
+**Files**: novo caller de produção, version.txt, mesmo teste funcional, documentação e registros TLC.
+**Depends on**: T3
+**Requirement**: RPSP-01, RPSP-02, RPSP-03, preparação de RPSP-05
+**Interfaces**: evento pull_request closed para master; validate de leitura; release depende de validate, usa called local, simple e central-ref github.sha; version.txt base 0.0.0. Milestone somente no PR de entrega.
+**Tools**: TLC, execução inline, CI/CD, TDD, Entregas e GitHub CLI autenticado como agente.
+
+- [x] No mesmo teste funcional, carregar o caller de produção; exigir evento/merge/needs/permissões/referências/inputs e arquivo de versão evolutivo. RED observado: arquivo do caller ausente.
+- [x] Criar o caller e version.txt, sem alterar o motor nem criar um publicador próprio; atualizar roteiro dos dois PRs.
+- [x] Executar sete testes, typecheck e validadores; atualizar rastreabilidade e commitar `feat(versioning): prepare real self-pilot delivery`.
+
+**Tests**: integração e contrato no mesmo teste funcional; sem novo arquivo de testes, sem chamadas de escrita no teste.
+**Gate**: Build; revisão independente antes do push e CI do PR observada antes da entrega.
+
 ## Diagram-Definition Cross-Check
 
 | Task | Depends On | Diagram Shows | Status |
@@ -118,6 +136,7 @@ T1 -> T2 -> T3
 | T1 | None | Nenhuma entrada | Match |
 | T2 | T1 | T1 -> T2 | Match |
 | T3 | T2 | T2 -> T3 | Match |
+| T4 | T3 | T3 -> T4 | Match |
 
 ## Test Co-location Validation
 
@@ -126,7 +145,8 @@ T1 -> T2 -> T3
 | T1 | Contrato executável e orquestrador | Integração | Mesmo teste funcional com motor real | Match |
 | T2 | Caller e CI | Contrato integrado | Mesmo teste funcional | Match |
 | T3 | Documentação | Revisão documental | Revisão e suíte de não regressão | Match |
+| T4 | Caller de produção | Contrato integrado | Mesmo teste funcional | Match |
 
 ## Completion Boundary
 
-O Verifier independente revisará a entrega e executará mutações em cópias temporárias antes do push. Depois, a branch será publicada e o teste deverá passar no Actions, com SHA e execução registrados. Isso não autoriza marcar RPSP-05 como comprovado nem encerrar a issue: o teste hospedado não cria PR/tag/Release.
+O Verifier independente revisará T4 e executará sensor isolado antes do próximo push; o relatório T1-T3 permanece arquivado em validation-sdk.md. Após PASS, publicar a mesma branch com a conta do agente, abrir PR de entrega para master com milestone v0.0.1, conferir CI e parar antes de qualquer merge. O usuário confirmou essa milestone separada; v1.0.0 fica preservada. Isso não autoriza marcar RPSP-05 como comprovado nem encerrar a issue: PR de release/tag/Release só serão produzidos pela Action depois dos merges humanos.

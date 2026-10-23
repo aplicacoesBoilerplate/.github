@@ -76,11 +76,29 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
       assert.ok(ci.jobs.validate.steps.some((step: { run?: string; 'working-directory'?: string }) =>
         step.run === command && step['working-directory'] === 'ci-scripts'), `CI deve executar ${command}`);
     }
+    const selfCaller = parse(fs.readFileSync(path.join(repository, '.github/workflows/version-release-please-self-caller.yml'), 'utf8'));
+    assert.deepEqual(selfCaller.on, { pull_request: { types: ['closed'], branches: ['master'] } });
+    assert.deepEqual(selfCaller.permissions, { contents: 'read' });
+    assert.deepEqual(Object.keys(selfCaller.jobs).sort(), ['release', 'validate']);
+    assert.equal(selfCaller.jobs.validate.if, 'github.event.pull_request.merged == true');
+    assert.equal(selfCaller.jobs.validate.uses, './.github/workflows/ci.yml');
+    assert.deepEqual(selfCaller.jobs.validate.permissions, { contents: 'read' });
+    assert.equal(selfCaller.jobs.validate.secrets, undefined);
+    const selfCall = selfCaller.jobs.release;
+    assert.equal(selfCall.if, 'github.event.pull_request.merged == true');
+    assert.equal(selfCall.needs, 'validate', 'A publicação deve aguardar a CI do commit integrado');
+    assert.equal(selfCall.uses, './.github/workflows/version-release-please-called.yml');
+    assert.deepEqual(selfCall.with, { 'project-type': 'simple', 'central-ref': '${{ github.sha }}' });
+    assert.deepEqual(selfCall.permissions, { contents: 'write', 'pull-requests': 'write', issues: 'write' });
+    assert.equal(selfCall.secrets, undefined, 'O piloto simple não precisa de secrets de registries');
+    // O arquivo evoluirá no PR técnico; a CI não pode ficar presa à base 0.0.0.
+    assert.match(fs.readFileSync(path.join(repository, 'version.txt'), 'utf8').trim(), /^\d+\.\d+\.\d+(?:-[\w.-]+)?$/);
     const caller = parse(fs.readFileSync(path.join(repository, '.github/workflows/examples/version-release-please-caller.yml'), 'utf8'));
     const call = caller.jobs['call-central-versioning'];
     call.with['project-type'] = 'simple';
     const calledPath = call.uses.split('@')[0].split('/').slice(2).join('/');
     assert.ok(fs.existsSync(path.join(repository, calledPath)), `Caller referencia workflow inexistente: ${calledPath}`);
+    assert.equal(selfCall.uses, `./${calledPath}`, 'O piloto de produção usa o mesmo called do exemplo externo');
     const workflow = parse(fs.readFileSync(path.join(repository, calledPath), 'utf8'));
     const job = workflow.jobs['release-please'];
     const centralCheckout = job.steps.find((step: { with?: { repository?: string } }) => step.with?.repository);
@@ -113,9 +131,9 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
       return result == null ? '' : String(result);
     };
     let invocation = 0;
-    const runCaller = (branch: string, milestone: string, projectType = 'simple') => {
+    const runCaller = (branch: string, milestone: string, projectType = selfCall.with['project-type']) => {
       const context = {
-        inputs: { ...call.with, 'project-type': projectType },
+        inputs: { ...selfCall.with, 'project-type': projectType },
         github: { event: { pull_request: { head: { ref: branch }, milestone: { title: milestone } } } },
       };
       const outputPath = path.join(TEMP_DIR, `caller-${++invocation}.outputs`);

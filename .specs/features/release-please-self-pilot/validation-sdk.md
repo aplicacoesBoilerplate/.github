@@ -1,4 +1,4 @@
-# Validation: release-please-self-pilot - PASS para T1-T3 e prontidão do teste hospedado
+# Archived validation: release-please-self-pilot - PASS para T1-T3 e prontidão do teste hospedado
 
 **Result**: PASS no recorte implementado. Seguro publicar somente a branch de teste para executar o caller de leitura. A execução hospedada ainda está PENDENTE. A Action de produção, o ciclo real de PR/tag/Release e a conclusão da feature/issue continuam PENDENTES.
 

@@ -2,7 +2,11 @@
 
 **Spec:** `spec.md`  
 **Status:** Implementação aprovada; teste hospedado autorizado.  
-**Limite:** push da branch de teste e execução no Actions permitidos; nenhum merge, PR de release, secret, tag ou Release nesta etapa.
+**Limite:** push e PR de entrega permitidos; nenhum merge, PR técnico de release, secret, tag ou Release executado pelo agente. A publicação será automática pela Action depois dos merges humanos.
+
+**Extensão aprovada após o teste:** preparar o caller de produção e abrir o PR de entrega no próprio repositório. O agente não fará merge nem criará tag/Release. O usuário fará os merges; a Action publicará automaticamente após o PR técnico. A milestone escolhida ficará somente no PR funcional.
+
+O caller de produção tem dois jobs: `validate`, reutilizando a CI de leitura, e `release`, dependente de `validate`, reutilizando o called central em modo simple. Ambos exigem PR mergeado; o evento aceita apenas closed para master. O segundo job recebe somente as permissões de escrita exigidas pelo Release Please e não herda secrets de registries. As referências locais e central-ref fixado em github.sha mantêm CI, caller, called e scripts na revisão integrada. A instalação do caller no PR ainda aberto não publica nada.
 
 ## Architecture Overview
 

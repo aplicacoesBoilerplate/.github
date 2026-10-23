@@ -3,7 +3,7 @@
 **Data:** 2026-10-23  
 **Issue:** [Versionamento por sprint](https://github.com/aplicacoesBoilerplate/.github/issues/4)  
 **Base examinada:** `master`, commit `e05a76af07096e2cc4350af02896a68b11386bd5`.  
-**Status:** Execução aprovada. Autorizados commits e push da branch de teste e execução no runner do GitHub Actions. Merge em master, tag, Release e alterações de secrets/proteções continuam fora da autorização.
+**Status:** Teste hospedado aprovado. O usuário autorizou preparar o caller de produção, version.txt e o PR de entrega na mesma branch. Os merges serão humanos; nenhuma tag, Release ou alteração administrativa será executada pelo agente.
 
 ## Problem Statement
 
@@ -23,7 +23,7 @@ O próprio `aplicacoesBoilerplate/.github` será o primeiro consumidor da pipeli
 
 | Feature | Reason |
 | --- | --- |
-| Merge, PR de release, tag ou Release nesta iteração | O usuário autorizou somente publicar a branch de teste e executar o teste no Actions. A prova de publicação real exige autorização posterior. |
+| Merge ou publicação pelo agente | O usuário autorizou preparar e abrir o PR de entrega, mas reservou os merges para si. A Action deverá criar PR de release/tag/Release depois dos merges humanos. O agente não executará essas escritas diretamente. |
 | Publicação npm, Maven, GoReleaser ou containers neste piloto | A entrega versionada é o conjunto de pipelines, não um pacote de aplicação. |
 | Alterar boilerplate-cli, PackagesJava ou outros consumidores | O primeiro piloto será este repositório. Particularidades de linguagem ficam para depois. |
 | Corrigir GitHub Pages ou adquirir plano pago | A falha da documentação foi explicitamente separada do versionamento. |
@@ -38,7 +38,7 @@ O próprio `aplicacoesBoilerplate/.github` será o primeiro consumidor da pipeli
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
 | Primeiro consumidor | O próprio `aplicacoesBoilerplate/.github` | Decisão expressa do usuário; evita depender agora de outra aplicação. | Sim, conversa |
-| Limite operacional atual | Arquivos e commits locais, push da branch de teste e execução no Actions; nenhum merge, tag ou Release | O usuário ampliou expressamente a autorização para testar no runner hospedado. | Sim, conversa |
+| Limite operacional atual | Arquivos e commits locais, push e PR de entrega; nenhum merge, tag ou Release executado pelo agente | O usuário autorizou preparar o cenário real e abrir o PR, com merges humanos. | Sim, conversa |
 | Motor de versão | Somente Release Please | Preserva a mudança de abordagem adotada na master. | Sim, conversa |
 | Estratégia do piloto | `simple`, com `version.txt` e `CHANGELOG.md` | Não exige transformar este repositório em um pacote npm. | Proposta técnica para conferência |
 | Milestone na preparação do PR de release | Exigir milestone válida no PR funcional de origem, inclusive hotfix, usando sua versão exata como `release-as` | A entrega que alimenta a criação ou atualização do PR de release não é aceita sem milestone. | Sim, esclarecimento expresso do usuário |
@@ -193,6 +193,12 @@ Essa é uma regra da nossa orquestração. Não é uma exigência universal do R
 **Coverage:** 6 requisitos identificados. T1 executa o contrato e o SDK real sem rede; T2/T3 entregam o caller de teste hospedado e o roteiro. RPSP-05 permanece pendente de autorização para o ciclo real de publicação; RPSP-06 é futuro.
 
 **Evidência hospedada:** [run 40033980369](https://github.com/aplicacoesBoilerplate/.github/actions/runs/40033980369), SHA `b6493740679134fc540c27344e4d8ec28cc23004`: sete testes aprovados, zero skips e typecheck aprovado. Não houve execução da Action com escrita nem publicação real; os resultados pendentes no relatório independente continuam pendentes.
+
+### Preparação autorizada do cenário real (T4)
+
+O usuário aprovou usar os próprios ajustes já entregues como mudança real do primeiro PR. T4 acrescenta o caller de produção `version-release-please-self-caller.yml` e `version.txt` com base `0.0.0`, sem publicar essa base como tag. O caller aceita somente PR fechado para master, exige merge verdadeiro nos dois jobs e aguarda a CI antes do called central. O job de CI mantém leitura; somente o job de release declara contents/pull-requests/issues:write, sem herdar secrets de pacotes. O called é referenciado localmente e recebe `central-ref: ${{ github.sha }}`.
+
+O PR de entrega será aberto na mesma branch, sem palavra-chave de fechamento da issue #4. A milestone do PR determina a versão planejada; o usuário confirmou v0.0.1 separada para o piloto, preservando v1.0.0 para as demais pipelines. O PR técnico será produzido pela Action somente depois do merge humano da entrega. Nenhum PR será integrado pelo agente. Os critérios externos RPSP-05 continuam pendentes até existirem evidências reais.
 
 ## Success Criteria
 

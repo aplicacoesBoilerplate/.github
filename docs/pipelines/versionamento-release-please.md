@@ -66,15 +66,21 @@ No GitHub, abra **Actions → Release Please Functional Pilot → execução do 
 
 O primeiro run é disparado por push somente na branch de teste. O botão **Run workflow** depende de o arquivo com `workflow_dispatch` existir na default branch; não é preciso fazer merge em master só para obter essa primeira evidência. Para repetir o mesmo commit sem novas mudanças, use **Re-run all jobs** na execução existente. Não altere secrets nem habilite permissões de escrita para esse teste.
 
-### Próxima etapa: publicação real, ainda pendente
+### Caller de produção preparado: publicação real ainda pendente
 
-A execução hospedada acima não fecha a issue de versionamento. O ciclo de publicação precisa de autorização separada e de um caller de produção ativo, usando `project-type: simple`. Esse tipo atualiza `version.txt` e `CHANGELOG.md`, sem npm, Maven ou GoReleaser. O arquivo `version.txt` precisa existir no repositório consumidor antes do piloto real; no teste ele é criado somente na fixture temporária com base `0.0.0`, nunca como tag publicada.
+A execução hospedada acima não fecha a issue de versionamento. O usuário autorizou preparar o PR de entrega deste próprio repositório, com milestone separada `v0.0.1`, preservando a milestone `v1.0.0` para outras pipelines. O caller de produção agora está em `.github/workflows/version-release-please-self-caller.yml`, usando `project-type: simple`. Esse tipo atualiza `version.txt` e `CHANGELOG.md`, sem npm, Maven ou GoReleaser. O arquivo `version.txt` entra no PR com base `0.0.0`, nunca como tag publicada.
 
-No piloto futuro deste mesmo repositório, a referência local ao called deve executar a mesma revisão da CI, e `central-ref: ${{ github.sha }}` deve fixar também o checkout dos scripts. Para consumidores externos, fixe **o mesmo SHA revisado** em `uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@SHA` e em `with.central-ref`. O default `master` preserva compatibilidade, mas é mutável e não é uma garantia de revisão imutável.
+O caller de produção aceita apenas `pull_request: closed` para `master`. Ambos os jobs exigem merge verdadeiro: `validate` executa a CI de leitura, e `release` depende de seu sucesso e chama o called central local. Só o job de release recebe as permissões de escrita necessárias; não há secrets de registries herdados. As referências locais e `central-ref: ${{ github.sha }}` fixam a revisão integrada. Abrir o PR não publica nada, e fechar sem merge não executa os jobs.
+
+São dois PRs: o **PR de entrega**, aberto por nós, leva a milestone e os ajustes reais; o **PR técnico de release**, criado pela Action após aquele merge, leva versão e changelog. O usuário integra os dois PRs. Depois do segundo merge, a pipeline cria a tag e publica no GitHub Releases automaticamente; não há publicação manual nessa tela. A exigência de milestone não é repetida no PR técnico. Nenhum merge é realizado pelo agente.
+
+O mesmo teste funcional agora lê o caller de produção e usa seus inputs no subprocesso real. As guardas e a dependência de CI são conferidas como contrato YAML, não como execução antecipada do runner de publicação. A CI aceita a evolução de version.txt, para não bloquear o PR técnico quando ele atualizar o arquivo para 0.0.1.
+
+Neste piloto do mesmo repositório, a referência local ao called executa a mesma revisão da CI, e `central-ref: ${{ github.sha }}` fixa também o checkout dos scripts. Para consumidores externos, fixe **o mesmo SHA revisado** em `uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@SHA` e em `with.central-ref`. O default `master` preserva compatibilidade, mas é mutável e não é uma garantia de revisão imutável.
 
 Roteiro posterior, não executado pelo teste:
 
-1. Preparar `version.txt` e o caller de produção após autorização; confirmar permissões de Actions e criação de PRs com `GITHUB_TOKEN`.
+1. Revisar o PR preparado com `version.txt` e o caller de produção; confirmar permissões de Actions e criação de PRs com `GITHUB_TOKEN`. Se a organização bloquear essa criação, um administrador precisa habilitá-la; não trocar credenciais nem alterar políticas automaticamente.
 2. Abrir entrega funcional com `fix:` ou `feat:` e milestone `v0.0.1`; preservar Conventional Commits no squash merge.
 3. Após CI/revisão e merge humano, inspecionar o PR real do Release Please, sua versão e changelog. Não deve haver tag/Release dessa candidata antes do merge do PR técnico.
 4. Aprovar a execução da CI do PR automatizado, se o GitHub solicitar. Não dispensar a CI.

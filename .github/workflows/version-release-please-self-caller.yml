@@ -1,0 +1,30 @@
+name: Release Please Self Caller
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate merged delivery
+    if: github.event.pull_request.merged == true
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Version the pipelines (simple)
+    if: github.event.pull_request.merged == true
+    needs: validate
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    uses: ./.github/workflows/version-release-please-called.yml
+    with:
+      project-type: simple
+      central-ref: ${{ github.sha }}

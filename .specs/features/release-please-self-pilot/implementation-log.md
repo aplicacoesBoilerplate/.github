@@ -64,3 +64,12 @@ Todas as asserções novas pertencem a RPSP-01 a RPSP-04. As asserções de cami
 - Limites preservados: master e05a76a; nenhuma tag ou Release retornada pela API após o run; nenhum PR criado, nenhum pacote publicado, nenhuma aplicação externa alterada.
 - O primeiro push usou também o transporte SSH configurado no origin, e o actor desse run foi gersonfribeiro. A credencial ativa da CLI continua agentegersonfribeiro-AI; o push deste registro usa URL HTTPS direta e o helper da CLI, sem alterar configuração global.
 - O resultado hospedado confirma T1-T3 no runner real. Não confirma RPSP-05 nem os critérios de produção marcados PENDENTES no relatório independente.
+
+## T4: Preparação do caller real
+
+- Autorização: preparar e abrir o PR de entrega no próprio aplicacoesBoilerplate/.github; usuário confirmou milestone v0.0.1 separada, mantendo v1.0.0 para as outras pipelines. Os merges ficam com o usuário; a Action publicará tag/GitHub Release após o segundo merge.
+- RED: mesmo teste funcional falhou com ENOENT para version-release-please-self-caller.yml antes da implementação.
+- GREEN: caller real recebe apenas PR closed para master, ambos os jobs exigem merged=true, release depende de validate e usa called local/simple/central-ref github.sha. validate tem leitura; release tem somente contents/pull-requests/issues:write e não herda secrets de pacotes.
+- version.txt inicia em 0.0.0 como base não publicada. O contrato permite que esse arquivo evolua no PR técnico; a fixture do teste continua isolada e previsível.
+- O fluxo funcional usa agora os inputs do caller de produção. As sete asserções/casos superiores permanecem, com 7/7 aprovados, zero skips e typecheck aprovado.
+- A revisão anterior permanece em validation-sdk.md com seu range imutável. Novo gate independente é exigido antes do push/PR desta extensão. Nenhuma publicação real foi presumida.
