@@ -6,7 +6,7 @@ Organização para templates, pacotes e aplicações base usados para acelerar n
 
 - Templates de issues e pull requests ficam no repositório `.github` da organização.
 - Workflows padrão ficam em `.github/workflows` e devem ser propagados para as organizações relacionadas por fork ou pull request.
-- O template canônico de GitHub Projects é o Project 11: https://github.com/orgs/aplicacoesBoilerplate/projects/11
+- O template canônico de GitHub Projects é [TEMPLATE](https://github.com/orgs/aplicacoesBoilerplate/projects/11).
 
 ## Campos de Project
 
@@ -14,4 +14,3 @@ Organização para templates, pacotes e aplicações base usados para acelerar n
 - `Effort`: Team, High, Medium, Low.
 - `Size`: XS, S, M, L, XL.
 - `Estimate`: escala numérica definida pela entrega.
-

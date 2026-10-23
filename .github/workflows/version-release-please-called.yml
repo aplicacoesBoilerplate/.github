@@ -1,0 +1,77 @@
+name: Release Please Called
+
+on:
+  workflow_call:
+    inputs:
+      project-type:
+        description: 'Tipo do projeto (node, go, maven, gradle)'
+        required: true
+        type: string
+
+jobs:
+  release-please:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # 1. Faz o checkout do repositório da aplicação (Caller)
+      - name: Checkout Aplicação
+        uses: actions/checkout@v4
+
+      # 2. Faz o checkout dos scripts centralizados do seu repo .github em uma pasta isolada
+      - name: Checkout Scripts Centralizados
+        uses: actions/checkout@v4
+        with:
+          repository: aplicacoesBoilerplate/.github
+          path: .ci-scripts
+
+      # 3. Configura o Node para executar o script TypeScript
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # 4. Executa o Orquestrador POO em TypeScript para gerar o manifesto do Release Please
+      - name: Executar Orquestrador TS
+        run: npx --yes tsx .ci-scripts/scripts/release-orchestrator.ts
+        env:
+          PROJECT_TYPE: ${{ inputs.project-type }}
+          MILESTONE_TITLE: ${{ github.event.pull_request.milestone.title }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+
+      # 5. Remove os scripts auxiliares antes do Release Please rodar para não sujar a árvore do Git
+      - name: Limpar Scripts Temporários
+        run: rm -rf .ci-scripts
+
+      # 6. Executa o Release Please (Cria o PR de Release OU gera a Tag + GitHub Release)
+      - name: Executar Release Please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+
+      # ==================================================================================
+      # 7. ADAPTADORES PÓS-TAG (Executam apenas quando o PR do Release Please é mergeado)
+      # ==================================================================================
+      - name: Adaptador GoReleaser (Go)
+        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'go' }}
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Adaptador NPM (Node / Vue / TS)
+        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'node' }}
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Adaptador Maven (Java / Kotlin)
+        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'maven' }}
+        run: mvn deploy -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

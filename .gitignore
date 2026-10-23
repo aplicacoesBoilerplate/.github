@@ -4,8 +4,19 @@
 *.swp
 .DS_Store
 Thumbs.db
-node_modules/
 coverage/
 .vscode/
 .idea/
 .superpowers/
+
+
+# Dependências Node
+node_modules/
+**/node_modules/
+
+# Build e cache do VitePress
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
+# Pastas temporárias de testes
+ci-scripts/tmp-*/

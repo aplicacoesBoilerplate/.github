@@ -1,0 +1,128 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
+// 1. Contrato de Configuração do Release Please
+interface PackageConfig {
+  'release-type': string;
+  'release-as'?: string;
+  'extra-files'?: string[];
+}
+
+interface ReleasePleaseConfig {
+  packages: Record<string, PackageConfig>;
+}
+
+// 2. Classe Base Abstrata (Abstração POO para os Adaptadores), adiciona a release na configuração para o release-please-config.json
+abstract class CProjectAdapter {
+  protected abstract lReleaseType: string;
+
+  public buildPackageConfig(pVersion?: string): PackageConfig {
+    const CONFIG: PackageConfig = {
+      'release-type': this.lReleaseType,
+    };
+
+    if (pVersion) {
+      CONFIG['release-as'] = pVersion;
+    }
+
+    return CONFIG;
+  }
+}
+
+// 3. Implementações Concretas (Polimorfismo para cada stack)
+class CNodeAdapter extends CProjectAdapter {
+  protected lReleaseType = 'node'; // Atualiza package.json e CHANGELOG.md
+}
+
+class CGoAdapter extends CProjectAdapter {
+  protected lReleaseType = 'go'; // Gerencia tags e CHANGELOG.md para o GoReleaser
+}
+
+class CMavenAdapter extends CProjectAdapter {
+  protected lReleaseType = 'maven'; // Atualiza pom.xml automaticamente
+}
+
+class GradleAdapter extends CProjectAdapter {
+  protected lReleaseType = 'gradle'; // Atualiza build.gradle / gradle.properties
+}
+
+// 4. Factory para instanciar o adaptador correto
+class CAdapterFactory {
+  public static create(pType: string): CProjectAdapter {
+    switch (pType.toLowerCase()) {
+      case 'node':
+      case 'vue':
+      case 'typescript':
+        return new CNodeAdapter();
+      case 'go':
+        return new CGoAdapter();
+      case 'maven':
+      case 'java':
+        return new CMavenAdapter();
+      case 'gradle':
+      case 'kotlin':
+        return new GradleAdapter();
+      default:
+        throw new Error(`Adaptador não suportado para o tipo de projeto: ${pType}`);
+    }
+  }
+}
+
+// 5. Domínio da Milestone (Regra de Negócio de Versionamento)
+class CMilestoneParser {
+  public static extractVersion(pMilestoneTitle?: string, pPrBranch?: string): string | undefined {
+    // Se o PR sendo mergeado já for o próprio PR do Release Please, não forçamos versão
+    if (pPrBranch && pPrBranch.startsWith('release-please')) {
+      console.log('Merge do PR de Release detectado. Ignorando extração de Milestone.');
+      return undefined;
+    }
+
+    if (!pMilestoneTitle) {
+      throw new Error('Falha de Governança: PR mergeado na master sem uma Milestone associada!');
+    }
+
+    // Remove o prefixo 'v' ou 'V' (ex: v1.2.3 -> 1.2.3)
+    const CLEAN_VERSION = pMilestoneTitle.trim().replace(/^[vV]/, '');
+    const SEM_VER_REGEX = /^\d+\.\d+\.\d+(-[\w.-]+)?$/;
+
+    if (!SEM_VER_REGEX.test(CLEAN_VERSION)) {
+      throw new Error(`A Milestone '${pMilestoneTitle}' não segue o padrão SemVer (vX.Y.Z).`);
+    }
+
+    return CLEAN_VERSION;
+  }
+}
+
+// 6. Orquestrador Principal
+class CReleaseOrchestrator {
+  public run(): void {
+    const PROJECT_TYPE = process.env.PROJECT_TYPE || '';
+    const MILESTONE_TITLE = process.env.MILESTONE_TITLE;
+    const PR_HEADE_REF = process.env.PR_HEAD_REF;
+
+    console.log(`Iniciando orquestração para o tipo de projeto: [${PROJECT_TYPE}]`);
+
+    const ADAPTER = CAdapterFactory.create(PROJECT_TYPE);
+    const TARGET_VERSION = CMilestoneParser.extractVersion(MILESTONE_TITLE, PR_HEADE_REF);
+
+    const CONFIG: ReleasePleaseConfig = {
+      packages: {
+        '.': ADAPTER.buildPackageConfig(TARGET_VERSION),
+      },
+    };
+
+    const OUTPUT_PATH = path.resolve(process.cwd(), 'release-please-config.json');
+    fs.writeFileSync(OUTPUT_PATH, JSON.stringify(CONFIG, null, 2), 'utf-8');
+
+    console.log('Arquivo release-please-config.json gerado com sucesso:');
+    console.log(fs.readFileSync(OUTPUT_PATH, 'utf-8'));
+  }
+}
+
+// Execução do Release Please
+try {
+  new CReleaseOrchestrator().run();
+} catch (error) {
+  console.error((error as Error).message);
+  process.exit(1);
+}

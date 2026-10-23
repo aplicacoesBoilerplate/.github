@@ -1,0 +1,17 @@
+name: Release Please Caller Node
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - master
+
+jobs:
+  call-central-versioning:
+    # Chama a pipeline centralizada no seu repositório de boilerplate
+    uses: aplicacoesBoilerplate/.github/workflows/version-release-please-called.yml@master
+    with:
+      # Define o adaptador/tipo de projeto (ex: node, go, maven, gradle)
+      project-type: 'node'
+    secrets: inherit

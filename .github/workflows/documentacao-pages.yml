@@ -1,0 +1,71 @@
+name: Publicar Build de Documentação do VitePress no GitHub Pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/documentacao-pages.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/workflows/documentacao-pages.yml'
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      docs-dir:
+        description: 'Diretório raiz da documentação VitePress'
+        required: false
+        default: 'docs'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentacao-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ${{ inputs.docs-dir || 'docs' }}/package-lock.json
+
+      - name: Instalar dependências da documentação
+        working-directory: ${{ inputs.docs-dir || 'docs' }}
+        run: npm ci
+
+      - name: Build VitePress
+        working-directory: ${{ inputs.docs-dir || 'docs' }}
+        run: npm run docs:build
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
+        with:
+          path: ${{ inputs.docs-dir || 'docs' }}/.vitepress/dist
+
+  deploy:
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
