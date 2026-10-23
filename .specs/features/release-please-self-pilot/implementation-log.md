@@ -13,7 +13,7 @@
 
 | Critério | Evidência no teste | Resultado exigido |
 | --- | --- | --- |
-| Referência caller | `ci-scripts/tests/release-please.test.ts:65` `assert.ok(fs.existsSync(...))` | Arquivo central existe |
+| Referência caller | `ci-scripts/tests/release-please.test.ts`, `assert.ok(fs.existsSync(...))` | Arquivo central existe |
 | Dois momentos originais | Mesmo arquivo, `assert.equal(FEATURE_CONFIG...release-as, '1.4.0')` e `assert.equal(releasePrConfig...release-as, undefined)` | Asserções originais preservadas |
 | Parâmetros efetivos | Mesmo arquivo, `assert.deepEqual(preparation.engineInputs, ...)` | simple e 0.0.1 |
 | Arquivos reais | Mesmo arquivo, `assert.equal(...version.txt..., '0.0.1')` e `assert.match(...CHANGELOG...)` | Updaters reais aplicados |
@@ -38,3 +38,10 @@ Todas as asserções novas pertencem a RPSP-01 a RPSP-04. As asserções de cami
 - CI existente: workflow_call aditivo e typecheck depois dos testes. Os gatilhos anteriores continuam preservados.
 - O mesmo fluxo funcional verifica o caller e a CI reais, sem novo arquivo de teste. A fixture version.txt continua temporária.
 - Gate local: 7 testes aprovados, 0 falhas/skip; typecheck e git diff --check aprovados. Execução hospedada ainda pendente do push após o Verifier.
+
+## T3: Roteiro e limites
+
+- Documentação atualizada no guia existente: outputs efetivos da Action, dois momentos, caller hospedado, dependências de teste, reprodução, central-ref e evolução de governança.
+- Distinção explícita: o runner executará o SDK real e o contrato TS, não a Action de publicação. Nenhum resultado de PR/tag/Release persistidos é presumido.
+- As sete asserções/casos superiores permanecem; sem arquivos novos de teste. RPSP-05 e RPSP-06 não são declarados entregues.
+- A próxima evidência exigida é o Verifier independente, seguido do run hospedado no SHA publicado.

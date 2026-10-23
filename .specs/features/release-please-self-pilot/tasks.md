@@ -104,9 +104,9 @@ T1 -> T2 -> T3
 **Interfaces**: instruções npm ci/test/typecheck, push na branch de teste e limites entre geração de propostas, execução hospedada e publicação.
 **Tools**: ferramentas locais e TLC; revisor independente ao final.
 
-- [ ] Documentar as duas etapas, o teste único, dependências somente de teste e modo simple sem registry.
-- [ ] Registrar GitHub E2E como pendente e governança avançada como futura.
-- [ ] Rodar Build e validação estrutural TLC; atualizar progresso antes do commit local `docs(versioning): document hosted pilot and publication boundary`.
+- [x] Documentar as duas etapas, o teste único, dependências somente de teste e modo simple sem registry.
+- [x] Registrar GitHub E2E como pendente e governança avançada como futura.
+- [x] Rodar Build e validação estrutural TLC; atualizar progresso antes do commit local `docs(versioning): document hosted pilot and publication boundary`.
 
 **Tests**: revisão documental com suíte existente como gate de não regressão; nenhum teste artificial de prosa.
 **Gate**: Build.
