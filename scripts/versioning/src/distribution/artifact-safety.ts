@@ -23,7 +23,7 @@ export interface DistributionReport {
   readonly publishedSha: string;
   readonly build: BuildIdentity;
   readonly manifestDigest: string;
-  readonly status: 'ready' | 'already-distributed' | 'partial-reconciliation-required' | 'blocked';
+  readonly status: 'ready' | 'already-distributed' | 'partial-reconciliation-required' | 'blocked' | 'no-distribution';
   readonly distributionAllowed: boolean;
   readonly entries: readonly RegistryEntry[];
 }
@@ -89,7 +89,7 @@ export async function inspectDistribution<T extends ArtifactFile & {readonly coo
   }
   assertDistributionContext(context);
   const states = new Set(entries.map(e => e.registryState));
-  const status = states.has('conflict') || states.has('unverifiable') ? 'blocked' :
+  const status = !entries.length ? 'no-distribution' : states.has('conflict') || states.has('unverifiable') ? 'blocked' :
     states.size > 1 ? 'partial-reconciliation-required' : states.has('existing-identical') ? 'already-distributed' : 'ready';
   return {schemaVersion:1, publishedSha:context.publishedSha, build:{...context.build},
     manifestDigest:sha256(JSON.stringify({sha:context.publishedSha, tags:context.expectedTags, build:context.build,

@@ -66,7 +66,7 @@ export async function inspectDistribution(context, artifacts, lookup) {
     }
     assertDistributionContext(context);
     const states = new Set(entries.map(e => e.registryState));
-    const status = states.has('conflict') || states.has('unverifiable') ? 'blocked' :
+    const status = !entries.length ? 'no-distribution' : states.has('conflict') || states.has('unverifiable') ? 'blocked' :
         states.size > 1 ? 'partial-reconciliation-required' : states.has('existing-identical') ? 'already-distributed' : 'ready';
     return { schemaVersion: 1, publishedSha: context.publishedSha, build: { ...context.build },
         manifestDigest: sha256(JSON.stringify({ sha: context.publishedSha, tags: context.expectedTags, build: context.build,
