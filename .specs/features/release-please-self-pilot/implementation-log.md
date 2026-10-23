@@ -45,3 +45,11 @@ Todas as asserções novas pertencem a RPSP-01 a RPSP-04. As asserções de cami
 - Distinção explícita: o runner executará o SDK real e o contrato TS, não a Action de publicação. Nenhum resultado de PR/tag/Release persistidos é presumido.
 - As sete asserções/casos superiores permanecem; sem arquivos novos de teste. RPSP-05 e RPSP-06 não são declarados entregues.
 - A próxima evidência exigida é o Verifier independente, seguido do run hospedado no SHA publicado.
+
+## Gate independente antes do push
+
+- Verifier: PASS no range e05a76a..a04385d, para T1-T3 e prontidão do teste hospedado; relatório em validation.md.
+- Execução independente: 7/7 testes, zero skips; typecheck, validadores TLC e diff aprovados.
+- Sensor: 3/3 mutações detectadas, com baseline da cópia restaurada aprovada e checkout real preservado.
+- Auditoria adicional: npm audit --prefix ci-scripts --omit=dev --audit-level=high retornou 0 vulnerabilidades.
+- Autorização conferida: conta agentegersonfribeiro-AI com WRITE; somente push da branch de teste e seu run. Antes do push, master continua e05a76a, e a API não retornou tags nem Releases.

@@ -186,7 +186,7 @@ Essa é uma regra da nossa orquestração. Não é uma exigência universal do R
 | RPSP-01 | Piloto simple sem publicação de pacotes | Execute | Implementing: contrato e SDK; publicação real pendente |
 | RPSP-02 | Contrato real entre caller, checkout e Action | Execute | Implementing: paths e bindings; Action hospedada pendente |
 | RPSP-03 | Milestone e limites de merge | Execute | Implementing: eventos simulados; merges reais pendentes |
-| RPSP-04 | Evidência local e separação de cobertura | Execute | Implemented locally; independent review and hosted run pending |
+| RPSP-04 | Evidência local e separação de cobertura | Execute | Verified locally by independent review; hosted run pending |
 | RPSP-05 | Ciclo remoto autorizado e rastreável | Specify | Pending |
 | RPSP-06 | Retry, concorrência e falhas: evolução fora do MVP | Future | Pending |
 
@@ -196,7 +196,7 @@ Essa é uma regra da nossa orquestração. Não é uma exigência universal do R
 
 - [x] Caller simple e orquestrador passam nos testes locais de caminhos, parâmetros e falhas.
 - [x] Os sete testes existentes continuam passando e a checagem de tipos termina com código 0.
-- [ ] Revisão independente confirma que o piloto não pode publicar pacotes.
+- [x] Revisão independente confirma que o piloto não pode publicar pacotes.
 - [x] O roteiro de teste diferencia preparação local de execução remota autorizada.
 - [ ] Após autorização específica, há evidência de PR de release, merge humano, tag no SHA correto e Release.
 - [x] Não há alterações nas aplicações externas nem fechamento automático da issue de versionamento.
