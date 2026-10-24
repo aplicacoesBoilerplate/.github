@@ -6,7 +6,7 @@
 - Java: novo worktree PackagesJava.worktrees/release-please-stage1, base origin/release/v0.0.1 2992a00995071d4e836e907e5148222fea1e3fdc. Clone original sujo preservado.
 - Vue: novo worktree PackagesVue.worktrees/release-please-stage1, base origin/release/v0.0.1 a846332f1f922f09333bfca81de45b3b47bf2f5b. Grafo atual tem cinco bibliotecas, docs e dois tools privados; não usar o inventário antigo da master. Clone original sujo preservado.
 - Go: novo worktree boilerplate-cli.worktrees/release-please-stage1, base origin/release/v0.0.1 939987851b49436476a82a859694688772fda7bb. Não tocar issue-8/13/14 nem promover os commits funcionais para master.
-- Gates de base: central 7/7 e typecheck; Java mvn verify com os quatro módulos SUCCESS; Go test/vet/build aprovados. Vue parou antes dos testes por npm devEngines; npm10.9.4 validado fora do repo e nova execução com --prefix em andamento. Nenhuma regra de versão foi removida para contornar a falha.
+- Gates de base: central 7/7 e typecheck; Java mvn verify com os quatro módulos SUCCESS; Go test/vet/build aprovados. Vue verify passou (17 tarefas, cache da baseline), usando npm10.9.4 invocado fora do repo com --prefix. Nenhuma regra de versão foi removida para contornar a falha. A instalação Vue reporta 16 vulnerabilidades preexistentes; upgrade amplo não integra este escopo.
 
 ## T1: Opt-out de distribuição
 
@@ -29,3 +29,17 @@
 | três guards exatos, linha 125 | RPIL-01.AC2 | Sim |
 
 Veredito local T1: PASS para o contrato; a etapa completa e a produção continuam pendentes. O teste verifica YAML/booleans tipados, não simula a execução do runner ou dos publicadores.
+
+## T2: Contrato configurado e motores nativos
+
+- RED: o teste exigindo engine=action falhou quando o output era ausente; contratos configurados foram adicionados antes da implementação correspondente.
+- Implementação: três inputs configurados; validação de caminho/política/seed; preservação dos arquivos do consumidor. Single continua na Action; manifest independente usa config-file/manifest-file oficiais; raiz configurada usa API pública Manifest.fromManifest do SDK 17.3.0 com override transitório da milestone. Nenhum cálculo próprio de incremento.
+- ci-scripts/tests/release-please.test.ts:227-266 comprova preservação, override raiz, ausência de override no workspace e negativos (política, múltiplos componentes com override, path traversal e manifest ausente).
+- Mesmo teste:288-321 aplica updaters Maven reais em quatro POMs, revision e pais, e confere versão 0.0.2, sem snapshot, tag v0.0.2 e SHA integrado.
+- Mesmo teste:324-345 verifica ordem nativa releases/reload/PRs e resultados, isolando transporte de escrita. Não constitui prova de escrita real no GitHub.
+- Mesmo teste:347-408 calcula incremento independente 1.1.1 -> 1.1.2, sem downgrade dos demais, atualiza range de docs privado e lockfile pelo plugin node-workspace, preserva root privado e impede GitHub Release para docs.
+- Gate integral: 7/7, zero skips/falhas; typecheck e diff aprovados; npm audit --omit=dev: 0 vulnerabilidades. Contrato inclui o entrypoint SDK do YAML.
+- Revisão independente central_contract_review: sem bloqueios da etapa 1. Limitação da etapa 2 registrada: os publishers legados não consomem resultados SDK nem múltiplos componentes; publish-artifacts=true não é suportado nesses modos. Os três pilotos usam false.
+- Erro de import Version na implementação foi detectado pelo typecheck e corrigido com semver público para validação, antes do commit.
+
+Veredito local T2: PASS. Transporte de GitHub isolado, cálculo/updates nativos. Publicação hospedada dos consumidores permanece pendente dos merges humanos.

@@ -67,10 +67,10 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7
 **Depends on**: T1
 **Requirement**: RPIL-02, RPIL-03, RPIL-04
 **Files**: orquestrador, ponte SDK tipada, manifest/lock do runtime, called e mesmo teste funcional com fixtures de dados nativos.
-- [ ] RED para políticas/configs inválidas, configuração preservada e override raiz.
-- [ ] Action single/manifest e SDK público configurado; nenhum algoritmo próprio ou distribuição nesta fase.
-- [ ] Exercitar Maven/revision, grafo npm/privados/versões e negativos com motor real e transporte isolado.
-- [ ] Gate Build, auditoria runtime, status e commit `feat(versioning): support native configured release engines`, push.
+- [x] RED para políticas/configs inválidas, configuração preservada e override raiz.
+- [x] Action single/manifest e SDK público configurado; nenhum algoritmo próprio ou distribuição nesta fase.
+- [x] Exercitar Maven/revision, grafo npm/privados/versões e negativos com motor real e transporte isolado.
+- [x] Gate Build e auditoria runtime aprovados; status incluído no commit `feat(versioning): support native configured release engines`; push antes de T3.
 **Tests**: integração funcional e fixtures nativas no fluxo existente.
 **Gate**: Build.
 

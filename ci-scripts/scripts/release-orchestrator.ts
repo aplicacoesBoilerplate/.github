@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { CReleaseConfiguration } from './release-configuration.js';
 
 // 1. Contrato de Configuração do Release Please
 interface PackageConfig {
@@ -89,9 +90,9 @@ class CMilestoneParser {
 
     // Remove o prefixo 'v' ou 'V' (ex: v1.2.3 -> 1.2.3)
     const CLEAN_VERSION = pMilestoneTitle.trim().replace(/^[vV]/, '');
-    const SEM_VER_REGEX = /^\d+\.\d+\.\d+(-[\w.-]+)?$/;
-
-    if (!SEM_VER_REGEX.test(CLEAN_VERSION)) {
+    try {
+      CReleaseConfiguration.assertVersion(CLEAN_VERSION);
+    } catch {
       throw new Error(`A Milestone '${pMilestoneTitle}' não segue o padrão SemVer (vX.Y.Z).`);
     }
 
@@ -110,24 +111,34 @@ class CReleaseOrchestrator {
 
     const ADAPTER = CAdapterFactory.create(PROJECT_TYPE);
     const TARGET_VERSION = CMilestoneParser.extractVersion(MILESTONE_TITLE, PR_HEADE_REF);
+    const SETTINGS = CReleaseConfiguration.load(
+      process.env.RELEASE_CONFIG_FILE || '',
+      process.env.RELEASE_MANIFEST_FILE || '.release-please-manifest.json',
+      process.env.VERSION_POLICY || 'milestone',
+    );
+    const RELEASE_AS = SETTINGS.policy === 'milestone' ? TARGET_VERSION : undefined;
 
     const CONFIG: ReleasePleaseConfig = {
       packages: {
-        '.': ADAPTER.buildPackageConfig(TARGET_VERSION),
+        '.': ADAPTER.buildPackageConfig(RELEASE_AS),
       },
     };
 
     const OUTPUT_PATH = path.resolve(process.cwd(), 'release-please-config.json');
-    fs.writeFileSync(OUTPUT_PATH, JSON.stringify(CONFIG, null, 2), 'utf-8');
+    if (!SETTINGS.configFile) fs.writeFileSync(OUTPUT_PATH, JSON.stringify(CONFIG, null, 2), 'utf-8');
 
     // A Action recebe inputs oficiais; um JSON apenas local não configura manifest-mode.
     if (process.env.GITHUB_OUTPUT) {
       fs.appendFileSync(process.env.GITHUB_OUTPUT,
-        `release_type=${CONFIG.packages['.']['release-type']}\nrelease_as=${TARGET_VERSION || ''}\n`, 'utf-8');
+        `release_type=${SETTINGS.configFile ? '' : CONFIG.packages['.']['release-type']}\nrelease_as=${RELEASE_AS || ''}\nengine=${SETTINGS.engine}\n`, 'utf-8');
     }
 
-    console.log('Arquivo release-please-config.json gerado com sucesso:');
-    console.log(fs.readFileSync(OUTPUT_PATH, 'utf-8'));
+    if (!SETTINGS.configFile) {
+      console.log('Arquivo release-please-config.json gerado com sucesso:');
+      console.log(fs.readFileSync(OUTPUT_PATH, 'utf-8'));
+    } else {
+      console.log(`Config do consumidor preservado; engine=${SETTINGS.engine}, policy=${SETTINGS.policy}`);
+    }
   }
 }
 

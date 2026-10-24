@@ -5,10 +5,13 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
-import { GitHub } from 'release-please';
+import { GitHub, Manifest, type CreatedRelease, type Strategy } from 'release-please';
+import { FileNotFoundError } from '@google-automations/git-file-utils';
 // API interna presa em 17.3.0 e usada somente neste teste de integração.
 import { Simple } from 'release-please/build/src/strategies/simple.js';
 import { parseConventionalCommits } from 'release-please/build/src/commit.js';
+import { buildStrategy } from 'release-please/build/src/factory.js';
+import { TagName } from 'release-please/build/src/util/tag-name.js';
 
 const SCRIPTS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ORCHESTRATOR_PATH = path.resolve(SCRIPTS_DIR, 'scripts/release-orchestrator.ts');
@@ -135,9 +138,9 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
       return result == null ? '' : String(result);
     };
     let invocation = 0;
-    const runCaller = (branch: string, milestone: string, projectType = selfCall.with['project-type']) => {
+    const runCaller = (branch: string, milestone: string, projectType = selfCall.with['project-type'], configuredInputs: Record<string, string> = {}) => {
       const context = {
-        inputs: { ...selfCall.with, 'project-type': projectType },
+        inputs: { ...selfCall.with, 'project-type': projectType, ...configuredInputs },
         github: { event: { pull_request: { head: { ref: branch }, milestone: { title: milestone } } } },
       };
       const outputPath = path.join(TEMP_DIR, `caller-${++invocation}.outputs`);
@@ -161,7 +164,7 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
 
     const preparation = runCaller('feature/piloto-local', 'v0.0.1');
     assert.equal(preparation.result.status, 0, preparation.result.stderr);
-    assert.deepEqual(preparation.outputs, { release_type: 'simple', release_as: '0.0.1' });
+    assert.deepEqual(preparation.outputs, { release_type: 'simple', release_as: '0.0.1', engine: 'action' });
     assert.deepEqual(preparation.engineInputs, { 'release-type': 'simple', 'release-as': '0.0.1' });
 
     // Motor verdadeiro; qualquer tentativa de consultar ou escrever no GitHub falha.
@@ -191,7 +194,7 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
 
     const publication = runCaller(candidate.headRefName, '');
     assert.equal(publication.result.status, 0, publication.result.stderr);
-    assert.deepEqual(publication.outputs, { release_type: 'simple', release_as: '' });
+    assert.deepEqual(publication.outputs, { release_type: 'simple', release_as: '', engine: 'action' });
     assert.deepEqual(publication.engineInputs, { 'release-type': 'simple', 'release-as': '' });
     const publisher = new Simple({
       github, targetBranch: 'master', includeComponentInTag: false,
@@ -219,6 +222,192 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
       assert.match(invalid.result.stderr, error);
       assert.deepEqual(invalid.outputs, {}, 'Falha não pode fornecer parâmetros para publicação');
     }
+
+    // Configs pertencem ao consumidor e não podem ser sobrescritos pelo gerador.
+    const rootConfig = JSON.stringify({ packages: { '.': { 'release-type': 'maven', 'skip-snapshot': true } } });
+    fs.writeFileSync(path.join(TEMP_DIR, 'consumer-release.json'), rootConfig);
+    fs.writeFileSync(path.join(TEMP_DIR, 'consumer-versions.json'), JSON.stringify({ '.': '0.0.1' }));
+    const rootInputs = { 'release-config-file': 'consumer-release.json', 'release-manifest-file': 'consumer-versions.json' };
+    const configured = runCaller('feature/piloto-java', 'v0.0.2', 'maven', rootInputs);
+    assert.equal(configured.result.status, 0, configured.result.stderr);
+    assert.deepEqual(configured.outputs, { release_type: '', release_as: '0.0.2', engine: 'configured-sdk' });
+    assert.equal(fs.readFileSync(path.join(TEMP_DIR, 'consumer-release.json'), 'utf8'), rootConfig);
+    const configuredPublish = runCaller(candidate.headRefName, '', 'maven', rootInputs);
+    assert.equal(configuredPublish.result.status, 0, configuredPublish.result.stderr);
+    assert.equal(configuredPublish.outputs.release_as, '');
+
+    fs.writeFileSync(path.join(TEMP_DIR, 'workspace-release.json'), JSON.stringify({
+      'release-type': 'node', plugins: ['node-workspace'],
+      packages: { 'packages/ui': {}, 'packages/utils': {} },
+    }));
+    fs.writeFileSync(path.join(TEMP_DIR, 'workspace-versions.json'), JSON.stringify({ 'packages/ui': '1.1.1', 'packages/utils': '0.0.1' }));
+    const workspaceInputs = { 'release-config-file': 'workspace-release.json', 'release-manifest-file': 'workspace-versions.json', 'version-policy': 'native' };
+    const independent = runCaller('feature/piloto-vue', 'v9.0.0', 'node', workspaceInputs);
+    assert.equal(independent.result.status, 0, independent.result.stderr);
+    assert.deepEqual(independent.outputs, { release_type: '', release_as: '', engine: 'action' }, 'Milestone não força versão escalar nos componentes independentes');
+    assert.equal(action.with['config-file'], '${{ inputs.release-config-file }}');
+    assert.equal(action.with['manifest-file'], '${{ inputs.release-manifest-file }}');
+    assert.equal(action.if, "steps.orchestrator.outputs.engine == 'action'");
+    const sdkStep = job.steps.find((step: { id?: string }) => step.id === 'configured-release');
+    assert.ok(sdkStep, 'O override configurado precisa do SDK oficial, não de um input ignorado pela Action');
+    assert.equal(sdkStep.if, "steps.orchestrator.outputs.engine == 'configured-sdk'");
+    assert.match(sdkStep.run, /configured-release\.ts$/);
+
+    for (const invalidInputs of [
+      { ...workspaceInputs, 'version-policy': 'milestone' },
+      { ...rootInputs, 'version-policy': 'desconhecida' },
+      { ...rootInputs, 'release-config-file': '../consumer-release.json' },
+      { ...rootInputs, 'release-manifest-file': 'ausente.json' },
+    ]) {
+      const invalid = runCaller('feature/invalida', 'v0.0.2', 'node', invalidInputs);
+      assert.equal(invalid.result.status, 1);
+      assert.deepEqual(invalid.outputs, {}, 'Config inválido deve falhar antes dos parâmetros de escrita');
+    }
+
+    // Apenas o transporte e as entradas são simulados; parser, estratégias e updaters são nativos.
+    const { loadConfiguredManifest, CConfiguredReleaseEngine } = await import('../scripts/configured-release.js');
+    const files: Record<string, string> = {};
+    const nativeGitHub = await GitHub.create({
+      owner: 'pilot', repo: 'consumer', defaultBranch: 'master',
+      fetch: async () => { throw new Error('Rede proibida no fluxo nativo configurado'); },
+    });
+    nativeGitHub.getFileContentsOnBranch = async file => {
+      const contents = files[file];
+      if (contents === undefined) throw new FileNotFoundError(file);
+      return { content: Buffer.from(contents).toString('base64'), parsedContent: contents, sha: 'a'.repeat(40), mode: '100644' };
+    };
+    nativeGitHub.findFilesByFilenameAndRef = async name => Object.keys(files).filter(file => path.posix.basename(file) === name);
+    const applyNative = (updates: NonNullable<typeof candidate>['updates']) => {
+      for (const update of updates) {
+        if (files[update.path] !== undefined || update.createIfMissing) {
+          files[update.path] = update.updater.updateContent(files[update.path]);
+        }
+      }
+    };
+
+    const mavenConfig = {
+      packages: { '.': { 'release-type': 'maven', 'skip-snapshot': true, 'include-component-in-tag': false,
+        'extra-files': [{ type: 'xml', path: 'pom.xml', xpath: '/*[local-name()="project"]/*[local-name()="properties"]/*[local-name()="revision"]' }] } },
+    };
+    files['consumer-release.json'] = JSON.stringify(mavenConfig);
+    files['consumer-versions.json'] = JSON.stringify({ '.': '0.0.1' });
+    fs.writeFileSync(path.join(TEMP_DIR, 'consumer-release.json'), files['consumer-release.json']);
+    files['pom.xml'] = '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>pilot</groupId><artifactId>parent</artifactId><version>0.0.1</version><properties><revision>0.0.1</revision></properties></project>';
+    for (const module of ['boilerplate-bom', 'boilerplate-core', 'boilerplate-starter']) {
+      files[`${module}/pom.xml`] = `<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><parent><groupId>pilot</groupId><artifactId>parent</artifactId><version>0.0.1</version></parent><artifactId>${module}</artifactId></project>`;
+    }
+    const options = { repository: 'pilot/consumer', targetBranch: 'master', configFile: 'consumer-release.json',
+      manifestFile: 'consumer-versions.json', releaseAs: '0.0.2', workspace: TEMP_DIR };
+    const mavenManifest = await loadConfiguredManifest(options, nativeGitHub);
+    assert.equal(mavenManifest.repositoryConfig['.'].releaseAs, '0.0.2');
+    assert.equal(mavenManifest.repositoryConfig['.'].skipSnapshot, true);
+    const maven = await buildStrategy({ ...mavenManifest.repositoryConfig['.'], github: nativeGitHub, targetBranch: 'master' });
+    const mavenCandidate = await maven.buildReleasePullRequest(parseConventionalCommits([{
+      sha: 'a'.repeat(40), message: 'fix: valida o reactor compartilhado', files: ['boilerplate-core/src/Example.java'],
+    }]));
+    assert.ok(mavenCandidate);
+    assert.equal(mavenCandidate.version?.toString(), '0.0.2');
+    assert.notEqual(mavenCandidate.group, 'snapshot');
+    applyNative(mavenCandidate.updates);
+    assert.match(files['pom.xml'], /<version>0\.0\.2<\/version>/);
+    assert.match(files['pom.xml'], /<revision>0\.0\.2<\/revision>/);
+    for (const module of ['boilerplate-bom', 'boilerplate-core', 'boilerplate-starter']) {
+      assert.match(files[`${module}/pom.xml`], /<version>0\.0\.2<\/version>/);
+    }
+    const mavenReleases = await maven.buildReleases({ number: 124, headBranchName: mavenCandidate.headRefName,
+      baseBranchName: 'master', title: mavenCandidate.title.toString(), body: mavenCandidate.body.toString(),
+      labels: mavenCandidate.labels, files: mavenCandidate.updates.map(update => update.path), sha: 'b'.repeat(40) });
+    assert.equal(mavenReleases[0].tag.toString(), 'v0.0.2');
+    assert.equal(mavenReleases[0].sha, 'b'.repeat(40));
+
+    // A ponte mantém a ordem da Action e os resultados, sem substituir o motor de cálculo.
+    const nativeRelease: CreatedRelease = { id: 1, path: '.', tagName: mavenReleases[0].tag.toString(),
+      sha: mavenReleases[0].sha, url: 'https://example.invalid/release', version: '0.0.2',
+      major: 0, minor: 0, patch: 2, prNumber: 124, notes: mavenReleases[0].notes };
+    const nativePR = { number: 124, headBranchName: mavenCandidate.headRefName, baseBranchName: 'master',
+      title: mavenCandidate.title.toString(), body: mavenCandidate.body.toString(), labels: mavenCandidate.labels,
+      files: mavenCandidate.updates.map(update => update.path), sha: 'b'.repeat(40) };
+    const writerOrder: string[] = [];
+    const engine = new CConfiguredReleaseEngine(async received => {
+      const parsed = await loadConfiguredManifest(received, nativeGitHub);
+      assert.equal(parsed.repositoryConfig['.'].releaseAs, '0.0.2');
+      writerOrder.push('load');
+      return { createReleases: async () => { writerOrder.push('releases'); return [undefined, nativeRelease]; },
+        createPullRequests: async () => { writerOrder.push('pullRequests'); return [undefined, nativePR]; } };
+    });
+    const result = await engine.run(options);
+    assert.deepEqual(writerOrder, ['load', 'releases', 'load', 'pullRequests']);
+    assert.equal(result.release_created, true);
+    assert.equal(result.prs_created, true);
+    assert.equal(result.releases[0].tagName, 'v0.0.2');
+    assert.equal(result.releases[0].sha, 'b'.repeat(40));
+    assert.match(result.releases[0].notes || '', /valida o reactor compartilhado/);
+    assert.equal(result.pullRequests[0].headBranchName, mavenCandidate.headRefName);
+
+    const packageVersions = {
+      'packages/composables': ['composables', '0.0.1'], 'packages/utils': ['utils', '0.0.1'],
+      'packages/ui/core': ['ui-core', '0.0.1'], 'packages/ui/prime-vue': ['ui-prime-vue', '0.0.1'],
+      'packages/ui/vuetify': ['ui-vuetify', '1.1.1'], 'apps/docs': ['docs', '0.0.0'],
+    };
+    const workspaceConfig = {
+      'release-type': 'node', 'include-component-in-tag': true, 'include-v-in-tag': false,
+      'tag-separator': '@', plugins: ['node-workspace'], packages: Object.fromEntries(Object.entries(packageVersions)
+        .map(([p, [name]]) => [p, { component: `@aplicacoesboilerplate/${name}`,
+          ...(p === 'apps/docs' ? { 'skip-github-release': true, 'skip-changelog': true, 'exclude-paths': ['apps/docs'] } : {}) }])),
+    };
+    files['workspace-release.json'] = JSON.stringify(workspaceConfig);
+    files['workspace-versions.json'] = JSON.stringify(Object.fromEntries(Object.entries(packageVersions).map(([p, [, version]]) => [p, version])));
+    files['.release-please-manifest.json'] = files['workspace-versions.json'];
+    files['package.json'] = JSON.stringify({ name: '@aplicacoesboilerplate/packages-vue', version: '0.0.1', private: true });
+    const lockPackages: Record<string, unknown> = { '': JSON.parse(files['package.json']) };
+    for (const [p, [name, version]] of Object.entries(packageVersions)) {
+      const packageName = `@aplicacoesboilerplate/${name}`;
+      const pkg = { name: packageName, version, ...(p === 'apps/docs'
+        ? { private: true, dependencies: { '@aplicacoesboilerplate/ui-vuetify': '^1.1.1' } } : {}) };
+      files[`${p}/package.json`] = JSON.stringify(pkg);
+      lockPackages[p] = pkg;
+      lockPackages[`node_modules/${packageName}`] = { resolved: p, link: true };
+    }
+    files['package-lock.json'] = JSON.stringify({ name: '@aplicacoesboilerplate/packages-vue', version: '0.0.1', lockfileVersion: 3, packages: lockPackages });
+    const nodeManifest = await Manifest.fromManifest(nativeGitHub, 'master', 'workspace-release.json', 'workspace-versions.json');
+    assert.equal(nodeManifest.repositoryConfig['packages/ui/vuetify'].releaseAs, undefined);
+    assert.equal(nodeManifest.releasedVersions['packages/ui/vuetify'].toString(), '1.1.1', 'Bootstrap preserva a versão do componente renomeado');
+    const strategies: Record<string, Strategy> = {};
+    const previous = Object.fromEntries(Object.keys(packageVersions).map(p => [p, {
+      tag: new TagName(nodeManifest.releasedVersions[p], nodeManifest.repositoryConfig[p].component), sha: 'a'.repeat(40), notes: '',
+    }]));
+    for (const [p, config] of Object.entries(nodeManifest.repositoryConfig)) {
+      strategies[p] = await buildStrategy({ ...config, path: p, github: nativeGitHub, targetBranch: 'master' });
+    }
+    const changedPath = 'packages/ui/vuetify';
+    const uiCandidate = await strategies[changedPath].buildReleasePullRequest(parseConventionalCommits([{
+      sha: 'a'.repeat(40), message: 'fix: valida o pacote Vue independente', files: [`${changedPath}/src/index.ts`],
+    }]), previous[changedPath]);
+    assert.ok(uiCandidate);
+    assert.equal(uiCandidate.version?.toString(), '1.1.2');
+    const plugin = nodeManifest.plugins[0];
+    await plugin.preconfigure(strategies, {}, previous);
+    const nativeCandidates = await plugin.run([{ path: changedPath, pullRequest: uiCandidate, config: nodeManifest.repositoryConfig[changedPath] }]);
+    assert.equal(nativeCandidates.length, 1);
+    applyNative(nativeCandidates[0].pullRequest.updates);
+    assert.equal(JSON.parse(files['packages/ui/vuetify/package.json']).version, '1.1.2');
+    assert.equal(JSON.parse(files['packages/utils/package.json']).version, '0.0.1');
+    const docs = JSON.parse(files['apps/docs/package.json']);
+    assert.equal(docs.private, true);
+    assert.equal(docs.dependencies['@aplicacoesboilerplate/ui-vuetify'], '^1.1.2');
+    const lock = JSON.parse(files['package-lock.json']);
+    assert.equal(lock.packages['packages/ui/vuetify'].version, '1.1.2');
+    assert.equal(lock.packages['apps/docs'].dependencies['@aplicacoesboilerplate/ui-vuetify'], '^1.1.2');
+    assert.equal(JSON.parse(files['package.json']).private, true);
+    assert.equal(JSON.parse(files['package.json']).version, '0.0.1');
+    const nodePR = nativeCandidates[0].pullRequest;
+    const mergedNodePR = { number: 125, headBranchName: nodePR.headRefName, baseBranchName: 'master',
+      title: nodePR.title.toString(), body: nodePR.body.toString(), labels: nodePR.labels,
+      files: nodePR.updates.map(update => update.path), sha: 'b'.repeat(40) };
+    const uiReleases = await strategies[changedPath].buildReleases(mergedNodePR);
+    assert.equal(uiReleases[0].tag.toString(), '@aplicacoesboilerplate/ui-vuetify@1.1.2');
+    assert.deepEqual(await strategies['apps/docs'].buildReleases(mergedNodePR), [], 'Nó privado não gera tag/Release');
+    t.diagnostic('Maven e workspace npm: versões, XML, dependências, lockfile e tags calculados pelo SDK real, sem escrita no GitHub');
   } finally {
     fs.rmSync(TEMP_DIR, { recursive: true, force: true });
   }

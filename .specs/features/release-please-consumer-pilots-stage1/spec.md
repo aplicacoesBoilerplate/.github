@@ -137,7 +137,7 @@ O piloto interno publicou v0.0.1 pelo Release Please. Os consumidores têm contr
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
 | RPIL-01 | Distribuição desligada | Execute | Implementing: gate central pronto; callers e automações legadas pendentes |
-| RPIL-02 | Contrato central e motor nativo | Design | Pending |
+| RPIL-02 | Contrato central e motor nativo | Execute | Implementing: modos e SDK testados; documentação e callers pendentes |
 | RPIL-03 | Maven compartilhado | Design | Pending |
 | RPIL-04 | npm independente | Design | Pending |
 | RPIL-05 | Go sem efeitos funcionais | Design | Pending |
