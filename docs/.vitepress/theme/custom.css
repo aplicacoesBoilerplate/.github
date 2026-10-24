@@ -134,3 +134,79 @@
     padding-top: 28px;
   }
 }
+
+
+/* Keep the full project name inside the navbar's title column. */
+.VPNavBar .container > .title,
+.VPNavBar .VPNavBarTitle {
+  min-width: 0;
+}
+
+.VPNavBar .VPNavBarTitle .title {
+  min-width: 0;
+}
+
+.VPNavBar .VPNavBarTitle .title > span {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.VPNavBar .container > .content {
+  min-width: 0;
+}
+
+@media (min-width: 840px) {
+  .VPNavBar .VPNavBarSearch {
+    min-width: 0;
+    padding-right: 24px;
+  }
+
+  .VPNavBar #local-search {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .VPNavBar #local-search .DocSearch-Button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .VPNavBar #local-search .DocSearch-Button-Container {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .VPNavBar #local-search .DocSearch-Button-Placeholder {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+  }
+}
+
+@media (max-width: 959px) {
+  .VPNavBar .container > .title {
+    max-width: 220px;
+  }
+}
+
+@media (max-width: 767px) {
+  .VPNavBar .container > .title {
+    flex: 1;
+    max-width: none;
+  }
+
+  .VPNavBar .VPNavBarTitle .title {
+    font-size: 14px;
+  }
+
+  .VPNavBar .container > .content {
+    flex-grow: 0;
+    flex-shrink: 0;
+    padding-left: 12px;
+  }
+}

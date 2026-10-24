@@ -1,4 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitepress';
+
+const { version: VERSION } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(VERSION)) {
+  throw new Error('docs/package.json deve conter uma versão SemVer no formato X.Y.Z');
+}
 
 export default defineConfig({
   lang: 'pt-BR',
@@ -7,15 +13,36 @@ export default defineConfig({
   base: '/.github/',
   themeConfig: {
     nav: [
+      { text: `v${VERSION}`, link: '/releases' },
       { text: 'Início', link: '/' },
-      { text: 'Pipelines', link: '/pipelines/versionamento-release-please' },
+      {
+        text: 'Versionamento',
+        items: [
+          { text: 'Visão geral', link: '/pipelines/versionamento-release-please' },
+          { text: 'Artefatos e inputs', link: '/pipelines/release-please/artefatos' },
+          { text: 'Versões e conflitos', link: '/pipelines/release-please/versoes-conflitos' },
+          { text: 'Subdiretórios', link: '/pipelines/release-please/subdiretorios' },
+          { text: 'Monorepos', link: '/pipelines/release-please/monorepos' },
+          { text: 'Publicação e diagnóstico', link: '/pipelines/release-please/publicacao' },
+        ],
+      },
       { text: 'Governança & Templates', link: '/governanca/templates-issues-prs' },
     ],
     sidebar: [
       {
+        text: 'Versionamento (Release Please)',
+        items: [
+          { text: 'Visão geral e ciclo de release', link: '/pipelines/versionamento-release-please' },
+          { text: 'Artefatos e inputs', link: '/pipelines/release-please/artefatos' },
+          { text: 'Versões, conflitos e duplicidade', link: '/pipelines/release-please/versoes-conflitos' },
+          { text: 'Projetos em subdiretórios', link: '/pipelines/release-please/subdiretorios' },
+          { text: 'Monorepos: cinco pacotes Vue', link: '/pipelines/release-please/monorepos' },
+          { text: 'Publicação e diagnóstico', link: '/pipelines/release-please/publicacao' },
+        ],
+      },
+      {
         text: 'Pipelines Centralizadas',
         items: [
-          { text: 'Versionamento (Release Please)', link: '/pipelines/versionamento-release-please' },
           { text: 'Publicação GitHub Pages', link: '/pipelines/documentacao-pages' },
         ],
       },

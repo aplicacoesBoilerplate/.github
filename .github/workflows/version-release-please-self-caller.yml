@@ -2,13 +2,24 @@ name: Release Please Self Caller
 
 on:
   pull_request:
-    types: [closed]
+    types: [opened, reopened, synchronize, edited, milestoned, demilestoned, closed]
     branches: [master]
 
 permissions:
   contents: read
 
 jobs:
+  version-policy:
+    name: Validate release version
+    if: github.event.action != 'closed'
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: ./.github/workflows/version-release-please-validate.yml
+    with:
+      config-file: release-please-config.json
+      central-ref: ${{ github.sha }}
+
   validate:
     name: Validate merged delivery
     if: github.event.pull_request.merged == true
@@ -27,4 +38,6 @@ jobs:
     uses: ./.github/workflows/version-release-please-called.yml
     with:
       project-type: simple
+      config-file: release-please-config.json
+      publish-artifacts: false
       central-ref: ${{ github.sha }}

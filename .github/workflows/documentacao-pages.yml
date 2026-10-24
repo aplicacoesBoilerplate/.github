@@ -5,10 +5,18 @@ on:
     branches: [master]
     paths:
       - 'docs/**'
+      - 'CHANGELOG.md'
+      - 'examples/**'
+      - 'release-please-config.json'
+      - '.release-please-manifest.json'
       - '.github/workflows/documentacao-pages.yml'
   pull_request:
     paths:
       - 'docs/**'
+      - 'CHANGELOG.md'
+      - 'examples/**'
+      - 'release-please-config.json'
+      - '.release-please-manifest.json'
       - '.github/workflows/documentacao-pages.yml'
   workflow_dispatch:
   workflow_call:

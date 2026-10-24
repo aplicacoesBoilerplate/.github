@@ -80,9 +80,9 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
         step.run === command && step['working-directory'] === 'ci-scripts'), `CI deve executar ${command}`);
     }
     const selfCaller = parse(fs.readFileSync(path.join(repository, '.github/workflows/version-release-please-self-caller.yml'), 'utf8'));
-    assert.deepEqual(selfCaller.on, { pull_request: { types: ['closed'], branches: ['master'] } });
+    assert.deepEqual(selfCaller.on, { pull_request: { types: ['opened', 'reopened', 'synchronize', 'edited', 'milestoned', 'demilestoned', 'closed'], branches: ['master'] } });
     assert.deepEqual(selfCaller.permissions, { contents: 'read' });
-    assert.deepEqual(Object.keys(selfCaller.jobs).sort(), ['release', 'validate']);
+    assert.deepEqual(Object.keys(selfCaller.jobs).sort(), ['release', 'validate', 'version-policy']);
     assert.equal(selfCaller.jobs.validate.if, 'github.event.pull_request.merged == true');
     assert.equal(selfCaller.jobs.validate.uses, './.github/workflows/ci.yml');
     assert.deepEqual(selfCaller.jobs.validate.permissions, { contents: 'read' });
@@ -91,11 +91,11 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
     assert.equal(selfCall.if, 'github.event.pull_request.merged == true');
     assert.equal(selfCall.needs, 'validate', 'A publicação deve aguardar a CI do commit integrado');
     assert.equal(selfCall.uses, './.github/workflows/version-release-please-called.yml');
-    assert.deepEqual(selfCall.with, { 'project-type': 'simple', 'central-ref': '${{ github.sha }}' });
+    assert.deepEqual(selfCall.with, { 'project-type': 'simple', 'config-file': 'release-please-config.json', 'publish-artifacts': false, 'central-ref': '${{ github.sha }}' });
     assert.deepEqual(selfCall.permissions, { contents: 'write', 'pull-requests': 'write', issues: 'write' });
     assert.equal(selfCall.secrets, undefined, 'O piloto simple não precisa de secrets de registries');
     // O arquivo evoluirá no PR técnico; a CI não pode ficar presa à base 0.0.0.
-    assert.match(fs.readFileSync(path.join(repository, 'version.txt'), 'utf8').trim(), /^\d+\.\d+\.\d+(?:-[\w.-]+)?$/);
+    assert.match(JSON.parse(fs.readFileSync(path.join(repository, 'docs/package.json'), 'utf8')).version, /^\d+\.\d+\.\d+(?:-[\w.-]+)?$/);
     const caller = parse(fs.readFileSync(path.join(repository, '.github/workflows/examples/version-release-please-caller.yml'), 'utf8'));
     const call = caller.jobs['call-central-versioning'];
     call.with['project-type'] = 'simple';
@@ -113,7 +113,13 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
     fs.mkdirSync(central, { recursive: true });
     fs.cpSync(path.join(SCRIPTS_DIR, 'scripts'), path.join(central, 'scripts'), { recursive: true });
     fs.copyFileSync(path.join(SCRIPTS_DIR, 'package.json'), path.join(central, 'package.json'));
-    fs.symlinkSync(path.join(SCRIPTS_DIR, 'node_modules'), path.join(central, 'node_modules'), 'junction');
+    try {
+      fs.symlinkSync(path.join(SCRIPTS_DIR, 'node_modules'), path.join(central, 'node_modules'), 'junction');
+    } catch (error) {
+      // O fixture usa cópia quando Windows não permite criar junction.
+      if ((error as NodeJS.ErrnoException).code !== 'EPERM') throw error;
+      fs.cpSync(path.join(SCRIPTS_DIR, 'node_modules'), path.join(central, 'node_modules'), { recursive: true });
+    }
 
     const orchestrator = job.steps.find((step: { name?: string }) => step.name === 'Executar Orquestrador TS');
     const action = job.steps.find((step: { uses?: string }) => step.uses === 'googleapis/release-please-action@v4');
@@ -125,7 +131,7 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
     const distribution = job.steps.filter((step: { name?: string }) => step.name?.startsWith('Adaptador '));
     assert.equal(distribution.length, 3);
     for (const [index, type] of ['go', 'node', 'maven'].entries()) {
-      assert.equal(distribution[index].if, `\${{ steps.release.outputs.release_created == 'true' && inputs.project-type == '${type}' && inputs.publish-artifacts }}`);
+      assert.equal(distribution[index].if, `\${{ inputs.config-file == '' && inputs.release-config-file == '' && inputs.publish-artifacts && steps.release.outputs.release_created == 'true' && inputs.project-type == '${type}' }}`);
       assert.notEqual(call.with['project-type'], type, 'O caller simple não seleciona publicadores de pacotes');
     }
 
@@ -141,6 +147,7 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
     const runCaller = (branch: string, milestone: string, projectType = selfCall.with['project-type'], configuredInputs: Record<string, string> = {}) => {
       const context = {
         inputs: { ...selfCall.with, 'project-type': projectType, ...configuredInputs },
+        steps: { 'version-policy': { outputs: {} } },
         github: { event: { pull_request: { head: { ref: branch }, milestone: { title: milestone } } } },
       };
       const outputPath = path.join(TEMP_DIR, `caller-${++invocation}.outputs`);
@@ -245,13 +252,12 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
     const independent = runCaller('feature/piloto-vue', 'v9.0.0', 'node', workspaceInputs);
     assert.equal(independent.result.status, 0, independent.result.stderr);
     assert.deepEqual(independent.outputs, { release_type: '', release_as: '', engine: 'action' }, 'Milestone não força versão escalar nos componentes independentes');
-    assert.equal(action.with['config-file'], '${{ inputs.release-config-file }}');
-    assert.equal(action.with['manifest-file'], '${{ inputs.release-manifest-file }}');
-    assert.equal(action.if, "steps.orchestrator.outputs.engine == 'action'");
-    const sdkStep = job.steps.find((step: { id?: string }) => step.id === 'configured-release');
-    assert.ok(sdkStep, 'O override configurado precisa do SDK oficial, não de um input ignorado pela Action');
-    assert.equal(sdkStep.if, "steps.orchestrator.outputs.engine == 'configured-sdk'");
-    assert.match(sdkStep.run, /configured-release\.ts$/);
+    assert.equal(action.if, "inputs.config-file == '' && inputs.release-config-file == ''");
+    const sdkStep = job.steps.find((step: { id?: string }) => step.id === 'manifest');
+    assert.ok(sdkStep);
+    assert.equal(sdkStep.if, "inputs.config-file != '' || inputs.release-config-file != ''");
+    assert.equal(sdkStep.env.RELEASE_CONFIG_FILE, '${{ inputs.config-file || inputs.release-config-file }}');
+    assert.match(sdkStep.run, /CManifestRelease\.ts$/);
 
     for (const invalidInputs of [
       { ...workspaceInputs, 'version-policy': 'milestone' },
