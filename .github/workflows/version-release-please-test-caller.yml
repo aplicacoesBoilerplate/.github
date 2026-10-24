@@ -1,0 +1,16 @@
+name: Release Please Functional Pilot
+
+on:
+  push:
+    branches:
+      - codex/release-please-self-pilot
+  # O despacho manual fica disponível quando este arquivo existir na default branch.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  functional-pilot:
+    name: Caller to real release engine (no publication)
+    uses: ./.github/workflows/ci.yml

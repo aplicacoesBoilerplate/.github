@@ -4,9 +4,14 @@ on:
   workflow_call:
     inputs:
       project-type:
-        description: 'Tipo do projeto (node, go, maven, gradle)'
+        description: 'Tipo do projeto (node, go, maven, gradle, simple)'
         required: true
         type: string
+      central-ref:
+        description: 'Revisão dos scripts centrais; use o mesmo SHA revisado da referência ao called'
+        required: false
+        type: string
+        default: master
 
 jobs:
   release-please:
@@ -15,10 +20,13 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      issues: write
     steps:
       # 1. Faz o checkout do repositório da aplicação (Caller)
       - name: Checkout Aplicação
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
 
       # 2. Faz o checkout dos scripts centralizados do seu repo .github em uma pasta isolada
       - name: Checkout Scripts Centralizados
@@ -26,6 +34,7 @@ jobs:
         with:
           repository: aplicacoesBoilerplate/.github
           path: .ci-scripts
+          ref: ${{ inputs.central-ref }}
 
       # 3. Configura o Node para executar o script TypeScript
       - name: Setup Node.js
@@ -33,9 +42,13 @@ jobs:
         with:
           node-version: '22'
 
-      # 4. Executa o Orquestrador POO em TypeScript para gerar o manifesto do Release Please
+      - name: Instalar runtime central travado
+        run: npm ci --prefix .ci-scripts/ci-scripts --omit=dev --ignore-scripts
+
+      # 4. Executa o orquestrador e fornece os parâmetros efetivos da Action
       - name: Executar Orquestrador TS
-        run: npx --yes tsx .ci-scripts/scripts/release-orchestrator.ts
+        id: orchestrator
+        run: node .ci-scripts/ci-scripts/node_modules/tsx/dist/cli.mjs .ci-scripts/ci-scripts/scripts/release-orchestrator.ts
         env:
           PROJECT_TYPE: ${{ inputs.project-type }}
           MILESTONE_TITLE: ${{ github.event.pull_request.milestone.title }}
@@ -51,7 +64,8 @@ jobs:
         uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          config-file: release-please-config.json
+          release-type: ${{ steps.orchestrator.outputs.release_type }}
+          release-as: ${{ steps.orchestrator.outputs.release_as }}
 
       # ==================================================================================
       # 7. ADAPTADORES PÓS-TAG (Executam apenas quando o PR do Release Please é mergeado)

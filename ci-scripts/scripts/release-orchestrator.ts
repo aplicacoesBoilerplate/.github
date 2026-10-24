@@ -46,6 +46,10 @@ class GradleAdapter extends CProjectAdapter {
   protected lReleaseType = 'gradle'; // Atualiza build.gradle / gradle.properties
 }
 
+class CSimpleAdapter extends CProjectAdapter {
+  protected lReleaseType = 'simple'; // Versiona as próprias pipelines sem publicar pacote
+}
+
 // 4. Factory para instanciar o adaptador correto
 class CAdapterFactory {
   public static create(pType: string): CProjectAdapter {
@@ -62,6 +66,8 @@ class CAdapterFactory {
       case 'gradle':
       case 'kotlin':
         return new GradleAdapter();
+      case 'simple':
+        return new CSimpleAdapter();
       default:
         throw new Error(`Adaptador não suportado para o tipo de projeto: ${pType}`);
     }
@@ -113,6 +119,12 @@ class CReleaseOrchestrator {
 
     const OUTPUT_PATH = path.resolve(process.cwd(), 'release-please-config.json');
     fs.writeFileSync(OUTPUT_PATH, JSON.stringify(CONFIG, null, 2), 'utf-8');
+
+    // A Action recebe inputs oficiais; um JSON apenas local não configura manifest-mode.
+    if (process.env.GITHUB_OUTPUT) {
+      fs.appendFileSync(process.env.GITHUB_OUTPUT,
+        `release_type=${CONFIG.packages['.']['release-type']}\nrelease_as=${TARGET_VERSION || ''}\n`, 'utf-8');
+    }
 
     console.log('Arquivo release-please-config.json gerado com sucesso:');
     console.log(fs.readFileSync(OUTPUT_PATH, 'utf-8'));
