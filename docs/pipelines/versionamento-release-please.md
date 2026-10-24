@@ -38,7 +38,7 @@ A Action v4 ignora config-file quando release-type é informado e não encaminha
 
 ## Caller na aplicação
 
-Use o [único exemplo genérico](../../.github/workflows/examples/version-release-please-caller.yml) como orientação. A aplicação mantém seu próprio YAML e sua CI precisa aceitar workflow_call. Não é necessário copiar um exemplo central para cada linguagem.
+Use o [único exemplo genérico](https://github.com/aplicacoesBoilerplate/.github/blob/1d874d946e5f5ad233a6b1f6bf278fef78f3b46d/.github/workflows/examples/version-release-please-caller.yml) como orientação. A aplicação mantém seu próprio YAML e sua CI precisa aceitar workflow_call. Não é necessário copiar um exemplo central para cada linguagem.
 
 O caller aceita pull_request closed para master. O job validate, com contents:read, executa a CI local reutilizável; release depende dele, exige merged=true e chama o called. Somente release recebe contents:write, pull-requests:write e issues:write. GITHUB_TOKEN é fornecido pelo GitHub; nenhum secret de registry precisa ser herdado na etapa 1.
 
@@ -60,7 +60,7 @@ O runner faz checkout da aplicação na raiz e do repositório central em .ci-sc
 
 O passo run executa Node com o CLI do tsx instalado pelo lockfile e o entrypoint TypeScript central. Na produção, npm ci --omit=dev --ignore-scripts instala tsx, semver e release-please; o Node é configurado antes. Scripts de lifecycle não são executados nessa instalação.
 
-Consulte o [README dos workflows](../../.github/workflows/README.md) e o [README dos scripts](../../ci-scripts/README.md) para os caminhos e responsabilidades.
+Consulte o [README dos workflows](https://github.com/aplicacoesBoilerplate/.github/blob/1d874d946e5f5ad233a6b1f6bf278fef78f3b46d/.github/workflows/README.md) e o [README dos scripts](https://github.com/aplicacoesBoilerplate/.github/blob/1d874d946e5f5ad233a6b1f6bf278fef78f3b46d/ci-scripts/README.md) para os caminhos e responsabilidades.
 
 ## Teste funcional central
 

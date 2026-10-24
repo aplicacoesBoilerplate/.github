@@ -50,3 +50,7 @@ Veredito local T2: PASS. Transporte de GitHub isolado, cálculo/updates nativos.
 - Guia central atualizado para os três modos, etapa 1/2, dois momentos, permissões, limites e evidência real do self-pilot já concluído. Removidas instruções antigas que prometiam publish automático ou duplicavam callers por linguagem.
 - Mantido um exemplo genérico, com CI antecedente, merge verdadeiro, permissões mínimas, SHA igual e publish-artifacts=false. README dos workflows e scripts explicam run, Node/tsx e os dois níveis de diretório .ci-scripts/ci-scripts.
 - Gate local: sete casos, zero skips/falhas, typecheck e diff aprovados. CI hospedada e PR/SHAs efetivos serão reconciliados em T7.
+
+### Correção do build documental T3
+
+O primeiro CI do PR19 aprovou os sete testes/tipos, mas o build VitePress reprovou dois links novos para READMEs fora da raiz docs/. Revisão independente confirmou a causa no run40071161215. Os links externos ao site passaram a URLs GitHub fixadas no SHA publicado 1d874d9, sem desabilitar checagem de links ou alterar Pages. Novo build obrigatório antes do push desta correção.
