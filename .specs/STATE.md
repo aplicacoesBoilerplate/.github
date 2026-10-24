@@ -7,12 +7,12 @@ Nenhuma decisão global nova registrada nesta consolidação. O piloto usa a abo
 ## Handoff
 
 - **Feature:** `.specs/features/release-please-consumer-pilots-stage1/spec.md`.
-- **Phase / Task:** Execute / T3 gate local aprovado; publicação/PR e T4 seguintes, sete tarefas totais, implementação inline.
-- **Completed:** T1 remota em 6f964cd; T2 modos single/manifest/SDK configurado com sete testes, tipos e audit runtime limpo; revisão independente sem bloqueio stage1. Baselines Java verify, Vue verify e Go test/vet/build aprovadas.
-- **In-progress:** publicação de T3/PR central e callers dos três consumidores. T2 remota em 1bfe472a24b6111aaee4721a8416ef00900c02ea.
-- **Next step:** publicar T3, abrir PR central e fixar seu SHA nos três consumidores, começando pelo Maven.
-- **Blockers:** sem bloqueio técnico para T2. Perguntas assíncronas apresentadas sobre milestone agrupadora no Vue e base release no Go; defaults explícitos preservam versões e desenvolvimento. Merges permanecem humanos.
-- **Uncommitted files:** T2 e status neste snapshot antes do commit atômico; conferir git status antes de retomar.
+- **Phase / Task:** Execute / T1–T7 de implementação/evidência concluídas; meta integral em andamento até os três ciclos reais.
+- **Completed:** PR central19; Java36 (47a1991), Vue39 (d17697a), Go16 (282285e). CI dos quatro aprovada; SDK ensaiado nos arquivos reais, Maven recompilado em0.0.2; Verifier técnico aprovado, quatro mutantes mortos, sem sobreviventes. Correções de links, npm/cache, ordem de build e checkout do SHA integrado persistidas.
+- **In-progress:** consolidação/publicação final dos registros T7. Os três ciclos de PR técnico/tag/GitHub Release dependem da revisão e dos merges humanos, não foram realizados pelo agente.
+- **Next step:** conferir CI do commit documental final; usuário revisa/integra PRs, preserva Git Flow e promove consumidores a master; depois acompanhar os dois momentos reais por aplicativo. Nenhuma distribuição na etapa 1.
+- **Blockers:** nenhum impedimento técnico conhecido. Política administrativa de criação de PRs confirmada no Go; consulta em Java/Vue retorna403 para a identidade AI, portanto configuração não confirmada (não inferir desabilitada). Defaults conservadores Vue nativo/Go release preservados. Não realizar merges, alterar políticas ou reabrir issue4.
+- **Worktree:** registros T7 e lição incluídos no commit final; runtime continua o SHA publicado1d874d946e5f5ad233a6b1f6bf278fef78f3b46d usado igualmente pelos três callers. Conferir git status e HEAD na retomada.
 - **Branch:** codex/release-please-pilots-stage1 no worktree nativo release-please-pilots-stage1/.github, base 564f1bba751ed605931beffa5e9fed00e42fec4c.
 - **Scope:** callers nas aplicações, central sem exemplos por adaptador; etapa 1 não publica pacotes nem binários. Issue #4 permanece fechada por decisão expressa posterior ao piloto interno bem-sucedido.
 - **Preservation:** clones principais Java/Vue/Go sujos e worktrees antigos não alterados; novos consumidores partem das releases remotas atuais.

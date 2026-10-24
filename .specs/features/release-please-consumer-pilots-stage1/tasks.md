@@ -2,7 +2,7 @@
 
 > Execute inline com tlc-spec-driven e superpowers:executing-plans; um commit por tarefa e Verifier independente no final.
 
-**Goal:** entregar etapa 1 nos três consumidores, sem distribuição. **Spec:** spec.md e design.md. **Status:** In progress, escopo autorizado pelo usuário.
+**Goal:** entregar etapa 1 nos três consumidores, sem distribuição. **Spec:** spec.md e design.md. **Status:** sete tarefas de implementação/evidência concluídas; meta integral em andamento até os três ciclos reais sob merges humanos.
 
 ## Global Constraints
 
@@ -92,9 +92,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7
 **Depends on**: T3
 **Requirement**: RPIL-03, RPIL-06
 **Files**: caller/config nativo e manifest no consumidor, workflow de distribuição desativado automaticamente e documentação/status locais.
-- [ ] Configurar caller por SHA, versão conjunta, revision sincronizada e skip-snapshot; preservar verify.
-- [ ] Desativar distribuição automática; executar verify e contrato nativo correspondente.
-- [ ] Commit `ci(versioning): integrate centralized Release Please stage one`, push e PR para release, sem merge.
+- [x] Configurar caller por SHA, versão conjunta, revision sincronizada e skip-snapshot; preservar verify.
+- [x] Desativar distribuição automática; executar verify e contrato nativo correspondente.
+- [x] Commit `ci(versioning): integrate centralized Release Please stage one`, push e PR para release, sem merge.
 **Tests**: integração nativa central e reactor Maven real.
 **Gate**: Build.
 
@@ -104,9 +104,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7
 **Depends on**: T4
 **Requirement**: RPIL-04, RPIL-06
 **Files**: caller/config/manifest, gates legados concorrentes e documentação/status do consumidor.
-- [ ] Mapear workspaces reais e seeds sem downgrade; preservar independência/privacidade e ranges/lockfile.
-- [ ] Aposentar automação/gate concorrente Changesets e manter distribuição desabilitada.
-- [ ] Executar npm verify e contratos; commit `ci(versioning): integrate centralized workspace releases`, push e PR para release.
+- [x] Mapear workspaces reais e seeds sem downgrade; preservar independência/privacidade e ranges/lockfile.
+- [x] Aposentar automação/gate concorrente Changesets e manter distribuição desabilitada.
+- [x] Executar npm verify e contratos; commit `ci(versioning): integrate centralized workspace releases`, push e PR para release.
 **Tests**: grafo nativo central e gates npm reais.
 **Gate**: Build.
 
@@ -116,9 +116,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7
 **Depends on**: T5
 **Requirement**: RPIL-05, RPIL-06
 **Files**: caller, CI/gates de integração antigos e guia/status, sem código funcional.
-- [ ] Migrar integração legada para called imutável com publicação de binários false.
-- [ ] Preservar Go CI, GoReleaser/configs de empacotamento e trabalho funcional, sem promoção de branches.
-- [ ] Executar gates Go/contrato; commit `ci(versioning): migrate Go caller to Release Please`, push e PR para release.
+- [x] Migrar integração legada para called imutável com publicação de binários false.
+- [x] Preservar Go CI, GoReleaser/configs de empacotamento e trabalho funcional, sem promoção de branches.
+- [x] Executar gates Go/contrato; commit `ci(versioning): migrate Go caller to Release Please`, push e PR para release.
 **Tests**: suíte Go e integração nativa/contrato central.
 **Gate**: Build.
 
@@ -128,9 +128,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7
 **Depends on**: T6
 **Requirement**: RPIL-06
 **Files**: relatórios de evidência e status TLC dos quatro repositórios.
-- [ ] Verifier novo com gates e sensor isolado; corrigir gaps com rastreabilidade antes de declarar entrega.
-- [ ] Conferir CI/SHAs dos PRs, solicitar revisão e registrar merges/publicações que dependem do usuário como pendentes.
-- [ ] Commit/push dos registros finais; manter a meta ativa enquanto restar critério obrigatório não comprovado.
+- [x] Verifier novo com gates e sensor isolado; corrigir gaps com rastreabilidade antes de declarar entrega.
+- [x] Conferir CI/SHAs dos PRs, solicitar revisão e registrar merges/publicações que dependem do usuário como pendentes.
+- [x] Commit/push dos registros finais; manter a meta ativa enquanto restar critério obrigatório não comprovado.
 **Tests**: gates reais, sensor e revisão independente; nenhuma publicação inferida de mock.
 **Gate**: Build.
 

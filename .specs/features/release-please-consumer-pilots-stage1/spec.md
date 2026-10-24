@@ -8,10 +8,10 @@ O piloto interno publicou v0.0.1 pelo Release Please. Os consumidores têm contr
 
 ## Goals
 
-- [ ] Entregar o caller dentro de PackagesJava, PackagesVue e boilerplate-cli, consumindo o mesmo workflow central por SHA publicado.
+- [x] Entregar o caller dentro de PackagesJava, PackagesVue e boilerplate-cli, consumindo o mesmo workflow central por SHA publicado.
 - [ ] Preparar versão/changelog, PR técnico, tag e GitHub Release com o motor nativo, sem algoritmo próprio de versão.
-- [ ] Impedir distribuição Maven/npm/Go na etapa 1, inclusive nos workflows antigos.
-- [ ] Preservar o trabalho funcional existente e validar cada entrega com testes, revisão independente e commits publicados.
+- [x] Impedir distribuição Maven/npm/Go na etapa 1, inclusive nos workflows antigos.
+- [x] Preservar o trabalho funcional existente e validar cada entrega com testes, revisão independente e commits publicados.
 
 ## Out of Scope
 
@@ -136,19 +136,19 @@ O piloto interno publicou v0.0.1 pelo Release Please. Os consumidores têm contr
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| RPIL-01 | Distribuição desligada | Execute | Implementing: gate central pronto; callers e automações legadas pendentes |
-| RPIL-02 | Contrato central e motor nativo | Execute | Implementing: modos e SDK testados; documentação e callers pendentes |
-| RPIL-03 | Maven compartilhado | Design | Pending |
-| RPIL-04 | npm independente | Design | Pending |
-| RPIL-05 | Go sem efeitos funcionais | Design | Pending |
-| RPIL-06 | Entrega e evidências | Design | Pending |
+| RPIL-01 | Distribuição desligada | Execute | Implementação verificada nos quatro repositórios; callers false e writers legados aposentados |
+| RPIL-02 | Contrato central e motor nativo | Execute | Implementação verificada; publicação dos consumidores aguarda ciclos reais |
+| RPIL-03 | Maven compartilhado | Execute | SDK nos POMs reais e reactor 0.0.2 aprovados; ciclo hospedado pendente |
+| RPIL-04 | npm independente | Execute | SDK/grafo/lockfile reais e CI aprovados; ciclo hospedado pendente |
+| RPIL-05 | Go sem efeitos funcionais | Execute | Gates/SDK e SHA integrado verificados; ciclo hospedado pendente |
+| RPIL-06 | Entrega e evidências | Execute | PRs/SHAs/CI e Verifier registrados; meta ativa até três ciclos após merges humanos |
 
 ## Success Criteria
 
-- [ ] Central publicado com opt-out seguro de distribuição e contratos raiz/manifest testados.
-- [ ] Três aplicações entregues em branches/PRs, cada uma com caller próprio e referência central imutável igual à dos scripts.
-- [ ] Gates pertinentes dos quatro repositórios executados e revisão independente registrada.
-- [ ] Nenhum pacote Maven/npm ou binário Go publicado pelo agente.
+- [x] Central publicado com opt-out seguro de distribuição e contratos raiz/manifest testados.
+- [x] Três aplicações entregues em branches/PRs, cada uma com caller próprio e referência central imutável igual à dos scripts.
+- [x] Gates pertinentes dos quatro repositórios executados e revisão independente registrada.
+- [x] Nenhum pacote Maven/npm ou binário Go publicado pelo agente.
 - [ ] Ciclos reais de PR/tag/Release registrados após os merges humanos; enquanto faltarem, a meta permanece em andamento.
 
 ## References

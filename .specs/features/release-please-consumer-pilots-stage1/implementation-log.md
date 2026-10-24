@@ -54,3 +54,32 @@ Veredito local T2: PASS. Transporte de GitHub isolado, cálculo/updates nativos.
 ### Correção do build documental T3
 
 O primeiro CI do PR19 aprovou os sete testes/tipos, mas o build VitePress reprovou dois links novos para READMEs fora da raiz docs/. Revisão independente confirmou a causa no run40071161215. Os links externos ao site passaram a URLs GitHub fixadas no SHA publicado 1d874d9, sem desabilitar checagem de links ou alterar Pages. Novo build obrigatório antes do push desta correção.
+
+## T4–T6: Callers publicados nas aplicações
+
+Cada aplicação inclui seu próprio guia/status no mesmo commit da implementação. A consolidação abaixo referencia esses commits, sem alterar fontes funcionais ou promover branches.
+
+| Tarefa | Entrega | Revisão remota final | Gate |
+| --- | --- | --- | --- |
+| T4 Java | [PR36](https://github.com/aplicacoesBoilerplate/PackagesJava/pull/36), para release/v0.0.1 | 47a19912d55e4d94334e87ae3071ada0d948b49d | Quatro módulos/quatro testes verify aprovados; SDK aplicou0.0.2 em POMs/pais/revision reais e reactor scratch recompilou |
+| T5 Vue | [PR39](https://github.com/aplicacoesBoilerplate/PackagesVue/pull/39), para release/v0.0.1 | d17697a47779608ee86caa9dd5cd810900837ce9 | verify17/17 sem cache; pack:check cinco libs; grafo/ranges/privados/lock reais aprovados |
+| T6 Go | [PR16](https://github.com/aplicacoesBoilerplate/boilerplate-cli/pull/16), para release/v0.0.1 | 282285ea372ab3bb9a5a47c5dff51d9b10b7c049 | Nove contratos, testes/vet/build/help, lint0issues; SDK Go propõe0.0.1/changelog/tag/SHA sem mudar go.mod |
+
+Os três usam 1d874d946e5f5ad233a6b1f6bf278fef78f3b46d tanto no uses quanto em central-ref e publish-artifacts=false. Nenhum novo exemplo central por adaptador. O PR central19 recebeu milestonev0.0.2; revisão solicitada a gersonfribeiro nos quatro PRs. Aplicações ficam nas releases existentes; nenhuma issue funcional foi alterada.
+
+### Impedimentos resolvidos
+
+- Vue40071481961: setup-node chamou npm cache antes do pin; npm10.9.9 violava devEngines10.9.4. Desabilitado cache npm automático antes do pin, sem relaxar devEngines (39794c5).
+- Vue40071638090: TS2307 em exemplo que importa a API pública do próprio ui-core antes de dist existir. Corrida preexistente resolvida com type-check.dependsOn=[build], sem excluir exemplos/testes (d17697a). Grafo Turbo real validou a dependência nos oito nós. Sem Context7 disponível; sintaxe confirmada no código instalado e na [documentação oficial](https://turborepo.dev/docs/crafting-your-repository/configuring-tasks#depending-on-tasks-in-the-same-package).
+- Go F-SHA: Verifier detectou CI do closed/merged no head anterior. Mesmo teste fortalecido produziu RED1/9, depois GREEN9/9; checkout agora prioriza merge_commit_sha após merge (282285e). Fonte Go não alterada.
+- Lint Go local: normalização do CRLF de checkout comprovadamente idêntico ao HEAD, sem diff de conteúdo e sem fonte Go incluído no commit. Nenhum clone original sujo foi limpo/alterado.
+
+## T7: Evidência independente e pendências humanas
+
+- Relatório canônico: validation.md; aprovação técnica para revisão/integração. Quatro mutantes mortos (default true, override escalar no native, perda do writer SDK, checkout Go incorreto); zero sobreviventes e isolamento dos quatro worktrees comprovado.
+- O verificador executou gates sequencialmente após saturação de memória em uma tentativa paralela; mesmas tarefas/testes mantidos. Não foi necessário reduzir cobertura.
+- CI hospedada verde nos heads finais: central40071353788 +docs40071353809; Java40071261874; Vue40071851841; Go40072007834. O commit final modifica apenas registros TLC/relatório/lição, sem mudar o runtime consumido.
+- Central PUBLIC; checkout externo não requer PAT. Go permite criação/aprovação de PRs por Actions. A consulta administrativa em Java/Vue e central retornou403 para a identidade agentegersonfribeiro-AI: não foi alterada política, nem presumida desabilitada. Confirmar na revisão administrativa dos consumidores antes de ativar os ciclos.
+- Preservação conferida por status: central original develop com alterações anteriores; Java release/v0.0.1 com .envrc/.opencode/OpenSpec; Vue feature/separacao-de-lib com snippet sujo; Go feature/issue-14 com README/fontes/OpenSpec. Nenhum desses arquivos foi modificado por esta entrega.
+- Limpeza de scratch rejeitada pela revisão automática: blocked by policy, sem motivo adicional. Diretórios temporários preservados limpos e sem novas tentativas destrutivas; detalhes no relatório. Não afeta os repositórios reais.
+- Meta permanece ATIVA. Ainda faltam os três ciclos hospedados completos após merges humanos (entrega funcional+milestone -> PR técnico -> merge -> tag/Release). A implementação e seus PRs estão entregues; não declarar conclusão integral com base no validador ou em transporte simulado. Nenhum merge, tag, Release ou pacote/binário criado pelo agente nesta etapa.
