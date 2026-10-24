@@ -12,6 +12,26 @@ on:
         required: false
         type: string
         default: master
+      publish-artifacts:
+        description: 'Publicar pacotes ou binários após a Release (etapa 2)'
+        required: false
+        type: boolean
+        default: false
+      release-config-file:
+        description: 'Config nativo versionado no consumidor; vazio mantém o modo single'
+        required: false
+        type: string
+        default: ''
+      release-manifest-file:
+        description: 'Manifest nativo de versões do consumidor'
+        required: false
+        type: string
+        default: .release-please-manifest.json
+      version-policy:
+        description: 'milestone para versão raiz planejada; native para componentes independentes'
+        required: false
+        type: string
+        default: milestone
 
 jobs:
   release-please:
@@ -53,25 +73,43 @@ jobs:
           PROJECT_TYPE: ${{ inputs.project-type }}
           MILESTONE_TITLE: ${{ github.event.pull_request.milestone.title }}
           PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          RELEASE_CONFIG_FILE: ${{ inputs.release-config-file }}
+          RELEASE_MANIFEST_FILE: ${{ inputs.release-manifest-file }}
+          VERSION_POLICY: ${{ inputs.version-policy }}
 
-      # 5. Remove os scripts auxiliares antes do Release Please rodar para não sujar a árvore do Git
-      - name: Limpar Scripts Temporários
-        run: rm -rf .ci-scripts
-
-      # 6. Executa o Release Please (Cria o PR de Release OU gera a Tag + GitHub Release)
+      # Single e manifest nativo usam a Action oficial.
       - name: Executar Release Please
+        if: steps.orchestrator.outputs.engine == 'action'
         id: release
         uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: ${{ steps.orchestrator.outputs.release_type }}
           release-as: ${{ steps.orchestrator.outputs.release_as }}
+          config-file: ${{ inputs.release-config-file }}
+          manifest-file: ${{ inputs.release-manifest-file }}
+
+      # A Action v4 não encaminha release-as no manifest-mode; o SDK público permite esse override.
+      - name: Executar Release Please configurado
+        id: configured-release
+        if: steps.orchestrator.outputs.engine == 'configured-sdk'
+        run: node .ci-scripts/ci-scripts/node_modules/tsx/dist/cli.mjs .ci-scripts/ci-scripts/scripts/configured-release.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
+          RELEASE_CONFIG_FILE: ${{ inputs.release-config-file }}
+          RELEASE_MANIFEST_FILE: ${{ inputs.release-manifest-file }}
+          RELEASE_AS: ${{ steps.orchestrator.outputs.release_as }}
+
+      - name: Limpar Scripts Temporários
+        if: always()
+        run: rm -rf .ci-scripts
 
       # ==================================================================================
       # 7. ADAPTADORES PÓS-TAG (Executam apenas quando o PR do Release Please é mergeado)
       # ==================================================================================
       - name: Adaptador GoReleaser (Go)
-        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'go' }}
+        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'go' && inputs.publish-artifacts }}
         uses: goreleaser/goreleaser-action@v6
         with:
           args: release --clean
@@ -79,13 +117,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Adaptador NPM (Node / Vue / TS)
-        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'node' }}
+        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'node' && inputs.publish-artifacts }}
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Adaptador Maven (Java / Kotlin)
-        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'maven' }}
+        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'maven' && inputs.publish-artifacts }}
         run: mvn deploy -DskipTests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
