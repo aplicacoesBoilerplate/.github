@@ -80,9 +80,9 @@ T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7
 **Depends on**: T2
 **Requirement**: RPIL-01, RPIL-02, RPIL-06
 **Files**: guia central, exemplo genérico existente se necessário e registros TLC.
-- [ ] Documentar modos, SDK, etapa 1/2, permissões e referências iguais.
-- [ ] Gate e revisão antes de abrir PR central; registrar SHA remoto testado para os callers.
-- [ ] Commit `docs(versioning): define stage one consumer contract`, push; sem merge.
+- [x] Documentar modos, SDK, etapa 1/2, permissões e referências iguais; README dos scripts/workflows com links cruzados.
+- [x] Gate local 7/7/tipos e revisão central independente sem bloqueio; runtime remoto 1bfe472a24b6111aaee4721a8416ef00900c02ea. Evidência hospedada será registrada em T7.
+- [x] Commit `docs(versioning): define stage one consumer contract`, push e PR central antes de T4; sem merge.
 **Tests**: suíte existente e CI hospedada, sem teste artificial de prosa.
 **Gate**: Build.
 

@@ -43,3 +43,10 @@ Veredito local T1: PASS para o contrato; a etapa completa e a produção continu
 - Erro de import Version na implementação foi detectado pelo typecheck e corrigido com semver público para validação, antes do commit.
 
 Veredito local T2: PASS. Transporte de GitHub isolado, cálculo/updates nativos. Publicação hospedada dos consumidores permanece pendente dos merges humanos.
+
+## T3: Contrato consumível
+
+- T2 publicada e SHA remoto conferido: 1bfe472a24b6111aaee4721a8416ef00900c02ea. A revisão de documentação seguinte contém o mesmo runtime e será fixada igualmente nos três callers.
+- Guia central atualizado para os três modos, etapa 1/2, dois momentos, permissões, limites e evidência real do self-pilot já concluído. Removidas instruções antigas que prometiam publish automático ou duplicavam callers por linguagem.
+- Mantido um exemplo genérico, com CI antecedente, merge verdadeiro, permissões mínimas, SHA igual e publish-artifacts=false. README dos workflows e scripts explicam run, Node/tsx e os dois níveis de diretório .ci-scripts/ci-scripts.
+- Gate local: sete casos, zero skips/falhas, typecheck e diff aprovados. CI hospedada e PR/SHAs efetivos serão reconciliados em T7.

@@ -7,10 +7,10 @@ Nenhuma decisão global nova registrada nesta consolidação. O piloto usa a abo
 ## Handoff
 
 - **Feature:** `.specs/features/release-please-consumer-pilots-stage1/spec.md`.
-- **Phase / Task:** Execute / T2 gate aprovado; T3 seguinte, sete tarefas totais, implementação inline.
+- **Phase / Task:** Execute / T3 gate local aprovado; publicação/PR e T4 seguintes, sete tarefas totais, implementação inline.
 - **Completed:** T1 remota em 6f964cd; T2 modos single/manifest/SDK configurado com sete testes, tipos e audit runtime limpo; revisão independente sem bloqueio stage1. Baselines Java verify, Vue verify e Go test/vet/build aprovadas.
-- **In-progress:** persistência de T2, documentação e callers dos três consumidores. Arquivos/SHAs em implementation-log.md.
-- **Next step:** publicar T2 antes de T3; documentar e abrir PR central, depois fixar seu SHA nos consumidores.
+- **In-progress:** publicação de T3/PR central e callers dos três consumidores. T2 remota em 1bfe472a24b6111aaee4721a8416ef00900c02ea.
+- **Next step:** publicar T3, abrir PR central e fixar seu SHA nos três consumidores, começando pelo Maven.
 - **Blockers:** sem bloqueio técnico para T2. Perguntas assíncronas apresentadas sobre milestone agrupadora no Vue e base release no Go; defaults explícitos preservam versões e desenvolvimento. Merges permanecem humanos.
 - **Uncommitted files:** T2 e status neste snapshot antes do commit atômico; conferir git status antes de retomar.
 - **Branch:** codex/release-please-pilots-stage1 no worktree nativo release-please-pilots-stage1/.github, base 564f1bba751ed605931beffa5e9fed00e42fec4c.
