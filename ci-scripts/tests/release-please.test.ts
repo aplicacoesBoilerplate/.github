@@ -100,6 +100,10 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
     assert.ok(fs.existsSync(path.join(repository, calledPath)), `Caller referencia workflow inexistente: ${calledPath}`);
     assert.equal(selfCall.uses, `./${calledPath}`, 'O piloto de produção usa o mesmo called do exemplo externo');
     const workflow = parse(fs.readFileSync(path.join(repository, calledPath), 'utf8'));
+    assert.deepEqual(workflow.on.workflow_call.inputs['publish-artifacts'], {
+      description: 'Publicar pacotes ou binários após a Release (etapa 2)',
+      required: false, type: 'boolean', default: false,
+    }, 'A distribuição deve ser opt-in e desabilitada por padrão');
     const job = workflow.jobs['release-please'];
     const centralCheckout = job.steps.find((step: { with?: { repository?: string } }) => step.with?.repository);
     const central = path.join(TEMP_DIR, centralCheckout.with.path, 'ci-scripts');
@@ -118,7 +122,7 @@ test('Fluxo do Orquestrador TS: deve fixar versão da Milestone na feature e lib
     const distribution = job.steps.filter((step: { name?: string }) => step.name?.startsWith('Adaptador '));
     assert.equal(distribution.length, 3);
     for (const [index, type] of ['go', 'node', 'maven'].entries()) {
-      assert.equal(distribution[index].if, `\${{ steps.release.outputs.release_created == 'true' && inputs.project-type == '${type}' }}`);
+      assert.equal(distribution[index].if, `\${{ steps.release.outputs.release_created == 'true' && inputs.project-type == '${type}' && inputs.publish-artifacts }}`);
       assert.notEqual(call.with['project-type'], type, 'O caller simple não seleciona publicadores de pacotes');
     }
 

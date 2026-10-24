@@ -12,6 +12,11 @@ on:
         required: false
         type: string
         default: master
+      publish-artifacts:
+        description: 'Publicar pacotes ou binários após a Release (etapa 2)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   release-please:
@@ -71,7 +76,7 @@ jobs:
       # 7. ADAPTADORES PÓS-TAG (Executam apenas quando o PR do Release Please é mergeado)
       # ==================================================================================
       - name: Adaptador GoReleaser (Go)
-        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'go' }}
+        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'go' && inputs.publish-artifacts }}
         uses: goreleaser/goreleaser-action@v6
         with:
           args: release --clean
@@ -79,13 +84,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Adaptador NPM (Node / Vue / TS)
-        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'node' }}
+        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'node' && inputs.publish-artifacts }}
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Adaptador Maven (Java / Kotlin)
-        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'maven' }}
+        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'maven' && inputs.publish-artifacts }}
         run: mvn deploy -DskipTests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
