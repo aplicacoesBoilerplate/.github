@@ -1,5 +1,7 @@
 # Publicação e diagnóstico
 
+Para os pré-requisitos por stack, comece por [artefatos publicados](./artefatos-publicados). Os [callers completos](./callers) mostram build, permissões e distribuição por tag para cada consumidor.
+
 ## Metadados e artefatos
 
 `publish-artifacts: false` mantém PR técnico, bump de versão, changelog, tag e GitHub Release. Ele apenas desliga os adaptadores de publicação do modo de projeto único. Seu padrão `false` preserva o comportamento dos callers legados.

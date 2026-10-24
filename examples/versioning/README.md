@@ -15,3 +15,10 @@ As chamadas usam `@master` e `central-ref: master` porque os novos recursos prec
 Configure o job de validação como check obrigatório na proteção de `master`. A CI de testes do consumidor pode continuar em um workflow separado com permissões de leitura.
 
 Consulte a documentação em `docs/pipelines/versionamento-release-please.md` e `docs/pipelines/release-please/` para o contrato e as limitações.
+
+
+## Publicação por adaptador
+
+A pasta [consumers](./consumers/README.md) contém exemplos completos de node, maven, gradle, go e simple. Eles usam manifest e publicadores no caller. Consulte os pré-requisitos, substitua o SHA central e ajuste os seeds e nomes do projeto antes de copiar os arquivos.
+
+O exemplo Gradle usa simple + extra-file genérico; não pressupõe uma estratégia gradle no SDK nem um publicador Gradle implementado na central. Os exemplos não executaram uploads reais de pacotes nesta validação.

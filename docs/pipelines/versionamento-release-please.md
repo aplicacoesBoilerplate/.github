@@ -1,5 +1,18 @@
 # Versionamento com Release Please
 
+## Seção de versionamento e publicação
+
+Comece pelas três páginas principais:
+
+| Página | O que você configura e acompanha |
+| --- | --- |
+| [Artefatos publicados](./release-please/artefatos-publicados) | Tags, Releases, npm, Maven, Gradle, GoReleaser e os arquivos mantidos pelo consumidor |
+| [Atuação da central](./release-please/pipeline-central) | Dois momentos da release, adaptadores, estratégias, versões, guardas e outputs |
+| [Callers por adaptador](./release-please/callers) | Configs e workflows completos para node, maven, gradle, go e simple |
+
+As páginas de [inputs](./release-please/artefatos), [conflitos](./release-please/versoes-conflitos), [subdiretórios](./release-please/subdiretorios) e [monorepos](./release-please/monorepos) aprofundam o contrato. Para administração e operação, consulte [quality gates da master](./release-please/quality-gates) e [conexão GitHub](./release-please/conexao-github).
+
+
 O workflow central prepara versões, changelogs, tags e GitHub Releases com o Release Please. O consumidor escolhe entre **um projeto por chamada**, com `project-type`, e **manifest nativo**, com `config-file` e versões independentes por diretório.
 
 ## Ciclo de uma entrega
