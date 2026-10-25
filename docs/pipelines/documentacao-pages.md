@@ -41,7 +41,20 @@ Não é necessário `secrets: inherit`: o workflow utiliza o `GITHUB_TOKEN` do c
 
 Em PRs de forks, as permissões de escrita podem ser reduzidas pelo GitHub; apenas o build é executado.
 
-O input opcional `docs-dir` permite mudar a pasta da documentação. Ao alterá-lo, ajuste os filtros `paths` do caller. A pasta precisa conter o projeto npm, o lockfile e o script `docs:build`.
+O input `docs-dir` identifica a pasta VitePress e sua saída `.vitepress/dist`. Ajuste também os filtros `paths` do caller. Os defaults continuam atendendo um projeto npm isolado em `docs/`.
+
+| Input | Default | Uso |
+| --- | --- | --- |
+| docs-dir | docs | Raiz do conteúdo VitePress e da saída do site |
+| install-dir | vazio | Diretório do lockfile e do build; vazio usa docs-dir |
+| build-script | docs:build | Script npm responsável pelo site e suas dependências |
+| npm-version | vazio | Versão exata exigida pelo consumidor; vazia usa a do Node22 |
+
+Para um workspace como PackagesVue, informar `docs-dir: apps/docs`, `install-dir: .`, `build-script: build` e `npm-version: 10.9.4`. O build da raiz precisa produzir os manifests das bibliotecas antes do catálogo; compilar somente o app documental em checkout limpo pode gerar um catálogo vazio. Java usa os defaults com seu projeto VitePress isolado em `docs/`.
+
+A versão npm é instalada em runner.temp antes de acessar o consumidor. O setup não consulta cache npm antecipadamente, pois isso poderia violar devEngines antes do pin. O build recebe DOCS_BASE com o caminho do repositório e DOCS_SOURCE_SHA com o commit executado; a configuração do consumidor pode usá-los para rotas e identificação do conteúdo.
+
+Os novos inputs requerem uma revisão que contenha este contrato; fixe o SHA revisado do workflow no caller. A referência v0.0.1 do exemplo continua adequada somente ao layout isolado original. Não é necessário duplicar os passos de instalação, build ou Pages dentro das aplicações.
 
 ## Versão e notas deste catálogo
 

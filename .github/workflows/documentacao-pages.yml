@@ -26,6 +26,21 @@ on:
         required: false
         default: 'docs'
         type: string
+      install-dir:
+        description: 'Diretório do package.json/lockfile e dos scripts de build; vazio usa docs-dir'
+        required: false
+        default: ''
+        type: string
+      build-script:
+        description: 'Script npm que constrói o site, incluindo dependências do workspace'
+        required: false
+        default: 'docs:build'
+        type: string
+      npm-version:
+        description: 'Versão npm exigida pelo consumidor; vazio usa o runtime Node'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -43,16 +58,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: ${{ inputs.docs-dir || 'docs' }}/package-lock.json
+
+      - name: Fixar versão npm do consumidor
+        if: inputs.npm-version != ''
+        working-directory: ${{ runner.temp }}
+        env:
+          DOCS_NPM_VERSION: ${{ inputs.npm-version }}
+        run: npm install --global "npm@$DOCS_NPM_VERSION" --ignore-scripts
 
       - name: Instalar dependências da documentação
-        working-directory: ${{ inputs.docs-dir || 'docs' }}
+        working-directory: ${{ inputs.install-dir || inputs.docs-dir || 'docs' }}
         run: npm ci
 
       - name: Build VitePress
-        working-directory: ${{ inputs.docs-dir || 'docs' }}
-        run: npm run docs:build
+        working-directory: ${{ inputs.install-dir || inputs.docs-dir || 'docs' }}
+        env:
+          DOCS_BUILD_SCRIPT: ${{ inputs.build-script || 'docs:build' }}
+          DOCS_BASE: /${{ github.event.repository.name }}/
+          DOCS_SOURCE_SHA: ${{ github.sha }}
+        run: npm run "$DOCS_BUILD_SCRIPT"
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
