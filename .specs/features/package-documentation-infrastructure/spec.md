@@ -101,7 +101,7 @@ A master central 1bd925d acrescenta seleção de subdiretórios e validação de
 | --- | --- | --- | --- |
 | PDOC-01 | Called documental | Execute | Implementado e gates aprovados; revisão independente pendente |
 | PDOC-02 | Java | Execute | Quatro páginas/versões/SDK/loader/reactor aprovados e publicados no PR36 |
-| PDOC-03 | Vue | Execute | Cinco páginas/versões/API e verify17 aprovados e publicados no PR39 |
+| PDOC-03 | Vue | Execute | Reparo b33547d publicado no PR39 após verify17/HTML/negativos de CI; revalidação independente limpa em andamento |
 | PDOC-04 | Contrato de versão | Execute | Callers fixados em080df5a, versão/distros preservadas; revisão pendente |
 | PDOC-05 | Evidência/publicação | Execute | Verifier e CI final em andamento; Pages habilitado, deploy pendente de merges humanos |
 

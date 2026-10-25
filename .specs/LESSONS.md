@@ -20,6 +20,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: validation.md:F-SHA; Go/.github/workflows/ci.yml:19; Go/tests/versioning/test_caller.py:76 (workflows)
 - last seen: 2026-10-24T06:57:17Z
 
+### L-002 - Declare and hash documentation context variables in the Turbo task and assert the compiled Pages base, rather than trusting a successful build.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `documentation` · harmful: 0
+- features: package-documentation-infrastructure
+- evidence: PDOC-03.AC3 (documentation)
+- last seen: 2026-10-25T12:45:26Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

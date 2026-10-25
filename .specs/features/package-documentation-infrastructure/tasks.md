@@ -61,7 +61,7 @@ T1 -> T2 -> T3 -> T4
 **Tests**: Build limpo real e HTML/versões/manifests, verify preservado.
 **Gate**: Build.
 - [x] Páginas dos cinco pacotes e versões do checkout, preservando catálogo UI e features pendentes.
-- [x] Callers/Pages atualizados; verify17/17 sem cache, HTML/versões/manifests aprovados;85e9c1a publicado no PR39.
+- [x] Callers/Pages atualizados; reparo b33547d publicado/conferido no PR39 após verify17/17, inspeção real dos cinco HTML e negativos em CI; revalidação independente em T4.
 
 ### Task 4: Evidência e publicação
 #### T4: Verificar independentemente e conferir Pages

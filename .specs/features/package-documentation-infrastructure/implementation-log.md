@@ -39,13 +39,23 @@ Todas as asserções novas pertencem ao contrato PDOC-01; não ampliam regras de
 - Rehearsal independente suplementar no SDK17.3.0: Manifest.buildPullRequests aplicou0.0.2 aos quatro POMs/revision/manifest/docs package.json/lock rootversion/lock packages[''].version. Loader TS real aceitou{version:0.0.2,sha:b*40}; manifest antigo e JSON documental adulterado falharam. Evidências em Temp/rp-java-docs-extra-files-1792930805912/recheck.mjs:27-44,58-60,63,66 e result.json; sem rede ou escrita real.
 - fab31050b2f54d49067e06c81f23ddeca335c536 repina validação/publicação/documentação para080df5a e corrige frase de exemplo de tag fixa no guia. Commit/push/SHA remoto conferidos no PR36. Nenhum fonte Java alterado.
 
-## T3 Vue concluída
+## T3 Vue: implementação inicial
 
 - Implementação parcial preservada e finalizada: cinco páginas de pacotes e catálogo, componentes de versão/instalação, loader TS de package.json, SHA e base/PackagesVue/. Catálogo UI gerado e previews preservados; composables/utils declaram corretamente API ainda vazia.
 - buildEnd confere versão e comando npm em todas as cinco páginas, além de exports/manifests e API BaseOverlay nas três UI. Dados não usam schemaVersion ou versão privada de docs como versão da biblioteca.
 - Gate autor: npm10.9.4 verify -- --force --concurrency=1,17/17 tarefas com zero cache, incluindo VitePress real e seus guards. Os passWithNoTests preexistentes de composables/utils não foram contados como cobertura funcional; nenhuma asserção/caso foi removido.
 - README atualizado para os cinco nomes atuais e para o deploy central; guia de versão alinhado ao contrato atual config-file/manifest-file/project-path, incluindo bloqueio de override global ambíguo.
 -85e9c1ac7662c2f409b4ec50d89e582c304ab69e publicado no PR39, caller de versão e caller documental na mesma revisão080df5a. Nenhum fonte funcional de biblioteca/feature pendente foi alterado.
+
+### Correção detectada pela revisão independente
+
+- Rodada1 reprovou PDOC-03.AC3: mesmo após verify17/17 limpo, os cinco HTML renderizavam assets em /assets/, não /PackagesVue/assets/. Turbo2.10.11 em modo strict filtrava DOCS_BASE e DOCS_SOURCE_SHA entre o caller e o VitePress. Portanto o gate inicial não comprovava a base correta.
+- Reaberta T3, preservando a especificação. O build documental recebe env própria com hash para base/SHA; inputs incluem release-please-config.json e os cinco manifests públicos, inclusive composables/utils que não são dependências diretas da aplicação documental. Outros builds não recebem essas variáveis.
+- RED: auditor HTML independente falhou no HTML fresco; diagnóstico nativo Turbo mostrou env configurada vazia. A correção exige novo gate real e inspeção do HTML; validar apenas o JSON Turbo não basta.
+- Dry-run real após o reparo confirma as duas variáveis e os inputs. Alterar somente SHA ou somente base invalida apenas docs#build; os outros sete hashes de build permanecem iguais.
+- Gate autor: verify17/17 sem cache em4m35, HTML dos cinco pacotes com base/PackagesVue/assets/, SHA b*40 e versões corretas. Verificação adicional em CI=true:17/17,16 hits e documentação recompilada em46s. ESLint do config e Prettier aprovados, nomes/imports alinhados às regras existentes sem relaxá-las.
+- O config agora exige DOCS_BASE e DOCS_SOURCE_SHA em CI; verify fornece ambos, assim como o called documental. Dois negativos VitePress reais rejeitaram separadamente base e SHA ausentes. Build local mantém defaults. Revalidação limpa independente ainda pendente.
+- b33547d185992007c2fb0bf2a3c8e78e8c641c4d commitado, publicado e conferido por ls-remote no PR39 antes da rodada2. Git status limpo no consumidor. CI hospedada nova em andamento; nenhum merge/deploy realizado.
 
 ## Preflight Pages atualizado
 
