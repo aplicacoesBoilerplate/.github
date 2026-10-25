@@ -188,3 +188,25 @@ test('Workspace sincroniza o lockfile da raiz sem incrementar pacotes não liber
   assert.equal(LOCK.packages['packages/utils'].version, '0.0.1');
   assert.equal(LOCK.version, '0.0.1');
 });
+
+test('Cliente manifest usa um unico /graphql com a URL fornecida pelo Actions', async () => {
+  for (const [CONFIGURED, EXPECTED] of [
+    ['https://api.github.com/graphql', 'https://api.github.com/graphql'],
+    ['https://github.enterprise.test/api/graphql', 'https://github.enterprise.test/api/graphql'],
+    ['https://api.github.com', 'https://api.github.com/graphql'],
+    [undefined, 'https://api.github.com/graphql'],
+  ]) {
+    let REQUEST_URL = '';
+    const CLIENT = await CManifestRelease.createGitHub({
+      owner: 'org', repo: 'repo', defaultBranch: 'master', graphqlUrl: CONFIGURED,
+      fetch: async (pUrl: string | URL | Request) => {
+        REQUEST_URL = String(pUrl);
+        return new Response(JSON.stringify({ data: { repository: {
+          releases: { nodes: [], pageInfo: { hasNextPage: false } },
+        } } }), { status: 200, headers: { 'content-type': 'application/json' } });
+      },
+    });
+    await CLIENT.releaseIterator().next();
+    assert.equal(REQUEST_URL, EXPECTED);
+  }
+});
