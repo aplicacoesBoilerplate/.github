@@ -5,23 +5,94 @@ on:
     inputs:
       project-type:
         description: 'Tipo do projeto (node, go, maven, gradle, simple)'
-        required: true
+        required: false
         type: string
+        default: ''
+      project-path:
+        description: 'Diretório do projeto; padrão raiz. Em manifest, raiz seleciona todos os pacotes.'
+        required: false
+        type: string
+        default: '.'
+      config-file:
+        description: 'Arquivo de configuração nativo no consumidor; vazio mantém o modo de projeto único.'
+        required: false
+        type: string
+        default: ''
+      manifest-file:
+        description: 'Estado de versões do manifest no consumidor'
+        required: false
+        type: string
+        default: ''
+      publish-artifacts:
+        description: 'Publicar pacotes ou binários após a Release (etapa 2)'
+        required: false
+        type: boolean
+        default: false
+      release-config-file:
+        description: 'Alias compatível de config-file usado pelos pilotos'
+        required: false
+        type: string
+        default: ''
+      release-manifest-file:
+        description: 'Alias compatível de manifest-file usado pelos pilotos'
+        required: false
+        type: string
+        default: '.release-please-manifest.json'
+      version-policy:
+        description: 'native ignora a milestone nos componentes independentes; milestone aceita também Release-As'
+        required: false
+        type: string
+        default: milestone
+      gradle-java-version:
+        description: 'JDK para publicação Gradle; compatível com o Wrapper do consumidor'
+        required: false
+        type: string
+        default: '17'
       central-ref:
         description: 'Revisão dos scripts centrais; use o mesmo SHA revisado da referência ao called'
         required: false
         type: string
         default: master
 
+    secrets:
+      NPM_TOKEN:
+        description: 'Token do publicador NPM legado'
+        required: false
+      GRADLE_PUBLISH_USERNAME:
+        description: 'Usuário do registry Gradle; padrão github.actor'
+        required: false
+      GRADLE_PUBLISH_TOKEN:
+        description: 'Token do registry Gradle; padrão GITHUB_TOKEN do caller'
+        required: false
+    outputs:
+      releases:
+        description: 'Releases manifest: path, version, tag_name e release_type'
+        value: ${{ jobs.release-please.outputs.releases }}
+      releases_created:
+        description: 'Se o manifest criou releases'
+        value: ${{ jobs.release-please.outputs.releases_created }}
+
+concurrency:
+  group: version-publish-${{ github.repository }}-${{ github.event.pull_request.base.ref }}
+  cancel-in-progress: false
+
+
 jobs:
   release-please:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
+    # As permissões são concedidas pelo caller para todos os adaptadores.
+    # Não reduzimos packages: write quando o consumidor precisa publicar.
+    outputs:
+      releases: ${{ steps.manifest.outputs.releases || '[]' }}
+      releases_created: ${{ steps.manifest.outputs.releases_created || 'false' }}
     steps:
+      - name: Validar contrato de versionamento Gradle
+        if: inputs.project-type == 'gradle' && inputs.config-file == '' && inputs.release-config-file == ''
+        run: |
+          echo "Gradle exige config-file/manifest-file com estratégia simple e updater de gradle.properties." >&2
+          exit 1
+
       # 1. Faz o checkout do repositório da aplicação (Caller)
       - name: Checkout Aplicação
         uses: actions/checkout@v4
@@ -45,47 +116,142 @@ jobs:
       - name: Instalar runtime central travado
         run: npm ci --prefix .ci-scripts/ci-scripts --omit=dev --ignore-scripts
 
+      - name: Validar disponibilidade da versão no GitHub
+        id: version-policy
+        run: node .ci-scripts/ci-scripts/node_modules/tsx/dist/cli.mjs .ci-scripts/ci-scripts/scripts/CReleaseVersionValidator.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_PATH: ${{ inputs.project-path }}
+          RELEASE_CONFIG_FILE: ${{ inputs.config-file || inputs.release-config-file }}
+          VERSION_POLICY: ${{ inputs.release-config-file != '' && inputs.version-policy || '' }}
+
       # 4. Executa o orquestrador e fornece os parâmetros efetivos da Action
       - name: Executar Orquestrador TS
         id: orchestrator
+        if: inputs.config-file == '' && inputs.release-config-file == ''
         run: node .ci-scripts/ci-scripts/node_modules/tsx/dist/cli.mjs .ci-scripts/ci-scripts/scripts/release-orchestrator.ts
         env:
+          PROJECT_PATH: ${{ inputs.project-path }}
+          VALIDATED_RELEASE_VERSION: ${{ steps.version-policy.outputs.version }}
           PROJECT_TYPE: ${{ inputs.project-type }}
           MILESTONE_TITLE: ${{ github.event.pull_request.milestone.title }}
           PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          RELEASE_CONFIG_FILE: ${{ inputs.release-config-file }}
+          RELEASE_MANIFEST_FILE: ${{ inputs.release-manifest-file }}
+          VERSION_POLICY: ${{ inputs.version-policy }}
 
       # 5. Remove os scripts auxiliares antes do Release Please rodar para não sujar a árvore do Git
       - name: Limpar Scripts Temporários
+        if: inputs.config-file == '' && inputs.release-config-file == ''
         run: rm -rf .ci-scripts
 
       # 6. Executa o Release Please (Cria o PR de Release OU gera a Tag + GitHub Release)
       - name: Executar Release Please
-        id: release
+        id: engine
+        if: inputs.config-file == '' && inputs.release-config-file == ''
         uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ steps.version-policy.outputs.project_path }}
           release-type: ${{ steps.orchestrator.outputs.release_type }}
           release-as: ${{ steps.orchestrator.outputs.release_as }}
+
+      - name: Executar manifest nativo
+        id: manifest
+        if: inputs.config-file != '' || inputs.release-config-file != ''
+        run: node .ci-scripts/ci-scripts/node_modules/tsx/dist/cli.mjs .ci-scripts/ci-scripts/scripts/CManifestRelease.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_PATH: ${{ inputs.project-path }}
+          RELEASE_CONFIG_FILE: ${{ inputs.config-file || inputs.release-config-file }}
+          VERSION_POLICY: ${{ inputs.release-config-file != '' && inputs.version-policy || '' }}
+          RELEASE_MANIFEST_FILE: ${{ inputs.manifest-file || inputs.release-manifest-file }}
+          RELEASE_OVERRIDES: ${{ steps.version-policy.outputs.overrides }}
+          TECHNICAL_RELEASE: ${{ steps.version-policy.outputs.technical }}
+
+
+      # Contrato comum de saída para os publicadores, independente do motor.
+      - name: Normalizar resultado do projeto selecionado
+        id: release
+        uses: actions/github-script@v7
+        env:
+          PROJECT_PATH: ${{ steps.version-policy.outputs.project_path }}
+          PROJECT_TYPE: ${{ inputs.project-type }}
+          PUBLISH_ARTIFACTS: ${{ inputs.publish-artifacts }}
+          MANIFEST_MODE: ${{ inputs.config-file != '' || inputs.release-config-file != '' }}
+          MANIFEST_CREATED: ${{ steps.manifest.outputs.releases_created || 'false' }}
+          RELEASES: ${{ steps.manifest.outputs.releases || '[]' }}
+          ACTION_CREATED: ${{ steps.engine.outputs[steps.version-policy.outputs.project_path == '.' && 'release_created' || format('{0}--release_created', steps.version-policy.outputs.project_path)] }}
+          ACTION_TAG: ${{ steps.engine.outputs[steps.version-policy.outputs.project_path == '.' && 'tag_name' || format('{0}--tag_name', steps.version-policy.outputs.project_path)] }}
+        with:
+          script: |
+            const PROJECT_PATH = (process.env.PROJECT_PATH || '.').trim().replace(/\/+$/, '');
+            let CREATED = process.env.ACTION_CREATED === 'true';
+            let TAG = CREATED ? (process.env.ACTION_TAG || '') : '';
+            if (process.env.MANIFEST_MODE === 'true') {
+              const RELEASES = JSON.parse(process.env.RELEASES || '[]');
+              const MATCHES = RELEASES.filter(RELEASE => RELEASE.path === PROJECT_PATH);
+              const TARGET = MATCHES.length === 1 ? MATCHES[0] : undefined;
+              const MANIFEST_CREATED = process.env.MANIFEST_CREATED === 'true';
+              const GRADLE_PUBLICATION = process.env.PROJECT_TYPE === 'gradle'
+                && process.env.PUBLISH_ARTIFACTS === 'true' && MANIFEST_CREATED;
+              if (GRADLE_PUBLICATION && (RELEASES.length !== 1 || !TARGET
+                  || TARGET.release_type !== 'simple'
+                  || typeof TARGET.tag_name !== 'string' || !TARGET.tag_name)) {
+                throw new Error('Gradle: selecione uma única release simple com tag no project-path solicitado.');
+              }
+              CREATED = MANIFEST_CREATED && Boolean(TARGET);
+              TAG = CREATED ? TARGET.tag_name : '';
+            }
+            core.setOutput('release_created', String(CREATED));
+            core.setOutput('project_path', PROJECT_PATH);
+            core.setOutput('tag_name', TAG);
 
       # ==================================================================================
       # 7. ADAPTADORES PÓS-TAG (Executam apenas quando o PR do Release Please é mergeado)
       # ==================================================================================
       - name: Adaptador GoReleaser (Go)
-        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'go' }}
+        if: ${{ inputs.config-file == '' && inputs.release-config-file == '' && inputs.publish-artifacts && steps.release.outputs.release_created == 'true' && inputs.project-type == 'go' }}
         uses: goreleaser/goreleaser-action@v6
         with:
+          workdir: ${{ steps.version-policy.outputs.project_path }}
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Adaptador NPM (Node / Vue / TS)
-        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'node' }}
+        if: ${{ inputs.config-file == '' && inputs.release-config-file == '' && inputs.publish-artifacts && steps.release.outputs.release_created == 'true' && inputs.project-type == 'node' }}
+        working-directory: ${{ steps.version-policy.outputs.project_path }}
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Adaptador Maven (Java / Kotlin)
-        if: ${{ steps.release.outputs.release_created == 'true' && inputs.project-type == 'maven' }}
+        if: ${{ inputs.config-file == '' && inputs.release-config-file == '' && inputs.publish-artifacts && steps.release.outputs.release_created == 'true' && inputs.project-type == 'maven' }}
+        working-directory: ${{ steps.version-policy.outputs.project_path }}
         run: mvn deploy -DskipTests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout da tag para publicação Gradle
+        id: publication-checkout
+        if: ${{ inputs.publish-artifacts && steps.release.outputs.release_created == 'true' && inputs.project-type == 'gradle' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.release.outputs.tag_name }}
+
+      - name: Preparar JDK para publicação Gradle
+        id: publication-java
+        if: ${{ inputs.publish-artifacts && steps.release.outputs.release_created == 'true' && inputs.project-type == 'gradle' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ inputs.gradle-java-version }}
+
+      - name: Adaptador Gradle
+        if: ${{ inputs.publish-artifacts && steps.release.outputs.release_created == 'true' && inputs.project-type == 'gradle' }}
+        working-directory: ${{ steps.release.outputs.project_path }}
+        run: ./gradlew --no-daemon check publish
+        env:
+          MAVEN_USERNAME: ${{ secrets.GRADLE_PUBLISH_USERNAME || github.actor }}
+          MAVEN_TOKEN: ${{ secrets.GRADLE_PUBLISH_TOKEN || secrets.GITHUB_TOKEN }}

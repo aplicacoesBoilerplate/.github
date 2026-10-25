@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 2,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::ao reutilizar ci de pr no fluxo pos merge valide merge commit sha e teste a selecao do sha nos dois contextos de evento",
+      "text": "Ao reutilizar CI de PR no fluxo pós-merge, valide merge_commit_sha e teste a seleção do SHA nos dois contextos de evento.",
+      "signal": "ac_gap",
+      "scope": "workflows",
+      "status": "candidate",
+      "features": [
+        "release-please-consumer-pilots-stage1"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md:F-SHA; Go/.github/workflows/ci.yml:19; Go/tests/versioning/test_caller.py:76 (workflows)"
+      ],
+      "created": "2026-10-24T06:57:17Z",
+      "last_seen": "2026-10-24T06:57:17Z"
+    }
+  ]
+}

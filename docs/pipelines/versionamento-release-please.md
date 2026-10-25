@@ -1,180 +1,70 @@
-# Versionamento Centralizado (Release Please)
+# Versionamento com Release Please
 
-Nossa arquitetura de versionamento utiliza o **Release Please** combinado com um **Orquestrador em TypeScript (POO)**. A versão planejada vem da **Milestone** do PR funcional integrado em `master`; o motor prepara o PR técnico e, depois do merge dele, a tag e a GitHub Release. A integração real de publicação ainda precisa ser comprovada pelo piloto descrito abaixo.
+## Seção de versionamento e publicação
 
-## Como o Fluxo Funciona
+Comece pelas três páginas principais:
 
-1. **Merge de Feature (`feat/* -> master`):**
-   - A pipeline valida se o PR possui uma Milestone no formato `vX.Y.Z` (ex: `v1.2.0`).
-   - O Orquestrador TS extrai a versão sem o prefixo `v` (`1.2.0`) e gera o `release-please-config.json` para inspeção.
-   - O canal efetivo de configuração é `GITHUB_OUTPUT`: `release_type` e `release_as` alimentam os inputs oficiais `release-type` e `release-as` da Action. Um JSON apenas gerado no workspace não configura o manifest-mode remoto da Action.
-   - O Release Please abre ou atualiza um **Pull Request de Release** contendo o `CHANGELOG.md` e o bump de versão no manifesto da linguagem (`package.json`, `pom.xml`, etc.).
-2. **Merge do PR de Release (`release-please--branches--master -> master`):**
-   - O Orquestrador TS identifica a branch do robô e libera a exigência de Milestone.
-   - O Release Please cria a **Tag oficial** e publica a **GitHub Release**.
-   - Os **Adaptadores Pós-Tag** são selecionados pelo tipo do projeto. No piloto `simple`, nenhum publicador de pacotes ou binários é selecionado.
+| Página | O que você configura e acompanha |
+| --- | --- |
+| [Artefatos publicados](./release-please/artefatos-publicados) | Tags, Releases, npm, Maven, Gradle, GoReleaser e os arquivos mantidos pelo consumidor |
+| [Atuação da central](./release-please/pipeline-central) | Dois momentos da release, adaptadores, estratégias, versões, guardas e outputs |
+| [Callers por adaptador](./release-please/callers) | Configs e workflows completos para node, maven, gradle, go e simple |
 
-A exigência de milestone vale também para hotfixes funcionais. A dispensa do segundo momento não autoriza uma nova entrega sem milestone. Hoje a identificação técnica no orquestrador usa o prefixo da branch `release-please`; isso não comprova a identidade do robô. O teste usa a branch gerada pelo motor real, mas não elimina essa limitação de governança.
+As páginas de [inputs](./release-please/artefatos), [conflitos](./release-please/versoes-conflitos), [subdiretórios](./release-please/subdiretorios) e [monorepos](./release-please/monorepos) aprofundam o contrato. Para administração e operação, consulte [quality gates da master](./release-please/quality-gates) e [conexão GitHub](./release-please/conexao-github).
 
-## Piloto funcional no próprio repositório
 
-O workflow **Release Please Functional Pilot**, em `.github/workflows/version-release-please-test-caller.yml`, é um caller de teste. Ele chama a CI existente por `uses: ./.github/workflows/ci.yml`: caller e CI vêm do mesmo commit. Não é uma cópia da implementação de versionamento.
+O workflow central prepara versões, changelogs, tags e GitHub Releases com o Release Please. O consumidor escolhe entre **um projeto por chamada**, com `project-type`, e **manifest nativo**, com `config-file` e versões independentes por diretório.
 
-```text
-push na branch codex/release-please-self-pilot
-  -> caller de teste (contents:read, sem secrets herdados)
-  -> CI reutilizável no runner Ubuntu / Node 22
-  -> npm test + npm run typecheck
-  -> teste funcional TS lê caller de exemplo e called reais
-  -> executa o mesmo comando TS no layout de checkout temporário
-  -> outputs efetivos -> estratégia Simple real do Release Please
-  -> versão, changelog, proposta de PR e dados de tag/Release em memória
-```
+## Ciclo de uma entrega
 
-O caller hospedado **não chama `googleapis/release-please-action` nem cria PR, tag ou Release**. Ele executa o teste funcional com o SDK real no runner do GitHub. É evidência de execução hospedada desse contrato; não é a validação ponta a ponta de publicação. O checkout central da produção foi corrigido para `.ci-scripts/ci-scripts/...`, e o teste executa esse caminho declarado, em vez de usar um atalho corrigido só na fixture.
+1. O PR funcional recebe validação antes do merge. No modo de projeto único, informe uma milestone `vX.Y.Z` ou um footer `Release-As: X.Y.Z`. No manifest, a versão também pode ser calculada por Conventional Commits.
+2. Após o merge em `master`, o workflow valida novamente e o motor abre ou atualiza um **PR técnico de release** com versões e changelogs. Esse primeiro merge ainda não publica a versão.
+3. A equipe revisa e integra o PR técnico. O motor cria a tag e a GitHub Release. O publicador de artefatos, quando configurado, executa depois dessa etapa.
 
-### Um fluxo funcional, sem multiplicar arquivos de teste
+Uma milestone organiza a entrega; ela não cria uma tag. O PR técnico propõe a alteração versionada. A tag identifica o commit publicado, a GitHub Release apresenta suas notas e o registro de pacotes distribui o artefato compilado.
 
-O fluxo foi ampliado no arquivo existente `ci-scripts/tests/release-please.test.ts`. Permanecem os sete casos superiores da suíte: um fluxo funcional, quatro contratos dos tipos já suportados, um contrato do called e um teste de Commitlint. Nenhuma asserção anterior foi removida ou desativada.
+## Escolher a configuração
 
-No mesmo fluxo:
+| Necessidade | Configuração | Próximo passo |
+| --- | --- | --- |
+| Um projeto na raiz | `project-type: node`, `go`, `maven`, `gradle` ou `simple` | [Artefatos e inputs](./release-please/artefatos) |
+| Um projeto dentro de `docs/` ou outro diretório | `project-type` + `project-path` | [Subdiretórios](./release-please/subdiretorios) |
+| Vários pacotes com versões independentes | `config-file` + manifest de versões | [Monorepos e PackagesVue](./release-please/monorepos) |
+| Definir ou corrigir uma versão planejada | Milestone, footer ou `release-as` por pacote | [Versões e conflitos](./release-please/versoes-conflitos) |
+| Publicar pacotes ou investigar uma falha | Publicadores e resultados do workflow | [Publicação e diagnóstico](./release-please/publicacao) |
 
-1. Lê os YAMLs reais, verifica a referência ao called, o entrypoint, o binding da Action e o caller hospedado com permissão de leitura.
-2. Simula uma entrega funcional com milestone `v0.0.1`; executa o orquestrador real e entrega seus outputs à estratégia real `Simple`.
-3. Aplica os updaters nativos no diretório temporário e confere `version.txt` em `0.0.1` e o conteúdo do `CHANGELOG.md`.
-4. Simula o merge do PR técnico gerado pelo motor, sem milestone; confirma que não existe `release-as` residual e confere a proposta nativa de tag `v0.0.1`, notas e SHA alvo.
-5. Rejeita milestone ausente/inválida e tipo não suportado. Caminhos ou bindings quebrados fazem o próprio teste falhar.
+## Ativar a proteção antes do merge
 
-Somente as entradas e os metadados dos eventos são simulados. Não existe implementação nossa de cálculo de versão, changelog ou dados de release. O cliente GitHub do SDK tem `fetch` proibido; qualquer tentativa dele de acessar a rede falha. Os subprocessos recebem um ambiente filtrado, sem tokens herdados.
+O caller deve ouvir `opened`, `reopened`, `synchronize`, `edited`, `milestoned` e `demilestoned` para executar a validação de leitura. Cadastre o status gerado por esse job como **obrigatório** no ruleset ou na proteção da branch `master`. Sem essa configuração do repositório, um check vermelho informa a falha, mas não impede o merge.
 
-O teste usa `release-please@17.3.0` e `yaml@2.9.1`, travados no lockfile e somente como dependências de desenvolvimento. Os imports internos da estratégia exigem essa versão exata; sua atualização precisa passar pelo teste funcional. Na produção, o called instala apenas o runtime com `npm ci --omit=dev --ignore-scripts`; quem executa o motor é a Action oficial. O `tsx` continua sendo uma dependência do runtime TS.
+O evento `closed`, condicionado a `pull_request.merged == true`, executa o workflow de release. A verificação após o merge reduz a janela de corrida; a publicação é serializada por repositório e branch. Nenhum workflow impede que uma pessoa crie uma milestone ou abra um PR na interface do GitHub.
 
-### Reproduzir e inspecionar
+Os [exemplos completos](./release-please/monorepos#caller-do-consumidor) usam `@master` para demonstrar recursos novos. Quando a revisão estiver disponível, fixe **o mesmo SHA revisado** na referência `uses` e em `central-ref` de cada chamada. Não use uma tag futura como se ela já existisse.
 
-Na raiz do checkout, instale e execute:
+## Como este catálogo se versiona
 
-```text
-npm ci --ignore-scripts
-npm ci --prefix ci-scripts --ignore-scripts
-npm test --prefix ci-scripts
-npm run typecheck --prefix ci-scripts
-```
+O catálogo usa um manifest com um único alvo `.` e estratégia `simple`. Isso mantém todos os commits do catálogo no escopo da release. Os `extra-files` atualizam `docs/package.json` e os dois campos correspondentes de `docs/package-lock.json`; o menu da documentação lê a versão de `docs/package.json`. `CHANGELOG.md`, na raiz, continua sendo a fonte das [notas de versão](../releases).
 
-Para iterar apenas no fluxo principal: `npm run test:functional --prefix ci-scripts`. O gate de entrega continua sendo a suíte integral, sem seleção ou skip.
+Configurar somente um componente `docs/` mudaria o escopo: alterações nas pipelines fora desse diretório deixariam de compor esse componente. Por isso, o alvo do catálogo permanece na raiz, mesmo que a versão visual esteja em `docs/package.json`. O antigo `version.txt` foi removido; o updater `simple` não recria um arquivo ausente (`createIfMissing: false`).
 
-No GitHub, abra **Actions → Release Please Functional Pilot → execução do commit publicado → Caller to real release engine / Validate repository**. Em **Run TypeScript tests**, confira sete testes aprovados e o diagnóstico `Motor real`, com versão, tag proposta e SHA da fixture. Em **Check TypeScript types**, confira o término com sucesso. O SHA alvo impresso pelo teste é um dado simulado, **não** o SHA de uma tag persistida no repositório. O SHA real da execução aparece nos metadados do run.
+A release histórica [v0.0.1](https://github.com/aplicacoesBoilerplate/.github/releases/tag/v0.0.1) é a base do manifest e da documentação. Uma próxima `v0.0.2` deve ser produzida pelo ciclo de PR técnico, tag e release; esta documentação não anuncia sua publicação.
 
-O primeiro run é disparado por push somente na branch de teste. O botão **Run workflow** depende de o arquivo com `workflow_dispatch` existir na default branch; não é preciso fazer merge em master só para obter essa primeira evidência. Para repetir o mesmo commit sem novas mudanças, use **Re-run all jobs** na execução existente. Não altere secrets nem habilite permissões de escrita para esse teste.
+## Referências
 
-### Caller de produção preparado: publicação real ainda pendente
+- [Release Please: configuração manifest](https://github.com/googleapis/release-please/blob/v17.3.0/docs/manifest-releaser.md)
+- [Opções nativas de configuração](https://github.com/googleapis/release-please/blob/v17.3.0/docs/customizing.md)
+- [Inputs da Action oficial](https://github.com/googleapis/release-please-action/tree/v4#action-inputs)
+- [Workflows reutilizáveis no GitHub Actions](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows)
 
-A execução hospedada acima não fecha a issue de versionamento. O usuário autorizou preparar o PR de entrega deste próprio repositório, com milestone separada `v0.0.1`, preservando a milestone `v1.0.0` para outras pipelines. O caller de produção agora está em `.github/workflows/version-release-please-self-caller.yml`, usando `project-type: simple`. Esse tipo atualiza `version.txt` e `CHANGELOG.md`, sem npm, Maven ou GoReleaser. O arquivo `version.txt` entra no PR com base `0.0.0`, nunca como tag publicada.
 
-O caller de produção aceita apenas `pull_request: closed` para `master`. Ambos os jobs exigem merge verdadeiro: `validate` executa a CI de leitura, e `release` depende de seu sucesso e chama o called central local. Só o job de release recebe as permissões de escrita necessárias; não há secrets de registries herdados. As referências locais e `central-ref: ${{ github.sha }}` fixam a revisão integrada. Abrir o PR não publica nada, e fechar sem merge não executa os jobs.
+## Pilotos Java, Vue e Go
 
-São dois PRs: o **PR de entrega**, aberto por nós, leva a milestone e os ajustes reais; o **PR técnico de release**, criado pela Action após aquele merge, leva versão e changelog. O usuário integra os dois PRs. Depois do segundo merge, a pipeline cria a tag e publica no GitHub Releases automaticamente; não há publicação manual nessa tela. A exigência de milestone não é repetida no PR técnico. Nenhum merge é realizado pelo agente.
+A entrega do PR #19 mantém os contratos das aplicações consumidoras:
 
-O mesmo teste funcional agora lê o caller de produção e usa seus inputs no subprocesso real. As guardas e a dependência de CI são conferidas como contrato YAML, não como execução antecipada do runner de publicação. A CI aceita a evolução de version.txt, para não bloquear o PR técnico quando ele atualizar o arquivo para 0.0.1.
+- **PackagesJava:** versão única de parent, BOM, core e starter; estratégia Maven com `skip-snapshot: true` e updater XML de `revision`.
+- **PackagesVue:** cinco bibliotecas independentes; tags com nome completo do pacote e `@`, plugin `node-workspace`, ranges e lockfile. O app privado de docs participa como dependente e usa `skip-github-release` e `skip-changelog`.
+- **boilerplate-cli:** estratégia Go para changelog, tag e Release; a distribuição por GoReleaser pertence à etapa seguinte.
 
-Neste piloto do mesmo repositório, a referência local ao called executa a mesma revisão da CI, e `central-ref: ${{ github.sha }}` fixa também o checkout dos scripts. Para consumidores externos, fixe **o mesmo SHA revisado** em `uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@SHA` e em `with.central-ref`. O default `master` preserva compatibilidade, mas é mutável e não é uma garantia de revisão imutável.
+Os pilotos usam os aliases documentados em [artefatos e inputs](./release-please/artefatos#compatibilidade-com-os-três-pilotos). Publicação em registry é opt-in e permanece desligada por padrão. Cada caller aguarda a CI da aplicação e fixa o mesmo SHA revisado em `uses` e `central-ref`.
 
-Roteiro posterior, não executado pelo teste:
-
-1. Revisar o PR preparado com `version.txt` e o caller de produção; confirmar permissões de Actions e criação de PRs com `GITHUB_TOKEN`. Se a organização bloquear essa criação, um administrador precisa habilitá-la; não trocar credenciais nem alterar políticas automaticamente.
-2. Abrir entrega funcional com `fix:` ou `feat:` e milestone `v0.0.1`; preservar Conventional Commits no squash merge.
-3. Após CI/revisão e merge humano, inspecionar o PR real do Release Please, sua versão e changelog. Não deve haver tag/Release dessa candidata antes do merge do PR técnico.
-4. Aprovar a execução da CI do PR automatizado, se o GitHub solicitar. Não dispensar a CI.
-5. Integrar o PR técnico por decisão humana, sem exigir outra milestone; conferir tag no SHA integrado, versão, notas e GitHub Release, sem publicação de pacote.
-6. Registrar links do PR, do run e da Release, versão e SHA. Enquanto essas evidências não existirem, o E2E de publicação continua **PENDENTE**.
-
-Conclusão de milestones em 100%, fechamento automático, concorrência, rejeição de versões conflitantes e identificação mais forte do PR técnico permanecem evoluções futuras. Nenhuma aplicação piloto externa foi modificada.
-
-O [PR de entrega do piloto](https://github.com/aplicacoesBoilerplate/.github/pull/17) tem milestone v0.0.1 e aguarda os merges humanos do roteiro. O piloto atual é **o próprio aplicacoesBoilerplate/.github**: fornecedor do called e consumidor via self-caller. Após validar esse ciclo interno, o usuário determinou testar pelo menos um repositório consumidor distinto antes de avaliar o fechamento da issue #4. A escolha e as alterações desse consumidor ficam para a próxima etapa; não fazem parte deste PR.
-
-Referências: [inputs oficiais da Action](https://github.com/googleapis/release-please-action/blob/v4/README.md#action-inputs), [estratégia Simple usada pelo teste](https://github.com/googleapis/release-please/blob/v17.3.0/src/strategies/simple.ts), [referências locais de workflows no mesmo commit](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows#calling-a-reusable-workflow), [requisito da default branch para workflow_dispatch](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
-
----
-
-## Exemplos de Callers por Ecossistema
-
-Em cada aplicação consumidora, crie o arquivo `.github/workflows/version-release-please-caller.yml` usando o `project-type` correspondente:
-
-### Node.js / Vue / TypeScript (`node`)
-
-Atualiza o `package.json`, gera o `CHANGELOG.md` e executa `npm publish` após a criação da tag.
-
-```yaml
-name: Release Please Caller Node
-
-on:
-  pull_request:
-    types: [closed]
-    branches: [master]
-
-jobs:
-  call-central-versioning:
-    uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@master
-    with:
-      project-type: 'node'
-    secrets: inherit
-```
-
-### Go (`go`)
-
-Gerencia o CHANGELOG.md e a Tag via Release Please e, em seguida, aciona o GoReleaser (goreleaser/goreleaser-action@v6) para compilar e anexar os binários à release.
-
-```yaml
-name: Release Please Caller Go
-
-on:
-  pull_request:
-    types: [closed]
-    branches: [master]
-
-jobs:
-  call-central-versioning:
-    uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@master
-    with:
-      project-type: 'go'
-    secrets: inherit
-```
-
-### Java com Maven (`maven`)
-
-Atualiza a versão no pom.xml no PR de release e executa mvn deploy -DskipTests quando a tag é publicada.
-
-```yaml
-name: Release Please Caller Maven
-
-on:
-  pull_request:
-    types: [closed]
-    branches: [master]
-
-jobs:
-  call-central-versioning:
-    uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@master
-    with:
-      project-type: 'maven'
-    secrets: inherit
-```
-
-### Kotlin / Java com Gradle (`gradle`)
-
-Atualiza o build.gradle / gradle.properties durante o ciclo de release.
-
-```yaml
-name: Release Please Caller Gradle
-
-on:
-  pull_request:
-    types: [closed]
-    branches: [master]
-
-jobs:
-  call-central-versioning:
-    uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@master
-    with:
-      project-type: 'gradle'
-    secrets: inherit
-```
+O piloto interno completou o ciclo anterior nos [PR #17](https://github.com/aplicacoesBoilerplate/.github/pull/17), [PR #18](https://github.com/aplicacoesBoilerplate/.github/pull/18) e [Release v0.0.1](https://github.com/aplicacoesBoilerplate/.github/releases/tag/v0.0.1). A próxima versão pretendida é `0.0.2`; ela será refletida na documentação após o ciclo de release. Os ciclos reais das aplicações continuam dependendo de revisão e merges humanos.

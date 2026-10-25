@@ -1,0 +1,81 @@
+name: Release node
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited, milestoned, demilestoned, closed]
+    branches: [master]
+permissions:
+  contents: read
+jobs:
+  version-policy:
+    if: github.event.action != 'closed'
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-validate.yml@SHA_CENTRAL_REVISADO
+    with:
+      config-file: release-please-config.json
+      central-ref: SHA_CENTRAL_REVISADO
+
+  verify:
+    name: Verify consumer
+    if: github.event.action != 'closed' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar o consumidor
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+  release:
+    needs: verify
+    if: github.event.pull_request.merged == true
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@SHA_CENTRAL_REVISADO
+    with:
+      config-file: release-please-config.json
+      manifest-file: .release-please-manifest.json
+      publish-artifacts: false
+      central-ref: SHA_CENTRAL_REVISADO
+
+  publish:
+    needs: release
+    if: needs.release.outputs.releases_created == 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: publish-node-${{ github.repository }}-${{ matrix.tag_name }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.release.outputs.releases) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.tag_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: https://npm.pkg.github.com
+          scope: '@aplicacoesboilerplate'
+      - name: Preparar e publicar a biblioteca
+        run: |
+          npm ci
+          npm test
+          npm run build
+          npm pack --dry-run
+          npm publish

@@ -1,4 +1,4 @@
-name: Release Please Caller Node
+name: Release Please Caller
 
 on:
   pull_request:
@@ -7,11 +7,25 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
+  validate:
+    if: github.event.pull_request.merged == true
+    uses: ./.github/workflows/ci.yml
+
   call-central-versioning:
-    # Chama a pipeline centralizada no seu repositório de boilerplate
-    uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@master
+    if: github.event.pull_request.merged == true
+    needs: validate
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    # O caller real fica na aplicação; fixe o mesmo SHA também em central-ref.
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@1bfe472a24b6111aaee4721a8416ef00900c02ea
     with:
       # Define o adaptador/tipo de projeto (ex: node, go, maven, gradle)
       project-type: 'node'
-    secrets: inherit
+      central-ref: 1bfe472a24b6111aaee4721a8416ef00900c02ea
+      publish-artifacts: false
