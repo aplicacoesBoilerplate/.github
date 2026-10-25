@@ -63,3 +63,13 @@ Todas as asserções novas pertencem ao contrato PDOC-01; não ampliam regras de
 - Usuário respondeu Vou habilitar nos dois e depois Habilitado. Nova consulta confirmou has_pages:true, build_type:workflow e environment github-pages com regra somente master, sem reviewers/waiters adicionais retornados.
 - URLs configuradas: https://aplicacoesboilerplate.github.io/PackagesJava/ e https://aplicacoesboilerplate.github.io/PackagesVue/. Na consulta, ainda404 e sem deployments. Configuração habilitada não equivale a site publicado.
 - PRs36/39 continuam para release/v0.0.1; PR20 central para master. Merges permanecem humanos. Não contornar guard de deployment nem promover features para conseguir evidência.
+
+## T4: fechamento técnico e implantação pendente
+
+- Rodada2 independente: Vue b33547d compilado de git archive sem outputs/cache iniciais, npmci real e build raiz em CI,8/8 tarefas/zero cache. Auditor confirmou nove páginas de pacotes entre os dois sites, três APIs UI, versões, base e SHA. Duas alterações válidas de versão em composables/utils invalidaram o hash documental e a restauração recuperou os bytes/hash originais.
+- Sensor adicional removeu DOCS_BASE do contrato Turbo: o guard de CI rejeitou o build real. Restauração/rebuild/auditor aprovados. Com os dois sensores anteriores do called e Java,3/3 falhas injetadas foram detectadas. Nenhum fonte funcional alterado pelo Verifier.
+- CI hospedada final dos consumidores: Java verify40192829453 e docs40192829750 aprovados em fab3105; Vue validate40195456856 e docs40195457152 aprovados em b33547d. O segundo construiu8/8 sem cache; validate17/17 com16 hits. Logs mostram base/PackagesVue/ e SHA da revisão de merge testada dc817aa991147fd8862d02b0064b5c4ba20a4cf4, não uma revisão suposta.
+- Central4859704: CI40195557435, documentação40195557431, hygiene40195557426 e policy40195557432 aprovados. Runtime080df5a permanece imutável em todos os callers; este fechamento altera somente artefatos TLC.
+- GitHub Pages habilitado nos dois, mas deployments continuam vazios e os jobs deploy são corretamente ignorados em PR. PR20 precisa de integração em master; PR36/39 vão para release/v0.0.1 e os sites só serão publicados após a promoção humana das aplicações a master. Não houve tentativa de contornar o environment ou publicar em outro serviço.
+- Go permanece em282285ea372ab3bb9a5a47c5dff51d9b10b7c049 com porcelain vazio; issue4 não foi reaberta. Clones originais e features pendentes preservados.
+- O relatório independente distingue PASS técnico de implantação PENDENTE. A tarefa de implementação/evidência pode ser encerrada; a publicação online ainda exige merges humanos e conferência posterior das URLs/runs de deployment.

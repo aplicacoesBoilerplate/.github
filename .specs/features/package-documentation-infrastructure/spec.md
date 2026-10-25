@@ -1,6 +1,6 @@
 # Infraestrutura e documentação dos packages Java e Vue
 
-**Status:** execução solicitada pelo usuário em 2026-10-25; contrato desta iteração, sem alterar o Go ou reabrir issue #4.
+**Status:** implementação e revisão independente aprovadas em 2026-10-25; publicação dos sites pendente dos merges humanos. Go e issue #4 preservados.
 
 ## Problem Statement
 
@@ -8,10 +8,10 @@ A master central 1bd925d acrescenta seleção de subdiretórios e validação de
 
 ## Goals
 
-- [ ] Atualizar os dois callers para o contrato central publicado, preservando versões Maven conjuntas e npm independentes.
-- [ ] Documentar os quatro artefatos Java e cinco pacotes públicos Vue com versões do código documentado.
-- [ ] Compilar e publicar ambos os sites pelo workflow documental central.
-- [ ] Persistir cada entrega e suas evidências, preservando fontes funcionais e trabalho paralelo.
+- [x] Atualizar os dois callers para o contrato central publicado, preservando versões Maven conjuntas e npm independentes.
+- [x] Documentar os quatro artefatos Java e cinco pacotes públicos Vue com versões do código documentado.
+- [ ] Compilar e publicar ambos os sites pelo workflow documental central. Builds aprovados; deployment aguarda merges humanos até master.
+- [x] Persistir cada entrega e suas evidências, preservando fontes funcionais e trabalho paralelo.
 
 ## Out of Scope
 
@@ -99,15 +99,15 @@ A master central 1bd925d acrescenta seleção de subdiretórios e validação de
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PDOC-01 | Called documental | Execute | Implementado e gates aprovados; revisão independente pendente |
-| PDOC-02 | Java | Execute | Quatro páginas/versões/SDK/loader/reactor aprovados e publicados no PR36 |
-| PDOC-03 | Vue | Execute | Reparo b33547d publicado no PR39 após verify17/HTML/negativos de CI; revalidação independente limpa em andamento |
-| PDOC-04 | Contrato de versão | Execute | Callers fixados em080df5a, versão/distros preservadas; revisão pendente |
-| PDOC-05 | Evidência/publicação | Execute | Verifier e CI final em andamento; Pages habilitado, deploy pendente de merges humanos |
+| PDOC-01 | Called documental | Validado | Gates65/65/tipos e revisão independente aprovados |
+| PDOC-02 | Java | Validado | Quatro páginas/versões/SDK/loader/reactor aprovados e publicados no PR36 |
+| PDOC-03 | Vue | Validado | b33547d publicado no PR39; build limpo/HTML/hash/negativos/CI e rodada2 independente aprovados |
+| PDOC-04 | Contrato de versão | Validado | Callers fixados em080df5a, versão/distribuição/fontes preservadas e conferidas independentemente |
+| PDOC-05 | Evidência/publicação | Pronto para integração | Verifier PASS17/17ACs e sensor3/3; CI aprovada, relatório persistido; deploy pendente de merges humanos |
 
 ## Success Criteria
 
-- [ ] Called compatível com site isolado e workspace, testado.
-- [ ] Dois callers atuais, nove páginas de pacote e sites com versões corretas compilados.
-- [ ] Gates locais/hospedados e revisão independente registrados, sem distribuição de pacotes.
-- [ ] Sites publicados com URL/run ou publicação explicitamente pendente por autoridade administrativa/merges humanos.
+- [x] Called compatível com site isolado e workspace, testado.
+- [x] Dois callers atuais, nove páginas de pacote e sites com versões corretas compilados.
+- [x] Gates locais/hospedados e revisão independente registrados, sem distribuição de pacotes.
+- [x] Publicação explicitamente pendente por merges humanos; não houve deployment, conforme evidências do relatório.

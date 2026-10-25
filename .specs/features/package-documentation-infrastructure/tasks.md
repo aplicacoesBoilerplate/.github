@@ -1,6 +1,6 @@
 # Package documentation implementation plan
 
-**Status:** execução do escopo solicitada pelo usuário. Main implementa inline; helpers somente recon/revisão.
+**Status:** implementação e verificação técnica aprovadas; implantação dos sites aguarda merges humanos. Main implementou inline; helpers somente recon/revisão.
 
 ## Global Constraints
 
@@ -70,9 +70,9 @@ T1 -> T2 -> T3 -> T4
 **Requirement**: PDOC-05
 **Tests**: Gates reais, sensor scratch, CI/runs/Pages/SHAs.
 **Gate**: Build.
-- [ ] Verifier novo; corrigir gaps e validar, máximo três rodadas.
-- [ ] Conferir PRs/CI e tentar somente publicação autorizada; registrar URL/run ou impedimentos concretos de permissão/merge.
-- [ ] Commit/push final de evidências, sem alegar publicação não comprovada.
+- [x] Verifier novo; rodada1 encontrou base Vue incorreta, reparada em b33547d; rodada2 PASS17/17ACs, sensor3/3 detectado.
+- [x] PRs/CI conferidos; Pages habilitado, nenhum deployment. Guard/environment permitem somente master e merges continuam humanos; pendência registrada.
+- [x] Checkpoint final reúne relatório/estado/evidências para commit/push; publicação online não é declarada concluída.
 
 ## Diagram-Definition Cross-Check
 

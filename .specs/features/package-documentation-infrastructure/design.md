@@ -24,6 +24,7 @@ Um VitePress por consumidor e um único workflow central de build/Pages. O calle
 | Concern | Mitigation |
 | --- | --- |
 | Catálogo vazio em checkout limpo | Build completo e gate sobre HTML/manifests reais. |
+| Turbo filtra contexto ou reaproveita versão documental antiga | Env base/SHA e inputs dos manifests/config apenas em docs#build; guard CI e auditor HTML real. |
 | npm bundled viola devEngines | Pin em runner.temp antes de comandos npm no projeto. |
 | Versão candidata confundida com pacote distribuído | Rótulo versão do código; registry desligado. |
 | Geração sobrescreve prosa | Páginas locais fora de generated/. |
