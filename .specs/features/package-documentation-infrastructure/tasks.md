@@ -41,7 +41,7 @@ T1 -> T2 -> T3 -> T4
 **Tests**: Um teste funcional com npm/build reais em dois layouts e guard de publicação.
 **Gate**: Build.
 - [x] RED observado por input ausente; install-dir/build-script/npm-version implementados sem alterar default ou autorização de deploy.
-- [x] Gate64/64, tipos e VitePress aprovados; status neste commit, push antes de T2.
+- [x] Gate64/64 inicial e65/65 após incorporar a master atual, tipos e VitePress aprovados; runtime publicado em080df5a antes dos consumidores.
 
 ### Task 2: Java
 #### T2: Documentar quatro artefatos e migrar caller
@@ -50,8 +50,8 @@ T1 -> T2 -> T3 -> T4
 **Requirement**: PDOC-02, PDOC-04
 **Tests**: VitePress real, reactor e extra-files nativos.
 **Gate**: Build.
-- [ ] Site isolado/versão dinâmica e páginas reais; JSONs documentais sincronizados pelo motor.
-- [ ] Atualizar callers/CI; gate; commit/push no PR36 antes da próxima tarefa.
+- [x] Site isolado/versão dinâmica e quatro páginas reais; POMs/manifest/JSONs documentais sincronizados pelo motor e negativos do loader aprovados.
+- [x] Callers atualizados; VitePress e reactor aprovados; af24bc8 +repin fab3105 publicados no PR36 antes de concluir T3.
 
 ### Task 3: Vue
 #### T3: Documentar cinco pacotes e migrar caller
@@ -60,8 +60,8 @@ T1 -> T2 -> T3 -> T4
 **Requirement**: PDOC-03, PDOC-04
 **Tests**: Build limpo real e HTML/versões/manifests, verify preservado.
 **Gate**: Build.
-- [ ] Páginas cinco pacotes e versões do checkout, preservando catálogo UI e features pendentes.
-- [ ] Atualizar callers/Pages; gate; commit/push no PR39 antes da próxima tarefa.
+- [x] Páginas dos cinco pacotes e versões do checkout, preservando catálogo UI e features pendentes.
+- [x] Callers/Pages atualizados; verify17/17 sem cache, HTML/versões/manifests aprovados;85e9c1a publicado no PR39.
 
 ### Task 4: Evidência e publicação
 #### T4: Verificar independentemente e conferir Pages

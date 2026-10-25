@@ -25,3 +25,31 @@
 | PDOC-01.AC4/autorização | documentation.test.ts:33-39, igualdade dos guards e permissões Pages mínimas | PASS do contrato; sem deploy presumido |
 
 Todas as asserções novas pertencem ao contrato PDOC-01; não ampliam regras de versão ou publicação de pacotes. Publicação efetiva dos sites ainda depende do gate de implantação e não é inferida desses testes.
+
+## Reconciliação em25/10/2026
+
+- Ao retomar, o worktree central já estava em codex/package-documentation-infrastructure/d79c8c6 e Java já tinha af24bc8 commitado/publicado, com site completo. Vue continha a implementação parcial autorizada, sem commit. Nenhum trabalho foi descartado ou refeito.
+- A master avançou para acdb458, incluindo a correção GraphQL0f689aa. Incorporada por merge local preservando o histórico do PR20:080df5aa1c803252ba91fa00ac529fc5e2006c47. Gates65/65, zero skips/falhas, typecheck e VitePress central aprovados; push/SHA remoto conferido. Esse é o runtime comum dos dois consumidores.
+- O snapshot global STATE ainda apontava para o piloto anterior; corrigido para esta feature com base nos commits e gates reais.
+
+## T2 Java concluída
+
+- af24bc8 contém site VitePress1.6.4, quatro páginas parent/BOM/core/starter, guias, loader com versão/commit e coordenadas Maven derivadas da versão. Revisão somente leitura confirmou as APIs e condições reais, sem inventar features.
+- Gate autor: VitePress com base/PackagesJava/ e quatro páginas verificadas pelo buildEnd; mvn verify com quatro módulos/quatro testes/zero skips/falhas.
+- Rehearsal independente suplementar no SDK17.3.0: Manifest.buildPullRequests aplicou0.0.2 aos quatro POMs/revision/manifest/docs package.json/lock rootversion/lock packages[''].version. Loader TS real aceitou{version:0.0.2,sha:b*40}; manifest antigo e JSON documental adulterado falharam. Evidências em Temp/rp-java-docs-extra-files-1792930805912/recheck.mjs:27-44,58-60,63,66 e result.json; sem rede ou escrita real.
+- fab31050b2f54d49067e06c81f23ddeca335c536 repina validação/publicação/documentação para080df5a e corrige frase de exemplo de tag fixa no guia. Commit/push/SHA remoto conferidos no PR36. Nenhum fonte Java alterado.
+
+## T3 Vue concluída
+
+- Implementação parcial preservada e finalizada: cinco páginas de pacotes e catálogo, componentes de versão/instalação, loader TS de package.json, SHA e base/PackagesVue/. Catálogo UI gerado e previews preservados; composables/utils declaram corretamente API ainda vazia.
+- buildEnd confere versão e comando npm em todas as cinco páginas, além de exports/manifests e API BaseOverlay nas três UI. Dados não usam schemaVersion ou versão privada de docs como versão da biblioteca.
+- Gate autor: npm10.9.4 verify -- --force --concurrency=1,17/17 tarefas com zero cache, incluindo VitePress real e seus guards. Os passWithNoTests preexistentes de composables/utils não foram contados como cobertura funcional; nenhuma asserção/caso foi removido.
+- README atualizado para os cinco nomes atuais e para o deploy central; guia de versão alinhado ao contrato atual config-file/manifest-file/project-path, incluindo bloqueio de override global ambíguo.
+-85e9c1ac7662c2f409b4ec50d89e582c304ab69e publicado no PR39, caller de versão e caller documental na mesma revisão080df5a. Nenhum fonte funcional de biblioteca/feature pendente foi alterado.
+
+## Preflight Pages atualizado
+
+- Primeiro preflight comprovou has_pages:false nos dois consumidores. A conta AI tem push, sem Admin/Maintain; nenhuma política foi alterada pelo agente.
+- Usuário respondeu Vou habilitar nos dois e depois Habilitado. Nova consulta confirmou has_pages:true, build_type:workflow e environment github-pages com regra somente master, sem reviewers/waiters adicionais retornados.
+- URLs configuradas: https://aplicacoesboilerplate.github.io/PackagesJava/ e https://aplicacoesboilerplate.github.io/PackagesVue/. Na consulta, ainda404 e sem deployments. Configuração habilitada não equivale a site publicado.
+- PRs36/39 continuam para release/v0.0.1; PR20 central para master. Merges permanecem humanos. Não contornar guard de deployment nem promover features para conseguir evidência.

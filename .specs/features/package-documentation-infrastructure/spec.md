@@ -27,11 +27,11 @@ A master central 1bd925d acrescenta seleção de subdiretórios e validação de
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --- | --- | --- | --- |
 | Um site por repositório, páginas por pacote | Java quatro páginas, Vue cinco, preservando APIs UI existentes | Reaproveita o catálogo e evita nove deployments | Default técnico explícito |
-| Referência central | Novo SHA publicado derivado da master1bd925d | Inclui alterações recentes do usuário e contrato documental ampliado | Dentro do escopo autorizado |
+| Referência central | 080df5aa1c803252ba91fa00ac529fc5e2006c47, incorporando masteracdb458 | Inclui contrato documental ampliado, release0.0.2 e correção GraphQL do usuário | Dentro do escopo autorizado |
 | Versões exibidas | Versão do checkout; não afirmar disponibilidade em registry | Distribuição de pacotes permanece desligada | Dentro do escopo autorizado |
 | Fonte Java | Manifest nativo raiz e docs/package.json sincronizados por extra-files | Uma versão conjunta sem parser XML próprio ou segundo motor | Default técnico explícito |
 | Publicação | Pages via called; PR só build, deploy na master após merges humanos | Preservar proteções e autoridade combinadas | Confirmado na conversa |
-| Permissões Pages | Consultas retornaram404; conta AI tem write | Configuração não confirmada, não inferir site existente | Evidência de preflight |
+| Permissões Pages | Administrador habilitou nos dois; API confirmou has_pages:true/build_type:workflow | Environment permite somente master; implantação aguarda promoção humana | Confirmado pelo usuário e nova consulta API |
 
 **Open questions:** none — defaults de implementação explícitos acima; eventual impedimento administrativo será comprovado e apresentado com a entrega concreta.
 
@@ -99,11 +99,11 @@ A master central 1bd925d acrescenta seleção de subdiretórios e validação de
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| PDOC-01 | Called documental | Execute | Pending |
-| PDOC-02 | Java | Execute | Pending |
-| PDOC-03 | Vue | Execute | Pending |
-| PDOC-04 | Contrato de versão | Execute | Pending |
-| PDOC-05 | Evidência/publicação | Execute | Pending |
+| PDOC-01 | Called documental | Execute | Implementado e gates aprovados; revisão independente pendente |
+| PDOC-02 | Java | Execute | Quatro páginas/versões/SDK/loader/reactor aprovados e publicados no PR36 |
+| PDOC-03 | Vue | Execute | Cinco páginas/versões/API e verify17 aprovados e publicados no PR39 |
+| PDOC-04 | Contrato de versão | Execute | Callers fixados em080df5a, versão/distros preservadas; revisão pendente |
+| PDOC-05 | Evidência/publicação | Execute | Verifier e CI final em andamento; Pages habilitado, deploy pendente de merges humanos |
 
 ## Success Criteria
 
