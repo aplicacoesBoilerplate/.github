@@ -466,3 +466,50 @@ test('Pipeline Called (version-release-please-called.yml): deve manter o fluxo d
   assert.match(workflowContent, /steps\.release\.outputs\.release_created == 'true' && inputs\.project-type == 'node'/);
   assert.match(workflowContent, /steps\.release\.outputs\.release_created == 'true' && inputs\.project-type == 'maven'/);
 });
+
+test('Publicador Gradle central só roda por opt-in e após uma release nova', () => {
+  const WORKFLOW = parse(fs.readFileSync(CALLED_WORKFLOW_PATH, 'utf8'));
+  const JOB = WORKFLOW.jobs['publish-gradle'];
+  assert.ok(JOB, 'A called deve disponibilizar o adaptador de publicação Gradle');
+  assert.equal(JOB.needs, 'release-please');
+  const EXPRESSION = JOB.if
+    .replaceAll('inputs.publish-artifacts', "inputs['publish-artifacts']")
+    .replaceAll('inputs.project-type', "inputs['project-type']")
+    .replaceAll('needs.release-please', "needs['release-please']");
+  const ENABLED = new Function('inputs', 'needs', 'return Boolean(' + EXPRESSION + ')') as
+    (inputs: object, needs: object) => boolean;
+  for (const [TYPE, PUBLISH, CREATED, EXPECTED] of [
+    ['gradle', true, 'true', true], ['gradle', false, 'true', false],
+    ['gradle', true, 'false', false], ['node', true, 'true', false],
+  ] as const) {
+    assert.equal(ENABLED({ 'project-type': TYPE, 'publish-artifacts': PUBLISH },
+      { 'release-please': { outputs: { releases_created: CREATED } } }), EXPECTED);
+  }
+  const CHECKOUT = JOB.steps.find((STEP: { uses?: string }) => STEP.uses === 'actions/checkout@v4');
+  assert.equal(CHECKOUT.with.ref, '${{ steps.target.outputs.tag }}');
+  const PUBLISH = JOB.steps.find((STEP: { id?: string }) => STEP.id === 'publish');
+  assert.equal(PUBLISH['working-directory'], '${{ steps.target.outputs.path }}');
+  assert.equal(PUBLISH.run, './gradlew --no-daemon check publish');
+  assert.equal(JOB.steps.find((STEP: { uses?: string }) => STEP.uses === 'actions/setup-java@v4').with['java-version'],
+    '${{ inputs.gradle-java-version }}');
+  assert.equal(JOB.permissions, undefined, 'O job condicional não deve exigir novas permissões de todos os callers');
+});
+
+test('Publicador Gradle seleciona uma release simple no caminho pedido e rejeita publicação ambígua', () => {
+  const WORKFLOW = parse(fs.readFileSync(CALLED_WORKFLOW_PATH, 'utf8'));
+  const JOB = WORKFLOW.jobs['publish-gradle'];
+  assert.ok(JOB, 'Adaptador Gradle ausente');
+  const SELECT = JOB.steps.find((STEP: { id?: string }) => STEP.id === 'target');
+  assert.equal(SELECT.env.RELEASES, '${{ needs.release-please.outputs.releases }}');
+  const RUN = new Function('core', 'process', SELECT.with.script) as (core: object, process: object) => void;
+  const VALID = { path: 'packages/lib', version: '0.0.2', tag_name: 'lib-v0.0.2', release_type: 'simple' };
+  const OUTPUTS: Record<string, string> = {};
+  RUN({ setOutput: (KEY: string, VALUE: string) => { OUTPUTS[KEY] = VALUE; } },
+    { env: { RELEASES: JSON.stringify([VALID]), PROJECT_PATH: 'packages/lib' } });
+  assert.deepEqual(OUTPUTS, { path: 'packages/lib', tag: 'lib-v0.0.2' });
+  for (const RELEASES of [[], [VALID, VALID], [{ ...VALID, path: 'docs' }],
+    [{ ...VALID, release_type: 'node' }], [{ ...VALID, tag_name: '' }]]) {
+    assert.throws(() => RUN({ setOutput: () => assert.fail('Não pode publicar um alvo inválido') },
+      { env: { RELEASES: JSON.stringify(RELEASES), PROJECT_PATH: 'packages/lib' } }), /Gradle/);
+  }
+});

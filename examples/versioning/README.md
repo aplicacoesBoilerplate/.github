@@ -19,6 +19,6 @@ Consulte a documentação em `docs/pipelines/versionamento-release-please.md` e 
 
 ## Publicação por adaptador
 
-A pasta [consumers](./consumers/README.md) contém exemplos completos de node, maven, gradle, go e simple. Eles usam manifest e publicadores no caller. Consulte os pré-requisitos, substitua o SHA central e ajuste os seeds e nomes do projeto antes de copiar os arquivos.
+A pasta [consumers](./consumers/README.md) contém exemplos completos de node, maven, gradle, go e simple. Eles usam manifest; Node/Maven/Go publicam no caller e Gradle pode solicitar a publicação central. Consulte os pré-requisitos, substitua o SHA central e ajuste os seeds e nomes do projeto antes de copiar os arquivos.
 
-O exemplo Gradle usa simple + extra-file genérico; não pressupõe uma estratégia gradle no SDK nem um publicador Gradle implementado na central. Os exemplos não executaram uploads reais de pacotes nesta validação.
+O exemplo Gradle usa simple + extra-file genérico; não pressupõe uma estratégia gradle no SDK nem uma estratégia gradle inexistente no SDK. O caller Gradle agora ativa o publicador da central. Os exemplos não executaram uploads reais de pacotes nesta validação.

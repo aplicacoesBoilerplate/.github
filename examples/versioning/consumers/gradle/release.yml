@@ -39,39 +39,12 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      packages: write
     uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@SHA_CENTRAL_REVISADO
     with:
       config-file: release-please-config.json
       manifest-file: .release-please-manifest.json
-      publish-artifacts: false
+      project-type: gradle
+      publish-artifacts: true
+      gradle-java-version: '17'
       central-ref: SHA_CENTRAL_REVISADO
-
-  publish:
-    needs: release
-    if: needs.release.outputs.releases_created == 'true'
-    runs-on: ubuntu-latest
-    concurrency:
-      group: publish-gradle-${{ github.repository }}-${{ matrix.tag_name }}
-      cancel-in-progress: false
-    permissions:
-      contents: read
-      packages: write
-    env:
-      MAVEN_USERNAME: ${{ github.actor }}
-      MAVEN_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJSON(needs.release.outputs.releases) }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ matrix.tag_name }}
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - name: Validar e publicar com o Wrapper
-        run: |
-          ./gradlew --no-daemon check
-          ./gradlew --no-daemon publish

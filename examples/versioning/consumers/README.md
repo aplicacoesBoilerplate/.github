@@ -16,7 +16,7 @@ Node, Maven e Gradle publicam no GitHub Packages nestes exemplos. Node usa NODE_
 
 O caller aguarda Verify consumer antes de acionar a central após merge e valida novamente a revisão da tag antes de distribuir. O preview deve ser obrigatório junto à CI. Não defina o publicador pós-merge como check obrigatório do PR.
 
-Os exemplos usam manifest mesmo com um só projeto para obter releases_created e lista de releases por tag. Os publicadores legados da central permanecem desabilitados. Não adicione outro fluxo release/publish concorrente para a mesma versão.
+Os exemplos usam manifest mesmo com um só projeto para obter releases_created e lista de releases por tag. Os publicadores legados permanecem desabilitados. O caller Gradle solicita o novo publicador central com project-type gradle e publish-artifacts true; ele concede packages: write e não contém um publicador duplicado. Não adicione outro fluxo release/publish concorrente para a mesma versão.
 
 Gradle usa a estratégia simple com updater genérico, sem pressupor release-type gradle no SDK. Não crie version.txt para esse exemplo. O nome da ferramenta de build não precisa coincidir com a estratégia de atualização do manifest.
 

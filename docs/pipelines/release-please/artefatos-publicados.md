@@ -140,7 +140,7 @@ Mantenha o Wrapper versionado, escolha um JDK compatível com a versão do Gradl
 ./gradlew --no-daemon publish
 ~~~
 
-`publishToMavenLocal` publica no cache Maven do runner; não distribui para outros projetos. O job de exemplo usa `publish` com GITHUB_TOKEN e `packages: write`.
+`publishToMavenLocal` publica no cache Maven do runner; não distribui para outros projetos. O job central usa check publish com GITHUB_TOKEN e as permissões herdadas do caller. Para GitHub Packages, conceda packages: write no job que chama a central.
 
 Em multi-project builds, configure publications por módulo e prefira uma tarefa explícita como `:biblioteca:publish` quando a release atingir apenas esse componente. Um `publish` indiscriminado pode publicar várias coordenadas. Configure assinatura quando exigida pelo destino.
 

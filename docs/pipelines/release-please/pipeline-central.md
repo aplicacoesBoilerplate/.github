@@ -22,11 +22,11 @@ O caminho completo é: validar o PR funcional, integrar a entrega, revisar o PR 
 | --- | --- | --- | --- |
 | node | node | package.json, lockfile e changelog | npm publish; em manifest, job do caller |
 | maven | maven | pom.xml, módulos e changelog; XML extra para revision quando usado | mvn deploy; em manifest, job do caller |
-| gradle | O nome legado não tem estratégia nativa no SDK 17.3.0 | Exemplo suportado usa simple + updater genérico de gradle.properties | gradlew publish em job do caller |
+| gradle | O nome legado não tem estratégia nativa no SDK 17.3.0 | Exemplo suportado usa simple + updater genérico de gradle.properties | check publish no publicador Gradle central, por opt-in |
 | go | go | Changelog e tags; go.mod não é um manifesto de versão do binário | GoReleaser no caller ou publicador legado |
 | simple | simple | Changelog e arquivo de versão configurado ou extra-files | Nenhum publicador de pacotes automático |
 
-Não use `project-type: gradle` no modo legado esperando suporte completo: esse input é reconhecido pelo orquestrador, mas não há estratégia nativa `gradle` nem publicador central. O [exemplo Gradle](./callers#gradle) demonstra a composição com mecanismos existentes.
+Não use `project-type: gradle` no modo legado esperando suporte completo: esse input é reconhecido pelo orquestrador, mas não há estratégia nativa `gradle`. A publicação agora existe na central e exige manifest com estratégia simple. O [exemplo Gradle](./callers#gradle) demonstra a composição com mecanismos existentes.
 
 O SDK permanece responsável pelo cálculo da versão e geração dos arquivos. A central acrescenta seleção de caminho, resolução de declarações e guardas de tags.
 
@@ -69,7 +69,7 @@ O primeiro conteúdo pertence a `release-please-config.json`; o segundo a `.rele
 
 O caller passa `config-file` e `manifest-file`. Omitir `project-path` seleciona todos os caminhos; informá-lo seleciona um pacote configurado. O adaptador de cada pacote vem do JSON. `project-type` não sobrescreve as estratégias do manifest.
 
-Nesse modo, a central usa o SDK oficial `release-please@17.3.0`, aplica overrides por pacote e protege cada criação real de release. Os publicadores legados não rodam, inclusive quando `publish-artifacts: true`. A distribuição pertence ao caller.
+Nesse modo, a central usa o SDK oficial `release-please@17.3.0`, aplica overrides por pacote e protege cada criação real de release. Os publicadores legados Node/Maven/Go não rodam em manifest. A exceção explícita é Gradle: `project-type: gradle` + `publish-artifacts: true` aciona o job central após uma release simple no caminho selecionado. Os demais publicadores manifest pertencem ao caller.
 
 ## Milestone, Release-As e conflito
 

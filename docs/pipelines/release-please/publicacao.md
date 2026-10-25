@@ -6,17 +6,17 @@ Para os pré-requisitos por stack, comece por [artefatos publicados](./artefatos
 
 `publish-artifacts: false` mantém PR técnico, bump de versão, changelog, tag e GitHub Release. Ele apenas desliga os adaptadores de publicação do modo de projeto único. Seu padrão `false` preserva o comportamento dos callers legados.
 
-| Tipo legado | Depois da criação da release |
+| Adaptador/projeto | Depois da criação da release |
 | --- | --- |
 | `node` | `npm publish` no `project-path`; requer registro/autenticação e artefato preparado. |
 | `go` | GoReleaser com `workdir` no `project-path`; requer configuração do consumidor. |
 | `maven` | `mvn deploy -DskipTests` no `project-path`; requer configuração do destino. |
 | `simple` | Sem publicador de pacotes. |
-| `gradle` | O input legado é aceito, mas não existe publicador Gradle central; o SDK 17.3.0 não oferece estratégia nativa Gradle validada neste fluxo. Exige adaptação própria. |
+| `gradle` | Job central com manifest simple, project-type gradle e publish-artifacts true; checkout da tag, JDK e ./gradlew --no-daemon check publish. |
 
 A escolha de um tipo não configura automaticamente registro, credenciais, build ou permissões da organização. Para somente versionar uma documentação Node, use o [exemplo com publicação desativada](./subdiretorios).
 
-No modo manifest, os adaptadores legados não são acionados. A publicação fica no consumidor, mesmo que `publish-artifacts` esteja com o valor padrão.
+No modo manifest, os adaptadores legados não são acionados. Node/Maven/Go publicam no consumidor. Gradle pode usar seu job central por opt-in; o padrão false continua sem distribuição.
 
 ## GitHub Packages com workspaces
 
@@ -41,7 +41,7 @@ Não execute simultaneamente esse publicador e um fluxo Changesets para a mesma 
 | Falha HTTP no validador | Permissões, disponibilidade da API e revisão da configuração | Corrija a causa e execute novamente; uma falha de leitura não significa versão livre. |
 | Check vermelho permite merge | Ruleset e nome do status obrigatório | Cadastre o status da validação como obrigatório. |
 | PR técnico pede milestone | Autor, branch, label e repositório de origem | Verifique se é realmente o PR criado pelo motor; não imite sua identidade num PR funcional. |
-| Nenhum pacote publicado em manifest | `releases_created`, JSON `releases` e job do consumidor | Só há matriz após releases novas; adicionar publicação é responsabilidade do caller. |
+| Nenhum pacote publicado em manifest | `releases_created`, JSON `releases` e job do consumidor | Só há distribuição após releases novas; Node/Maven/Go usam o caller, Gradle pode optar pelo job central. |
 | Bump inesperado | Conventional Commits preservados no merge e configuração do pacote | Revise o PR técnico antes de integrá-lo. |
 | Versionamento Gradle falha | Estratégia suportada pelo SDK | Implemente e valide uma integração específica antes de adotar. |
 

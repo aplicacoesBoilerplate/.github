@@ -20,17 +20,18 @@ O JSON de configuração e o JSON de estado são diferentes: declare regras em `
 
 | Input | Padrão | Uso |
 | --- | --- | --- |
-| `project-type` | vazio | Obrigatório no modo legado: `node`, `go`, `maven`, `gradle`, `simple`. Em manifest, o tipo vem da configuração de cada pacote. |
+| `project-type` | vazio | Obrigatório no modo legado: `node`, `go`, `maven`, `gradle`, `simple`. Em manifest, a estratégia vem do JSON; project-type gradle também seleciona seu publicador central. |
 | `project-path` | `.` | Diretório relativo do projeto. Em manifest, `.` seleciona todos os pacotes; outro caminho seleciona um pacote configurado. |
 | `config-file` | vazio | Não vazio ativa o manifest nativo e aponta para a configuração no consumidor. |
 | `manifest-file` | `.release-please-manifest.json` | Estado de versões do modo manifest. |
-| `publish-artifacts` | `false` | Habilita os publicadores legados. Use `false` para versionar sem publicar artefatos. Em manifest, a publicação pertence ao caller. |
+| `publish-artifacts` | `false` | Habilita os publicadores legados. Use `false` para versionar sem publicar artefatos. Em manifest, apenas Gradle dispõe de publicador central opt-in; os demais publicam no caller. |
 | `release-config-file` | vazio | Alias compatível de `config-file` nos pilotos. |
 | `release-manifest-file` | `.release-please-manifest.json` | Alias compatível de `manifest-file`. |
 | `version-policy` | `milestone` | No contrato com alias: raiz planejada ou `native` para componentes independentes. |
+| `gradle-java-version` | `17` | JDK usado pelo publicador Gradle central; deve ser compatível com o Wrapper. |
 | `central-ref` | `master` | Revisão dos scripts centrais; fixe o mesmo SHA usado em `uses`. |
 
-O valor legado `gradle` é aceito como input, mas não comprova suporte nativo do SDK nem publicação; veja a [limitação Gradle](./publicacao#metadados-e-artefatos).
+Gradle exige config-file (ou alias), estratégia simple e updater de gradle.properties; o modo sem config falha antes do motor. Seu publicador central roda apenas com opt-in e uma release nova no caminho escolhido. Veja o [caller Gradle](./callers#gradle).
 
 O workflow de validação aceita `project-path`, `config-file` e `central-ref`. Use os mesmos valores nas duas chamadas para verificar o projeto que será publicado.
 
