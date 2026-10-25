@@ -9,6 +9,11 @@ import { CReleaseVersionPolicy } from './CReleaseVersionPolicy.js';
 
 // O SDK oficial continua calculando versões, changelogs, PRs e tags.
 export class CManifestRelease {
+  public static async createGitHub(pOptions: Parameters<typeof GitHub.create>[0]): Promise<GitHub> {
+    // Actions fornece o endpoint completo; o SDK acrescenta /graphql a base.
+    return GitHub.create({ ...pOptions, graphqlUrl: pOptions.graphqlUrl?.replace(/\/graphql\/?$/, '') });
+  }
+
   public static async load(pGitHub: GitHub, pBranch: string, pConfig: string, pManifest: string,
     pOverrides: Record<string, string>, pPath = '.'): Promise<Manifest> {
     const CONFIG_FILE = CReleaseProjectConfig.normalizePath(pConfig);
@@ -62,7 +67,7 @@ async function main(): Promise<void> {
   const EVENT = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH || '', 'utf8'));
   const [OWNER, REPOSITORY] = (process.env.GITHUB_REPOSITORY || '').split('/');
   if (!OWNER || !REPOSITORY || !EVENT.pull_request?.base?.ref) throw new Error('Contexto de release do PR ausente.');
-  const GITHUB = await GitHub.create({
+  const GITHUB = await CManifestRelease.createGitHub({
     owner: OWNER, repo: REPOSITORY, defaultBranch: EVENT.pull_request.base.ref,
     token: process.env.GITHUB_TOKEN, apiUrl: process.env.GITHUB_API_URL,
     graphqlUrl: process.env.GITHUB_GRAPHQL_URL,
