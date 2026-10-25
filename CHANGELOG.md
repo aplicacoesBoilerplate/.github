@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.2](https://github.com/aplicacoesBoilerplate/.github/compare/v0.0.1...v0.0.2) (2026-10-25)
+
+
+### Features
+
+* **versioning:** prepara os três consumidores Release Please ([#19](https://github.com/aplicacoesBoilerplate/.github/issues/19)) ([1bd925d](https://github.com/aplicacoesBoilerplate/.github/commit/1bd925d599f51a1a4d60bae57fee44c9b49c436d))
+
+
+### Bug Fixes
+
+* **versioning:** normalize Release Please GraphQL endpoint ([#21](https://github.com/aplicacoesBoilerplate/.github/issues/21)) ([0f689aa](https://github.com/aplicacoesBoilerplate/.github/commit/0f689aaef529d6c84c6f6946f52bbaa0c996af32))
+
 ## 0.0.1 (2026-10-24)
 
 
