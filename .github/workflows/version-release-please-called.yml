@@ -81,10 +81,8 @@ jobs:
   release-please:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
+    # As permissões são concedidas pelo caller para todos os adaptadores.
+    # Não reduzimos packages: write quando o consumidor precisa publicar.
     outputs:
       releases: ${{ steps.manifest.outputs.releases || '[]' }}
       releases_created: ${{ steps.manifest.outputs.releases_created || 'false' }}
@@ -158,13 +156,6 @@ jobs:
           release-type: ${{ steps.orchestrator.outputs.release_type }}
           release-as: ${{ steps.orchestrator.outputs.release_as }}
 
-      - name: Normalizar resultado do projeto selecionado
-        id: release
-        if: inputs.config-file == '' && inputs.release-config-file == ''
-        env:
-          CREATED: ${{ steps.engine.outputs[steps.version-policy.outputs.project_path == '.' && 'release_created' || format('{0}--release_created', steps.version-policy.outputs.project_path)] }}
-        run: echo "release_created=${CREATED:-false}" >> "$GITHUB_OUTPUT"
-
       - name: Executar manifest nativo
         id: manifest
         if: inputs.config-file != '' || inputs.release-config-file != ''
@@ -177,6 +168,44 @@ jobs:
           RELEASE_MANIFEST_FILE: ${{ inputs.manifest-file || inputs.release-manifest-file }}
           RELEASE_OVERRIDES: ${{ steps.version-policy.outputs.overrides }}
           TECHNICAL_RELEASE: ${{ steps.version-policy.outputs.technical }}
+
+
+      # Contrato comum de saída para os publicadores, independente do motor.
+      - name: Normalizar resultado do projeto selecionado
+        id: release
+        uses: actions/github-script@v7
+        env:
+          PROJECT_PATH: ${{ steps.version-policy.outputs.project_path }}
+          PROJECT_TYPE: ${{ inputs.project-type }}
+          PUBLISH_ARTIFACTS: ${{ inputs.publish-artifacts }}
+          MANIFEST_MODE: ${{ inputs.config-file != '' || inputs.release-config-file != '' }}
+          MANIFEST_CREATED: ${{ steps.manifest.outputs.releases_created || 'false' }}
+          RELEASES: ${{ steps.manifest.outputs.releases || '[]' }}
+          ACTION_CREATED: ${{ steps.engine.outputs[steps.version-policy.outputs.project_path == '.' && 'release_created' || format('{0}--release_created', steps.version-policy.outputs.project_path)] }}
+          ACTION_TAG: ${{ steps.engine.outputs[steps.version-policy.outputs.project_path == '.' && 'tag_name' || format('{0}--tag_name', steps.version-policy.outputs.project_path)] }}
+        with:
+          script: |
+            const PROJECT_PATH = (process.env.PROJECT_PATH || '.').trim().replace(/\/+$/, '');
+            let CREATED = process.env.ACTION_CREATED === 'true';
+            let TAG = CREATED ? (process.env.ACTION_TAG || '') : '';
+            if (process.env.MANIFEST_MODE === 'true') {
+              const RELEASES = JSON.parse(process.env.RELEASES || '[]');
+              const MATCHES = RELEASES.filter(RELEASE => RELEASE.path === PROJECT_PATH);
+              const TARGET = MATCHES.length === 1 ? MATCHES[0] : undefined;
+              const MANIFEST_CREATED = process.env.MANIFEST_CREATED === 'true';
+              const GRADLE_PUBLICATION = process.env.PROJECT_TYPE === 'gradle'
+                && process.env.PUBLISH_ARTIFACTS === 'true' && MANIFEST_CREATED;
+              if (GRADLE_PUBLICATION && (RELEASES.length !== 1 || !TARGET
+                  || TARGET.release_type !== 'simple'
+                  || typeof TARGET.tag_name !== 'string' || !TARGET.tag_name)) {
+                throw new Error('Gradle: selecione uma única release simple com tag no project-path solicitado.');
+              }
+              CREATED = MANIFEST_CREATED && Boolean(TARGET);
+              TAG = CREATED ? TARGET.tag_name : '';
+            }
+            core.setOutput('release_created', String(CREATED));
+            core.setOutput('project_path', PROJECT_PATH);
+            core.setOutput('tag_name', TAG);
 
       # ==================================================================================
       # 7. ADAPTADORES PÓS-TAG (Executam apenas quando o PR do Release Please é mergeado)
@@ -204,48 +233,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Herda as permissões do caller; somente quem publica concede packages: write.
-  publish-gradle:
-    name: Adaptador Gradle
-    needs: release-please
-    if: inputs.publish-artifacts && inputs.project-type == 'gradle' && needs.release-please.outputs.releases_created == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Selecionar a release Gradle
-        id: target
-        uses: actions/github-script@v7
-        env:
-          RELEASES: ${{ needs.release-please.outputs.releases }}
-          PROJECT_PATH: ${{ inputs.project-path }}
-        with:
-          script: |
-            const RELEASES = JSON.parse(process.env.RELEASES || '[]');
-            const PROJECT_PATH = (process.env.PROJECT_PATH || '.').trim().replace(/\/+$/, '');
-            if (RELEASES.length !== 1) {
-              throw new Error('Gradle: selecione um único projeto com project-path antes de publicar.');
-            }
-            const TARGET = RELEASES[0];
-            if (TARGET.path !== PROJECT_PATH || TARGET.release_type !== 'simple'
-                || typeof TARGET.tag_name !== 'string' || !TARGET.tag_name) {
-              throw new Error('Gradle: a release deve corresponder ao caminho selecionado e à estratégia simple.');
-            }
-            core.setOutput('path', TARGET.path);
-            core.setOutput('tag', TARGET.tag_name);
-
-      - name: Checkout da tag publicada
+      - name: Checkout da tag para publicação Gradle
+        id: publication-checkout
+        if: ${{ inputs.publish-artifacts && steps.release.outputs.release_created == 'true' && inputs.project-type == 'gradle' }}
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.target.outputs.tag }}
+          ref: ${{ steps.release.outputs.tag_name }}
 
-      - name: Preparar JDK do Gradle
+      - name: Preparar JDK para publicação Gradle
+        id: publication-java
+        if: ${{ inputs.publish-artifacts && steps.release.outputs.release_created == 'true' && inputs.project-type == 'gradle' }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: ${{ inputs.gradle-java-version }}
 
-      - name: Validar e publicar artefatos Gradle
-        id: publish
-        working-directory: ${{ steps.target.outputs.path }}
+      - name: Adaptador Gradle
+        if: ${{ inputs.publish-artifacts && steps.release.outputs.release_created == 'true' && inputs.project-type == 'gradle' }}
+        working-directory: ${{ steps.release.outputs.project_path }}
         run: ./gradlew --no-daemon check publish
         env:
           MAVEN_USERNAME: ${{ secrets.GRADLE_PUBLISH_USERNAME || github.actor }}

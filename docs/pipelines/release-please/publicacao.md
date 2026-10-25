@@ -12,11 +12,11 @@ Para os pré-requisitos por stack, comece por [artefatos publicados](./artefatos
 | `go` | GoReleaser com `workdir` no `project-path`; requer configuração do consumidor. |
 | `maven` | `mvn deploy -DskipTests` no `project-path`; requer configuração do destino. |
 | `simple` | Sem publicador de pacotes. |
-| `gradle` | Job central com manifest simple, project-type gradle e publish-artifacts true; checkout da tag, JDK e ./gradlew --no-daemon check publish. |
+| `gradle` | Step no mesmo job release-please, com manifest simple, project-type gradle e publish-artifacts true; checkout da tag, JDK e ./gradlew --no-daemon check publish. |
 
 A escolha de um tipo não configura automaticamente registro, credenciais, build ou permissões da organização. Para somente versionar uma documentação Node, use o [exemplo com publicação desativada](./subdiretorios).
 
-No modo manifest, os adaptadores legados não são acionados. Node/Maven/Go publicam no consumidor. Gradle pode usar seu job central por opt-in; o padrão false continua sem distribuição.
+No modo manifest, os adaptadores legados não são acionados. Node/Maven/Go publicam no consumidor. Gradle pode usar o step central por opt-in; o padrão false continua sem distribuição.
 
 ## GitHub Packages com workspaces
 
@@ -41,7 +41,7 @@ Não execute simultaneamente esse publicador e um fluxo Changesets para a mesma 
 | Falha HTTP no validador | Permissões, disponibilidade da API e revisão da configuração | Corrija a causa e execute novamente; uma falha de leitura não significa versão livre. |
 | Check vermelho permite merge | Ruleset e nome do status obrigatório | Cadastre o status da validação como obrigatório. |
 | PR técnico pede milestone | Autor, branch, label e repositório de origem | Verifique se é realmente o PR criado pelo motor; não imite sua identidade num PR funcional. |
-| Nenhum pacote publicado em manifest | `releases_created`, JSON `releases` e job do consumidor | Só há distribuição após releases novas; Node/Maven/Go usam o caller, Gradle pode optar pelo job central. |
+| Nenhum pacote publicado em manifest | `releases_created`, JSON `releases` e job do consumidor | Só há distribuição após releases novas; Node/Maven/Go usam o caller, Gradle pode optar pelo step central. |
 | Bump inesperado | Conventional Commits preservados no merge e configuração do pacote | Revise o PR técnico antes de integrá-lo. |
 | Versionamento Gradle falha | Estratégia suportada pelo SDK | Implemente e valide uma integração específica antes de adotar. |
 

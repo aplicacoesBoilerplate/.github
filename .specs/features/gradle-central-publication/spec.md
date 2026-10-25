@@ -10,7 +10,7 @@ Provide central opt-in Gradle artifact publication for a single selected manifes
 Native SDK Gradle strategy, signing infrastructure, publishing mixed manifests or all Gradle modules, and real registry uploads during validation.
 
 ## Assumptions & Open Questions
-Use manifest simple plus gradle.properties updater. The caller maintains Wrapper and registry build configuration. Gradle job inherits caller permissions; existing callers do not gain packages:write.
+Use manifest simple plus gradle.properties updater. The caller maintains Wrapper and registry build configuration. The single release-please job inherits caller permissions; existing callers do not gain packages:write.
 Open questions: None for this scoped publisher.
 
 ## User Stories
@@ -19,9 +19,12 @@ As a Gradle consumer maintainer, I want the called workflow to publish the relea
 ## Acceptance Criteria
 - AC-1: WHEN publish-artifacts is false or project-type is not gradle or no new release exists, THE workflow SHALL not run the Gradle publisher.
 - AC-2: WHEN one simple release matches project-path, THE publisher SHALL check out its tag and run Wrapper check publish in that path with the configured JDK.
-- AC-3: WHEN release selection is empty, ambiguous, incompatible or has no tag, THE selector SHALL fail before any checkout/build/publication.
+- AC-3: WHEN a created Gradle release declares an empty, ambiguous, incompatible selection or has no tag, THE selector SHALL fail before any checkout/build/publication.
 - AC-4: WHEN a Gradle caller enables central publication, THE example SHALL grant registry permissions and remove duplicate consumer publication.
 - AC-5: WHEN existing callers do not publish Gradle, THE called SHALL not require new permissions from them.
+
+- AC-6: WHEN invoking the called, THE workflow SHALL keep exactly one release-please job and four adapter publication steps, with no Gradle-only job.
+- AC-7: WHEN either Action or manifest returns its result, THE common release step SHALL expose release_created, project_path and tag_name for the adapter stage.
 
 ## Requirement Traceability
 | Criterion | Evidence | Gate |
@@ -31,6 +34,8 @@ As a Gradle consumer maintainer, I want the called workflow to publish the relea
 | AC-3 | Selector executed with invalid native outputs | Existing release-please.test.ts |
 | AC-4 | Gradle example and documentation | YAML lint + docs build + independent review |
 | AC-5 | No job-level permission expansion | Contract assertion + caller validation |
+| AC-6 | Single job and four adapter assertions | Existing release-please.test.ts |
+| AC-7 | Real normalizer executed for both engines and no-release cases | Existing release-please.test.ts |
 
 ## Validation
 Two targeted regressions failed for missing publisher before implementation. Full npm test, typecheck, actionlint, VitePress build and independent review must pass. No real Gradle project or registry is published by these checks.

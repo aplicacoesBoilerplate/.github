@@ -2,25 +2,29 @@
 
 Verdict: PASS
 
+## Contract correction
+The user rejected the Gradle-only job. This revision keeps one jobs.release-please and places all four publishers in its post-tag adapter stage. A common release step normalizes Action/manifest into release_created, project_path and tag_name. The external workflow_call inputs, secrets and outputs are byte-equivalent as parsed YAML to the previous revision. The Gradle caller file is unchanged.
+
 ## Acceptance evidence
-- AC-1: ci-scripts/tests/release-please.test.ts:470 executes the real workflow condition with Gradle enabled, publication disabled, no release and another adapter.
-- AC-2: the same test asserts the tag checkout output, selected working-directory, Wrapper check publish command and configured JDK. The selector test at line 498 executes the workflow JavaScript and asserts the exact path/tag outputs.
-- AC-3: the selector test rejects empty/multiple releases, another path, another strategy and an empty tag before any output.
-- AC-4: examples/versioning/consumers/gradle/release.yml:42 grants packages:write; lines 47-49 enable the central Gradle publisher. The old duplicate publish job was removed. Documentation explains the manifest simple updater and central/caller responsibilities.
-- AC-5: the publisher has no permission override and inherits only the caller's grants. Existing non-publishing callers do not acquire or need packages:write.
+- AC-1: ci-scripts/tests/release-please.test.ts:470 executes the Gradle adapter condition for opt-in, disabled publication, no new release and another type.
+- AC-2: that test asserts checkout by steps.release.outputs.tag_name, publication in project_path, configured JDK and the Wrapper check publish command.
+- AC-3: the common-normalizer test executes the actual workflow script with invalid cardinality, wrong path, wrong strategy and missing tag, rejecting an invalid created Gradle release before any publication.
+- AC-4: the existing Gradle caller retains its permissions, project-type, config and opt-in; no extra call or Gradle-only job is required.
+- AC-5: the common job inherits only the caller's permission grants, including packages:write when explicitly granted. Existing callers do not need a new permission for disabled publication.
+- AC-6: the contract test asserts exactly one release-please job; the existing functional test now requires four adapter steps and retains the legacy checks.
+- AC-7: the common-normalizer test asserts outputs for Action, manifest, absent release and non-publishing multi-project contexts.
 
 ## Executed gates
-- Two regressions failed before implementation because the central publisher did not exist.
-- npm test passed 63/63 cases in the same seven test files, with no skipped cases; only two new cases were added to the existing release-please.test.ts.
-- npm run typecheck passed.
-- actionlint passed for the called workflow, existing self-caller and Gradle example. Explicit optional NPM_TOKEN was declared to preserve the legacy publisher when declaring Gradle secrets.
-- VitePress 1.6.4 build passed in 13.94 seconds using the previously recorded cached runtime.
-- validate_spec passed without errors or warnings; git diff --check passed.
-- Independent review /root/review_gradle_publisher: PASS. It executed root and subdirectory selection and invalid cases. Three isolated in-memory mutations removing cardinality, path or strategy checks were discriminated; no real source was mutated.
+- The two architectural regressions failed before implementation: a Gradle-only job existed and the release normalizer did not cover both engines.
+- npm test: 63/63 passed, no skips, same seven files. Existing tests were aligned to the explicitly requested common contract; test count did not grow.
+- npm run typecheck: passed.
+- actionlint: passed for called, self-caller and Gradle caller.
+- Parsed workflow_call comparison against 7acf120: identical public inputs, secrets and outputs.
+- VitePress 1.6.4 build: passed in 5.60s with the previously recorded cached runtime.
+- validate_spec: passed; git diff --check: passed.
+- Independent /root/verify_common_publication: PASS. Root/subdirectory, Action/no release and manifest cases inspected and executed. Three isolated in-memory mutations removing cardinality, path and strategy validation were discriminated. Real sources were not mutated.
 
-## Behavior and limits
-Gradle versioning still uses the official simple strategy and generic gradle.properties updater. The central publisher is a separate post-release job: it selects one compatible release, checks out its tag, prepares the configured JDK and runs the executable consumer Wrapper.
+## Limits
+No real Gradle build or registry upload was executed by repository checks. Consumer build configuration, Wrapper, runtime compatibility and registry credentials remain consumer responsibilities. The SDK still uses simple plus a generic gradle.properties updater for Gradle versioning; the publication pattern is shared.
 
-The no-config Gradle contract fails explicitly before invoking the unsupported native gradle release type. Other adapters keep their existing behavior. Registry configuration, wrapper, artifact coordinates, signing and specialized multi-project publication remain in the consumer.
-
-No real Gradle build or registry upload was executed by these repository checks. CI hosted on GitHub and actual consumer publication remain the final integration evidence. Default publication remains disabled.
+The earlier report described the previous separate-job implementation and is superseded by this contract correction. Hosted CI and real consumer publication remain integration evidence after remote delivery.

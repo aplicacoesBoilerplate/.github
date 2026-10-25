@@ -69,7 +69,7 @@ O primeiro conteúdo pertence a `release-please-config.json`; o segundo a `.rele
 
 O caller passa `config-file` e `manifest-file`. Omitir `project-path` seleciona todos os caminhos; informá-lo seleciona um pacote configurado. O adaptador de cada pacote vem do JSON. `project-type` não sobrescreve as estratégias do manifest.
 
-Nesse modo, a central usa o SDK oficial `release-please@17.3.0`, aplica overrides por pacote e protege cada criação real de release. Os publicadores legados Node/Maven/Go não rodam em manifest. A exceção explícita é Gradle: `project-type: gradle` + `publish-artifacts: true` aciona o job central após uma release simple no caminho selecionado. Os demais publicadores manifest pertencem ao caller.
+Nesse modo, a central usa o SDK oficial `release-please@17.3.0`, aplica overrides por pacote e protege cada criação real de release. Os publicadores legados Node/Maven/Go não rodam em manifest. A exceção explícita é Gradle: `project-type: gradle` + `publish-artifacts: true` aciona o step pós-tag no mesmo job release-please após uma release simple no caminho selecionado. Os demais publicadores manifest pertencem ao caller.
 
 ## Milestone, Release-As e conflito
 
@@ -107,3 +107,12 @@ O preview usa leitura de conteúdo e PRs. A criação de PR/tag/Release precisa 
 Os exemplos fixam `uses` e `central-ref` no mesmo placeholder `SHA_CENTRAL_REVISADO`. Substitua ambos pelo SHA completo que contém esta entrega. As alterações pendentes do PR #19 não existem em tags anteriores da central.
 
 A central instala seu runtime travado em `.ci-scripts/ci-scripts`. O primeiro segmento é a pasta do checkout central; o segundo é o projeto Node do catálogo. A autenticação do terminal do desenvolvedor é independente do GITHUB_TOKEN de cada workflow.
+
+
+## Um job e um contrato pós-release
+
+A called mantém um único job, release-please. Node, Maven, Gradle e Go são steps adaptadores na mesma etapa pós-tag; simple não tem publicador de pacotes.
+
+O step release normaliza o resultado da Action ou do SDK manifest em release_created, project_path e tag_name. Cada publicador usa esse resultado, o tipo de projeto e publish-artifacts. A diferença de motor fica na normalização, sem criar outro job ou outra chamada só para Gradle.
+
+Gradle prepara checkout da tag e JDK por steps condicionais e executa o Wrapper no diretório normalizado. O caller mantém o mesmo contrato e concede os escopos necessários ao seu registry. O job herda esses escopos; a central não adiciona permissões que o caller não concedeu.

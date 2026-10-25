@@ -18,7 +18,7 @@ Os nomes de projeto, scope, registry, versão, entrypoint e JDK são exemplos, n
 
 ## Estrutura compartilhada e responsabilidades
 
-Cada caller tem version-policy de leitura, verify para build/testes e release reutilizável após merge. Node/Maven/Go têm publish no consumidor; Gradle usa o job publish-gradle da central. Simple não distribui a registry.
+Cada caller tem version-policy de leitura, verify para build/testes e release reutilizável após merge. Node/Maven/Go têm publish no consumidor; Gradle usa o step Adaptador Gradle dentro do mesmo job release-please da central. Simple não distribui a registry.
 
 A CI roda em PR e no commit integrado. O release depende da CI do merge. Os publicadores Node/Maven/Go recebem needs.release.outputs.releases, constroem uma matriz e fazem checkout de matrix.tag_name. O Gradle central seleciona uma única release desse output e faz checkout da sua tag. Antes de distribuir, verifica a revisão publicada.
 
@@ -87,7 +87,7 @@ Caller completo:
 
 <<< ../../../examples/versioning/consumers/gradle/release.yml
 
-Mantenha o build.gradle.kts com maven-publish, publications e repositories conforme [configuração Gradle](./artefatos-publicados#gradle-java-e-kotlin). O número deve vir de gradle.properties. O job central configura JDK por gradle-java-version, faz checkout da tag e executa check publish com o Wrapper.
+Mantenha o build.gradle.kts com maven-publish, publications e repositories conforme [configuração Gradle](./artefatos-publicados#gradle-java-e-kotlin). O número deve vir de gradle.properties. A central prepara o JDK no mesmo job release-please por gradle-java-version, faz checkout da tag e executa check publish com o Wrapper.
 
 O caller ativa project-type gradle e publish-artifacts true, concede packages: write para GitHub Packages e não mantém outro job de distribuição. O publicador central exige uma única release simple no project-path selecionado; em monorepo, selecione o pacote nas chamadas de preview e release. Em multi-project builds cujo Wrapper publica vários módulos, adapte o build ou mantenha um publicador especializado no caller.
 
@@ -97,9 +97,9 @@ O caller ativa project-type gradle e publish-artifacts true, concede packages: w
 - `publish-artifacts` permanece false por padrão e precisa ser true para distribuir.
 - `gradle-java-version` escolhe o JDK (padrão 17).
 - O caller mantém Wrapper executável, maven-publish/publications/repositories e leitura de version.
-- O job herda as permissões do caller; não exige packages: write de consumidores que não publicam.
+- O único job release-please herda as permissões do caller; não exige packages: write de consumidores que não publicam.
 - As credenciais opcionais são passadas em secrets; assinatura e plugins específicos do destino continuam no projeto.
-- O job só roda quando o SDK retorna uma release nova. Lista vazia, múltiplos alvos ou alvo incompatível não publicam.
+- O step publicador só executa quando o SDK retorna uma release nova. Lista vazia, múltiplos alvos ou alvo incompatível não publicam.
 - Se um registry falhar após a tag, recupere a publicação da mesma tag; não recrie a release para forçar um upload.
 
 ~~~yaml
