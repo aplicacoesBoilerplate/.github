@@ -26,6 +26,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: PDOC-03.AC3 (documentation)
 - last seen: 2026-10-25T12:45:26Z
 
+### L-003 - Validate effective harness configuration without credentials: a temporary HOME does not prevent discovery of ancestor project settings.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `agentic` · harmful: 0
+- features: agentic-local-pilot
+- evidence: agentic-local-pilot/validation.md:AGP-03/04 (agentic)
+- last seen: 2026-10-26T03:36:35Z
+
+### L-004 - Exercite a integridade geral com arquivo versionado fora do manifesto, para que validações de contexto não ocultem falhas na comparação do workspace.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `agentic` · harmful: 0
+- features: agentic-remote-pilot
+- evidence: validation.md: sensor all tracked post comparison (agentic)
+- last seen: 2026-10-26T10:47:55Z
+
+### L-005 - Compare os hashes de proveniência com valores calculados dos arquivos de origem, não apenas com um formato hexadecimal válido.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `agentic` · harmful: 0
+- features: agentic-remote-pilot
+- evidence: validation.md: sensor config hash payload e input hash payload (agentic)
+- last seen: 2026-10-26T10:47:55Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -44,3 +44,9 @@ jobs:
       - name: Check TypeScript types
         working-directory: ci-scripts
         run: npm run typecheck
+
+      - name: Reproduce pinned agentic workflows without inference
+        working-directory: ci-scripts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: npm run compile:agentic -- --check
