@@ -29,7 +29,7 @@ Executar comandos Node/npm em ci-scripts.
 ### Phase 1: Piloto
 
 ```text
-T1 → T2 → T3
+T1 → T2 → T3 → T4
 ```
 
 ## Task Breakdown
@@ -52,21 +52,31 @@ T1 → T2 → T3
 **Depends on:** T1
 **Requirement:** AGP-03, AGP-04, AGP-05
 **Done when:**
-- [ ] Perfil pessoal e PATs não são herdados; falha/timeout não liberam sucesso e limpam temporários.
+- [x] Perfil pessoal e PATs não são herdados; falha/timeout não liberam sucesso e limpam temporários. Gate: 8 testes e typecheck aprovados.
 **Tests:** integration
 **Gate:** Quick
 
 ### T3: Caller e prova real no .github
 
-**What:** executar os dois processos com configurações próprias e registrar evidências locais.
+**What:** fornecer caller dos dois processos com configurações próprias e evidências locais.
 **Where:** ci-scripts/scripts/agentic/run-pilot.ts
 **Depends on:** T2
-**Requirement:** AGP-06, AGP-07
+**Requirement:** AGP-03, AGP-06
 **Done when:**
-- [ ] Caller possui config, prompts e inputs controlados; respostas reais inspecionadas e evidência sanitizada.
-- [ ] Regressões existentes e tipos passam; revisão independente e sensor concluídos.
+- [ ] Caller possui config, prompts e inputs controlados; evidência sanitizada e testes de contrato aprovados.
 **Tests:** integration
 **Gate:** Build
+
+### T4: Prova real e revisão independente
+
+**What:** executar e inspecionar as duas inferências no próprio .github.
+**Where:** .specs/features/agentic-local-pilot/implementation-log.md
+**Depends on:** T3
+**Requirement:** AGP-07, AGP-08
+**Done when:**
+- [ ] Respostas reais inspecionadas; regressões e tipos aprovados; revisão independente e sensor concluídos.
+**Tests:** integration
+**Gate:** Full
 
 ## Diagram-Definition Cross-Check
 
@@ -75,6 +85,7 @@ T1 → T2 → T3
 | T1 | None | início | Match |
 | T2 | T1 | T1 → T2 | Match |
 | T3 | T2 | T2 → T3 | Match |
+| T4 | T3 | T3 → T4 | Match |
 
 ## Test Co-location Validation
 
@@ -83,3 +94,4 @@ T1 → T2 → T3
 | T1 | Configuração | unit | unit | Match |
 | T2 | Adapter | integration | integration | Match |
 | T3 | Caller | integration | integration | Match |
+| T4 | Inferência | integration | integration | Match |

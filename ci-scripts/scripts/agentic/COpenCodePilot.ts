@@ -1,0 +1,86 @@
+import { spawn } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import { CAgenticConfiguration, type IAgenticProcess } from './CAgenticConfiguration.js';
+
+export interface IPilotResponse { text: string; model: string; durationMs: number }
+
+/** Executa análise controlada sem reutilizar o serviço, perfil ou credenciais pessoais. */
+export class COpenCodePilot {
+  public constructor(private readonly EXECUTABLE: string, private readonly ARGUMENTS: string[] = []) {}
+
+  public async run(pProcess: IAgenticProcess, pFiles: Record<string, string>, pPrompt: string, pTimeoutMs: number, pEnvironment: NodeJS.ProcessEnv = process.env): Promise<IPilotResponse> {
+    const KEY = pEnvironment[pProcess.credentialEnv];
+    if (!KEY?.trim()) throw new Error(`Credencial ausente: ${pProcess.credentialEnv}`);
+    for (const FILE of Object.keys(pFiles)) CAgenticConfiguration.path(FILE);
+    if (Buffer.byteLength(pPrompt) > 8192 || Object.values(pFiles).reduce((SUM, TEXT) => SUM + Buffer.byteLength(TEXT), 0) > 131072) throw new Error('Contexto excede o limite do piloto.');
+    const ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'agentic-pilot-'));
+    const WORKSPACE = path.join(ROOT, 'workspace');
+    const PROFILE = path.join(ROOT, 'profile');
+    const START = Date.now();
+    try {
+      fs.mkdirSync(WORKSPACE);
+      for (const [FILE, CONTENT] of Object.entries(pFiles)) {
+        const TARGET = path.join(WORKSPACE, FILE);
+        fs.mkdirSync(path.dirname(TARGET), { recursive: true });
+        fs.writeFileSync(TARGET, CONTENT);
+      }
+      const PERMISSIONS = [
+        { action: '*', resource: '*', effect: 'deny' },
+        ...Object.keys(pFiles).map(FILE => ({ action: 'read', resource: FILE, effect: 'allow' })),
+      ];
+      const CONFIG = {
+        model: `${pProcess.provider}/${pProcess.model}`, default_agent: 'pilot', snapshots: false,
+        permissions: PERMISSIONS, mcp: { servers: {} },
+        agents: { pilot: { description: 'Análise local controlada', mode: 'primary', permissions: PERMISSIONS } },
+      };
+      fs.writeFileSync(path.join(WORKSPACE, 'opencode.json'), JSON.stringify(CONFIG));
+      const GLOBAL = path.join(PROFILE, '.config', 'opencode');
+      fs.mkdirSync(GLOBAL, { recursive: true });
+      fs.writeFileSync(path.join(GLOBAL, 'opencode.json'), JSON.stringify({ update: 'disable' }));
+      const ENV: NodeJS.ProcessEnv = {
+        HOME: PROFILE, USERPROFILE: PROFILE, XDG_CONFIG_HOME: path.join(PROFILE, '.config'),
+        XDG_DATA_HOME: path.join(PROFILE, '.local', 'share'), XDG_CACHE_HOME: path.join(PROFILE, '.cache'),
+        XDG_STATE_HOME: path.join(PROFILE, '.local', 'state'), APPDATA: path.join(PROFILE, 'AppData', 'Roaming'),
+        LOCALAPPDATA: path.join(PROFILE, 'AppData', 'Local'), PROGRAMDATA: path.join(ROOT, 'system'),
+        TMP: ROOT, TEMP: ROOT, TMPDIR: ROOT, CI: 'true', NO_COLOR: '1',
+      };
+      for (const NAME of ['PATH', 'SystemRoot', 'SYSTEMROOT', 'COMSPEC', 'PATHEXT']) if (process.env[NAME]) ENV[NAME] = process.env[NAME];
+      const CREDENTIAL = { openrouter: 'OPENROUTER_API_KEY', openai: 'OPENAI_API_KEY', anthropic: 'ANTHROPIC_API_KEY' }[pProcess.provider];
+      ENV[CREDENTIAL] = KEY;
+      const OUTPUT = await this.execute([...this.ARGUMENTS, 'run', '--standalone', '--format', 'json', '--agent', 'pilot', '--model', CONFIG.model, pPrompt], WORKSPACE, ENV, pTimeoutMs);
+      let EVENTS: { type?: string; part?: { text?: string }; error?: unknown }[];
+      try { EVENTS = OUTPUT.split(/\r?\n/).filter(LINE => LINE.trim()).map(LINE => JSON.parse(LINE)); }
+      catch { throw new Error('OpenCode retornou resposta JSONL inválida.'); }
+      if (EVENTS.some(EVENT => EVENT.type === 'error' || EVENT.error)) throw new Error('OpenCode retornou evento de erro.');
+      const TEXT = EVENTS.filter(EVENT => EVENT.type === 'text').map(EVENT => EVENT.part?.text || '').join('\n').trim();
+      if (!TEXT) throw new Error('OpenCode terminou sem resposta.');
+      if (TEXT.includes(KEY)) throw new Error('Resposta contém credencial; persistência recusada.');
+      return { text: TEXT, model: CONFIG.model, durationMs: Date.now() - START };
+    } finally {
+      if (path.dirname(ROOT) !== path.resolve(os.tmpdir()) || !path.basename(ROOT).startsWith('agentic-pilot-')) throw new Error('Diretório temporário inválido para limpeza.');
+      fs.rmSync(ROOT, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+    }
+  }
+
+  private execute(pArgs: string[], pCwd: string, pEnv: NodeJS.ProcessEnv, pTimeoutMs: number): Promise<string> {
+    return new Promise((RESOLVE, REJECT) => {
+      const CHILD = spawn(this.EXECUTABLE, pArgs, { cwd: pCwd, env: pEnv, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+      let OUTPUT = '';
+      let FAILURE = '';
+      const TIMER = setTimeout(() => { FAILURE = 'OpenCode timeout.'; CHILD.kill(); }, pTimeoutMs);
+      CHILD.stdout.on('data', (CHUNK: Buffer) => {
+        OUTPUT += CHUNK.toString('utf8');
+        if (Buffer.byteLength(OUTPUT) > 1048576) { FAILURE = 'OpenCode excedeu o limite de resposta.'; CHILD.kill(); }
+      });
+      CHILD.stderr.resume();
+      CHILD.once('error', () => { clearTimeout(TIMER); REJECT(new Error('OpenCode falhou ao iniciar.')); });
+      CHILD.once('close', CODE => {
+        clearTimeout(TIMER);
+        if (FAILURE || CODE !== 0) REJECT(new Error(FAILURE || `OpenCode falhou com código ${CODE}.`));
+        else RESOLVE(OUTPUT);
+      });
+    });
+  }
+}
