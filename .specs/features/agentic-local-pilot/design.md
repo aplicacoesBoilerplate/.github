@@ -12,6 +12,8 @@
 
 Config do consumidor → validação TypeScript → snapshot selecionado da master → OpenCode standalone → resposta validada → JSON local → limpeza.
 
+O contexto selecionado e input.md são anexados explicitamente via --file. O modelo recebe o conteúdo sem depender de uma sequência de ferramentas só para obter a entrada conhecida. Leituras adicionais continuam restritas aos mesmos arquivos. AGENTS.md é fornecido integralmente por instructions.
+
 O exemplo consumidor fica em examples/agentic/self-pilot. Modelos e prompts pertencem a ele. O executor em ci-scripts/scripts/agentic não contém autenticações, modelos padrão ou repositório fixo. Codex e Claude não são simulados como implementados: engines sem adaptador falham explicitamente.
 
 ## Components
@@ -28,6 +30,8 @@ Usar Node test, tsx, TypeScript strict e package-lock do ci-scripts existente. N
 ## Error Handling Strategy
 
 Config inválida ou chave ausente falha antes do spawn. Timeout encerra o processo privado. Erro JSONL ou saída vazia falha. Somente resposta final, sem credencial, entra no resultado; stdout/stderr bruto não é publicado. Diretório temporário contém config e código selecionado, nunca a chave em disco, e é removido em finally.
+
+O caller não cria retries ou fallback. O harness pode repetir internamente chamadas da provedora; o timeout externo limita essas tentativas. Diagnósticos de falha são limitados e redigidos, incluindo eventos de erro enviados em stdout; não são artefatos de sucesso.
 
 ## SonarQube
 

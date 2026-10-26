@@ -34,6 +34,7 @@ test('AGP-03/04: processo recebe só a chave escolhida, arquivos selecionados e 
   assert.equal(OBSERVED.configDir, path.join(OBSERVED.home, '.config', 'opencode'));
   assert.equal(OBSERVED.testHome, OBSERVED.home);
   assert.ok(OBSERVED.args.includes('openrouter/test/model:free'));
+  assert.deepEqual(OBSERVED.args.filter((ARG: string, INDEX: number) => OBSERVED.args[INDEX - 1] === '--file'), ['input.md', 'src/config.ts']);
   assert.equal(OBSERVED.agents, 'Regras completas');
   assert.deepEqual(OBSERVED.config.agents.pilot.permissions[0], { action: '*', resource: '*', effect: 'deny' });
   assert.deepEqual(OBSERVED.config.mcp, { servers: {} });

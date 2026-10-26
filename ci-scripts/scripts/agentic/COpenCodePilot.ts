@@ -52,7 +52,8 @@ export class COpenCodePilot {
       for (const NAME of ['PATH', 'SystemRoot', 'SYSTEMROOT', 'COMSPEC', 'PATHEXT']) if (process.env[NAME]) ENV[NAME] = process.env[NAME];
       const CREDENTIAL = { openrouter: 'OPENROUTER_API_KEY', openai: 'OPENAI_API_KEY', anthropic: 'ANTHROPIC_API_KEY' }[pProcess.provider];
       ENV[CREDENTIAL] = KEY;
-      const OUTPUT = await this.execute([...this.ARGUMENTS, 'run', '--standalone', '--format', 'json', '--agent', 'pilot', '--model', CONFIG.model, pPrompt], WORKSPACE, ENV, pTimeoutMs);
+      const ATTACHMENTS = Object.keys(pFiles).filter(FILE => FILE !== 'AGENTS.md').flatMap(FILE => ['--file', FILE]);
+      const OUTPUT = await this.execute([...this.ARGUMENTS, 'run', '--standalone', '--format', 'json', '--agent', 'pilot', '--model', CONFIG.model, ...ATTACHMENTS, pPrompt], WORKSPACE, ENV, pTimeoutMs);
       let EVENTS: { type?: string; part?: { text?: string }; error?: unknown }[];
       try { EVENTS = OUTPUT.split(/\r?\n/).filter(LINE => LINE.trim()).map(LINE => JSON.parse(LINE)); }
       catch { throw new Error('OpenCode retornou resposta JSONL inválida.'); }
@@ -91,7 +92,7 @@ export class COpenCodePilot {
       CHILD.once('close', CODE => {
         clearTimeout(TIMER);
         const DETAIL = ['OPENROUTER_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY'].reduce((TEXT, NAME) => pEnv[NAME] ? TEXT.replaceAll(pEnv[NAME]!, '[REDACTED]') : TEXT, DIAGNOSTIC || OUTPUT).slice(-2000);
-        if (FAILURE || CODE !== 0) REJECT(new Error(FAILURE || `OpenCode falhou com código ${CODE}. ${DETAIL}`));
+        if (FAILURE || CODE !== 0) REJECT(new Error(FAILURE ? `${FAILURE} ${DETAIL}` : `OpenCode falhou com código ${CODE}. ${DETAIL}`));
         else RESOLVE(OUTPUT);
       });
     });
