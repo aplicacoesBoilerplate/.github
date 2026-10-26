@@ -153,6 +153,7 @@ engine:
           { action: "read", resource: "*", effect: "allow" },
           { action: "glob", resource: "*", effect: "allow" },
           { action: "grep", resource: "*", effect: "allow" },
+          { action: "safeoutputs_noop", resource: "*", effect: "allow" },
         ];
         const config = {
           model: `awf-proxy/${model}`,

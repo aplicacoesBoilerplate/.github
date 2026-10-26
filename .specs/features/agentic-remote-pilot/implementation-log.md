@@ -73,3 +73,15 @@ Os mesmos testes de geração/lock foram corrigidos e primeiro falharam2/3 na ex
 Gate T7: Node22.23.4 executou87/87 testes, zero falhas/skips; typecheck e reprodução strict/validate dos dois locks passaram com zero avisos. A revisão independente final segue após o commit; isso ainda não é sucesso de inferência remota.
 
 Fontes pinned: https://github.com/github/gh-aw-firewall/blob/v0.28.70/containers/api-proxy/proxy-utils.js#L170; https://github.com/github/gh-aw-firewall/blob/v0.28.70/containers/api-proxy/upstream-http.js#L619; https://github.com/github/gh-aw-firewall/blob/v0.28.70/containers/api-proxy/upstream-log.js#L261; https://github.com/github/gh-aw/blob/32ecafbc061c9af57e9361942099e381102ae304/actions/setup/js/awf_reflect.cjs#L338.
+
+## T8 — contrato terminal da análise
+
+CI40422300334 e revisão independente route-validation.md aprovaram T7: cinco contratos, tipos e um mutante detectado. Run40422387649 no SHA0f6cc02 obteve462 modelos via /reflect e resposta real da LLM. A triagem retornou needs-human, identificando Milestone/Epic/Release branch authorized/Effort ausentes. Engine exit0 e integridade verified. A conclusão, porém, falhou corretamente com missing_terminal_safe_output: texto no log não satisfaz o terminal obrigatório do pin.
+
+O schema não suporta safe-outputs:false. O collector sempre sinaliza report_incomplete na ausência de terminal; desabilitar publicação de falhas não desabilita esse gate. A correção habilita somente noop{max:1,report-as-issue:false}, adiciona a única permissão nativa safeoutputs_noop e instrui o agente a chamá-lo depois da resposta. O protótipo compilado foi conferido independentemente: mesmos quatro jobs, permissões somente read/none, nenhum safe_outputs/detector/publicação. MCP adicional expõe somente noop. Handler oficial executado em memória confirmou zero mutações GitHub quando report-as-issue é false.
+
+Os mesmos casos de engine/workflow passaram primeiro por RED: três falhas em cinco, cobrindo permissão, manifesto e configuração terminal. Acrescentadas asserções de negação para safeoutputs_create_issue e github_get_file_contents. O compilador real aprovou os dois locks strict/validate sem avisos. Suíte, tipos e reprodução devem passar antes do commit. O pin acrescenta a imagem ghcr.io/github/gh-aw-node fixada por digest para servir esse MCP local; não há nova credencial ou action e o raw secret continua fora do agente.
+
+Fontes: https://github.com/github/gh-aw/blob/32ecafbc061c9af57e9361942099e381102ae304/actions/setup/js/collect_ndjson_output.cjs#L374; https://github.com/github/gh-aw/blob/32ecafbc061c9af57e9361942099e381102ae304/actions/setup/js/handle_noop_message.cjs#L290; https://github.com/anomalyco/opencode/blob/v2.0.26/packages/core/src/tool/mcp.ts.
+
+Gate T8: Node22 executou87/87 testes sem falhas/skips; tipos e reprodução strict/validate dos dois locks aprovados, zero avisos. Nenhum novo caso por contagem: reforços em cinco contratos existentes. Revisão independente final e homologação remota ainda exigidas; a resposta já obtida em40422387649 não é confundida com sucesso do workflow completo.

@@ -37,7 +37,10 @@ test('ARP-02/03: programa compilado não publica, não eleva permissões e exclu
     assert.equal(`${BASE_PATH}/v1/models`, '/api/v1/models');
     for (const KEY of ['OPENAI_API_KEY', 'CODEX_API_KEY', 'GITHUB_MCP_SERVER_TOKEN']) assert.ok(EXECUTE.run.includes(`--exclude-env ${KEY}`));
     const MANIFEST = JSON.parse(TEXT.split('\n')[1].replace('# gh-aw-manifest: ', ''));
-    assert.deepEqual(MANIFEST.mcp_servers, [{ name: 'github', tools: ['get_file_contents'] }]);
+    assert.deepEqual(MANIFEST.mcp_servers, [{ name: 'github', tools: ['get_file_contents'] }, { name: 'safeoutputs', tools: ['noop'] }]);
+    const NOOP = WORKFLOW.jobs.conclusion.steps.find((STEP: { id: string }) => STEP.id === 'noop');
+    assert.equal(NOOP?.env.GH_AW_NOOP_MAX, '1');
+    assert.equal(NOOP?.env.GH_AW_NOOP_REPORT_AS_ISSUE, 'false');
     assert.ok(MANIFEST.actions.every((ACTION: { sha: string }) => /^[a-f0-9]{40}$/.test(ACTION.sha)));
   }
 });
@@ -61,7 +64,8 @@ test('ARP-01/02: callers preservam processo/modelo/secret e geram somente aciona
     assert.equal(HEADER.engine.env.OPENAI_BASE_URL, 'https://openrouter.ai/api');
     assert.equal(HEADER.engine.env.OPENAI_API_KEY, undefined);
     assert.equal(HEADER.engine.env.CODEX_API_KEY, undefined);
-    assert.deepEqual(HEADER['safe-outputs'], { 'create-issue': false, noop: false, 'report-missing-data': false, 'report-missing-tool': false, 'report-incomplete': false, 'report-failure-as-issue': false, 'report-failed-jobs': false, 'threat-detection': false });
+    assert.deepEqual(HEADER['safe-outputs'], { 'create-issue': false, noop: { max: 1, 'report-as-issue': false }, 'report-missing-data': false, 'report-missing-tool': false, 'report-incomplete': false, 'report-failure-as-issue': false, 'report-failed-jobs': false, 'threat-detection': false });
+    assert.ok(CONTENT.includes('safeoutputs_noop'));
     assert.deepEqual(HEADER.tools.github, { mode: 'local', 'read-only': true, 'min-integrity': 'merged', 'allowed-repos': '${{ github.repository }}', toolsets: ['repos'], allowed: ['get_file_contents'] });
     assert.equal(HEADER.sandbox?.agent, undefined); // O default seguro não foi substituído por false.
     assert.ok(CONTENT.includes('Diretrizes Globais para Agentes de IA'));

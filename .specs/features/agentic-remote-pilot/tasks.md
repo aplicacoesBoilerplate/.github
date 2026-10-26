@@ -29,7 +29,7 @@ Comandos npm/Node em ci-scripts; gh-aw na raiz.
 ### Phase 1: Preparação
 
 ```text
-T1 → T2 → T3 → T4 → T5 → T6 → T7
+T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8
 ```
 
 ## Task Breakdown
@@ -104,6 +104,16 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 **Tests:** integration
 **Gate:** Build
 
+### T8: Encerrar análise sem publicação
+**What:** habilitar somente noop limitado a um sinal, sem report-as-issue, com permissão nativa específica e instrução de término; preservar falha para ausência de terminal.
+**Where:** ci-scripts/scripts/agentic/CGhAwPilot.ts
+**Depends on:** T7
+**Requirement:** ARP-08
+**Done when:**
+- [x] Engine/locks expõem somente o terminal noop adicional, sem permissões write, detector ou publicação. Node22 87/87, tipos e compilação strict/validate reproduzidos passaram; revisão independente automática após o commit e pilotos exigidos antes da promoção.
+**Tests:** integration
+**Gate:** Build
+
 ## Diagram-Definition Cross-Check
 
 | Task | Depends On | Diagram Shows | Status |
@@ -115,6 +125,7 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 | T5 | T4 | T4→T5 | Match |
 | T6 | T5 | T5→T6 | Match |
 | T7 | T6 | T6→T7 | Match |
+| T8 | T7 | T7→T8 | Match |
 
 ## Test Co-location Validation
 
@@ -127,3 +138,4 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 | T5 | integration | integration | Match |
 | T6 | integration | integration | Match |
 | T7 | integration | integration | Match |
+| T8 | integration | integration | Match |

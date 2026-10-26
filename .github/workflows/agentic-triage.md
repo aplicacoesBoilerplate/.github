@@ -44,7 +44,9 @@ tools:
   cli-proxy: false
 safe-outputs:
   create-issue: false
-  noop: false
+  noop:
+    max: 1
+    report-as-issue: false
   report-missing-data: false
   report-missing-tool: false
   report-incomplete: false
@@ -545,3 +547,7 @@ export class CReleaseProjectConfig {
 }
 
 ```
+
+## Encerramento do workflow
+
+Após produzir a resposta JSON solicitada, chame a ferramenta safeoutputs_noop uma única vez, com uma mensagem curta confirmando que a análise terminou. Essa ferramenta apenas registra o encerramento interno; não publica recursos. Não substitua a resposta JSON pelo sinal terminal. Se a análise falhar, não emita um encerramento de sucesso.

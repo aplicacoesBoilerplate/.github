@@ -64,7 +64,7 @@ export class CGhAwPilot {
         'inlined-imports': true,
         network: { allowed: ['defaults', 'openrouter.ai'] },
         tools: { github: { mode: 'local', 'read-only': true, 'min-integrity': 'merged', 'allowed-repos': '${{ github.repository }}', toolsets: ['repos'], allowed: ['get_file_contents'] }, 'cli-proxy': false },
-        'safe-outputs': { 'create-issue': false, noop: false, 'report-missing-data': false, 'report-missing-tool': false, 'report-incomplete': false, 'report-failure-as-issue': false, 'report-failed-jobs': false, 'threat-detection': false },
+        'safe-outputs': { 'create-issue': false, noop: { max: 1, 'report-as-issue': false }, 'report-missing-data': false, 'report-missing-tool': false, 'report-incomplete': false, 'report-failure-as-issue': false, 'report-failed-jobs': false, 'threat-detection': false },
         'runs-on': 'ubuntu-latest', 'timeout-minutes': 8, 'max-turns': 4,
         concurrency: { group: '${{ github.repository }}-agentic-pilot', 'cancel-in-progress': false },
         'pre-agent-steps': [
@@ -79,7 +79,8 @@ export class CGhAwPilot {
       };
       PROCESSES[NAME] = { model: PROCESS.model, provider: PROCESS.provider, engine: PROCESS.engine };
       const BODY = `# Piloto ${NAME} do próprio consumidor\n\nNão publique comentários, issues, PRs ou alterações. A saída é análise local ao job, para inspeção humana. Não execute comandos nem altere arquivos. SonarQube não foi executado.\n\nOs anexos citados no template estão apresentados integralmente nas seções abaixo. Use esse contexto; não procure credenciais ou serviços externos.\n\n## Diretrizes globais integrais\n\n${GLOBAL}\n\n## Diretrizes do consumidor\n\n${CONSUMER}\n\n## Tarefa\n\n${PROMPT}\n\n## input.md${NAME === 'triage' ? ': metadados do issue' : ': patch proposto'}\n\n\`\`\`text\n${INPUT}\n\`\`\`\n\n## Código-base versionado\n\n${CONTEXT}\n`;
-      OUTPUT[`.github/workflows/agentic-${NAME}.md`] = `---\n${stringify(HEADER, { lineWidth: 0 })}---\n\n${BODY}`;
+      const TERMINAL = '\n## Encerramento do workflow\n\nApós produzir a resposta JSON solicitada, chame a ferramenta safeoutputs_noop uma única vez, com uma mensagem curta confirmando que a análise terminou. Essa ferramenta apenas registra o encerramento interno; não publica recursos. Não substitua a resposta JSON pelo sinal terminal. Se a análise falhar, não emita um encerramento de sucesso.\n';
+      OUTPUT[`.github/workflows/agentic-${NAME}.md`] = `---\n${stringify(HEADER, { lineWidth: 0 })}---\n\n${BODY}${TERMINAL}`;
       OUTPUT[`.github/workflows/agentic-${NAME}-pilot.yml`] = stringify({
         name: `Agentic ${NAME} pilot`,
         on: { workflow_dispatch: {} },
