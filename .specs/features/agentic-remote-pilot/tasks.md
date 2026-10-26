@@ -1,6 +1,6 @@
 # Tarefas do piloto remoto
 
-**Status:** In Progress. Implementação sequencial pelo principal, commits locais por componente e revisão independente final. Autorização: avançar até preparar testes remotos; não interpretar como merge ou homologação já ocorrida.
+**Status:** preparação local concluída; revisão independente PASS na rodada2. Implementação sequencial pelo principal, commits locais por componente e revisão independente final. Autorização: avançar até preparar testes remotos; não interpretar como merge ou homologação já ocorrida.
 
 ## Execution Protocol
 
@@ -70,7 +70,7 @@ T1 → T2 → T3 → T4 → T5
 **Depends on:** T3
 **Requirement:** ARP-06
 **Done when:**
-- [x] CI de reprodução e instruções exatas de secret/acionamento implementadas; fechamento condicionado à revisão independente automática registrada em validation.md.
+- [x] CI de reprodução e instruções exatas de secret/acionamento implementadas; revisão independente PASS de preparação registrada em validation.md.
 **Tests:** integration
 **Gate:** Build
 
@@ -80,7 +80,7 @@ T1 → T2 → T3 → T4 → T5
 **Depends on:** T4
 **Requirement:** ARP-04, ARP-05
 **Done when:**
-- [x] Fixture fora do contexto e valores exatos dos hashes verificados; suíte Node22 86/86 e tipos aprovados; revalidação independente automática solicitada.
+- [x] Fixture fora do contexto e valores exatos dos hashes verificados; suíte Node22 86/86 e tipos aprovados; revalidação independente PASS; três mutantes antes sobreviventes agora mortos.
 **Tests:** integration
 **Gate:** Build
 

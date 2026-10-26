@@ -33,3 +33,7 @@ Gate real: npm run compile:agentic -- --check reproduziu os dois locks com gh-aw
 O verificador encontrou três mutações sobreviventes nos testes de proveniência/integridade, sem defeito funcional demonstrado. Reforçados os mesmos três casos: hashes do config/inputs comparados aos valores reais calculados com crypto, e adulteração com assume-unchanged tanto no AGENTS já coberto quanto em outro arquivo versionado fora do manifesto. Todas as asserções anteriores foram preservadas. Sem aumento de casos por meta.
 
 Gate no Node22 da CI: 86/86 testes passam, zero skips; typecheck aprovado. O relatório inicial FAIL fica no histórico para rastreabilidade; revisão2 deve reexecutar os mutantes antes de encerrar a preparação. Não houve publicação nem inferência remota.
+
+## Fechamento da preparação
+
+Revisão2 confirmou PASS de preparação: baseline8/8 contratos e os três mutantes sobreviventes agora mortos. Cinco riscos de autenticação/política/modelo já discriminados na rodada1; total8/8. Suíte completa86/86 no Node22 e tipos aprovados. Relatório distingue contrato simulado de homologação remota: cadastro da secret, publicação/integração e primeiro run ainda pendentes. A chave real não foi utilizada nesta preparação e não foi gravada no repositório.

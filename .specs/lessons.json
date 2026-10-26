@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 4,
+  "next_id": 6,
   "lessons": [
     {
       "id": "L-001",
@@ -58,6 +58,42 @@
       ],
       "created": "2026-10-26T03:36:35Z",
       "last_seen": "2026-10-26T03:36:35Z"
+    },
+    {
+      "id": "L-004",
+      "key": "surviving_mutant::exercite a integridade geral com arquivo versionado fora do manifesto para que validacoes de contexto nao ocultem falhas na comparacao do workspace",
+      "text": "Exercite a integridade geral com arquivo versionado fora do manifesto, para que validações de contexto não ocultem falhas na comparação do workspace.",
+      "signal": "surviving_mutant",
+      "scope": "agentic",
+      "status": "candidate",
+      "features": [
+        "agentic-remote-pilot"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md: sensor all tracked post comparison (agentic)"
+      ],
+      "created": "2026-10-26T10:47:55Z",
+      "last_seen": "2026-10-26T10:47:55Z"
+    },
+    {
+      "id": "L-005",
+      "key": "surviving_mutant::compare os hashes de proveniencia com valores calculados dos arquivos de origem nao apenas com um formato hexadecimal valido",
+      "text": "Compare os hashes de proveniência com valores calculados dos arquivos de origem, não apenas com um formato hexadecimal válido.",
+      "signal": "surviving_mutant",
+      "scope": "agentic",
+      "status": "candidate",
+      "features": [
+        "agentic-remote-pilot"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md: sensor config hash payload e input hash payload (agentic)"
+      ],
+      "created": "2026-10-26T10:47:55Z",
+      "last_seen": "2026-10-26T10:47:55Z"
     }
   ]
 }

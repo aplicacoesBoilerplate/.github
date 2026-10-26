@@ -8,9 +8,9 @@ O piloto local comprovou OpenCode/OpenRouter com triagem e revisão, mas não va
 
 ## Goals
 
-- [ ] Gerar e compilar dois callers manuais com a configuração do consumidor existente.
-- [ ] Manter credenciais fora do processo agente, com AWF ativo e permissões GitHub somente leitura.
-- [ ] Preparar validação de integridade, artefatos, CI e instruções para o primeiro acionamento remoto.
+- [x] Gerar e compilar dois callers manuais com a configuração do consumidor existente.
+- [x] Manter credenciais fora do processo agente, com AWF ativo e permissões GitHub somente leitura.
+- [x] Preparar validação de integridade, artefatos, CI e instruções para o primeiro acionamento remoto.
 
 ## Out of Scope
 
@@ -73,13 +73,13 @@ O piloto local comprovou OpenCode/OpenRouter com triagem e revisão, mas não va
 | ARP-03 | Callers | Execute | Harness contract verified; remote pending |
 | ARP-04 | Evidência | Execute | Verified locally |
 | ARP-05 | Evidência | Execute | Verified locally |
-| ARP-06 | Evidência | Execute | Pending |
+| ARP-06 | Evidência | Execute | Verified preparation; remote pending |
 
 ## Success Criteria
 
-- [ ] Locks compilados e verificados, sem desligar sandbox/firewall ou exigir chave Copilot.
-- [ ] Contratos, integridade e regressões existentes aprovados com revisão independente.
-- [ ] Primeiro teste remoto desbloqueável pelo cadastro da secret e integração/revisão humana necessária.
+- [x] Locks compilados e verificados, sem desligar sandbox/firewall ou exigir chave Copilot.
+- [x] Contratos, integridade e regressões existentes aprovados com revisão independente.
+- [x] Primeiro teste remoto desbloqueável pelo cadastro da secret e integração/revisão humana necessária.
 
 ## Limites e falhas
 
