@@ -1,0 +1,13 @@
+diff --git a/ci-scripts/scripts/CReleaseProjectConfig.ts b/ci-scripts/scripts/CReleaseProjectConfig.ts
+--- a/ci-scripts/scripts/CReleaseProjectConfig.ts
++++ b/ci-scripts/scripts/CReleaseProjectConfig.ts
+@@ -15,8 +15,7 @@ export class CReleaseProjectConfig {
+   public static normalizePath(pPath: string): string {
+     const DIRECTORY = pPath.trim().replace(/\/+$/, '');
+     if (DIRECTORY === '.') return DIRECTORY;
+-    if (!DIRECTORY || !/^[\w@.-]+(?:\/[\w@.-]+)*$/.test(DIRECTORY)
+-      || DIRECTORY.split('/').some(PART => PART === '..' || PART === '.')) {
++    if (!DIRECTORY || !/^[\w@.-]+(?:\/[\w@.-]+)*$/.test(DIRECTORY)) {
+       throw new Error(`O diretório '${pPath}' deve ser relativo ao repositório, sem navegação para fora dele.`);
+     }
+     return DIRECTORY;

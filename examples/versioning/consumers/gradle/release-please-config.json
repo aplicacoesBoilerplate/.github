@@ -1,0 +1,14 @@
+{
+  "include-component-in-tag": false,
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "gradle.properties"
+        }
+      ]
+    }
+  }
+}

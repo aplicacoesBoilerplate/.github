@@ -1,0 +1,32 @@
+# Adicione este job sob jobs: no mesmo caller que possui o job release.
+publish:
+  needs: release
+  if: needs.release.outputs.releases_created == 'true'
+  runs-on: ubuntu-latest
+  permissions:
+    contents: read
+    packages: write
+  env:
+    NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  strategy:
+    fail-fast: false
+    matrix:
+      include: ${{ fromJSON(needs.release.outputs.releases) }}
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ matrix.tag_name }}
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        registry-url: https://npm.pkg.github.com
+        scope: '@aplicacoesboilerplate'
+    - name: Instalar workspaces e verificar a revisão publicada
+      run: |
+        npm ci
+        npm run verify
+    - name: Publicar somente o workspace liberado
+      run: npm publish --workspace "$WORKSPACE_PATH"
+      env:
+        WORKSPACE_PATH: ${{ matrix.path }}
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

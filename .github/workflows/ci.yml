@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   pull_request:
   push:
     branches:
@@ -16,40 +17,36 @@ jobs:
   validate:
     name: Validate repository
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        if: ${{ hashFiles('pom.xml') != '' }}
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-
-      - name: Validate Maven project
-        if: ${{ hashFiles('pom.xml') != '' }}
-        run: mvn -B verify
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up Node.js
-        if: ${{ hashFiles('package-lock.json', 'npm-shrinkwrap.json') != '' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            ci-scripts/package-lock.json
 
-      - name: Install npm dependencies
-        if: ${{ hashFiles('package-lock.json', 'npm-shrinkwrap.json') != '' }}
+      - name: Install Commitlint dependencies
         run: npm ci
 
-      - name: Run npm tests when available
-        if: ${{ hashFiles('package.json') != '' }}
-        shell: bash
-        run: npm run test --if-present
+      - name: Install CI Scripts dependencies
+        working-directory: ci-scripts
+        run: npm ci
 
-      - name: Run npm build when available
-        if: ${{ hashFiles('package.json') != '' }}
-        shell: bash
-        run: npm run build --if-present
+      - name: Run TypeScript tests
+        working-directory: ci-scripts
+        run: npm test
+
+      - name: Check TypeScript types
+        working-directory: ci-scripts
+        run: npm run typecheck
+
+      - name: Reproduce pinned agentic workflows without inference
+        working-directory: ci-scripts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: npm run compile:agentic -- --check

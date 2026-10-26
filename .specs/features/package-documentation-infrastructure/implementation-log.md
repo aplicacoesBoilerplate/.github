@@ -1,0 +1,75 @@
+# Registro da iteração documental Java/Vue
+
+## Baseline e autorização
+
+- Pedido de25/10/2026: somente infra Java/Vue, documentação por pacote e publicação pelo called central. Go fora desta iteração; merges continuam humanos. Execução inline, helpers de recon somente leitura.
+- Central master1bd925d599f51a1a4d60bae57fee44c9b49c436d já inclui as alterações recentes do usuário: caminhos/configs/collisions/footer e extra-files nativos. PR19 integrado; não ressuscitar PR12 antigo.
+- Worktree central limpo reaproveitado em codex/package-documentation-infrastructure a partir da nova master. Standalone repos locais release-pr19/docs-navigation e clones originais sujos preservados.
+- Java PR36 head47a1991, base release2992a009. Vue PR39 headd17697a, base releasea846332. Reaproveitar as próprias branches dos PRs.
+- Identidade AI restabelecida após detectar conta humana ativa; nenhuma credencial impressa. Ambas as apps dão write à AI; Pages GET404, estado de configuração não comprovado. Nenhuma mudança administrativa ou merge realizado.
+- Baseline central63 testes/tipos aprovados. Documentação atual: Java só guia de versionamento; Vue3UI sem versões e sem páginas de composables/utils.
+
+## T1: Called documental compatível com workspace
+
+- RED: novo fluxo funcional falhou porque install-dir não existia.
+- Implementação: install-dir vazio preserva docs-dir; build-script default docs:build; npm-version opcional instalado em runner.temp antes de qualquer npm no consumidor. npm ci/build usam o diretório de instalação; o upload usa docs-dir/.vitepress/dist. DOCS_BASE/SOURCE_SHA enviados ao build.
+- Sem cópia de pipeline nas aplicações. Guard master+push/manual, PR build-only, environment e permissões mantidos. Removida somente a consulta antecipada de cache npm que violava devEngines.
+- Um único teste funcional novo executa npmci e scripts de build reais em dois layouts temporários sem dependências de rede, conferindo HTML na saída esperada. Nenhum teste existente removido;63->64 casos.
+- Gates:64/64, zero skips/falhas; typecheck e VitePress central aprovados, diff limpo. Typecheck detectou inferência de spawnSync no teste; anotação SpawnSyncReturns<string> corrigida antes do commit.
+
+| Critério | Evidência de asserção | Resultado |
+| --- | --- | --- |
+| PDOC-01.AC1/default | documentation.test.ts:15, build-script.default === docs:build; execução standalone escreve HTML emdocs/.vitepress/dist | PASS |
+| PDOC-01.AC2/workspace | documentation.test.ts:68-80, diretórios resolvidos e conteúdo built:workspace no upload apps/docs/.vitepress/dist | PASS |
+| PDOC-01.AC3/npm | documentation.test.ts:24-30, pin antes de install, em runner.temp, sem cache antecipado | PASS do contrato; npm10.9.4 real verificado na app |
+| PDOC-01.AC4/autorização | documentation.test.ts:33-39, igualdade dos guards e permissões Pages mínimas | PASS do contrato; sem deploy presumido |
+
+Todas as asserções novas pertencem ao contrato PDOC-01; não ampliam regras de versão ou publicação de pacotes. Publicação efetiva dos sites ainda depende do gate de implantação e não é inferida desses testes.
+
+## Reconciliação em25/10/2026
+
+- Ao retomar, o worktree central já estava em codex/package-documentation-infrastructure/d79c8c6 e Java já tinha af24bc8 commitado/publicado, com site completo. Vue continha a implementação parcial autorizada, sem commit. Nenhum trabalho foi descartado ou refeito.
+- A master avançou para acdb458, incluindo a correção GraphQL0f689aa. Incorporada por merge local preservando o histórico do PR20:080df5aa1c803252ba91fa00ac529fc5e2006c47. Gates65/65, zero skips/falhas, typecheck e VitePress central aprovados; push/SHA remoto conferido. Esse é o runtime comum dos dois consumidores.
+- O snapshot global STATE ainda apontava para o piloto anterior; corrigido para esta feature com base nos commits e gates reais.
+
+## T2 Java concluída
+
+- af24bc8 contém site VitePress1.6.4, quatro páginas parent/BOM/core/starter, guias, loader com versão/commit e coordenadas Maven derivadas da versão. Revisão somente leitura confirmou as APIs e condições reais, sem inventar features.
+- Gate autor: VitePress com base/PackagesJava/ e quatro páginas verificadas pelo buildEnd; mvn verify com quatro módulos/quatro testes/zero skips/falhas.
+- Rehearsal independente suplementar no SDK17.3.0: Manifest.buildPullRequests aplicou0.0.2 aos quatro POMs/revision/manifest/docs package.json/lock rootversion/lock packages[''].version. Loader TS real aceitou{version:0.0.2,sha:b*40}; manifest antigo e JSON documental adulterado falharam. Evidências em Temp/rp-java-docs-extra-files-1792930805912/recheck.mjs:27-44,58-60,63,66 e result.json; sem rede ou escrita real.
+- fab31050b2f54d49067e06c81f23ddeca335c536 repina validação/publicação/documentação para080df5a e corrige frase de exemplo de tag fixa no guia. Commit/push/SHA remoto conferidos no PR36. Nenhum fonte Java alterado.
+
+## T3 Vue: implementação inicial
+
+- Implementação parcial preservada e finalizada: cinco páginas de pacotes e catálogo, componentes de versão/instalação, loader TS de package.json, SHA e base/PackagesVue/. Catálogo UI gerado e previews preservados; composables/utils declaram corretamente API ainda vazia.
+- buildEnd confere versão e comando npm em todas as cinco páginas, além de exports/manifests e API BaseOverlay nas três UI. Dados não usam schemaVersion ou versão privada de docs como versão da biblioteca.
+- Gate autor: npm10.9.4 verify -- --force --concurrency=1,17/17 tarefas com zero cache, incluindo VitePress real e seus guards. Os passWithNoTests preexistentes de composables/utils não foram contados como cobertura funcional; nenhuma asserção/caso foi removido.
+- README atualizado para os cinco nomes atuais e para o deploy central; guia de versão alinhado ao contrato atual config-file/manifest-file/project-path, incluindo bloqueio de override global ambíguo.
+-85e9c1ac7662c2f409b4ec50d89e582c304ab69e publicado no PR39, caller de versão e caller documental na mesma revisão080df5a. Nenhum fonte funcional de biblioteca/feature pendente foi alterado.
+
+### Correção detectada pela revisão independente
+
+- Rodada1 reprovou PDOC-03.AC3: mesmo após verify17/17 limpo, os cinco HTML renderizavam assets em /assets/, não /PackagesVue/assets/. Turbo2.10.11 em modo strict filtrava DOCS_BASE e DOCS_SOURCE_SHA entre o caller e o VitePress. Portanto o gate inicial não comprovava a base correta.
+- Reaberta T3, preservando a especificação. O build documental recebe env própria com hash para base/SHA; inputs incluem release-please-config.json e os cinco manifests públicos, inclusive composables/utils que não são dependências diretas da aplicação documental. Outros builds não recebem essas variáveis.
+- RED: auditor HTML independente falhou no HTML fresco; diagnóstico nativo Turbo mostrou env configurada vazia. A correção exige novo gate real e inspeção do HTML; validar apenas o JSON Turbo não basta.
+- Dry-run real após o reparo confirma as duas variáveis e os inputs. Alterar somente SHA ou somente base invalida apenas docs#build; os outros sete hashes de build permanecem iguais.
+- Gate autor: verify17/17 sem cache em4m35, HTML dos cinco pacotes com base/PackagesVue/assets/, SHA b*40 e versões corretas. Verificação adicional em CI=true:17/17,16 hits e documentação recompilada em46s. ESLint do config e Prettier aprovados, nomes/imports alinhados às regras existentes sem relaxá-las.
+- O config agora exige DOCS_BASE e DOCS_SOURCE_SHA em CI; verify fornece ambos, assim como o called documental. Dois negativos VitePress reais rejeitaram separadamente base e SHA ausentes. Build local mantém defaults. Revalidação limpa independente ainda pendente.
+- b33547d185992007c2fb0bf2a3c8e78e8c641c4d commitado, publicado e conferido por ls-remote no PR39 antes da rodada2. Git status limpo no consumidor. CI hospedada nova em andamento; nenhum merge/deploy realizado.
+
+## Preflight Pages atualizado
+
+- Primeiro preflight comprovou has_pages:false nos dois consumidores. A conta AI tem push, sem Admin/Maintain; nenhuma política foi alterada pelo agente.
+- Usuário respondeu Vou habilitar nos dois e depois Habilitado. Nova consulta confirmou has_pages:true, build_type:workflow e environment github-pages com regra somente master, sem reviewers/waiters adicionais retornados.
+- URLs configuradas: https://aplicacoesboilerplate.github.io/PackagesJava/ e https://aplicacoesboilerplate.github.io/PackagesVue/. Na consulta, ainda404 e sem deployments. Configuração habilitada não equivale a site publicado.
+- PRs36/39 continuam para release/v0.0.1; PR20 central para master. Merges permanecem humanos. Não contornar guard de deployment nem promover features para conseguir evidência.
+
+## T4: fechamento técnico e implantação pendente
+
+- Rodada2 independente: Vue b33547d compilado de git archive sem outputs/cache iniciais, npmci real e build raiz em CI,8/8 tarefas/zero cache. Auditor confirmou nove páginas de pacotes entre os dois sites, três APIs UI, versões, base e SHA. Duas alterações válidas de versão em composables/utils invalidaram o hash documental e a restauração recuperou os bytes/hash originais.
+- Sensor adicional removeu DOCS_BASE do contrato Turbo: o guard de CI rejeitou o build real. Restauração/rebuild/auditor aprovados. Com os dois sensores anteriores do called e Java,3/3 falhas injetadas foram detectadas. Nenhum fonte funcional alterado pelo Verifier.
+- CI hospedada final dos consumidores: Java verify40192829453 e docs40192829750 aprovados em fab3105; Vue validate40195456856 e docs40195457152 aprovados em b33547d. O segundo construiu8/8 sem cache; validate17/17 com16 hits. Logs mostram base/PackagesVue/ e SHA da revisão de merge testada dc817aa991147fd8862d02b0064b5c4ba20a4cf4, não uma revisão suposta.
+- Central4859704: CI40195557435, documentação40195557431, hygiene40195557426 e policy40195557432 aprovados. Runtime080df5a permanece imutável em todos os callers; este fechamento altera somente artefatos TLC.
+- GitHub Pages habilitado nos dois, mas deployments continuam vazios e os jobs deploy são corretamente ignorados em PR. PR20 precisa de integração em master; PR36/39 vão para release/v0.0.1 e os sites só serão publicados após a promoção humana das aplicações a master. Não houve tentativa de contornar o environment ou publicar em outro serviço.
+- Go permanece em282285ea372ab3bb9a5a47c5dff51d9b10b7c049 com porcelain vazio; issue4 não foi reaberta. Clones originais e features pendentes preservados.
+- O relatório independente distingue PASS técnico de implantação PENDENTE. A tarefa de implementação/evidência pode ser encerrada; a publicação online ainda exige merges humanos e conferência posterior das URLs/runs de deployment.

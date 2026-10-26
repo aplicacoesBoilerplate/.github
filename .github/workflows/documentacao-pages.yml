@@ -1,0 +1,103 @@
+name: Publicar Build de Documentação do VitePress no GitHub Pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'docs/**'
+      - 'CHANGELOG.md'
+      - 'examples/**'
+      - 'release-please-config.json'
+      - '.release-please-manifest.json'
+      - '.github/workflows/documentacao-pages.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'CHANGELOG.md'
+      - 'examples/**'
+      - 'release-please-config.json'
+      - '.release-please-manifest.json'
+      - '.github/workflows/documentacao-pages.yml'
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      docs-dir:
+        description: 'Diretório raiz da documentação VitePress'
+        required: false
+        default: 'docs'
+        type: string
+      install-dir:
+        description: 'Diretório do package.json/lockfile e dos scripts de build; vazio usa docs-dir'
+        required: false
+        default: ''
+        type: string
+      build-script:
+        description: 'Script npm que constrói o site, incluindo dependências do workspace'
+        required: false
+        default: 'docs:build'
+        type: string
+      npm-version:
+        description: 'Versão npm exigida pelo consumidor; vazio usa o runtime Node'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentacao-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Fixar versão npm do consumidor
+        if: inputs.npm-version != ''
+        working-directory: ${{ runner.temp }}
+        env:
+          DOCS_NPM_VERSION: ${{ inputs.npm-version }}
+        run: npm install --global "npm@$DOCS_NPM_VERSION" --ignore-scripts
+
+      - name: Instalar dependências da documentação
+        working-directory: ${{ inputs.install-dir || inputs.docs-dir || 'docs' }}
+        run: npm ci
+
+      - name: Build VitePress
+        working-directory: ${{ inputs.install-dir || inputs.docs-dir || 'docs' }}
+        env:
+          DOCS_BUILD_SCRIPT: ${{ inputs.build-script || 'docs:build' }}
+          DOCS_BASE: /${{ github.event.repository.name }}/
+          DOCS_SOURCE_SHA: ${{ github.sha }}
+        run: npm run "$DOCS_BUILD_SCRIPT"
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
+        with:
+          path: ${{ inputs.docs-dir || 'docs' }}/.vitepress/dist
+
+  deploy:
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/master'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,16 @@
+{
+  "include-component-in-tag": false,
+  "packages": {
+    ".": {
+      "release-type": "maven",
+      "skip-snapshot": true,
+      "extra-files": [
+        {
+          "type": "xml",
+          "path": "pom.xml",
+          "xpath": "/*[local-name()='project']/*[local-name()='properties']/*[local-name()='revision']"
+        }
+      ]
+    }
+  }
+}

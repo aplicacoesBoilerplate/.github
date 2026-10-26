@@ -1,0 +1,49 @@
+name: SonarQube Community scan
+
+on:
+  workflow_call:
+    inputs:
+      project_key:
+        description: Chave do projeto no SonarQube
+        required: true
+        type: string
+      sonar_host_url:
+        description: URL do SonarQube acessível de dentro do scanner
+        required: true
+        type: string
+    secrets:
+      sonar_token:
+        description: Project Analysis token do projeto
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: [self-hosted, Windows]
+    steps:
+      - name: Checkout do commit integrado no consumidor
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verificar configuração do consumidor
+        shell: pwsh
+        run: |
+          if (-not (Test-Path -LiteralPath 'sonar-project.properties')) {
+            throw 'sonar-project.properties deve estar versionado na raiz do consumidor.'
+          }
+
+      - name: Analisar código no SonarQube
+        shell: pwsh
+        env:
+          SONAR_TOKEN: ${{ secrets.sonar_token }}
+          SONAR_HOST_URL: ${{ inputs.sonar_host_url }}
+          SONAR_PROJECT_KEY: ${{ inputs.project_key }}
+        run: |
+          docker run --rm --pull=missing --env SONAR_TOKEN --env SONAR_HOST_URL --volume "${env:GITHUB_WORKSPACE}:/usr/src" sonarsource/sonar-scanner-cli:12.1.0.3233_8.0.1 "-Dsonar.projectKey=$env:SONAR_PROJECT_KEY"
+          if ($LASTEXITCODE -ne 0) {
+            throw "SonarScanner falhou com código $LASTEXITCODE."
+          }

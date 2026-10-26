@@ -1,0 +1,56 @@
+name: Validate release version
+
+on:
+  workflow_call:
+    inputs:
+      project-path:
+        type: string
+        required: false
+        default: '.'
+      config-file:
+        type: string
+        required: false
+        default: ''
+      release-config-file:
+        type: string
+        required: false
+        default: ''
+      version-policy:
+        type: string
+        required: false
+        default: milestone
+      central-ref:
+        description: 'Revisão dos scripts centrais'
+        required: false
+        type: string
+        default: master
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  version-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout scripts centrais
+        uses: actions/checkout@v4
+        with:
+          repository: aplicacoesBoilerplate/.github
+          ref: ${{ inputs.central-ref }}
+          path: .ci-scripts
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar runtime central
+        run: npm ci --prefix .ci-scripts/ci-scripts --omit=dev --ignore-scripts
+
+      - name: Validar disponibilidade da versão no GitHub
+        run: node .ci-scripts/ci-scripts/node_modules/tsx/dist/cli.mjs .ci-scripts/ci-scripts/scripts/CReleaseVersionValidator.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_PATH: ${{ inputs.project-path }}
+          RELEASE_CONFIG_FILE: ${{ inputs.config-file || inputs.release-config-file }}
+          VERSION_POLICY: ${{ inputs.release-config-file != '' && inputs.version-policy || '' }}

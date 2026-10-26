@@ -1,0 +1,33 @@
+name: Release packages
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited, milestoned, demilestoned, closed]
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  version-policy:
+    if: github.event.action != 'closed'
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-validate.yml@master
+    with:
+      config-file: release-please-config.json
+      central-ref: master
+
+  release:
+    if: github.event.pull_request.merged == true
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    uses: aplicacoesBoilerplate/.github/.github/workflows/version-release-please-called.yml@master
+    with:
+      config-file: release-please-config.json
+      manifest-file: .release-please-manifest.json
+      publish-artifacts: false
+      central-ref: master
