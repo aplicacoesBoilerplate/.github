@@ -63,7 +63,7 @@ T1 → T2 → T3 → T4
 **Depends on:** T2
 **Requirement:** AGP-03, AGP-06
 **Done when:**
-- [ ] Caller possui config, prompts e inputs controlados; evidência sanitizada e testes de contrato aprovados.
+- [x] Caller possui config, prompts e inputs controlados; evidência sanitizada e testes de contrato aprovados. Gate: 74 testes e typecheck aprovados.
 **Tests:** integration
 **Gate:** Build
 

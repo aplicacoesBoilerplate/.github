@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "timeoutMs": 120000,
+  "instructionsFile": "ci-scripts/instructions/AGENTS.md",
+  "sonar": {
+    "enabled": false,
+    "hostUrl": "",
+    "projectKey": "",
+    "mainBranch": "develop",
+    "scanner": "cli",
+    "qualityGateRequired": true
+  },
+  "processes": {
+    "triage": {
+      "engine": "opencode",
+      "provider": "openrouter",
+      "model": "google/gemma-4-26b-a4b-it:free",
+      "credentialEnv": "API_KEY_OPENROUTER",
+      "promptFile": "examples/agentic/self-pilot/triage-prompt.md",
+      "inputFile": "examples/agentic/self-pilot/issue.md",
+      "contextFiles": ["ci-scripts/scripts/CReleaseProjectConfig.ts"]
+    },
+    "review": {
+      "engine": "opencode",
+      "provider": "openrouter",
+      "model": "google/gemma-4-31b-it:free",
+      "credentialEnv": "API_KEY_OPENROUTER",
+      "promptFile": "examples/agentic/self-pilot/review-prompt.md",
+      "inputFile": "examples/agentic/self-pilot/change.patch",
+      "contextFiles": ["ci-scripts/scripts/CReleaseProjectConfig.ts"]
+    }
+  }
+}

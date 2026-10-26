@@ -53,7 +53,8 @@ export class COpenCodePilot {
       let EVENTS: { type?: string; part?: { text?: string }; error?: unknown }[];
       try { EVENTS = OUTPUT.split(/\r?\n/).filter(LINE => LINE.trim()).map(LINE => JSON.parse(LINE)); }
       catch { throw new Error('OpenCode retornou resposta JSONL inválida.'); }
-      if (EVENTS.some(EVENT => EVENT.type === 'error' || EVENT.error)) throw new Error('OpenCode retornou evento de erro.');
+      const ERROR = EVENTS.find(EVENT => EVENT.type === 'error' || EVENT.error);
+      if (ERROR) throw new Error(`OpenCode retornou erro: ${JSON.stringify(ERROR.error || ERROR.type).replaceAll(KEY, '[REDACTED]').slice(0, 1200)}`);
       const TEXT = EVENTS.filter(EVENT => EVENT.type === 'text').map(EVENT => EVENT.part?.text || '').join('\n').trim();
       if (!TEXT) throw new Error('OpenCode terminou sem resposta.');
       if (TEXT.includes(KEY)) throw new Error('Resposta contém credencial; persistência recusada.');
