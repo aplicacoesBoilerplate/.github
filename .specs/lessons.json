@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 3,
+  "next_id": 4,
   "lessons": [
     {
       "id": "L-001",
@@ -40,6 +40,24 @@
       ],
       "created": "2026-10-25T12:45:26Z",
       "last_seen": "2026-10-25T12:45:26Z"
+    },
+    {
+      "id": "L-003",
+      "key": "ac_gap::validate effective harness configuration without credentials a temporary home does not prevent discovery of ancestor project settings",
+      "text": "Validate effective harness configuration without credentials: a temporary HOME does not prevent discovery of ancestor project settings.",
+      "signal": "ac_gap",
+      "scope": "agentic",
+      "status": "candidate",
+      "features": [
+        "agentic-local-pilot"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "agentic-local-pilot/validation.md:AGP-03/04 (agentic)"
+      ],
+      "created": "2026-10-26T03:36:35Z",
+      "last_seen": "2026-10-26T03:36:35Z"
     }
   ]
 }

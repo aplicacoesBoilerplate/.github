@@ -1,6 +1,6 @@
 # Piloto local de agentes no próprio .github
 
-**Status:** recorte local autorizado em 2026-10-26; implementação em andamento.
+**Status:** piloto local implementado e validado em 2026-10-26. gh-aw e SonarQube ainda não executados.
 
 ## Problem Statement
 
@@ -8,9 +8,9 @@ As issues #7, #8 e #9 precisam validar um harness com vários provedores antes d
 
 ## Goals
 
-- [ ] Executar triagem e revisão reais com OpenCode e a chave OpenRouter fornecida pelo consumidor.
-- [ ] Preservar modelo e prompt próprios por processo e gerar evidências locais verificáveis.
-- [ ] Preparar o contrato SonarQube sem declarar homologação de um servidor ainda indisponível.
+- [x] Executar triagem e revisão reais com OpenCode e a chave OpenRouter fornecida pelo consumidor.
+- [x] Preservar modelo e prompt próprios por processo e gerar evidências locais verificáveis.
+- [x] Preparar o contrato SonarQube sem declarar homologação de um servidor ainda indisponível.
 
 ## Out of Scope
 
@@ -78,20 +78,20 @@ As issues #7, #8 e #9 precisam validar um harness com vários provedores antes d
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| AGP-01 | Configuração por processo | Execute | Implementing |
-| AGP-02 | Configuração por processo | Execute | Implementing |
-| AGP-03 | Harness temporário | Execute | Pending |
-| AGP-04 | Harness temporário | Execute | Pending |
-| AGP-05 | Harness temporário | Execute | Pending |
-| AGP-06 | Evidência real | Execute | Pending |
-| AGP-07 | Evidência real | Execute | Pending |
-| AGP-08 | Evidência real | Execute | Pending |
+| AGP-01 | Configuração por processo | Execute | Verified |
+| AGP-02 | Configuração por processo | Execute | Verified |
+| AGP-03 | Harness temporário | Execute | Verified |
+| AGP-04 | Harness temporário | Execute | Verified |
+| AGP-05 | Harness temporário | Execute | Verified |
+| AGP-06 | Evidência real | Execute | Verified |
+| AGP-07 | Evidência real | Execute | Verified |
+| AGP-08 | Evidência real | Execute | Verified |
 
 ## Success Criteria
 
-- [ ] Duas chamadas reais aprovadas por inspeção de resultado, com modelos configurados separadamente.
-- [ ] Testes relevantes de isolamento, configuração, timeout e falha aprovados; typecheck e regressões existentes preservados.
-- [ ] Revisão independente e sensor de discriminação concluídos antes da entrega local.
+- [x] Duas chamadas reais aprovadas por inspeção de resultado, com modelos configurados separadamente.
+- [x] Testes relevantes de isolamento, configuração, timeout e falha aprovados; typecheck e regressões existentes preservados.
+- [x] Revisão independente e sensor de discriminação concluídos antes da entrega local.
 
 ## Implicit requirements
 

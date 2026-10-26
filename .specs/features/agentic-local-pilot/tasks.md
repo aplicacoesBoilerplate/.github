@@ -4,7 +4,7 @@
 
 TLC, implementação sequencial pelo agente principal, commits locais por tarefa, testes de contrato e falhas relevantes. Sem publicação remota. Recorte local aprovado pelo usuário em 2026-10-26 e corrigido para o próprio .github.
 
-**Status:** In Progress
+**Status:** Done, somente recorte local
 
 ## Test Coverage Matrix
 
@@ -74,7 +74,7 @@ T1 → T2 → T3 → T4
 **Depends on:** T3
 **Requirement:** AGP-07, AGP-08
 **Done when:**
-- [ ] Respostas reais inspecionadas; regressões e tipos aprovados; revisão independente e sensor concluídos.
+- [x] Duas respostas reais inspecionadas; 78 testes e tipos aprovados; revisão independente PASS8/8 e sensor6/6 concluídos. Evidência no SHAd1c6aef.
 **Tests:** integration
 **Gate:** Full
 

@@ -37,3 +37,16 @@ Gate independente corrigido: 78 testes, zero falhas/skips e typecheck aprovado. 
 Tentativas com Gemma4 chegaram ao OpenRouter e falharam com HTTP429, limite upstream_provider_shared_pool, sem evidência de sucesso. Consulta de disponibilidade confirmou ausência de saldo para modelos pagos; nenhum modelo pago foi acionado. Probes nvidia/poolside com32tokens não produziram texto útil e não contam como homologação; outro poolside retornou429. Probe liquid/lfm-2.5-2.6b:free sem parâmetros extras retornou texto com finish_reason=stop. Modelo do exemplo foi alterado explicitamente no consumidor para Liquid nos dois processos, sem implementar fallback no executor. O próximo ensaio deve comprovar as duas respostas pelo harness, não apenas a chamada HTTP direta.
 
 Ensaio inicial completo Liquid atingiu timeout. Diagnóstico mínimo pelo mesmo adapter retornou OK em3557ms, com perfil isolado e chave do consumidor, comprovando rota OpenCode→OpenRouter. Probe direto Liquid com ferramenta retornou tool_calls. Esses probes não substituem AGP-07. O caller passou a anexar input/código explicitamente com --file; os prompts do consumidor refletem essa entrega direta. Essa mudança evita depender de ferramentas para receber entradas já selecionadas e versionadas, sem reduzir o AGENTS global. O teste de fronteira do adapter exige os dois anexos exatos.
+
+## Resultado real final
+
+PASS no recorte local sobre d1c6aefe723f79da39c614135eac0f12ea74479a. Os dois envelopes sanitizados estão em pilot-evidence.json; a chave foi comparada em memória e não consta no arquivo.
+
+| Processo | Modelo configurado | Duração | Resultado inspecionado |
+| --- | --- | --- | --- |
+| triage | openrouter/liquid/lfm-2.5-2.6b:free | 30128ms | needs-human, identifica ausência de milestone/épica/base e pede confirmação humana |
+| review | openrouter/liquid/lfm-2.5-2.6b:free | 12908ms | changes-required, high, identifica remoção da guarda de traversal e exemplo '../' |
+
+O verificador recomputou configHash e todos os hashes de inputs no snapshot e confirmou integridade da fonte original. Nenhum patch foi aplicado. As respostas vieram como JSON em cercas Markdown; são evidências para inspeção local, não comandos estruturados autorizados para automação. O exemplo './' no texto de review é impreciso porque a base já permite a raiz normalizada; a demonstração válida é '../'. Essa limitação do modelo não altera o finding principal e deve ser considerada antes de ampliar a autonomia.
+
+SonarQube e gh-aw continuam not-run. Não houve uso de modelo pago, persistência de autenticação, push, PR ou escrita em serviço GitHub nesta iteração. Os PRs antigos permanecem preservados; este ensaio não conclui as issues7–9 em produção.
