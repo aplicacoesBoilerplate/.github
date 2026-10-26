@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.0](https://github.com/aplicacoesBoilerplate/.github/compare/v0.0.2...v0.1.0) (2026-10-26)
+
+
+### Features
+
+* **docs:** publica documentação de projetos e workspaces ([#20](https://github.com/aplicacoesBoilerplate/.github/issues/20)) ([a9a6a51](https://github.com/aplicacoesBoilerplate/.github/commit/a9a6a51fc0707df819a187e3df4071be6e24bec2))
+
 ## [0.0.2](https://github.com/aplicacoesBoilerplate/.github/compare/v0.0.1...v0.0.2) (2026-10-25)
 
 
