@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0](https://github.com/aplicacoesBoilerplate/.github/compare/v0.1.0...v1.0.0) (2026-10-26)
+
+
+### Features
+
+* **agentic:** disponibilizar pilotos manuais de triagem e revisão ([#26](https://github.com/aplicacoesBoilerplate/.github/issues/26)) ([ad203b6](https://github.com/aplicacoesBoilerplate/.github/commit/ad203b65c2c01bfefd991615308904920e94a593))
+* **agentic:** homologar pilotos OpenCode/OpenRouter ([#25](https://github.com/aplicacoesBoilerplate/.github/issues/25)) ([077bcdd](https://github.com/aplicacoesBoilerplate/.github/commit/077bcdd281555cb4913bf6547dc2e10a1d5efdec))
+
 ## [0.1.0](https://github.com/aplicacoesBoilerplate/.github/compare/v0.0.2...v0.1.0) (2026-10-26)
 
 
