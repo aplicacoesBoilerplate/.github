@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 2,
+  "next_id": 3,
   "lessons": [
     {
       "id": "L-001",
@@ -22,6 +22,24 @@
       ],
       "created": "2026-10-24T06:57:17Z",
       "last_seen": "2026-10-24T06:57:17Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::declare and hash documentation context variables in the turbo task and assert the compiled pages base rather than trusting a successful build",
+      "text": "Declare and hash documentation context variables in the Turbo task and assert the compiled Pages base, rather than trusting a successful build.",
+      "signal": "ac_gap",
+      "scope": "documentation",
+      "status": "candidate",
+      "features": [
+        "package-documentation-infrastructure"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PDOC-03.AC3 (documentation)"
+      ],
+      "created": "2026-10-25T12:45:26Z",
+      "last_seen": "2026-10-25T12:45:26Z"
     }
   ]
 }
