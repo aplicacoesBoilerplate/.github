@@ -29,7 +29,7 @@ Comandos npm/Node em ci-scripts; gh-aw na raiz.
 ### Phase 1: Preparação
 
 ```text
-T1 → T2 → T3 → T4 → T5
+T1 → T2 → T3 → T4 → T5 → T6
 ```
 
 ## Task Breakdown
@@ -84,6 +84,16 @@ T1 → T2 → T3 → T4 → T5
 **Tests:** integration
 **Gate:** Build
 
+### T6: Transportar tarifação explícita do consumidor ao AWF
+**What:** corrigir unknown_model_ai_credits observado no primeiro run real com pricing por modelo exato, sem fallback global.
+**Where:** ci-scripts/scripts/agentic/CAgenticConfiguration.ts, CGhAwPilot.ts; config do consumidor e artefatos gerados.
+**Depends on:** T5
+**Requirement:** ARP-07
+**Done when:**
+- [x] Config opcional preserva compatibilidade; tarifas inválidas recusadas e valores zero/não zero chegam ao catálogo compilado do modelo selecionado. Node22 87/87, tipos e compilação/reprodução aprovados; revisão independente automática após este commit.
+**Tests:** integration
+**Gate:** Build
+
 ## Diagram-Definition Cross-Check
 
 | Task | Depends On | Diagram Shows | Status |
@@ -93,6 +103,7 @@ T1 → T2 → T3 → T4 → T5
 | T3 | T2 | T2→T3 | Match |
 | T4 | T3 | T3→T4 | Match |
 | T5 | T4 | T4→T5 | Match |
+| T6 | T5 | T5→T6 | Match |
 
 ## Test Co-location Validation
 
@@ -103,3 +114,4 @@ T1 → T2 → T3 → T4 → T5
 | T3 | integration | integration | Match |
 | T4 | integration | integration | Match |
 | T5 | integration | integration | Match |
+| T6 | integration | integration | Match |

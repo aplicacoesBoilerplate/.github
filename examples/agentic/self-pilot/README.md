@@ -19,6 +19,7 @@ A variável `API_KEY_OPENROUTER` deve existir no ambiente desse terminal. Não i
 - `engine`: `opencode` nesta primeira prova. `codex`/`claude` exigem adaptadores futuros e são recusados explicitamente.
 - `provider`: `openrouter`, `openai` ou `anthropic`; só OpenRouter está homologado neste piloto quando houver evidência de inferência aprovada. O formato de `model` é o ID do provedor, sem repetir o prefixo externo OpenCode.
 - `credentialEnv`: nome da variável no consumidor. O executor mapeia para a variável esperada pelo provedor; nunca coloca seu valor no config.
+- `pricing` opcional por processo: `input` e `output` em USD por token, números finitos não negativos. Quando informado, gera a tarifa AWF para o modelo exato, sem fallback global; a ausência mantém o catálogo do AWF. O modelo gratuito deste piloto declara ambos como zero, conforme API pública OpenRouter consultada em 2026-10-26. Esses dados permitem contabilizar AI Credits; não alteram o preço cobrado pelo provedor. Ao trocar de modelo, conferir e atualizar também as tarifas.
 - `timeoutMs`: 1000 a 120000. Não há fallback ou repetição automática para outro modelo.
 - `instructionsFile`: snapshot integral das diretrizes globais; o caller acrescenta o AGENTS.md do consumidor. Limite combinado: 64 KiB.
 - `sonar`: URL, chave do projeto, branch principal e scanner ficam preparados; `enabled` deve permanecer `false` até a implementação própria. Quality Gate obrigatório quando essa integração for ativada.

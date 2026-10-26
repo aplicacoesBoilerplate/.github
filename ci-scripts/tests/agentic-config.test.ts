@@ -38,3 +38,13 @@ test('AGP-08: configuração Sonar não permite gate opcional quando habilitado'
   assert.throws(() => CAgenticConfiguration.parse({ ...CONFIG, sonar: { ...CONFIG.sonar, enabled: true } }), /SonarQube/i);
   assert.throws(() => CAgenticConfiguration.parse({ ...CONFIG, sonar: { ...CONFIG.sonar, qualityGateRequired: false } }), /Quality Gate/i);
 });
+
+test('ARP-07: preserva preços por processo e rejeita tarifas inválidas sem inferir gratuidade', () => {
+  const withPricing = (PRICE: unknown): unknown => ({ ...CONFIG, processes: { ...CONFIG.processes, triage: { ...CONFIG.processes.triage, pricing: PRICE } } });
+  const RESULT = CAgenticConfiguration.parse(withPricing({ input: 0, output: 0 }));
+  assert.deepEqual(RESULT.processes.triage.pricing, { input: 0, output: 0 });
+  assert.equal(RESULT.processes.review.pricing, undefined);
+  for (const PRICE of [{ input: -1, output: 0 }, { input: NaN, output: 0 }, { input: 0, output: Infinity }, { input: '0', output: 0 }, { input: 0 }]) {
+    assert.throws(() => CAgenticConfiguration.parse(withPricing(PRICE)), /tarifa|pricing|obrigatório/i);
+  }
+});

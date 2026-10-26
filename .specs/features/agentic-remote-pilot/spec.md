@@ -45,6 +45,7 @@ O piloto local comprovou OpenCode/OpenRouter com triagem e revisão, mas não va
 1. WHEN o consumidor gerar workflows THEN o gerador SHALL preservar modelo, prompt, contexto e nome da credencial por processo, sem ler valores de autenticação. (ARP-01)
 2. WHEN os workflows forem compilados THEN o compilador SHALL produzir locks com entradas públicas exclusivamente workflow_dispatch, calleds workflow_call, contents/actions read e sem jobs de escrita ou detector Copilot. (ARP-02)
 3. WHILE o agente executar the engine SHALL usar a rota AWF OpenRouter/api/v1 com chave placeholder e política nativa que nega shell/escrita/acesso externo. (ARP-03)
+4. WHEN o consumidor informar pricing por processo THEN o gerador SHALL transportar input/output em USD por token, finitos e não negativos, para o catálogo AWF do modelo exato, aceitando zero explícito sem criar fallback global nem inferir preços ausentes. (ARP-07)
 
 **Independent Test:** executar o harness com fronteiras simuladas e inspecionar configurações efetivas; compilar com gh-aw fixado e conferir o grafo de jobs/credenciais.
 
@@ -74,6 +75,7 @@ O piloto local comprovou OpenCode/OpenRouter com triagem e revisão, mas não va
 | ARP-04 | Evidência | Execute | Verified locally |
 | ARP-05 | Evidência | Execute | Verified locally |
 | ARP-06 | Evidência | Execute | Verified preparation; remote pending |
+| ARP-07 | Callers | Execute | Local gates passed; independent review pending |
 
 ## Success Criteria
 

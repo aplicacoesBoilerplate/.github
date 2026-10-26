@@ -58,6 +58,7 @@ export class CGhAwPilot {
         permissions: { contents: 'read' },
         engine: { id: 'opencode', env: { OPENAI_BASE_URL: 'https://openrouter.ai/api/v1' } },
         model: 'openai/${{ inputs.model }}',
+        ...(PROCESS.pricing ? { models: { providers: { openai: { models: { [PROCESS.model]: { cost: PROCESS.pricing } } } } } } : {}),
         imports: ['shared/agentic-opencode.md'],
         'inlined-imports': true,
         network: { allowed: ['defaults', 'openrouter.ai'] },

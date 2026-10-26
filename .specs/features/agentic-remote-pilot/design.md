@@ -37,6 +37,8 @@ O caller YAML mapeia explicitamente sua secret para o secret requerido OPENAI_AP
 
 ## References
 
+Correção do primeiro run: pricing opcional em cada processo do JSON do consumidor, com input/output em USD por token. Renderizar models.providers.openai.models[modelo].cost, compatível com a família técnica do proxy. Ausência mantém o catálogo upstream; não adotar fallback global. A API pública OpenRouter confirmou preço zero para o modelo gratuito selecionado em 2026-10-26. Limites de turnos/tempo e credenciais não mudam.
+
 - https://github.com/github/gh-aw/tree/32ecafbc061c9af57e9361942099e381102ae304
 - https://github.github.com/gh-aw/reference/third-party-agent/
 - https://github.github.com/gh-aw/reference/imports/

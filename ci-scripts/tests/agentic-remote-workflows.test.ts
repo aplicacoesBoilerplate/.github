@@ -23,6 +23,12 @@ test('ARP-02/03: programa compilado não publica, não eleva permissões e exclu
     assert.equal(EXECUTE.env.OPENAI_BASE_URL, 'https://openrouter.ai/api/v1');
     assert.equal(EXECUTE.env.OPENCODE_MODEL, 'openai/${{ inputs.model }}');
     assert.equal(EXECUTE.env.GH_AW_MAX_TURNS, 4);
+    const CONFIG_LINE = EXECUTE.run.split('\n').find((LINE: string) => LINE.includes("printf '%s\\n'") && LINE.includes('apiProxy'));
+    const QUOTED = /printf '%s\\n' "(.*)" >/.exec(CONFIG_LINE ?? '')?.[1];
+    assert.ok(QUOTED, 'AWF deve receber a configuração compilada.');
+    const FIREWALL = JSON.parse(QUOTED.replace(/\\(["\\$`])/g, '$1').replace(/\$\{GH_AW_MAX_AI_CREDITS\}/g, '1000'));
+    assert.deepEqual(FIREWALL.apiProxy.providers?.openai?.models?.['liquid/lfm-2.5-2.6b:free']?.cost, { input: 0, output: 0 });
+    assert.equal(FIREWALL.apiProxy.defaultAiCreditsPricing, undefined);
     assert.match(EXECUTE.run, /awf --config/);
     assert.match(EXECUTE.run, /--openai-api-base-path \/api\/v1/);
     for (const KEY of ['OPENAI_API_KEY', 'CODEX_API_KEY', 'GITHUB_MCP_SERVER_TOKEN']) assert.ok(EXECUTE.run.includes(`--exclude-env ${KEY}`));
@@ -47,6 +53,7 @@ test('ARP-01/02: callers preservam processo/modelo/secret e geram somente aciona
     assert.deepEqual(HEADER.on, { workflow_call: { inputs: { model: { type: 'string', required: true } }, secrets: { OPENAI_API_KEY: { required: true } } } });
     assert.deepEqual(HEADER.permissions, { contents: 'read' });
     assert.equal(HEADER.model, 'openai/${{ inputs.model }}');
+    assert.deepEqual(HEADER.models?.providers?.openai?.models?.['liquid/lfm-2.5-2.6b:free']?.cost, { input: 0, output: 0 });
     assert.equal(HEADER.engine.env.OPENAI_BASE_URL, 'https://openrouter.ai/api/v1');
     assert.equal(HEADER.engine.env.OPENAI_API_KEY, undefined);
     assert.equal(HEADER.engine.env.CODEX_API_KEY, undefined);
@@ -75,11 +82,14 @@ test('ARP-01: alteração do modelo do consumidor propaga sem alterar o gerador'
     const CONFIG = JSON.parse(fs.readFileSync(FILE, 'utf8'));
     CONFIG.processes.review.model = 'provider/another-model';
     CONFIG.processes.review.credentialEnv = 'REVIEW_KEY';
+    CONFIG.processes.review.pricing = { input: 0.000003, output: 0.000015 };
     fs.writeFileSync(FILE, JSON.stringify(CONFIG));
     const OUTPUT = CGhAwPilot.render(ROOT, 'examples/agentic/self-pilot/config.json');
     const REVIEW = parse(OUTPUT['.github/workflows/agentic-review-pilot.yml']);
     assert.equal(REVIEW.jobs.pilot.with.model, 'provider/another-model');
     assert.equal(REVIEW.jobs.pilot.secrets.OPENAI_API_KEY, '${{ secrets.REVIEW_KEY }}');
+    const CALLED = parse(OUTPUT['.github/workflows/agentic-review.md'].split(/^---\s*$/m)[1]);
+    assert.deepEqual(CALLED.models?.providers?.openai?.models?.['provider/another-model']?.cost, { input: 0.000003, output: 0.000015 });
     fs.writeFileSync(path.join(ROOT, 'examples/agentic/self-pilot/issue.md'), '${{ secrets.DO_NOT_EXPAND }}');
     assert.throws(() => CGhAwPilot.render(ROOT, 'examples/agentic/self-pilot/config.json'), /interpolação/i);
   } finally { fs.rmSync(ROOT, { recursive: true, force: true }); }

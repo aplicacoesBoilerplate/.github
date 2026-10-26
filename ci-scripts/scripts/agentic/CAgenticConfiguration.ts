@@ -6,6 +6,7 @@ export interface IAgenticProcess {
   promptFile: string;
   inputFile: string;
   contextFiles: string[];
+  pricing?: { input: number; output: number };
 }
 
 export interface IAgenticConfiguration {
@@ -25,7 +26,7 @@ export class CAgenticConfiguration {
     this.path(CONFIG.instructionsFile);
     const PROCESSES = this.record(CONFIG.processes, ['triage', 'review']);
     for (const PROCESS of Object.values(PROCESSES)) {
-      const ITEM = this.record(PROCESS, ['engine', 'provider', 'model', 'credentialEnv', 'promptFile', 'inputFile', 'contextFiles']);
+      const ITEM = this.record(PROCESS, ['engine', 'provider', 'model', 'credentialEnv', 'promptFile', 'inputFile', 'contextFiles'], ['pricing']);
       if (ITEM.engine !== 'opencode') throw new Error('Engine ainda não implementada neste piloto.');
       if (!['openrouter', 'openai', 'anthropic'].includes(String(ITEM.provider))) throw new Error('Provedor não suportado.');
       if (typeof ITEM.model !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:/-]{1,180}$/.test(ITEM.model)) throw new Error('Modelo inválido.');
@@ -34,6 +35,12 @@ export class CAgenticConfiguration {
       this.path(ITEM.inputFile);
       if (!Array.isArray(ITEM.contextFiles) || ITEM.contextFiles.length < 1 || ITEM.contextFiles.length > 10) throw new Error('Selecione de 1 a 10 arquivos de contexto.');
       ITEM.contextFiles.forEach(FILE => this.path(FILE));
+      if ('pricing' in ITEM) {
+        const PRICING = this.record(ITEM.pricing, ['input', 'output']);
+        for (const RATE of Object.values(PRICING)) {
+          if (typeof RATE !== 'number' || !Number.isFinite(RATE) || RATE < 0) throw new Error('Tarifa deve ser um número finito não negativo.');
+        }
+      }
     }
     const SONAR = this.record(CONFIG.sonar, ['enabled', 'hostUrl', 'projectKey', 'mainBranch', 'scanner', 'qualityGateRequired']);
     if (SONAR.qualityGateRequired !== true) throw new Error('Quality Gate deve ser obrigatório.');
@@ -47,10 +54,10 @@ export class CAgenticConfiguration {
     if (typeof pValue !== 'string' || !/^[\w.-]+(?:\/[\w.-]+)*$/.test(pValue) || pValue.split('/').some(PART => PART === '..' || PART === '.')) throw new Error('Caminho deve ser relativo e permanecer no repositório.');
   }
 
-  private static record(pValue: unknown, pKeys: string[]): Record<string, unknown> {
+  private static record(pValue: unknown, pKeys: string[], pOptional: string[] = []): Record<string, unknown> {
     if (!pValue || typeof pValue !== 'object' || Array.isArray(pValue)) throw new Error('Configuração deve ser objeto.');
     const RECORD = pValue as Record<string, unknown>;
-    for (const KEY of Object.keys(RECORD)) if (!pKeys.includes(KEY)) throw new Error(`Campo desconhecido: ${KEY}`);
+    for (const KEY of Object.keys(RECORD)) if (![...pKeys, ...pOptional].includes(KEY)) throw new Error(`Campo desconhecido: ${KEY}`);
     for (const KEY of pKeys) if (!(KEY in RECORD)) throw new Error(`Campo obrigatório: ${KEY}`);
     return RECORD;
   }

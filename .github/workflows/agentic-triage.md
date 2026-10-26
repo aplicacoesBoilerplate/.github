@@ -16,6 +16,14 @@ engine:
   env:
     OPENAI_BASE_URL: https://openrouter.ai/api/v1
 model: openai/${{ inputs.model }}
+models:
+  providers:
+    openai:
+      models:
+        liquid/lfm-2.5-2.6b:free:
+          cost:
+            input: 0
+            output: 0
 imports:
   - shared/agentic-opencode.md
 inlined-imports: true
