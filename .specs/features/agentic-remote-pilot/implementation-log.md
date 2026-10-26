@@ -41,3 +41,11 @@ Revisão2 confirmou PASS de preparação: baseline8/8 contratos e os três mutan
 ## Cadastro da credencial remota
 
 Em 2026-10-26 o usuário confirmou o cadastro da secret API_KEY_OPENROUTER. Seu valor não foi acessado e nenhuma inferência foi disparada. Publicação/integração dos workflows e primeiro run real permanecem pendentes.
+
+## Publicação autorizada e CI remota
+
+Em 2026-10-26 o usuário autorizou o push e o PR draft. Branch publicada e PR24 aberto por agentegersonfribeiro-AI para release/v1.0.0, milestone v1.0.0, label Pipelines, Project GitHub Features/In review; Priority Urgent, Size XL, Effort Team, Estimate5 da #9. Revisão solicitada a gersonfribeiro. Referências não fecham as issues7–9; PRs14–16 preservados.
+
+Base formal da milestone está53 commits atrás da master4176883. O corpo do PR distingue esse baseline já publicado do intervalo próprio do piloto e exige alinhar a integração antes do merge. A release e a master não foram alteradas.
+
+CI remota40411970600 passou em3559bd9, incluindo testes/types/reprodução gh-aw Linux. Higiene40411970659 e build de documentação40411970613 também passaram. Essas execuções não chamam LLM: o primeiro run de inferência AWF/OpenRouter continua pendente de revisão e integração dos callers na branch padrão.
