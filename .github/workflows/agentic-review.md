@@ -14,7 +14,7 @@ permissions:
 engine:
   id: opencode
   env:
-    OPENAI_BASE_URL: https://openrouter.ai/api/v1
+    OPENAI_BASE_URL: https://openrouter.ai/api
 model: openai/${{ inputs.model }}
 models:
   providers:

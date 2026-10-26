@@ -20,7 +20,7 @@ test('ARP-02/03: programa compilado não publica, não eleva permissões e exclu
     }
     const EXECUTE = WORKFLOW.jobs.agent.steps.find((STEP: { name: string }) => STEP.name === 'Execute OpenCode CLI');
     assert.equal(EXECUTE.env.AWF_REFLECT_ENABLED, 1);
-    assert.equal(EXECUTE.env.OPENAI_BASE_URL, 'https://openrouter.ai/api/v1');
+    assert.equal(EXECUTE.env.OPENAI_BASE_URL, 'https://openrouter.ai/api');
     assert.equal(EXECUTE.env.OPENCODE_MODEL, 'openai/${{ inputs.model }}');
     assert.equal(EXECUTE.env.GH_AW_MAX_TURNS, 4);
     const CONFIG_LINE = EXECUTE.run.split('\n').find((LINE: string) => LINE.includes("printf '%s\\n'") && LINE.includes('apiProxy'));
@@ -30,7 +30,11 @@ test('ARP-02/03: programa compilado não publica, não eleva permissões e exclu
     assert.deepEqual(FIREWALL.apiProxy.providers?.openai?.models?.['liquid/lfm-2.5-2.6b:free']?.cost, { input: 0, output: 0 });
     assert.equal(FIREWALL.apiProxy.defaultAiCreditsPricing, undefined);
     assert.match(EXECUTE.run, /awf --config/);
-    assert.match(EXECUTE.run, /--openai-api-base-path \/api\/v1/);
+    const BASE_PATH = /--openai-api-base-path (\S+)/.exec(EXECUTE.run)?.[1];
+    assert.equal(BASE_PATH, '/api');
+    // AWF 0.28.70 prefixa a rota /v1 anunciada pelo seu próprio /reflect.
+    assert.equal(`${BASE_PATH}/v1/chat/completions`, '/api/v1/chat/completions');
+    assert.equal(`${BASE_PATH}/v1/models`, '/api/v1/models');
     for (const KEY of ['OPENAI_API_KEY', 'CODEX_API_KEY', 'GITHUB_MCP_SERVER_TOKEN']) assert.ok(EXECUTE.run.includes(`--exclude-env ${KEY}`));
     const MANIFEST = JSON.parse(TEXT.split('\n')[1].replace('# gh-aw-manifest: ', ''));
     assert.deepEqual(MANIFEST.mcp_servers, [{ name: 'github', tools: ['get_file_contents'] }]);
@@ -54,7 +58,7 @@ test('ARP-01/02: callers preservam processo/modelo/secret e geram somente aciona
     assert.deepEqual(HEADER.permissions, { contents: 'read' });
     assert.equal(HEADER.model, 'openai/${{ inputs.model }}');
     assert.deepEqual(HEADER.models?.providers?.openai?.models?.['liquid/lfm-2.5-2.6b:free']?.cost, { input: 0, output: 0 });
-    assert.equal(HEADER.engine.env.OPENAI_BASE_URL, 'https://openrouter.ai/api/v1');
+    assert.equal(HEADER.engine.env.OPENAI_BASE_URL, 'https://openrouter.ai/api');
     assert.equal(HEADER.engine.env.OPENAI_API_KEY, undefined);
     assert.equal(HEADER.engine.env.CODEX_API_KEY, undefined);
     assert.deepEqual(HEADER['safe-outputs'], { 'create-issue': false, noop: false, 'report-missing-data': false, 'report-missing-tool': false, 'report-incomplete': false, 'report-failure-as-issue': false, 'report-failed-jobs': false, 'threat-detection': false });

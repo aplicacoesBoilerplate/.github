@@ -75,7 +75,7 @@ O piloto local comprovou OpenCode/OpenRouter com triagem e revisão, mas não va
 | ARP-04 | Evidência | Execute | Verified locally |
 | ARP-05 | Evidência | Execute | Verified locally |
 | ARP-06 | Evidência | Execute | Verified preparation; remote pending |
-| ARP-07 | Callers | Execute | Local gates passed; independent review pending |
+| ARP-07 | Callers | Execute | Verified independently; pricing-validation.md |
 
 ## Success Criteria
 

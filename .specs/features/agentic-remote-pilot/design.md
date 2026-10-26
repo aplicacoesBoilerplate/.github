@@ -26,6 +26,8 @@ O caller YAML mapeia explicitamente sua secret para o secret requerido OPENAI_AP
 
 ## Risks & Concerns
 
+O env técnico remoto OPENAI_BASE_URL usa https://openrouter.ai/api como prefixo upstream do AWF0.28.70. O harness descobre /v1 via /reflect e o proxy concatena os caminhos: /api + /v1/chat/completions resulta em /api/v1/chat/completions. Usar /api/v1 nesse env duplica /v1 e causa404. A URL pública direta continua https://openrouter.ai/api/v1; o executor local não muda. O fetch inicial de catálogo do pin pode consultar /api/models sem abortar; o helper recupera por /v1/models, encaminhado corretamente a /api/v1/models.
+
 | Concern | Mitigation |
 | --- | --- |
 | Sample experimental permite shell/escrita por padrão | Política deny por padrão, somente leitura; teste executa o harness contra fronteiras simuladas |

@@ -29,7 +29,7 @@ Comandos npm/Node em ci-scripts; gh-aw na raiz.
 ### Phase 1: Preparação
 
 ```text
-T1 → T2 → T3 → T4 → T5 → T6
+T1 → T2 → T3 → T4 → T5 → T6 → T7
 ```
 
 ## Task Breakdown
@@ -94,6 +94,16 @@ T1 → T2 → T3 → T4 → T5 → T6
 **Tests:** integration
 **Gate:** Build
 
+### T7: Corrigir prefixo upstream do OpenRouter
+**What:** preservar /api/v1 no destino real sem duplicar /v1 já anunciado por /reflect; corrigir o404 reproduzido no piloto40421313262.
+**Where:** ci-scripts/scripts/agentic/CGhAwPilot.ts
+**Depends on:** T6
+**Requirement:** ARP-03
+**Done when:**
+- [x] Prefixo AWF /api produz /api/v1/models e /api/v1/chat/completions; suíte Node22 87/87, tipos e locks strict/validate reproduzidos passam. Revisão independente automática após o commit; novo piloto exigido antes da promoção.
+**Tests:** integration
+**Gate:** Build
+
 ## Diagram-Definition Cross-Check
 
 | Task | Depends On | Diagram Shows | Status |
@@ -104,6 +114,7 @@ T1 → T2 → T3 → T4 → T5 → T6
 | T4 | T3 | T3→T4 | Match |
 | T5 | T4 | T4→T5 | Match |
 | T6 | T5 | T5→T6 | Match |
+| T7 | T6 | T6→T7 | Match |
 
 ## Test Co-location Validation
 
@@ -115,3 +126,4 @@ T1 → T2 → T3 → T4 → T5 → T6
 | T4 | integration | integration | Match |
 | T5 | integration | integration | Match |
 | T6 | integration | integration | Match |
+| T7 | integration | integration | Match |

@@ -56,7 +56,8 @@ export class CGhAwPilot {
         description: `Piloto ${NAME} manual, somente leitura e artefatos`,
         on: { workflow_call: { inputs: { model: { type: 'string', required: true } }, secrets: { OPENAI_API_KEY: { required: true } } } },
         permissions: { contents: 'read' },
-        engine: { id: 'opencode', env: { OPENAI_BASE_URL: 'https://openrouter.ai/api/v1' } },
+        // Prefixo upstream do AWF: /reflect já fornece /v1 ao harness.
+        engine: { id: 'opencode', env: { OPENAI_BASE_URL: 'https://openrouter.ai/api' } },
         model: 'openai/${{ inputs.model }}',
         ...(PROCESS.pricing ? { models: { providers: { openai: { models: { [PROCESS.model]: { cost: PROCESS.pricing } } } } } } : {}),
         imports: ['shared/agentic-opencode.md'],
