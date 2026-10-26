@@ -50,7 +50,7 @@ T1 → T2 → T3 → T4
 **Depends on:** T1
 **Requirement:** ARP-01, ARP-02
 **Done when:**
-- [ ] Modelos/prompts preservados; fonte de secret é o consumidor; locks estritos somente manuais/read-only.
+- [x] Modelos/prompts preservados; secret explicitamente mapeada pelo caller; locks estritos workflow_call e callers manuais, sem escrita/detector. Compilador real aprovou os dois locks sem avisos; cinco testes e tipos aprovados.
 **Tests:** integration
 **Gate:** Full
 

@@ -4,7 +4,7 @@
 
 ## Architecture Overview
 
-Config do consumidor → gerador TypeScript → dois callers Markdown → gh-aw0.93.5 → locks versionados → workflow_dispatch → AWF/OpenCode → verificação de integridade + artefatos.
+Config do consumidor → gerador TypeScript → dois calleds Markdown + callers YAML manuais → gh-aw0.93.5 → locks versionados → workflow_dispatch → AWF/OpenCode → verificação de integridade + artefatos.
 
 O gerador reutiliza CAgenticConfiguration e o JSON examples/agentic/self-pilot/config.json. Cada consumidor mantém suas escolhas e secrets; a biblioteca central não armazena autenticação. As diretrizes globais integrais, AGENTS do consumidor, prompt e dados selecionados entram no prompt compilado com hashes. Conteúdo de dados não pode introduzir expressões Actions/macros.
 
@@ -14,15 +14,15 @@ Escolhida a continuação OpenCode/gh-aw pedida pelo usuário. Pi continua alter
 
 ## Components
 
-- shared/agentic-opencode.md: definição upstream do engine, pin32ecafbc061c9af57e9361942099e381102ae304, versão2.0.26. Adaptar apenas política nativa de ferramentas; preservar AWF/reflection/protocolo/contabilidade.
+- shared/agentic-opencode.md: definição upstream do engine, pin32ecafbc061c9af57e9361942099e381102ae304, versão2.0.26. Exigir AWF e remover chaves reais do filho; adaptar política nativa de ferramentas; preservar AWF/reflection/protocolo/contabilidade.
 - CGhAwPilot.ts: renderizador de callers e manifesto de fingerprints, com modo check para CI. Sem acesso a valores de ambiente para credenciais.
 - remote-pilot.ts: guard pre/post no runner, compara hashes e workspace e escreve proveniência no RUNNER_TEMP.
-- agentic-triage.md e agentic-review.md: consumidores gerados com engine/model/auth explícitos e nenhum safe-outputs.
+- agentic-triage.md e agentic-review.md: consumidores gerados com engine/model/auth explícitos e todos os handlers de publicação desativados.
 - CI: reproduzir geração/compilação com ferramenta fixada e verificar ausência de drift. Não chamar LLM na CI de PR.
 
 ## Authentication and publication
 
-engine.env mapeia OPENAI_API_KEY e CODEX_API_KEY para a secret do consumidor, e OPENAI_BASE_URL para OpenRouter. A família técnica openai permite ao AWF selecionar a API compatível; o provedor continua OpenRouter. O agente recebe awf-proxy, não a chave real. Nenhuma secret Copilot é exigida porque safe-outputs está completamente ausente. Antes de habilitar escrita futura, especificar detector compatível e gates próprios.
+O caller YAML mapeia explicitamente sua secret para o secret requerido OPENAI_API_KEY do workflow_call; engine.env contém somente OPENAI_BASE_URL para OpenRouter. Não usar secrets: inherit. A família técnica openai permite ao AWF selecionar a API compatível; o provedor continua OpenRouter. O agente recebe awf-proxy, não a chave real. Nenhuma secret Copilot é exigida: create-issue, noop, report-missing-data, report-missing-tool, report-incomplete, report-failure-as-issue, report-failed-jobs e threat-detection estão explicitamente false. O pin injeta publicação quando o bloco é omitido. O detector só permanece fora deste piloto sem escrita; habilitar publicação exige novo contrato. Antes de habilitar escrita futura, especificar detector compatível e gates próprios.
 
 ## Risks & Concerns
 
@@ -41,3 +41,5 @@ engine.env mapeia OPENAI_API_KEY e CODEX_API_KEY para a secret do consumidor, e 
 - https://github.github.com/gh-aw/reference/third-party-agent/
 - https://github.github.com/gh-aw/reference/imports/
 - https://github.github.com/gh-aw/reference/threat-detection/
+
+O pin requer ao menos um MCP para AWF: usar GitHub local/read-only, somente get_file_contents, allowed-repos do consumidor e min-integrity merged. A política nativa continua negando ferramentas que não sejam read/glob/grep. O job conclusion permanece para diagnóstico, com actions read. O timeout de oito minutos limita a etapa de inferência; o job gerado mantém o orçamento de infraestrutura de sessenta minutos. max-turns=4 chega ao harness.

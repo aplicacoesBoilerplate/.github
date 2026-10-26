@@ -1,0 +1,13 @@
+name: Agentic review pilot
+on:
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  actions: read
+jobs:
+  pilot:
+    uses: ./.github/workflows/agentic-review.lock.yml
+    with:
+      model: liquid/lfm-2.5-2.6b:free
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.API_KEY_OPENROUTER }}

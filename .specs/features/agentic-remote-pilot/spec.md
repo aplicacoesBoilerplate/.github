@@ -31,7 +31,7 @@ O piloto local comprovou OpenCode/OpenRouter com triagem e revisão, mas não va
 | Primeiro acionamento | workflow_dispatch, somente leitura e artefatos | Permite homologar sem autorizar escrita por modelo | Default técnico comunicado |
 | Engine | Sample gh-aw32ecafbc, com política nativa de ferramentas restringida localmente | Sample upstream permite escrita/shell por padrão | Default técnico |
 | Compatibilidade | Família técnica openai com baseURL OpenRouter e Chat Completions | Adaptador upstream suporta essa rota via AWF; não representa troca para provedor OpenAI | Verificado na fonte |
-| Detector | safe-outputs ausente por completo | Não há publicação para detectar; não desativar detector de fluxos com escrita | Verificado na fonte |
+| Detector | Handlers de publicação explicitamente false | O pin injeta publicação se ausente; detector fica fora somente deste ensaio sem escrita | Verificado na fonte |
 | Ambiente local | Compilação Windows; Docker daemon indisponível | Execução AWF/Linux permanece evidência remota futura | Verificado |
 
 **Open questions:** none; defaults técnicos explícitos, cadastro e execução reais permanecem pendentes.
@@ -43,7 +43,7 @@ O piloto local comprovou OpenCode/OpenRouter com triagem e revisão, mas não va
 **Acceptance Criteria**:
 
 1. WHEN o consumidor gerar workflows THEN o gerador SHALL preservar modelo, prompt, contexto e nome da credencial por processo, sem ler valores de autenticação. (ARP-01)
-2. WHEN os workflows forem compilados THEN o compilador SHALL produzir locks com acionamento exclusivamente manual, contents read e sem jobs de escrita ou detector Copilot. (ARP-02)
+2. WHEN os workflows forem compilados THEN o compilador SHALL produzir locks com entradas públicas exclusivamente workflow_dispatch, calleds workflow_call, contents/actions read e sem jobs de escrita ou detector Copilot. (ARP-02)
 3. WHILE o agente executar the engine SHALL usar a rota AWF OpenRouter/api/v1 com chave placeholder e política nativa que nega shell/escrita/acesso externo. (ARP-03)
 
 **Independent Test:** executar o harness com fronteiras simuladas e inspecionar configurações efetivas; compilar com gh-aw fixado e conferir o grafo de jobs/credenciais.
@@ -68,9 +68,9 @@ O piloto local comprovou OpenCode/OpenRouter com triagem e revisão, mas não va
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| ARP-01 | Callers | Execute | Pending |
-| ARP-02 | Callers | Execute | Pending |
-| ARP-03 | Callers | Execute | Pending |
+| ARP-01 | Callers | Execute | Verified locally |
+| ARP-02 | Callers | Execute | Verified locally |
+| ARP-03 | Callers | Execute | Harness contract verified; remote pending |
 | ARP-04 | Evidência | Execute | Pending |
 | ARP-05 | Evidência | Execute | Pending |
 | ARP-06 | Evidência | Execute | Pending |
