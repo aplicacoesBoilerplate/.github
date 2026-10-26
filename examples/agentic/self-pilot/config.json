@@ -14,7 +14,7 @@
     "triage": {
       "engine": "opencode",
       "provider": "openrouter",
-      "model": "google/gemma-4-26b-a4b-it:free",
+      "model": "liquid/lfm-2.5-2.6b:free",
       "credentialEnv": "API_KEY_OPENROUTER",
       "promptFile": "examples/agentic/self-pilot/triage-prompt.md",
       "inputFile": "examples/agentic/self-pilot/issue.md",
@@ -23,7 +23,7 @@
     "review": {
       "engine": "opencode",
       "provider": "openrouter",
-      "model": "google/gemma-4-31b-it:free",
+      "model": "liquid/lfm-2.5-2.6b:free",
       "credentialEnv": "API_KEY_OPENROUTER",
       "promptFile": "examples/agentic/self-pilot/review-prompt.md",
       "inputFile": "examples/agentic/self-pilot/change.patch",

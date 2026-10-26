@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -14,7 +14,8 @@ export class COpenCodePilot {
     const KEY = pEnvironment[pProcess.credentialEnv];
     if (!KEY?.trim()) throw new Error(`Credencial ausente: ${pProcess.credentialEnv}`);
     for (const FILE of Object.keys(pFiles)) CAgenticConfiguration.path(FILE);
-    if (Buffer.byteLength(pPrompt) > 8192 || Object.values(pFiles).reduce((SUM, TEXT) => SUM + Buffer.byteLength(TEXT), 0) > 131072) throw new Error('Contexto excede o limite do piloto.');
+    if (Buffer.byteLength(pFiles['AGENTS.md'] || '') > 65536) throw new Error('Diretrizes excedem o limite de 64 KiB.');
+    if (Buffer.byteLength(pPrompt) > 8192 || Object.entries(pFiles).filter(([FILE]) => FILE !== 'AGENTS.md').reduce((SUM, [, TEXT]) => SUM + Buffer.byteLength(TEXT), Buffer.byteLength(pPrompt)) > 65536) throw new Error('Contexto excede o limite de 64 KiB.');
     const ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'agentic-pilot-'));
     const WORKSPACE = path.join(ROOT, 'workspace');
     const PROFILE = path.join(ROOT, 'profile');
@@ -31,7 +32,7 @@ export class COpenCodePilot {
         ...Object.keys(pFiles).map(FILE => ({ action: 'read', resource: FILE, effect: 'allow' })),
       ];
       const CONFIG = {
-        model: `${pProcess.provider}/${pProcess.model}`, default_agent: 'pilot', snapshots: false,
+        model: `${pProcess.provider}/${pProcess.model}`, default_agent: 'pilot', snapshots: false, instructions: ['AGENTS.md'],
         permissions: PERMISSIONS, mcp: { servers: {} },
         agents: { pilot: { description: 'Análise local controlada', mode: 'primary', permissions: PERMISSIONS } },
       };
@@ -45,6 +46,8 @@ export class COpenCodePilot {
         XDG_STATE_HOME: path.join(PROFILE, '.local', 'state'), APPDATA: path.join(PROFILE, 'AppData', 'Roaming'),
         LOCALAPPDATA: path.join(PROFILE, 'AppData', 'Local'), PROGRAMDATA: path.join(ROOT, 'system'),
         TMP: ROOT, TEMP: ROOT, TMPDIR: ROOT, CI: 'true', NO_COLOR: '1',
+        OPENCODE_DISABLE_PROJECT_CONFIG: '1', OPENCODE_CONFIG: path.join(WORKSPACE, 'opencode.json'),
+        OPENCODE_CONFIG_DIR: GLOBAL, OPENCODE_TEST_HOME: PROFILE,
       };
       for (const NAME of ['PATH', 'SystemRoot', 'SYSTEMROOT', 'COMSPEC', 'PATHEXT']) if (process.env[NAME]) ENV[NAME] = process.env[NAME];
       const CREDENTIAL = { openrouter: 'OPENROUTER_API_KEY', openai: 'OPENAI_API_KEY', anthropic: 'ANTHROPIC_API_KEY' }[pProcess.provider];
@@ -67,19 +70,28 @@ export class COpenCodePilot {
 
   private execute(pArgs: string[], pCwd: string, pEnv: NodeJS.ProcessEnv, pTimeoutMs: number): Promise<string> {
     return new Promise((RESOLVE, REJECT) => {
-      const CHILD = spawn(this.EXECUTABLE, pArgs, { cwd: pCwd, env: pEnv, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+      const CHILD = spawn(this.EXECUTABLE, pArgs, { cwd: pCwd, env: pEnv, shell: false, windowsHide: true, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] });
       let OUTPUT = '';
+      let DIAGNOSTIC = '';
       let FAILURE = '';
-      const TIMER = setTimeout(() => { FAILURE = 'OpenCode timeout.'; CHILD.kill(); }, pTimeoutMs);
+      const TERMINATE = (): void => {
+        if (!CHILD.pid) return;
+        try {
+          if (process.platform === 'win32') execFileSync(path.join(pEnv.SystemRoot || pEnv.SYSTEMROOT || 'C:\\Windows', 'System32', 'taskkill.exe'), ['/PID', String(CHILD.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore', timeout: 3000, env: { SystemRoot: pEnv.SystemRoot || pEnv.SYSTEMROOT, PATH: pEnv.PATH } });
+          else process.kill(-CHILD.pid, 'SIGKILL');
+        } catch { CHILD.kill(); }
+      };
+      const TIMER = setTimeout(() => { FAILURE = 'OpenCode timeout.'; TERMINATE(); }, pTimeoutMs);
       CHILD.stdout.on('data', (CHUNK: Buffer) => {
         OUTPUT += CHUNK.toString('utf8');
-        if (Buffer.byteLength(OUTPUT) > 1048576) { FAILURE = 'OpenCode excedeu o limite de resposta.'; CHILD.kill(); }
+        if (Buffer.byteLength(OUTPUT) > 1048576) { FAILURE = 'OpenCode excedeu o limite de resposta.'; TERMINATE(); }
       });
-      CHILD.stderr.resume();
+      CHILD.stderr.on('data', (CHUNK: Buffer) => { DIAGNOSTIC = (DIAGNOSTIC + CHUNK.toString('utf8')).slice(-8192); });
       CHILD.once('error', () => { clearTimeout(TIMER); REJECT(new Error('OpenCode falhou ao iniciar.')); });
       CHILD.once('close', CODE => {
         clearTimeout(TIMER);
-        if (FAILURE || CODE !== 0) REJECT(new Error(FAILURE || `OpenCode falhou com código ${CODE}.`));
+        const DETAIL = ['OPENROUTER_API_KEY', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY'].reduce((TEXT, NAME) => pEnv[NAME] ? TEXT.replaceAll(pEnv[NAME]!, '[REDACTED]') : TEXT, DIAGNOSTIC || OUTPUT).slice(-2000);
+        if (FAILURE || CODE !== 0) REJECT(new Error(FAILURE || `OpenCode falhou com código ${CODE}. ${DETAIL}`));
         else RESOLVE(OUTPUT);
       });
     });

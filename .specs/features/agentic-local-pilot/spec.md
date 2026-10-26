@@ -29,7 +29,7 @@ As issues #7, #8 e #9 precisam validar um harness com vários provedores antes d
 | Execução inicial | Local, resultados locais | Escolha explícita do usuário no esclarecimento | Sim |
 | Harness e provedor | OpenCode 2.0.26 e OpenRouter | Usuário escolheu engine com vários provedores e disponibilizou API key | Sim |
 | Uso de credencial | API_KEY_OPENROUTER mapeada apenas para OPENROUTER_API_KEY no processo filho | A chave pertence ao consumidor; não entra em arquivo | Sim |
-| Modelos iniciais | Dois IDs gratuitos disponíveis no catálogo, fixados no exemplo por processo | Demonstrar configuração independente sem cobrança de inferência; disponibilidade precisa ser verificada | Proposta técnica |
+| Modelos iniciais | liquid/lfm-2.5-2.6b:free declarado separadamente nos dois processos | Gemma gratuito retornou429; Liquid respondeu ao probe direto. IDs distintos já são testados no contrato; não há fallback automático | Decisão técnica do piloto |
 | Entrada de triagem | Caso controlado sobre caminho de pacote no código real da master | Exercitar decisão e contexto sem criar issue remota | Proposta técnica |
 | Entrada de revisão | Patch controlado de regressão na validação de caminhos | Permitir avaliar a resposta contra uma falha conhecida no código real | Proposta técnica |
 | SonarQube | enabled=false; mainBranch=develop; scanner=cli; gate obrigatório quando habilitado | Servidor em preparação; preservar fluxo corretivo aprovado | Sim quanto ao fluxo; nomes de campos são proposta |

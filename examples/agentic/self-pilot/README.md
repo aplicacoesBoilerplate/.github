@@ -31,4 +31,6 @@ JSONs locais ficam em `ci-scripts/tmp-agentic-results/`, ignorados pelo Git. O r
 
 Os casos são controlados: faltam metadados na triagem e o patch de review remove uma proteção contra traversal. O patch não é aplicado ao código original. Os modelos gratuitos podem estar indisponíveis ou sujeitos a limites; uma falha deve permanecer explícita.
 
+O exemplo foi ajustado explicitamente para `liquid/lfm-2.5-2.6b:free` nos dois processos após o pool gratuito Gemma retornar429. Cada campo continua independente; o teste de contrato usa IDs diferentes. O executor não troca de modelo por conta própria.
+
 Esta prova não homologa gh-aw, publicação, MCP ou Quality Gate. O adapter de exemplo gh-aw precisa de uma prova separada de endpoint, isolamento e detector antes da ativação no Actions.
