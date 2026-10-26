@@ -71,8 +71,8 @@ O piloto local comprovou OpenCode/OpenRouter com triagem e revisão, mas não va
 | ARP-01 | Callers | Execute | Verified locally |
 | ARP-02 | Callers | Execute | Verified locally |
 | ARP-03 | Callers | Execute | Harness contract verified; remote pending |
-| ARP-04 | Evidência | Execute | Pending |
-| ARP-05 | Evidência | Execute | Pending |
+| ARP-04 | Evidência | Execute | Verified locally |
+| ARP-05 | Evidência | Execute | Verified locally |
 | ARP-06 | Evidência | Execute | Pending |
 
 ## Success Criteria

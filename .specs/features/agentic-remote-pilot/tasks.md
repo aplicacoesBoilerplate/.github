@@ -60,7 +60,7 @@ T1 → T2 → T3 → T4
 **Depends on:** T2
 **Requirement:** ARP-04, ARP-05
 **Done when:**
-- [ ] Guard recusa inputs/workspace divergentes e grava somente metadados sem credencial.
+- [x] Guard recusa SHA/modelo/origem/contexto divergente e compara hashes de todos os arquivos versionados; somente metadados na evidência. Oito testes contratuais e typecheck aprovados.
 **Tests:** integration
 **Gate:** Quick
 
