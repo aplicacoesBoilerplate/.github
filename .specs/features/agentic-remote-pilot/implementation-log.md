@@ -37,3 +37,7 @@ Gate no Node22 da CI: 86/86 testes passam, zero skips; typecheck aprovado. O rel
 ## Fechamento da preparação
 
 Revisão2 confirmou PASS de preparação: baseline8/8 contratos e os três mutantes sobreviventes agora mortos. Cinco riscos de autenticação/política/modelo já discriminados na rodada1; total8/8. Suíte completa86/86 no Node22 e tipos aprovados. Relatório distingue contrato simulado de homologação remota: cadastro da secret, publicação/integração e primeiro run ainda pendentes. A chave real não foi utilizada nesta preparação e não foi gravada no repositório.
+
+## Cadastro da credencial remota
+
+Em 2026-10-26 o usuário confirmou o cadastro da secret API_KEY_OPENROUTER. Seu valor não foi acessado e nenhuma inferência foi disparada. Publicação/integração dos workflows e primeiro run real permanecem pendentes.

@@ -19,7 +19,7 @@ O piloto local comprovou OpenCode/OpenRouter com triagem e revisão, mas não va
 | Comentários, PRs, atualização de issues/Projects ou eventos automáticos | Primeiro piloto remoto valida transporte, isolamento e resultados controlados. |
 | Scanner/MCP SonarQube, provedores adicionais e detector para publicação | Servidor em preparação; nenhuma publicação do agente habilitada nesta etapa. |
 | Declarar sucesso remoto antes de uma execução real | Compilação e testes locais apenas deixam o piloto pronto. |
-| Merge da entrega ou criação automática da secret pelo agente | Merge humano; usuário informou que ainda precisa cadastrar a secret. |
+| Merge da entrega ou criação automática da secret pelo agente | Merge humano; usuário confirmou o cadastro da secret em 2026-10-26. |
 
 ## Assumptions & Open Questions
 
@@ -27,14 +27,14 @@ O piloto local comprovou OpenCode/OpenRouter com triagem e revisão, mas não va
 | --- | --- | --- | --- |
 | Consumidor | aplicacoesBoilerplate/.github | Decisão explícita anterior do usuário | Sim |
 | Modelo e provedor | JSON do consumidor já existente; OpenCode/OpenRouter | Continuação autorizada do piloto local | Sim |
-| Credencial remota | Secret API_KEY_OPENROUTER cadastrada pelo usuário | Variável local não é enviada ao Actions; bot não tem administração de secrets | Sim, cadastro pendente |
+| Credencial remota | Secret API_KEY_OPENROUTER cadastrada pelo usuário | Variável local não é enviada ao Actions; bot não tem administração de secrets | Cadastro confirmado pelo usuário em 2026-10-26; uso real pendente |
 | Primeiro acionamento | workflow_dispatch, somente leitura e artefatos | Permite homologar sem autorizar escrita por modelo | Default técnico comunicado |
 | Engine | Sample gh-aw32ecafbc, com política nativa de ferramentas restringida localmente | Sample upstream permite escrita/shell por padrão | Default técnico |
 | Compatibilidade | Família técnica openai com baseURL OpenRouter e Chat Completions | Adaptador upstream suporta essa rota via AWF; não representa troca para provedor OpenAI | Verificado na fonte |
 | Detector | Handlers de publicação explicitamente false | O pin injeta publicação se ausente; detector fica fora somente deste ensaio sem escrita | Verificado na fonte |
 | Ambiente local | Compilação Windows; Docker daemon indisponível | Execução AWF/Linux permanece evidência remota futura | Verificado |
 
-**Open questions:** none; defaults técnicos explícitos, cadastro e execução reais permanecem pendentes.
+**Open questions:** none; defaults técnicos explícitos, cadastro confirmado pelo usuário; publicação/integração e execução real permanecem pendentes.
 
 ## User Stories
 
