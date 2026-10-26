@@ -70,7 +70,7 @@ T1 → T2 → T3 → T4
 **Depends on:** T3
 **Requirement:** ARP-06
 **Done when:**
-- [ ] Gates e revisão independente aprovados; instruções exatas da secret/ativação e pendências reais registradas.
+- [x] CI de reprodução e instruções exatas de secret/acionamento implementadas; fechamento condicionado à revisão independente automática registrada em validation.md.
 **Tests:** integration
 **Gate:** Build
 

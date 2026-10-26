@@ -21,3 +21,9 @@ Cobertura e necessidade: agentic-remote-workflows.test.ts:14 Object.keys(WORKFLO
 Guard pre/post confere evento manual, SHA do checkout, modelo real do caller e os snapshots gerados. Registra hashes dos inputs/config, todos os arquivos versionados, repositório/run/attempt e estado pending. A conclusão só vira verified quando tudo permanece idêntico. Nenhuma credencial entra no registro; inferenceStatus permanece not-assessed e sonarStatus not-run, pois integridade não aprova análise.
 
 Critérios/necessidade: agentic-remote-guard.test.ts:45–54 confere valores da proveniência e ausência da sentinela; linhas61–65 rejeitam modelo/evento/SHA/contexto divergentes; linhas75–79 adulteram fonte com assume-unchanged e comprovam falha sem evidência verified. Cobrem ARP04–05, sem testes de texto/documentação. Oito testes remotos passam com typecheck. Estado fixture Git é isolado e apagado somente após verificar o prefixo temporário. Nenhuma inferência real nem credencial usada.
+
+## T4
+
+Compilador bootstrap fixado para Windows/Linux x64 verifica SHA256 antes de executar; modo check compara fontes e locks antes/depois. CI reproduz a compilação sem secret de LLM e sem inferência. Instruções do consumidor cobrem secret, interface called/caller, atualização de modelo/prompt, integração humana, dispatch, artefatos, falhas e limites. Documentação não tem testes automatizados.
+
+Gate real: npm run compile:agentic -- --check reproduziu os dois locks com gh-aw0.93.5 strict/validate e zero avisos; tipo TypeScript aprovado. Os testes do programa compilado validam permissões somente read/none, ausência de publicação/detection, exclusão de chaves reais pelo AWF, endpoint/basepath, modelo e max-turns. Cadastro de secret, integração em branch padrão e primeiro run remoto permanecem pendentes. A revisão independente roda automaticamente após este commit.
