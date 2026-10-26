@@ -42,6 +42,9 @@ test('ARP-03: harness usa proxy Chat Completions e nega shell, escrita e acesso 
     assert.equal(permits('edit'), 'deny');
     assert.equal(permits('external_directory'), 'deny');
     assert.equal(permits('read'), 'allow');
+    assert.equal(permits('safeoutputs_noop'), 'allow');
+    assert.equal(permits('safeoutputs_create_issue'), 'deny');
+    assert.equal(permits('github_get_file_contents'), 'deny');
   }
 });
 

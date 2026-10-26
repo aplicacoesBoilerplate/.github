@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "normalization": "LF",
   "configFile": "examples/agentic/self-pilot/config.json",
-  "configHash": "6be6c88de4b1aa1dc29bd12196a4f9ece66ccefa4cf203c1fd19f09dbac6c8ef",
+  "configHash": "06aac14bf07350abd8dfa312b9c0fee124b95edc6e59f4dc490a1e1ba2ea688c",
   "ghAwVersion": "0.93.5",
   "ghAwRef": "32ecafbc061c9af57e9361942099e381102ae304",
   "files": {
-    "examples/agentic/self-pilot/config.json": "6be6c88de4b1aa1dc29bd12196a4f9ece66ccefa4cf203c1fd19f09dbac6c8ef",
+    "examples/agentic/self-pilot/config.json": "06aac14bf07350abd8dfa312b9c0fee124b95edc6e59f4dc490a1e1ba2ea688c",
     "ci-scripts/instructions/AGENTS.md": "5e5d5640dcb6827ff8df7a01e745c7027893483091791b7f01ac163166a3c40a",
     "AGENTS.md": "41b2d1be5d187bb31eaa58275665bf96621ed3e7e00ccfe7c86fce4376681e7f",
     "examples/agentic/self-pilot/triage-prompt.md": "1229e070b28b171fbbea6b415f7f54397d2845916fe9cbf6e011cda340cd1a29",

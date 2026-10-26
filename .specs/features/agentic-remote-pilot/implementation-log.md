@@ -49,3 +49,39 @@ Em 2026-10-26 o usuário autorizou o push e o PR draft. Branch publicada e PR24 
 Base formal da milestone está53 commits atrás da master4176883. O corpo do PR distingue esse baseline já publicado do intervalo próprio do piloto e exige alinhar a integração antes do merge. A release e a master não foram alteradas.
 
 CI remota40411970600 passou em3559bd9, incluindo testes/types/reprodução gh-aw Linux. Higiene40411970659 e build de documentação40411970613 também passaram. Essas execuções não chamam LLM: o primeiro run de inferência AWF/OpenRouter continua pendente de revisão e integração dos callers na branch padrão.
+
+## Integração e primeiro piloto remoto
+
+PR24 foi squash-mergeado pelo usuário em release/v1.0.0,084f826. A reconciliação b582d3b recuperou a ancestralidade da master4176883 mantendo exatamente a árvore bf7ada4d5b553736ca2b0f0f944be78dbae379d4. Develop remoto foi restaurado da master publicada, preservando o develop local em outro worktree. PR25 homologou via squash077bcdd com mensagem própria: o agregado do PR24 continha um footer histórico de versão já publicada. PR26 promoveu develop→master em ad203b6 após CI e política SemVer aprovadas. A árvore permaneceu idêntica; nenhum gate foi desativado ou autoaprovado. O PR técnico Release Please27 permanece aberto, sem publicação de tag/milestone/épica.
+
+Run40416458541 chegou ao OpenCode/AWF, mas falhou com HTTP400 unknown_model_ai_credits para liquid/lfm-2.5-2.6b:free. O guard pós-execução confirmou workspaceIntegrity verified; isso não aprovou a inferência. A causa é falta de tarifa no catálogo interno AWF, antes da chamada ao modelo. API pública OpenRouter consultada confirmou prompt/completion zero. O pin gh-aw32ec suporta models.providers; AWF0.28.70 aceita zero no overlay exato, comprovado também por execução isolada do módulo upstream em memória. Não foi preciso acessar o valor da chave.
+
+T6 acrescenta pricing opcional ao contrato, valida finitude/valor não negativo, transporta por modelo exato e recompila os locks. Um caso novo e reforços nos casos existentes demonstraram falha antes da correção (campo desconhecido/catálogo ausente) e passaram depois. A configuração do piloto declara preços zero explicitamente; outras configurações não recebem gratuidade automática. Sem fallback global, troca de modelo ou alteração do firewall/orçamento.
+
+Verificação local T6: o teste preexistente AGP-05 timeout encerra também subprocessos do harness falhou uma vez na suíte Node22 sob carga Windows (86/87), enquanto a compilação também rodava. O arquivo runtime passou8/8 isoladamente sem qualquer mudança de teste ou código; a suíte foi repetida serialmente sem compilação concorrente. Essa observação fica registrada, não é atribuída à correção de pricing. T6 permanece um único contrato opcional que atravessa parser/renderer/config/locks, justificando o aviso estrutural de granularidade.
+
+Gate final T6: suíte serial Node22 passou87/87, zero skips; tipos e reprodução dos dois locks strict/validate aprovados. Testes necessários: agentic-config.test.ts compara preço zero/ausência e rejeita inválidos; agentic-remote-workflows.test.ts compara preços zero no JSON efetivamente entregue ao AWF, ausência de fallback e tarifas não zero de outro modelo selecionado. Nenhum teste anterior foi removido ou enfraquecido. Revisão independente da correção segue automaticamente.
+
+## T7 — rota observada no piloto remoto
+
+PR28/CI40418152607 passou. A revisão independente de T6 aprovou8/8 contratos, tipos e3/3 mutações detectadas; relatório pricing-validation.md. O piloto40421313262 no SHA94745c5 passou pricing, mas GET/v1/models e POST/v1/chat/completions receberam404. Proveniência confirmou workspaceIntegrity verified, inferenceStatus not-assessed e sonarStatus not-run. Review40421333266 foi cancelado antes da inferência para evitar a mesma falha.
+
+Diagnóstico independente executou buildUpstreamPath oficial do AWFv0.28.70: prefixo/api/v1 + entrada/v1/... produz /api/v1/v1/.... upstream-log.js registra req.url, não o caminho final. O fix mantém o harness/reflection e configura somente o prefixo técnico do AWF como https://openrouter.ai/api; as chamadas resultam em /api/v1/models e /api/v1/chat/completions. A URL pública direta do provedor não mudou. O fetch inicial do catálogo do pin pode falhar em /api/models sem abortar; o helper recupera usando /v1/models. Sem troca de modelo/chave, fallback ou alteração do firewall.
+
+Os mesmos testes de geração/lock foram corrigidos e primeiro falharam2/3 na expectativa da URL antiga. Asserções adicionais conferem os dois caminhos upstream; não foi criado outro conjunto de testes. Compilação strict/validate dos dois locks passou sem avisos. Suíte completa/tipos/reprodução e novo piloto devem passar antes da promoção.
+
+Gate T7: Node22.23.4 executou87/87 testes, zero falhas/skips; typecheck e reprodução strict/validate dos dois locks passaram com zero avisos. A revisão independente final segue após o commit; isso ainda não é sucesso de inferência remota.
+
+Fontes pinned: https://github.com/github/gh-aw-firewall/blob/v0.28.70/containers/api-proxy/proxy-utils.js#L170; https://github.com/github/gh-aw-firewall/blob/v0.28.70/containers/api-proxy/upstream-http.js#L619; https://github.com/github/gh-aw-firewall/blob/v0.28.70/containers/api-proxy/upstream-log.js#L261; https://github.com/github/gh-aw/blob/32ecafbc061c9af57e9361942099e381102ae304/actions/setup/js/awf_reflect.cjs#L338.
+
+## T8 — contrato terminal da análise
+
+CI40422300334 e revisão independente route-validation.md aprovaram T7: cinco contratos, tipos e um mutante detectado. Run40422387649 no SHA0f6cc02 obteve462 modelos via /reflect e resposta real da LLM. A triagem retornou needs-human, identificando Milestone/Epic/Release branch authorized/Effort ausentes. Engine exit0 e integridade verified. A conclusão, porém, falhou corretamente com missing_terminal_safe_output: texto no log não satisfaz o terminal obrigatório do pin.
+
+O schema não suporta safe-outputs:false. O collector sempre sinaliza report_incomplete na ausência de terminal; desabilitar publicação de falhas não desabilita esse gate. A correção habilita somente noop{max:1,report-as-issue:false}, adiciona a única permissão nativa safeoutputs_noop e instrui o agente a chamá-lo depois da resposta. O protótipo compilado foi conferido independentemente: mesmos quatro jobs, permissões somente read/none, nenhum safe_outputs/detector/publicação. MCP adicional expõe somente noop. Handler oficial executado em memória confirmou zero mutações GitHub quando report-as-issue é false.
+
+Os mesmos casos de engine/workflow passaram primeiro por RED: três falhas em cinco, cobrindo permissão, manifesto e configuração terminal. Acrescentadas asserções de negação para safeoutputs_create_issue e github_get_file_contents. O compilador real aprovou os dois locks strict/validate sem avisos. Suíte, tipos e reprodução devem passar antes do commit. O pin acrescenta a imagem ghcr.io/github/gh-aw-node fixada por digest para servir esse MCP local; não há nova credencial ou action e o raw secret continua fora do agente.
+
+Fontes: https://github.com/github/gh-aw/blob/32ecafbc061c9af57e9361942099e381102ae304/actions/setup/js/collect_ndjson_output.cjs#L374; https://github.com/github/gh-aw/blob/32ecafbc061c9af57e9361942099e381102ae304/actions/setup/js/handle_noop_message.cjs#L290; https://github.com/anomalyco/opencode/blob/v2.0.26/packages/core/src/tool/mcp.ts.
+
+Gate T8: Node22 executou87/87 testes sem falhas/skips; tipos e reprodução strict/validate dos dois locks aprovados, zero avisos. Nenhum novo caso por contagem: reforços em cinco contratos existentes. Revisão independente final e homologação remota ainda exigidas; a resposta já obtida em40422387649 não é confundida com sucesso do workflow completo.
