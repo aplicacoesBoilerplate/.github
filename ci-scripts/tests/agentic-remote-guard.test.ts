@@ -4,10 +4,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { CGhAwPilot, PILOT_CONFIG } from '../scripts/agentic/CGhAwPilot.js';
 import { CRemotePilot } from '../scripts/agentic/remote-pilot.js';
 
-function fixture(): { root: string; temp: string; env: NodeJS.ProcessEnv; cleanup: () => void } {
+function fixture(): { root: string; temp: string; hashes: Record<string, string>; env: NodeJS.ProcessEnv; cleanup: () => void } {
   const TEMP = fs.mkdtempSync(path.join(os.tmpdir(), 'agentic-guard-'));
   const ROOT = path.join(TEMP, 'repo');
   fs.mkdirSync(ROOT);
@@ -21,10 +22,12 @@ function fixture(): { root: string; temp: string; env: NodeJS.ProcessEnv; cleanu
     fs.copyFileSync(path.join('..', FILE), path.join(ROOT, FILE));
   }
   CGhAwPilot.generate(ROOT);
+  const HASHES = Object.fromEntries([...FILES].map(FILE => [FILE, createHash('sha256').update(fs.readFileSync(path.join(ROOT, FILE), 'utf8').replace(/\r\n/g, '\n')).digest('hex')]));
+  fs.writeFileSync(path.join(ROOT, 'outside-context.txt'), 'Arquivo versionado que não foi anexado ao prompt.');
   const git = (...ARGS: string[]): string => execFileSync('git', ['-c', 'core.hooksPath=', ...ARGS], { cwd: ROOT, encoding: 'utf8' }).trim();
   git('init', '-q'); git('add', '.');
   git('-c', 'user.name=Pilot test', '-c', 'user.email=pilot@example.invalid', 'commit', '-qm', 'fixture');
-  return { root: ROOT, temp: TEMP, env: { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_SHA: git('rev-parse', 'HEAD'), GITHUB_REPOSITORY: 'fixture/repo', GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '1', RUNNER_TEMP: TEMP, PILOT_MODEL: CONFIG.processes.triage.model }, cleanup: () => {
+  return { root: ROOT, temp: TEMP, hashes: HASHES, env: { GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_SHA: git('rev-parse', 'HEAD'), GITHUB_REPOSITORY: 'fixture/repo', GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '1', RUNNER_TEMP: TEMP, PILOT_MODEL: CONFIG.processes.triage.model }, cleanup: () => {
     assert.ok(TEMP.startsWith(path.join(os.tmpdir(), 'agentic-guard-')));
     fs.rmSync(TEMP, { recursive: true, force: true });
   } };
@@ -44,6 +47,8 @@ test('ARP-04: proveniência vincula SHA, configuração e modelo sem transportar
     assert.equal(END.sonarStatus, 'not-run');
     assert.equal(END.runId, '123');
     assert.match(END.configHash, /^[a-f0-9]{64}$/);
+    assert.equal(END.configHash, F.hashes[PILOT_CONFIG]);
+    assert.deepEqual(END.files, F.hashes);
     assert.ok(!fs.readFileSync(path.join(F.temp, 'agentic-pilot-triage/evidence.json'), 'utf8').includes(ENV.API_KEY_OPENROUTER));
   } finally { F.cleanup(); }
 });
@@ -61,13 +66,15 @@ test('ARP-04/05: snapshot, modelo e origem divergentes impedem a inferência', (
 });
 
 test('ARP-05: alteração versionada oculta do git status também bloqueia integridade aprovada', () => {
-  const F = fixture();
-  try {
-    CRemotePilot.run(F.root, 'pre', 'triage', PILOT_CONFIG, F.env);
-    fs.writeFileSync(path.join(F.root, 'AGENTS.md'), 'alterado durante a inferência');
-    execFileSync('git', ['update-index', '--assume-unchanged', 'AGENTS.md'], { cwd: F.root });
-    assert.throws(() => CRemotePilot.run(F.root, 'post', 'triage', PILOT_CONFIG, F.env), /divergente|alterado|integridade/i);
-    const RECORD = JSON.parse(fs.readFileSync(path.join(F.temp, 'agentic-pilot-triage/evidence.json'), 'utf8'));
-    assert.notEqual(RECORD.workspaceIntegrity, 'verified');
-  } finally { F.cleanup(); }
+  for (const FILE of ['AGENTS.md', 'outside-context.txt']) {
+    const F = fixture();
+    try {
+      CRemotePilot.run(F.root, 'pre', 'triage', PILOT_CONFIG, F.env);
+      fs.writeFileSync(path.join(F.root, FILE), 'alterado durante a inferência');
+      execFileSync('git', ['update-index', '--assume-unchanged', FILE], { cwd: F.root });
+      assert.throws(() => CRemotePilot.run(F.root, 'post', 'triage', PILOT_CONFIG, F.env), /divergente|alterado|integridade/i);
+      const RECORD = JSON.parse(fs.readFileSync(path.join(F.temp, 'agentic-pilot-triage/evidence.json'), 'utf8'));
+      assert.notEqual(RECORD.workspaceIntegrity, 'verified');
+    } finally { F.cleanup(); }
+  }
 });

@@ -29,7 +29,7 @@ Comandos npm/Node em ci-scripts; gh-aw na raiz.
 ### Phase 1: Preparação
 
 ```text
-T1 → T2 → T3 → T4
+T1 → T2 → T3 → T4 → T5
 ```
 
 ## Task Breakdown
@@ -74,6 +74,16 @@ T1 → T2 → T3 → T4
 **Tests:** integration
 **Gate:** Build
 
+### T5: Reforçar regressões apontadas pela revisão independente
+**What:** conferir hashes reais da proveniência e adulteração de fonte fora do manifesto, sem remover cenários existentes.
+**Where:** ci-scripts/tests/agentic-remote-guard.test.ts
+**Depends on:** T4
+**Requirement:** ARP-04, ARP-05
+**Done when:**
+- [x] Fixture fora do contexto e valores exatos dos hashes verificados; suíte Node22 86/86 e tipos aprovados; revalidação independente automática solicitada.
+**Tests:** integration
+**Gate:** Build
+
 ## Diagram-Definition Cross-Check
 
 | Task | Depends On | Diagram Shows | Status |
@@ -82,6 +92,7 @@ T1 → T2 → T3 → T4
 | T2 | T1 | T1→T2 | Match |
 | T3 | T2 | T2→T3 | Match |
 | T4 | T3 | T3→T4 | Match |
+| T5 | T4 | T4→T5 | Match |
 
 ## Test Co-location Validation
 
@@ -91,3 +102,4 @@ T1 → T2 → T3 → T4
 | T2 | integration | integration | Match |
 | T3 | integration | integration | Match |
 | T4 | integration | integration | Match |
+| T5 | integration | integration | Match |

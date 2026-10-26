@@ -27,3 +27,9 @@ Critérios/necessidade: agentic-remote-guard.test.ts:45–54 confere valores da 
 Compilador bootstrap fixado para Windows/Linux x64 verifica SHA256 antes de executar; modo check compara fontes e locks antes/depois. CI reproduz a compilação sem secret de LLM e sem inferência. Instruções do consumidor cobrem secret, interface called/caller, atualização de modelo/prompt, integração humana, dispatch, artefatos, falhas e limites. Documentação não tem testes automatizados.
 
 Gate real: npm run compile:agentic -- --check reproduziu os dois locks com gh-aw0.93.5 strict/validate e zero avisos; tipo TypeScript aprovado. Os testes do programa compilado validam permissões somente read/none, ausência de publicação/detection, exclusão de chaves reais pelo AWF, endpoint/basepath, modelo e max-turns. Cadastro de secret, integração em branch padrão e primeiro run remoto permanecem pendentes. A revisão independente roda automaticamente após este commit.
+
+## T5 — revisão independente, primeira correção
+
+O verificador encontrou três mutações sobreviventes nos testes de proveniência/integridade, sem defeito funcional demonstrado. Reforçados os mesmos três casos: hashes do config/inputs comparados aos valores reais calculados com crypto, e adulteração com assume-unchanged tanto no AGENTS já coberto quanto em outro arquivo versionado fora do manifesto. Todas as asserções anteriores foram preservadas. Sem aumento de casos por meta.
+
+Gate no Node22 da CI: 86/86 testes passam, zero skips; typecheck aprovado. O relatório inicial FAIL fica no histórico para rastreabilidade; revisão2 deve reexecutar os mutantes antes de encerrar a preparação. Não houve publicação nem inferência remota.
