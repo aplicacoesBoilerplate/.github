@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "normalization": "LF",
+  "configFile": "examples/agentic/self-pilot/config.json",
+  "configHash": "6be6c88de4b1aa1dc29bd12196a4f9ece66ccefa4cf203c1fd19f09dbac6c8ef",
+  "ghAwVersion": "0.93.5",
+  "ghAwRef": "32ecafbc061c9af57e9361942099e381102ae304",
+  "files": {
+    "examples/agentic/self-pilot/config.json": "6be6c88de4b1aa1dc29bd12196a4f9ece66ccefa4cf203c1fd19f09dbac6c8ef",
+    "ci-scripts/instructions/AGENTS.md": "5e5d5640dcb6827ff8df7a01e745c7027893483091791b7f01ac163166a3c40a",
+    "AGENTS.md": "41b2d1be5d187bb31eaa58275665bf96621ed3e7e00ccfe7c86fce4376681e7f",
+    "examples/agentic/self-pilot/triage-prompt.md": "1229e070b28b171fbbea6b415f7f54397d2845916fe9cbf6e011cda340cd1a29",
+    "examples/agentic/self-pilot/issue.md": "dbbddf156b07cfa0ea19302b44f4c5d399f63801345a6902fa948b9c1798cb53",
+    "ci-scripts/scripts/CReleaseProjectConfig.ts": "99ce83b65b51e461c6feb5a78a1a29c37381cc5510d8dc69439d67372ea699a5",
+    "examples/agentic/self-pilot/review-prompt.md": "f7bcf5d29c5b47b419027c87c8a9544aa9eead1b78d29ce8116d0e5deba4842f",
+    "examples/agentic/self-pilot/change.patch": "e080b66338c9a1de488b87609ae8f2f2df2c032d12f2bb4088a809852d4c3758"
+  },
+  "processes": {
+    "triage": {
+      "model": "liquid/lfm-2.5-2.6b:free",
+      "provider": "openrouter",
+      "engine": "opencode"
+    },
+    "review": {
+      "model": "liquid/lfm-2.5-2.6b:free",
+      "provider": "openrouter",
+      "engine": "opencode"
+    }
+  }
+}

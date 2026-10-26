@@ -3,6 +3,9 @@
   "private": true,
   "description": "Scripts executados com TS como helpers para processos das pipelines.",
   "scripts": {
+    "compile:agentic": "node --import tsx scripts/agentic/compile-pilot.ts",
+    "generate:agentic": "node --import tsx scripts/agentic/CGhAwPilot.ts",
+    "pilot:agentic": "node --import tsx scripts/agentic/run-pilot.ts",
     "test": "node --import tsx --test --test-concurrency=1 tests/*.test.ts",
     "test:functional": "node --import tsx --test --test-name-pattern=Fluxo tests/release-please.test.ts",
     "typecheck": "tsc --noEmit"
@@ -18,6 +21,7 @@
     "yaml": "2.9.1"
   },
   "dependencies": {
+    "@opencode/cli": "2.0.26",
     "release-please": "17.3.0",
     "semver": "7.8.5",
     "tsx": "^4.19.0"

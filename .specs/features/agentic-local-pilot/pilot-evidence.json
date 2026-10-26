@@ -1,0 +1,42 @@
+[
+  {
+    "repository": "aplicacoesBoilerplate/.github",
+    "revision": "d1c6aefe723f79da39c614135eac0f12ea74479a",
+    "process": "review",
+    "engine": "opencode",
+    "engineVersion": "2.0.26",
+    "provider": "openrouter",
+    "model": "openrouter/liquid/lfm-2.5-2.6b:free",
+    "configHash": "6be6c88de4b1aa1dc29bd12196a4f9ece66ccefa4cf203c1fd19f09dbac6c8ef",
+    "inputs": {
+      "AGENTS.md": "354e5e1e3154f5e8db666622eefc66aa56eec439607e799753139a99e0e44310",
+      "input.md": "e080b66338c9a1de488b87609ae8f2f2df2c032d12f2bb4088a809852d4c3758",
+      "ci-scripts/scripts/CReleaseProjectConfig.ts": "99ce83b65b51e461c6feb5a78a1a29c37381cc5510d8dc69439d67372ea699a5",
+      "prompt": "f7bcf5d29c5b47b419027c87c8a9544aa9eead1b78d29ce8116d0e5deba4842f"
+    },
+    "response": "```json\n{\n  \"verdict\": \"changes-required\",\n  \"findings\": [\n    {\n      \"file\": \"ci-scripts/scripts/CReleaseProjectConfig.ts\",\n      \"severity\": \"high\",\n      \"reason\": \"Remoção da verificação de segurança contra travessia de diretórios (componentes '..' ou '.'). O patch remove a condição `DIRECTORY.split('/').some(PART => PART === '..' || PART === '.')` que impedia caminhos como '../' ou './' de serem aceitos. Isso cria uma regressão de segurança permitindo ataques de diretório de navegação para fora do repositório.\"\n    }\n  ]\n}\n```",
+    "durationMs": 12908,
+    "sonarqube": "not-run",
+    "ghAw": "not-run"
+  },
+  {
+    "repository": "aplicacoesBoilerplate/.github",
+    "revision": "d1c6aefe723f79da39c614135eac0f12ea74479a",
+    "process": "triage",
+    "engine": "opencode",
+    "engineVersion": "2.0.26",
+    "provider": "openrouter",
+    "model": "openrouter/liquid/lfm-2.5-2.6b:free",
+    "configHash": "6be6c88de4b1aa1dc29bd12196a4f9ece66ccefa4cf203c1fd19f09dbac6c8ef",
+    "inputs": {
+      "AGENTS.md": "354e5e1e3154f5e8db666622eefc66aa56eec439607e799753139a99e0e44310",
+      "input.md": "dbbddf156b07cfa0ea19302b44f4c5d399f63801345a6902fa948b9c1798cb53",
+      "ci-scripts/scripts/CReleaseProjectConfig.ts": "99ce83b65b51e461c6feb5a78a1a29c37381cc5510d8dc69439d67372ea699a5",
+      "prompt": "1229e070b28b171fbbea6b415f7f54397d2845916fe9cbf6e011cda340cd1a29"
+    },
+    "response": "```json\n{\n  \"action\": \"needs-human\",\n  \"needsSpecification\": true,\n  \"missingFields\": [\n    \"Milestone\",\n    \"Epic\",\n    \"Branch de release ou empilhamento autorizada\"\n  ],\n  \"reason\": \"Os metadados do issue estão incompletos (Milestone, Epic e Branch de release não foram informados). O texto indica explicitamente que não há autorização para escolher uma base, testando a decisão quando metadados estão faltando. Sem essa informação, não é possível determinar a elegibilidade para implementação automática ou a necessidade de SDD.\",\n  \"nextStep\": \"Solicitar ao proprietário do issue a confirmação dos metadados completos (Milestone, Epic, Branch de release) antes de prosseguir com a implementação.\"\n}\n```",
+    "durationMs": 30128,
+    "sonarqube": "not-run",
+    "ghAw": "not-run"
+  }
+]
