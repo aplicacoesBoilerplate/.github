@@ -15,4 +15,20 @@ Gate executado com Node 24.19.0 e Commitlint 17.4.4 instalados:
 
 ## D2: largura do conteúdo
 
-Baseline medida no navegador antes da alteração: conteúdo limitado a 688 px em viewports de 1440 e 1920 px; em 960 px, 544,8 px. Inspeção do tema VitePress 1.6.4 confirmou teto de largura, padding duplicado e margem externa da grade de 1440 px. Implementação e gate pendentes.
+Baseline medida no navegador antes da alteração: conteúdo limitado a 688 px em viewports de 1440 e 1920 px; em 960 px, 544,8 px. Inspeção do tema VitePress 1.6.4 confirmou teto de largura, padding duplicado e margem externa da grade de 1440 px.
+
+O CSS usa toda a largura da grade, retira padding duplicado da coluna central e mantém gutter de 24 px em desktop. As regras móveis existentes foram preservadas.
+
+| Viewport | Largura final do conteúdo | Rolagem horizontal da página |
+| ---: | ---: | --- |
+| 390 px | 327,2 px | Não |
+| 768 px | 688 px | Não |
+| 960 px | 624,8 px | Não |
+| 1440 px | 833,6 px | Não |
+| 1920 px | 1313,6 px | Não |
+
+O navegador confirmou `overflow-x: auto` nos dois exemplos e o menu móvel aberto com links acessíveis. Sidebar e índice permanecem visíveis nas duas larguras maiores. Build VitePress aprovado com renderização de todas as páginas. Captura visual em `docs-commitlint-content-width/commitlint-desktop.jpg` na pasta de visualizações do chat.
+
+## Fontes consultadas
+
+Context7 indisponível entre as ferramentas da sessão. Conferidos o código local do VitePress 1.6.4 e as referências oficiais: https://commitlint.js.org/reference/configuration.html e https://vitepress.dev/guide/extending-default-theme.

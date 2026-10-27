@@ -7,7 +7,7 @@ A página de configuração menciona dois arquivos, mas contém apenas o YAML do
 ## Goals
 
 - [x] D1: documentar a configuração CJS completa antes do YAML, com caminhos coerentes.
-- [ ] D2: ampliar o conteúdo de desktop preservando navegação e uso no celular.
+- [x] D2: ampliar o conteúdo de desktop preservando navegação e uso no celular.
 
 ## Out of Scope
 
@@ -50,4 +50,4 @@ Sem novos testes permanentes para esta mudança documental e visual reversível.
 | Requirement | Delivery | Evidence |
 | --- | --- | --- |
 | DOCS-01 | D1 | Objeto CJS e YAML comparados aos arquivos reais; Commitlint aceitou mensagem válida e rejeitou tipo inválido |
-| DOCS-02 | D2 | Pendente de implementação |
+| DOCS-02 | D2 | Build VitePress aprovado; DOM em 390/768/960/1440/1920 px, menu móvel e rolagem dos exemplos conferidos |

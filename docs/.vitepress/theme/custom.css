@@ -1,5 +1,6 @@
 :root {
   --vp-home-hero-name-color: var(--vp-c-brand-1);
+  --vp-layout-max-width: 100%;
 }
 
 .VPHome .VPHero {
@@ -38,6 +39,23 @@
 
 .VPDoc {
   padding-top: 36px;
+}
+
+@media (min-width: 960px) {
+  .VPContent.has-sidebar .VPDoc {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .VPDoc > .container > .content {
+    min-width: 0;
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .VPDoc.has-aside > .container > .content > .content-container {
+    max-width: none;
+  }
 }
 
 .vp-doc h1 {
