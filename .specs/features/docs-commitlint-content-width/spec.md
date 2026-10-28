@@ -20,6 +20,7 @@ Alterar regras do Commitlint, versões de dependências, hooks, workflows, aplic
 | Configuração publicada | Mesmo objeto de config/commitlint/commitlint.config.cjs | Evitar regras divergentes entre guia e repositório |
 | Layout | Usar largura disponível, gutter de 24 px em desktop, retirar padding interno duplicado e teto de 688 px | Priorizar texto e exemplos sem remover sidebar ou índice |
 | Celular | Preservar regras abaixo de 960 px | Manter margens, menu e rolagem interna dos exemplos |
+| Próxima versão | v1.0.1, milestone 4 do repositório central | Versão escolhida explicitamente pelo usuário e vinculada ao PR 29 |
 
 **Open questions:** none. As duas alterações foram solicitadas explicitamente.
 

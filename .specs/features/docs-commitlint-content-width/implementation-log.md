@@ -32,3 +32,14 @@ O navegador confirmou `overflow-x: auto` nos dois exemplos e o menu móvel abert
 ## Fontes consultadas
 
 Context7 indisponível entre as ferramentas da sessão. Conferidos o código local do VitePress 1.6.4 e as referências oficiais: https://commitlint.js.org/reference/configuration.html e https://vitepress.dev/guide/extending-default-theme.
+
+## Checkpoint remoto em 2026-10-28
+
+- Commits D1 `4abc037` e D2 `a1d76c4` persistidos em `codex/docs-commitlint-content-width`.
+- PR 29 para master: https://github.com/aplicacoesBoilerplate/.github/pull/29.
+- Usuário escolheu `v1.0.1`; milestone 4 criada e vinculada ao PR.
+- CI 40522960312 aprovada no produto `a1d76c4`: 86 testes, 86 aprovados, zero falhas ou skips, tipos e reprodução dos workflows existentes aprovados.
+- Documentação 40522960096: build aprovado; deploy corretamente ignorado por ser PR.
+- Higiene de título e validação de versão também aprovadas. Validação de versão 40785377014 aprovada após vínculo da milestone.
+- Revisão independente PASS: quatro critérios atendidos; duas mutações do snippet detectadas em memória, sem alterar fontes; build independente aprovado. Relatório canônico em `validation.md`, com evidências por critério. `validate_state.py` aprovado sem erros.
+- O checkpoint final altera somente registros TLC. Nenhum merge, tag, release ou deploy executado pelo agente.
