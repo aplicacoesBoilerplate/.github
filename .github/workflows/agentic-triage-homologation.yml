@@ -1,5 +1,5 @@
 name: Agentic native triage homologation
-# Identidade vinculada nativamente; decisão e lacunas validadas no exporter e inspector.
+# Identidade e ação do evento vinculadas nativamente; decisão/lacunas validadas no exporter e inspector.
 on:
   push:
     branches: [feature/agentics-workflows-architecture]

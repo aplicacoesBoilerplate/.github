@@ -11,11 +11,11 @@ Nenhuma decisão global nova registrada nesta consolidação. O piloto usa a abo
 - **Phase:** Execute; T1/T2 em commits 98822ae/f749c03; T3 implementada e com gates estáticos aprovados; T4 homologação remota pendente.
 - **User decisions:** prioridade workflows/arquitetura inteira; sem novos scripts TypeScript nem suítes locais; testes funcionais no próprio .github. Harness OpenCode e autenticação/modelos por consumidor.
 - **Completed:** runtime compartilhado, quatro agentes Markdown/locks, coordenador, caller local e exemplo externo. Projects V2 + organization issue fields/dependências reais; catálogo e limites do caller; gate SDD com exact SHA e revisão; publicação com gate nativo e checks de identidade.
-- **Evidence:** quatro compile strict/validate zero avisos; actionlint coordenador/callers aprovado; query real issue7 confirmou quatro organization fields e um Project item. Revisão independente concluída: apto para piloto, aceitação integral PARTIAL; evidências em validation.md. Nenhuma inferência nem publicação real realizada nesta implementação.
-- **Next:** T3 pronta em commit local; preparar T4: publicar/registrar caller; configurar PROJECTS_TOKEN/PUBLISH_TOKEN dedicados, Project node ID e Environment com required reviewers. Apenas API_KEY_OPENROUTER foi confirmada anteriormente.
+- **Evidence:** quatro compile strict/validate zero avisos; actionlint coordenador/callers aprovado; query real issue7 confirmou quatro organization fields e um Project item. Revisão independente concluída: apto para piloto, aceitação integral PARTIAL; evidências em validation.md. Homologação remota iniciada: três runs reais, sem PASS integral; detalhes em pilot.md. Nenhuma operação de produto publicada.
+- **Next:** T4 iniciada sobre marco PR29/20a4562; PR31 em rascunho, integração limpa codex/agentic-pilot-integration. Branch feature preservada. Para continuar operações: publicar/registrar caller; configurar PROJECTS_TOKEN/PUBLISH_TOKEN dedicados, Project node ID e Environment com required reviewers. OpenRouter confirmou autenticação real. Usuário confirmou ausência das duas secrets; PAT atual sem Secrets/Variables e conta com role write. Instruções de configuração fornecidas.
 - **Known limits:** OpenRouter inicial; IDs reais de modelo/sufixos, sem aliases #rapido inventados; gate estrutural não é veredito AI/Sonar. PR manual é needs-human; correção de PR depende do evento nativo. Recuperação de spec usa Re-run failed jobs no run original.
 - **SonarQube:** not-run; manter fluxo corretivo aprovado após merge develop e bloqueio master. Nenhum plugin instalado.
-- **Preservation:** legados e outros worktrees preservados; não feito merge nem push da implementação nova nesta etapa.
+- **Preservation:** legados e outros worktrees preservados; implementação publicada na feature e no PR31. Master continua 20a4562; sem merge, tag ou release nesta etapa.
 
 ## Entrega documental integrada
 

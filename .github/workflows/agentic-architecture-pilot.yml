@@ -31,11 +31,11 @@ jobs:
       issue_number: ${{ inputs.issue_number || 0 }}
       automation_actor: ${{ vars.AGENTIC_AUTOMATION_ACTOR || 'github-actions[bot]' }}
       models: >-
-        {"triage":"liquid/lfm-2.5-2.6b:free",
-         "low":"liquid/lfm-2.5-2.6b:free",
-         "medium":"liquid/lfm-2.5-2.6b:free",
-         "high":"liquid/lfm-2.5-2.6b:free",
-         "ultra":"liquid/lfm-2.5-2.6b:free"}
+        {"triage":"nvidia/nemotron-3.5-lightning:free",
+         "low":"nvidia/nemotron-3.5-lightning:free",
+         "medium":"nvidia/nemotron-3.5-lightning:free",
+         "high":"nvidia/nemotron-3.5-lightning:free",
+         "ultra":"nvidia/nemotron-3.5-lightning:free"}
     secrets:
       OPENROUTER_API_KEY: ${{ secrets.API_KEY_OPENROUTER }}
       PROJECTS_TOKEN: ${{ secrets.AGENTIC_PROJECTS_TOKEN }}

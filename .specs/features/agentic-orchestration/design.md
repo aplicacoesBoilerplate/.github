@@ -46,3 +46,7 @@ Compilação strict/validate e inspeção dos locks; piloto com issue/PR/push, r
 - O implementador lê a spec aprovada fora do checkout de produto e trabalha no base_sha para evitar misturar o PR documental no patch.
 - OpenCode v2 fixado não recebe aliases #rapido/#ultra inventados; o caller seleciona IDs reais do provedor por perfil, inclusive sufixos suportados, e limites de turnos/tempo.
 - Query GraphQL validada contra a issue7 real: campos da organização e item Projects disponíveis. Nenhum modelo ou publicador foi executado nessa consulta.
+
+## Contrato observado no piloto
+
+O modelo produz decisão/justificativa/lacunas por noop. O exporter nativo valida tipos/enums e preservação das lacunas, rejeita identidade divergente quando fornecida e vincula repository/source_sha/action da execução e evento confiáveis quando ausentes. O artefato raw permanece separado. Não gerar terminal ou decisão para encobrir omissão do modelo. Brief pode reutilizar reason na normalização do contrato. Isso mantém identidade como responsabilidade do workflow em vez de exigir repetição de constantes pela LLM.

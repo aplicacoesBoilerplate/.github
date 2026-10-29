@@ -10,7 +10,7 @@ outro consumidor. Não copiar runtime nem credenciais para o central.
 2. Criar `AGENTIC_PROJECTS_TOKEN`: leitura do repositório, issues/PRs e do Project
    V2 configurado. O ID esperado é o node ID `PVT_...`, não o número da URL.
 3. Criar `AGENTIC_PUBLISH_TOKEN`: contents e pull requests com escrita;
-   leitura de issues e dos Environments do repositório. Usar identidade de
+   leitura de issues e Actions do repositório (consulta de Environments). Usar identidade de
    automação dedicada e informar seu login em `AGENTIC_AUTOMATION_ACTOR`.
    Não usar o token pessoal do autor dos eventos como identidade de automação.
 4. Criar o Environment `agentic-architecture-approval`, com required reviewers
@@ -19,7 +19,7 @@ outro consumidor. Não copiar runtime nem credenciais para o central.
 5. Definir a variável `AGENTIC_PROJECT_ID`. Nos consumidores externos, definir
    também `AGENTIC_MODELS` com as chaves `triage`, `low`, `medium`, `high`, `ultra`,
    cada uma contendo o ID exato do modelo OpenRouter. O piloto usa
-   `liquid/lfm-2.5-2.6b:free`, cujo preço zero é declarado explicitamente.
+   `nvidia/nemotron-3.5-lightning:free`, cujo preço zero é declarado explicitamente.
 6. Publicar/revisar os workflows e registrar o caller na branch padrão para
    disponibilizar o acionamento manual do GitHub. Manter `AGENTIC_ENABLED`
    ausente ou `false` até validar os cenários abaixo.
@@ -65,3 +65,5 @@ O gate de publicação verifica terminal, patch, sinais de credenciais e identid
 atual. Não é análise semântica de segurança nem Quality Gate. As entregas são
 draft e continuam exigindo revisão humana. SonarQube permanece `not-run`; manter
 o fluxo aprovado após merge em develop, sem simular aprovação nem instalar plugin.
+
+A homologação inicial somente de leitura usa `agentic-triage-homologation.yml`, separado do caller legado gerado. Evidências reais e preparo das operações estão em `.specs/features/agentic-orchestration/pilot.md`. Identidade é vinculada no exporter nativo; saída bruta e decisão normalizada permanecem separadas.
