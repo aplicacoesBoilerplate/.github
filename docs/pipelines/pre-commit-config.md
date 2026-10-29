@@ -4,31 +4,7 @@ Para garantir que os commits sigam o padrão Conventional Commits antes do push,
 
 Crie os dois arquivos abaixo nos caminhos indicados, relativos à raiz da aplicação.
 
-## 1. `config/commitlint/commitlint.config.cjs`
-
-Crie a pasta `config/commitlint/` e adicione o arquivo `commitlint.config.cjs` com o seguinte conteúdo:
-
-```js
-module.exports = {
-  extends: ['@commitlint/config-conventional'],
-  rules: {
-    'type-enum': [
-      2,
-      'always',
-      ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert'],
-    ],
-    'subject-case': [0],
-    'subject-full-stop': [2, 'never', '.'],
-    'header-max-length': [2, 'always', 120],
-    'body-max-line-length': [2, 'always', 300],
-    'footer-max-line-length': [2, 'always', 50],
-  },
-};
-```
-
-A configuração estende `@commitlint/config-conventional` e aplica as mesmas regras deste repositório: tipos de commit permitidos, assunto sem ponto final e limites de tamanho para título, corpo e rodapé. O hook abaixo instala a dependência no ambiente isolado do `pre-commit` e carrega este arquivo pelo caminho informado em `--config`.
-
-## 2. `.pre-commit-config.yaml`
+## 1. `.pre-commit-config.yaml`
 
 Crie este arquivo na raiz da aplicação:
 
@@ -57,3 +33,31 @@ repos:
         stages: [pre-commit]
         args: ['--maxkb=500']
 ```
+
+## 2. `config/commitlint/commitlint.config.cjs`
+
+Crie a pasta `config/commitlint/` e adicione o arquivo `commitlint.config.cjs` com o seguinte conteúdo:
+
+```js
+module.exports = {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'type-enum': [
+      2,
+      'always',
+      ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert'],
+    ],
+    'subject-case': [0],
+    'subject-full-stop': [2, 'never', '.'],
+    'header-max-length': [2, 'always', 120],
+    'body-max-line-length': [2, 'always', 300],
+    'footer-max-line-length': [2, 'always', 50],
+  },
+};
+```
+
+A configuração estende `@commitlint/config-conventional` e aplica as mesmas regras deste repositório: tipos de commit permitidos, assunto sem ponto final e limites de tamanho para título, corpo e rodapé. O hook acima instala a dependência no ambiente isolado do `pre-commit` e carrega este arquivo pelo caminho informado em `--config`.
+
+## Ativar e conferir
+
+Depois de criar os dois arquivos, siga o [setup dos hooks](/pipelines/pre-commit-setup). Apenas copiar o YAML não instala os hooks no clone local.

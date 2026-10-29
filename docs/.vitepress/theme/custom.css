@@ -1,6 +1,7 @@
 :root {
   --vp-home-hero-name-color: var(--vp-c-brand-1);
   --vp-layout-max-width: 100%;
+  --vp-sidebar-width: 240px;
 }
 
 .VPHome .VPHero {
@@ -42,6 +43,16 @@
 }
 
 @media (min-width: 960px) {
+  .Layout .VPSidebar,
+  .VPNavBar.has-sidebar .container > .title {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .VPNavBar.has-sidebar .container > .content {
+    padding-right: 16px;
+  }
+
   .VPContent.has-sidebar .VPDoc {
     padding-right: 24px;
     padding-left: 24px;
@@ -55,6 +66,22 @@
 
   .VPDoc.has-aside > .container > .content > .content-container {
     max-width: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .VPDoc.has-aside > .container > .aside {
+    max-width: 208px;
+    padding-left: 16px;
+  }
+
+  .VPDoc .aside-container,
+  .VPDoc .aside-curtain {
+    width: 192px;
+  }
+
+  .VPDocAsideOutline.has-outline > .content {
+    padding-left: 12px;
   }
 }
 

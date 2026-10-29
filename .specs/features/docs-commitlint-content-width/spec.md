@@ -6,7 +6,7 @@ A página de configuração menciona dois arquivos, mas contém apenas o YAML do
 
 ## Goals
 
-- [x] D1: documentar a configuração CJS completa antes do YAML, com caminhos coerentes.
+- [x] D1: documentar a configuração CJS completa após o YAML, com caminhos coerentes.
 - [x] D2: ampliar o conteúdo de desktop preservando navegação e uso no celular.
 
 ## Out of Scope
@@ -28,7 +28,7 @@ Alterar regras do Commitlint, versões de dependências, hooks, workflows, aplic
 
 ### DOCS-01: Configuração copiável
 
-1. WHEN o leitor abrir a página de configuração THEN o guia SHALL apresentar primeiro config/commitlint/commitlint.config.cjs completo e depois .pre-commit-config.yaml na raiz, mantendo o caminho referenciado pelo hook.
+1. WHEN o leitor abrir a página de configuração THEN o guia SHALL apresentar primeiro .pre-commit-config.yaml na raiz e depois config/commitlint/commitlint.config.cjs completo, mantendo o caminho referenciado pelo hook.
 2. WHEN o leitor executar o exemplo CJS THEN o Commitlint SHALL aceitar uma mensagem convencional válida e rejeitar um tipo inválido com type-enum, usando as mesmas regras do arquivo real.
 
 ### DOCS-02: Espaço para o conteúdo
@@ -52,3 +52,7 @@ Sem novos testes permanentes para esta mudança documental e visual reversível.
 | --- | --- | --- |
 | DOCS-01 | D1 | Objeto CJS e YAML comparados aos arquivos reais; Commitlint aceitou mensagem válida e rejeitou tipo inválido |
 | DOCS-02 | D2 | Build VitePress aprovado; DOM em 390/768/960/1440/1920 px, menu móvel e rolagem dos exemplos conferidos |
+
+## Ampliação solicitada em 2026-10-28
+
+O usuário mudou a ordem: YAML antes do CJS. Reduzir também sidebar/navbar (padding16px e coluna240px) e sumário (coluna208px, gutter16px), preservando acessibilidade. Completar setup dos dois hooks, validação manual, diagnóstico/Husky/worktrees e referências/diagnóstico Pages. Alterações restritas aos quatro arquivos de documentação/CSS; nenhum runtime ou consumidor. Revalidar build, snippet e layout; a revisão anterior cobre somente a primeira entrega e não prova esta ampliação.

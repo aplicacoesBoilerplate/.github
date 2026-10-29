@@ -26,7 +26,7 @@ Copie o exemplo para **`.github/workflows/documentacao.yml` no consumidor**:
 
 <<< ../../examples/documentacao/.github/workflows/documentacao.yml
 
-O exemplo fixa a release publicada `v0.0.1`. Depois que `v0.0.2` for publicada, o consumidor pode atualizar a referência após revisão. Também é possível fixar um SHA completo. A branch `master` é mutável.
+O exemplo fixa a release histórica `v0.0.1`, adequada ao projeto isolado original. Para usar todos os inputs descritos nesta página, substitua a referência por uma revisão publicada que contenha o contrato, como o SHA `4176883e69cf32fe36d1b893e246bbdc03885cf9` da release `v0.1.0`. Confira as [notas de versão](/releases) antes de atualizar. A branch `master` é mutável.
 
 Não é necessário `secrets: inherit`: o workflow utiliza o `GITHUB_TOKEN` do consumidor com as permissões declaradas.
 
@@ -60,6 +60,16 @@ Os novos inputs requerem uma revisão que contenha este contrato; fixe o SHA rev
 
 O Release Please atualiza `docs/package.json` e `docs/package-lock.json` pela configuração nativa do catálogo, mantendo as notas em `CHANGELOG.md` na raiz. A documentação lê a versão do package no build, sem consulta à API no navegador. O TXT de homologação foi removido.
 
-Os filtros da pipeline deste catálogo incluem esses arquivos. Quando o PR técnico de release for integrado, o site acompanha a nova versão e suas notas. A próxima entrega está planejada para **v0.0.2**, pela milestone correspondente; **v1.0.0** permanece reservada para a conclusão do escopo planejado.
+Os filtros da pipeline deste catálogo incluem esses arquivos. Quando o PR técnico de release for integrado, o site acompanha a nova versão e suas notas. Consulte a versão exibida na navegação e as notas publicadas; a versão do código documentado não comprova que pacotes foram distribuídos em um registry.
+
+## Conferência local e diagnóstico
+
+No projeto isolado deste catálogo, execute `npm ci` e `npm run docs:build` dentro de `docs/`. Para visualizar o build, execute `npm run docs:preview` e abra a URL impressa, incluindo o prefixo `/.github/`. Em workspaces, use o diretório e o script definidos nos inputs do caller.
+
+- **PR com build verde e deploy ignorado:** comportamento esperado; publicação depende de integração em master.
+- **Site não encontrado no deploy:** confira Settings → Pages → Source e o environment `github-pages`.
+- **Arquivos ou links sem o prefixo do repositório:** confira `base` no VitePress e `DOCS_BASE` no build.
+- **Catálogo vazio no workspace:** compile bibliotecas/manifests antes de compilar o site.
+- **Site ainda mostra a versão anterior:** confira o SHA do último deploy aprovado, o build da master e os arquivos de versão do checkout. Um build de PR não atualiza o site público.
 
 Consulte [Notas de versão](/releases) e o [guia de versionamento](/pipelines/versionamento-release-please).

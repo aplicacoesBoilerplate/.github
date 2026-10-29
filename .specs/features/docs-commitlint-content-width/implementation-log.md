@@ -43,3 +43,11 @@ Context7 indisponível entre as ferramentas da sessão. Conferidos o código loc
 - Higiene de título e validação de versão também aprovadas. Validação de versão 40785377014 aprovada após vínculo da milestone.
 - Revisão independente PASS: quatro critérios atendidos; duas mutações do snippet detectadas em memória, sem alterar fontes; build independente aprovado. Relatório canônico em `validation.md`, com evidências por critério. `validate_state.py` aprovado sem erros.
 - O checkpoint final altera somente registros TLC. Nenhum merge, tag, release ou deploy executado pelo agente.
+
+## Ampliação documental em 2026-10-28
+
+Última orientação do usuário prevalece: YAML primeiro, CJS depois. Atualizados os exemplos para instalar pre-commit e commit-msg; removidos comandos que escondiam falhas; acrescentados validação manual, diagnóstico PATH/Husky/worktrees/CI e referências de Pages/preview.
+
+CSS: sidebar240px com padding16px, navbar16px e sumário208px com gutter16px. Não há novas medidas visuais: Cua informou que uso do navegador está desabilitado nas configurações Work. Não foi usado outro runtime para contornar a restrição.
+
+Gate: equivalência completa YAML/CJS com arquivos reais aprovada; ordemyaml/js aprovada; VitePress1.6.4 compilou todas as páginas em5.86s; gitdiffcheck aprovado. pre-commit não está instalado neste terminal: os comandos novos foram conferidos nas referências oficiais, mas sua execução integrada local não está comprovada. Revisão independente e nova conferência visual pendentes; o PASS anterior corresponde somente ao produtoa1d76c4.
