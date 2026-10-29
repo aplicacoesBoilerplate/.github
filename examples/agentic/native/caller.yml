@@ -1,0 +1,40 @@
+# Copiar para .github/workflows/agents.yml no consumidor.
+# A branch é referência de integração do MVP; fixar SHA revisado antes de produção.
+name: Agentes do consumidor
+on:
+  issues:
+    types: [opened, reopened, labeled]
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    branches: ['release/**']
+  push:
+    branches: ['release/**']
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue real para piloto
+        type: number
+        required: true
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  actions: read
+jobs:
+  agents:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (vars.AGENTIC_ENABLED == 'true' &&
+       (github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'agentic:run')))
+    uses: aplicacoesBoilerplate/.github/.github/workflows/agentic-orchestrator.yml@feature/agentics-workflows-architecture
+    with:
+      project_id: ${{ vars.AGENTIC_PROJECT_ID }}
+      automation_actor: ${{ vars.AGENTIC_AUTOMATION_ACTOR || 'github-actions[bot]' }}
+      issue_number: ${{ inputs.issue_number || 0 }}
+      models: ${{ vars.AGENTIC_MODELS }}
+      # Opcional: limits JSON por triage/low/medium/high/ultra.
+      # Cada perfil contém max_turns (2..40) e timeout em minutos (2..30).
+    secrets:
+      OPENROUTER_API_KEY: ${{ secrets.API_KEY_OPENROUTER }}
+      PROJECTS_TOKEN: ${{ secrets.AGENTIC_PROJECTS_TOKEN }}
+      PUBLISH_TOKEN: ${{ secrets.AGENTIC_PUBLISH_TOKEN }}
