@@ -51,3 +51,14 @@ Context7 indisponível entre as ferramentas da sessão. Conferidos o código loc
 CSS: sidebar240px com padding16px, navbar16px e sumário208px com gutter16px. Não há novas medidas visuais: Cua informou que uso do navegador está desabilitado nas configurações Work. Não foi usado outro runtime para contornar a restrição.
 
 Gate: equivalência completa YAML/CJS com arquivos reais aprovada; ordemyaml/js aprovada; VitePress1.6.4 compilou todas as páginas em5.86s; gitdiffcheck aprovado. pre-commit não está instalado neste terminal: os comandos novos foram conferidos nas referências oficiais, mas sua execução integrada local não está comprovada. Revisão independente e nova conferência visual pendentes; o PASS anterior corresponde somente ao produtoa1d76c4.
+
+### Fechamento da revisão possível
+
+- CI 40794097579 e documentação 40794097911 aprovaram o checkpoint ef3d614; nenhum deploy foi executado.
+- Verificador executou checks funcionais e sensor, além de build independente em 5,40 s; a validação visual atual segue indisponível.
+- Achado do verificador: receita Makefile usava espaços. Corrigida para TAB em 8d675fd e conferida extraindo o bloco Markdown com normalização de CRLF; ambos os hooks preservados.
+- O relatório atual distingue validação parcial de PASS histórico. O PR 29 permanece draft, com milestone v1.0.1, até comprovar o layout atual.
+
+### Meta dos consumidores, conferência remota
+
+Java PR37 e Vue PR40 continuam abertos para develop; Go PR16 continua aberto para release/v0.0.1. Nenhum dos três foi integrado. Java e Go ainda não têm GitHub Releases; a última release Vue é anterior ao piloto (agosto). Issue #4 permanece fechada. A meta completa não foi declarada entregue: ciclos reais aguardam merges humanos e a inspeção posterior de PR técnico, tag e Release.
