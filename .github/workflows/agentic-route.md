@@ -133,10 +133,13 @@ jobs:
 
           const decision=JSON.parse(output.items[0].message),expected=JSON.parse(process.env.EXPECTED_CONTEXT);
 
-          if(![''ready'',''needs-human''].includes(decision.status)||![''issue-fix'',''review-fix'',''push-fix''].includes(decision.action)||decision.action!==expected.action||![''low'',''medium'',''high'',''ultra''].includes(decision.tier)||typeof
+          if(![''ready'',''needs-human''].includes(decision.status)||![''low'',''medium'',''high'',''ultra''].includes(decision.tier)||typeof
           decision.requires_sdd!==''boolean''||!Array.isArray(decision.missing_fields)||decision.missing_fields.some(f=>typeof
           f!==''string'')||typeof decision.reason!==''string''||!decision.reason.trim())throw new Error(''Contrato
           de decisão inválido'');
+
+          if(![''issue-fix'',''review-fix'',''push-fix''].includes(expected.action)||(decision.action!==undefined&&decision.action!==expected.action))throw
+          new Error(''Ação divergente do evento confiável'');
 
           if(decision.repository&&decision.repository!==process.env.EXPECTED_REPOSITORY)throw new Error(''Repositório
           divergente'');
@@ -150,9 +153,12 @@ jobs:
 
           // Identidade vem da execução confiável, nunca de inferência ou suposição do modelo.
 
-          decision.repository=process.env.EXPECTED_REPOSITORY;decision.source_sha=process.env.SOURCE_SHA;
+          decision.repository=process.env.EXPECTED_REPOSITORY;decision.source_sha=process.env.SOURCE_SHA;decision.action=expected.action;
 
-          decision.brief=decision.brief||decision.reason;
+          if(decision.brief!==undefined&&(typeof decision.brief!==''string''||!decision.brief.trim()))throw new
+          Error(''Brief fornecido deve ser texto não vazio'');
+
+          decision.brief=decision.brief??decision.reason;
 
           output.items[0].message=JSON.stringify(decision);
 
