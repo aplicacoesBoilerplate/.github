@@ -1,13 +1,73 @@
 name: Agentic triage pilot
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue real do piloto
+        type: number
+        default: 7
 permissions:
   contents: read
   actions: read
+  issues: read
+  pull-requests: read
 jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    outputs:
+      context: ${{ steps.check.outputs.context }}
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        id: check
+        env:
+          HAS_OPENROUTER: ${{ secrets.API_KEY_OPENROUTER != '' }}
+          HAS_PROJECTS: ${{ secrets.AGENTIC_PROJECTS_TOKEN != '' }}
+          HAS_PUBLISH: ${{ secrets.AGENTIC_PUBLISH_TOKEN != '' }}
+          PROJECT_ID: ${{ vars.AGENTIC_PROJECT_ID }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+        with:
+          script: |
+            const missing=[];
+            for(const [flag,name] of [['HAS_OPENROUTER','API_KEY_OPENROUTER'],['HAS_PROJECTS','AGENTIC_PROJECTS_TOKEN'],['HAS_PUBLISH','AGENTIC_PUBLISH_TOKEN']])
+              if(process.env[flag]!=='true')missing.push(name);
+            if(!process.env.PROJECT_ID)missing.push('AGENTIC_PROJECT_ID');
+            await core.summary.addHeading('Prontidão da arquitetura completa').addCodeBlock(JSON.stringify({missing,baseline:'20a456207bb8c436317107ca1dc85d90d15d6203'},null,2),'json').write();
+            if(process.env.HAS_OPENROUTER!=='true')throw new Error('API_KEY_OPENROUTER indisponível ao consumidor');
+            const issue=(await github.rest.issues.get({...context.repo,issue_number:Number(process.env.ISSUE_NUMBER)})).data;
+            if(issue.pull_request)throw new Error('Informar issue real, não PR');
+            const envelope={repository:context.payload.repository.full_name,event:'workflow_dispatch',action:'issue-fix',
+              actor:context.actor,number:issue.number,source_sha:context.sha,configuration_sha:context.sha,
+              metadata:{title:issue.title,body:issue.body,url:issue.html_url,labels:issue.labels.map(l=>l.name),milestone:issue.milestone?.title,
+                project_fields:{},organization_fields:{status:'not-queried'},missing:['Piloto isolado de triagem: sem coleta Projects ou autorização de escrita']},
+              sonarqube:{status:'not-run'}};
+            core.setOutput('context',JSON.stringify(envelope));
   pilot:
-    uses: ./.github/workflows/agentic-triage.lock.yml
+    needs: readiness
+    uses: ./.github/workflows/agentic-route.lock.yml
     with:
       model: liquid/lfm-2.5-2.6b:free
+      context: ${{ needs.readiness.outputs.context }}
+      source_sha: ${{ github.sha }}
+      base_branch: ${{ github.ref_name }}
     secrets:
       OPENAI_API_KEY: ${{ secrets.API_KEY_OPENROUTER }}
+  inspect:
+    needs: [readiness, pilot]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: agentic-route-decision
+          path: ${{ runner.temp }}/triage-result
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        env:
+          EXPECTED_CONTEXT: ${{ needs.readiness.outputs.context }}
+        with:
+          script: |
+            const fs=require('fs'),path=require('path');
+            const result=JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,'triage-result/agent_output.json'),'utf8'));
+            if(result.items?.length!==1||result.items[0].type!=='noop')throw new Error('Terminal único noop ausente');
+            const decision=JSON.parse(result.items[0].message),expected=JSON.parse(process.env.EXPECTED_CONTEXT);
+            if(decision.repository!==expected.repository||decision.source_sha!==expected.source_sha||decision.action!=='issue-fix'||decision.status!=='needs-human'||!Array.isArray(decision.missing_fields)||!decision.missing_fields.length)
+              throw new Error('Lacunas reais devem impedir operações; decisão divergente');
+            await core.summary.addHeading('Triagem real: terminal verificado').addCodeBlock(JSON.stringify(decision,null,2),'json').write();
