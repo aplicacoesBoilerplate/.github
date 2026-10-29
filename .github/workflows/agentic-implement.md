@@ -72,6 +72,10 @@ models:
           cost:
             input: 0
             output: 0
+        nvidia/nemotron-3.5-lightning:free:
+          cost:
+            input: 0
+            output: 0
 safe-outputs:
   create-issue: false
   noop:

@@ -66,6 +66,10 @@ models:
           cost:
             input: 0
             output: 0
+        nvidia/nemotron-3.5-lightning:free:
+          cost:
+            input: 0
+            output: 0
 safe-outputs:
   create-issue: false
   noop:
@@ -120,6 +124,8 @@ jobs:
         retention-days: 7
         overwrite: true
 ---
+
+Se metadata.missing já contiver lacunas, conclua imediatamente por safeoutputs_noop com status needs-human e missing_fields preservados. Não chame GitHub MCP nem leia código para tentar contornar lacunas já confirmadas pelo caller. O JSON deve conter todos os campos do contrato, inclusive tier e requires_sdd.
 
 # Triagem unificada
 
