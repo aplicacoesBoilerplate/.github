@@ -1,0 +1,305 @@
+name: Agentic orchestration
+on:
+  workflow_call:
+    inputs:
+      project_id:
+        type: string
+        required: true
+      models:
+        description: JSON de modelos OpenRouter por papel (triage, low, medium, high, ultra)
+        type: string
+        required: true
+      limits:
+        description: JSON com max_turns e timeout por papel; limites absolutos 40 turnos e 30 minutos
+        type: string
+        default: '{"triage":{"max_turns":12,"timeout":6},"low":{"max_turns":12,"timeout":8},"medium":{"max_turns":20,"timeout":12},"high":{"max_turns":24,"timeout":15},"ultra":{"max_turns":32,"timeout":20}}'
+      issue_number:
+        description: Somente para piloto manual; zero usa o evento original
+        type: number
+        default: 0
+      automation_actor:
+        description: Login do publicador usado para impedir loops
+        type: string
+        default: github-actions[bot]
+    secrets:
+      OPENROUTER_API_KEY:
+        required: true
+      PROJECTS_TOKEN:
+        required: true
+      PUBLISH_TOKEN:
+        required: true
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  actions: read
+concurrency:
+  group: agentic-${{ github.repository }}-${{ github.event.issue.number || github.event.pull_request.number || inputs.issue_number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      context: ${{ steps.context.outputs.context }}
+      source_sha: ${{ steps.context.outputs.source_sha }}
+      base_sha: ${{ steps.context.outputs.base_sha }}
+      base_branch: ${{ steps.context.outputs.base_branch }}
+      triage_model: ${{ steps.context.outputs.triage_model }}
+      eligible: ${{ steps.context.outputs.eligible }}
+      triage_turns: ${{ steps.context.outputs.triage_turns }}
+      triage_timeout: ${{ steps.context.outputs.triage_timeout }}
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        id: context
+        env:
+          PROJECT_ID: ${{ inputs.project_id }}
+          MODELS: ${{ inputs.models }}
+          LIMITS: ${{ inputs.limits }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+          AUTOMATION_ACTOR: ${{ inputs.automation_actor }}
+        with:
+          github-token: ${{ secrets.PROJECTS_TOKEN }}
+          script: |
+            const repo=context.repo, repository=`${repo.owner}/${repo.repo}`;
+            const models=JSON.parse(process.env.MODELS);
+            const limits=JSON.parse(process.env.LIMITS);
+            for(const key of ['triage','low','medium','high','ultra']) {
+              if(typeof models[key]!=='string'||! /^[a-zA-Z0-9_.:-]+\/[a-zA-Z0-9_./:-]+$/.test(models[key]))
+                throw new Error(`Modelo inválido/ausente: ${key}`);
+              const l=limits[key];
+              if(!Number.isInteger(l?.max_turns)||l.max_turns<2||l.max_turns>40||!Number.isInteger(l?.timeout)||l.timeout<2||l.timeout>30)
+                throw new Error(`Limite inválido: ${key}`);
+            }
+            core.setOutput('triage_model',models.triage);
+            core.setOutput('triage_turns',limits.triage.max_turns);
+            core.setOutput('triage_timeout',limits.triage.timeout);
+            const event=context.eventName;
+            if(!['issues','pull_request','push','workflow_dispatch'].includes(event))throw new Error('Evento não suportado');
+            if(context.actor===process.env.AUTOMATION_ACTOR||context.actor.endsWith('[bot]')) {
+              core.setOutput('eligible','false');
+              await core.summary.addRaw('Evento de automação ignorado para impedir recursão.').write(); return;
+            }
+            const actorPermission=(await github.rest.repos.getCollaboratorPermissionLevel({...repo,username:context.actor})).data.permission;
+            if(!['write','maintain','admin'].includes(actorPermission))throw new Error('Acionamento exige colaborador com escrita');
+            let number=context.payload.issue?.number||context.payload.pull_request?.number;
+            let pr, issue, baseBranch, sourceSha, baseSha;
+            const missing=[];
+            if(event==='workflow_dispatch')number=Number(process.env.ISSUE_NUMBER);
+            if(event==='push') {
+              const prs=(await github.rest.repos.listPullRequestsAssociatedWithCommit({...repo,commit_sha:context.sha})).data;
+              const candidates=prs.filter(p=>p.head.sha===context.sha||p.merge_commit_sha===context.sha);
+              if(candidates.length===1)number=candidates[0].number;
+              else missing.push('push sem PR aberto inequívoco');
+            }
+            if(number) {
+              const item=(await github.rest.issues.get({...repo,issue_number:number})).data;
+              if(item.pull_request) {
+                pr=(await github.rest.pulls.get({...repo,pull_number:number})).data;
+                if(pr.head.repo?.full_name!==repository)throw new Error('PR de fork não recebe credenciais');
+                if(pr.title.startsWith('[agentic')||pr.head.ref.startsWith('agentic/')) {
+                  core.setOutput('eligible','false'); return;
+                }
+                baseBranch=pr.base.ref; baseSha=pr.base.sha; sourceSha=event==='push'?context.sha:pr.head.sha;
+                if(event==='workflow_dispatch')missing.push('PR manual: usar evento pull_request para correção no PR de origem');
+              } else issue=item;
+            } else missing.push('issue/PR ausente');
+            let metadata={project_fields:{},organization_fields:{status:'not-queried'},missing};
+            if(number) {
+              try {
+              const issueFields=`issueFieldValues(first:100){pageInfo{hasNextPage} nodes{
+                ... on IssueFieldSingleSelectValue {selected:value field{... on IssueFieldSingleSelect{name}}}
+                ... on IssueFieldNumberValue {numeric:value field{... on IssueFieldNumber{name}}}
+                ... on IssueFieldTextValue {text:value field{... on IssueFieldText{name}}}
+              }} blockedBy(first:100){pageInfo{hasNextPage} nodes{number state url}}`;
+              const data=await github.graphql(`query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){issueOrPullRequest(number:$number){
+                ... on Issue {title body url issueType{name} ${issueFields} milestone{title} parent{number url milestone{title}} projectItems(first:100){pageInfo{hasNextPage} nodes{project{id} fieldValues(first:100){pageInfo{hasNextPage} nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}} ... on ProjectV2ItemFieldNumberValue{number field{... on ProjectV2Field{name}}} ... on ProjectV2ItemFieldTextValue{text field{... on ProjectV2Field{name}}}}}}}}
+                ... on PullRequest {title body url milestone{title} closingIssuesReferences(first:20){pageInfo{hasNextPage} nodes{number url issueType{name} ${issueFields} milestone{title} parent{number url milestone{title}}}} projectItems(first:100){pageInfo{hasNextPage} nodes{project{id} fieldValues(first:100){pageInfo{hasNextPage} nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2SingleSelectField{name}}} ... on ProjectV2ItemFieldNumberValue{number field{... on ProjectV2Field{name}}} ... on ProjectV2ItemFieldTextValue{text field{... on ProjectV2Field{name}}}}}}}}
+              }}}`,{owner:repo.owner,repo:repo.repo,number});
+              const item=data.repository.issueOrPullRequest;
+              const entries=item.projectItems.nodes.filter(i=>i.project.id===process.env.PROJECT_ID);
+              if(item.projectItems.pageInfo.hasNextPage||entries.length!==1||entries[0].fieldValues.pageInfo.hasNextPage)
+                missing.push('Project ausente, ambíguo ou paginado');
+              else for(const v of entries[0].fieldValues.nodes)if(v.field?.name)metadata.project_fields[v.field.name]=v.name??v.number??v.text;
+              const links=pr?item.closingIssuesReferences.nodes:[];
+              const linked=pr?(links.length===1?links[0]:null):item;
+              if(pr&&item.closingIssuesReferences.pageInfo.hasNextPage)missing.push('issues vinculadas paginadas');
+              const organization_fields={};
+              if(linked?.issueFieldValues) {
+                if(linked.issueFieldValues.pageInfo.hasNextPage)missing.push('campos da organização paginados');
+                for(const v of linked.issueFieldValues.nodes)if(v.field?.name)organization_fields[v.field.name]=v.selected??v.numeric??v.text;
+              }
+              const resolved_fields={...metadata.project_fields};
+              for(const [key,value] of Object.entries(organization_fields)) {
+                if(key in resolved_fields&&resolved_fields[key]!==value)missing.push(`campo conflitante: ${key}`);
+                resolved_fields[key]=value;
+              }
+              if(linked?.blockedBy?.pageInfo.hasNextPage||linked?.blockedBy?.nodes.some(i=>i.state==='OPEN'))missing.push('dependências abertas/paginadas');
+              metadata={...metadata,title:item.title,body:item.body,url:item.url,type:item.issueType?.name,
+                labels:issue?.labels.map(l=>l.name)||(await github.rest.issues.listLabelsOnIssue({...repo,issue_number:number})).data.map(l=>l.name),
+                milestone:item.milestone?.title||(links.length===1?links[0].milestone?.title:null),
+                epic:item.parent||linked?.parent||(linked?.issueType?.name==='Release'?{number:linked.number||number,url:linked.url}:null),linked_issues:links,
+                organization_fields,resolved_fields,dependencies:linked?.blockedBy?.nodes||[]};
+              if(!metadata.milestone)missing.push('milestone');
+              if(!metadata.epic)missing.push('épica');
+              if(!metadata.resolved_fields.Effort)missing.push('Effort');
+              if(issue&&metadata.milestone)baseBranch=`release/${metadata.milestone}`;
+              } catch(error) {
+                missing.push('Consulta de metadados indisponível; verificar schema/permissões Projects V2');
+                core.warning('Metadados não confirmados; execução limitada à triagem');
+              }
+            }
+            if(baseBranch) {
+              try {const ref=(await github.rest.git.getRef({...repo,ref:`heads/${baseBranch}`})).data;
+                baseSha=ref.object.sha; if(!sourceSha)sourceSha=baseSha;
+                if(event==='push'&&(baseSha!==context.sha||context.ref!==`refs/heads/${baseBranch}`))missing.push('push obsoleto ou branch divergente');
+              }catch {missing.push('branch release/base não encontrada');}
+            }
+            if(!baseSha||!sourceSha) {
+              baseBranch=context.payload.repository.default_branch;
+              baseSha=(await github.rest.git.getRef({...repo,ref:`heads/${baseBranch}`})).data.object.sha;
+              sourceSha=baseSha; missing.push('base autorizada ausente; checkout somente para triagem');
+            }
+            // Nunca execute entrega sobre produção/homologação por inferência do texto.
+            if(!baseBranch.startsWith('release/'))missing.push('base fora de release/* no MVP');
+            const envelope={repository,event,action:event==='push'?'push-fix':pr?'review-fix':'issue-fix',actor:context.actor,
+              number,head_branch:pr?.head.ref||null,configuration_sha:context.sha,source_sha:sourceSha,base_sha:baseSha,base_branch:baseBranch,
+              metadata,sonarqube:{status:'not-run'}};
+            envelope.delivery_id=require('crypto').createHash('sha256').update(JSON.stringify(envelope)).digest('hex');
+            const prs=await github.paginate(github.rest.pulls.list,{...repo,state:'all',per_page:100});
+            if(prs.some(p=>p.body?.includes(`Agentic delivery: ${envelope.delivery_id}`))) {
+              core.setOutput('eligible','false');
+              await core.summary.addRaw('Entrega desta entrada já publicada; repetição ignorada.').write();return;
+            }
+            const encoded=JSON.stringify(envelope);
+            if(Buffer.byteLength(encoded)>48000)throw new Error('Contexto excede 48 KiB; reduzir entrada explicitamente');
+            for(const [key,value] of Object.entries({context:encoded,source_sha:sourceSha,base_sha:baseSha,base_branch:baseBranch,eligible:'true'}))core.setOutput(key,value);
+            await core.summary.addHeading('Entrada Agentic').addCodeBlock(JSON.stringify({repository,event,number,sourceSha,baseBranch,missing},null,2),'json').write();
+  triage:
+    needs: prepare
+    if: needs.prepare.outputs.eligible == 'true'
+    uses: ./.github/workflows/agentic-route.lock.yml
+    with:
+      model: ${{ needs.prepare.outputs.triage_model }}
+      context: ${{ needs.prepare.outputs.context }}
+      source_sha: ${{ needs.prepare.outputs.source_sha }}
+      base_branch: ${{ needs.prepare.outputs.base_branch }}
+      max_turns: ${{ fromJSON(needs.prepare.outputs.triage_turns) }}
+      timeout: ${{ fromJSON(needs.prepare.outputs.triage_timeout) }}
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      GH_AW_GITHUB_MCP_SERVER_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+  route:
+    needs: [prepare, triage]
+    runs-on: ubuntu-latest
+    outputs:
+      destination: ${{ steps.route.outputs.destination }}
+      model: ${{ steps.route.outputs.model }}
+      context: ${{ steps.route.outputs.context }}
+      max_turns: ${{ steps.route.outputs.max_turns }}
+      timeout: ${{ steps.route.outputs.timeout }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: agentic-route-decision
+          path: ${{ runner.temp }}/agentic-decision
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        id: route
+        env:
+          ENVELOPE: ${{ needs.prepare.outputs.context }}
+          MODELS: ${{ inputs.models }}
+          LIMITS: ${{ inputs.limits }}
+        with:
+          script: |
+            const fs=require('fs'),path=require('path');
+            const root=path.join(process.env.RUNNER_TEMP,'agentic-decision');
+            const env=JSON.parse(process.env.ENVELOPE);
+            const output=JSON.parse(fs.readFileSync(path.join(root,'agent_output.json'),'utf8'));
+            if(output.items?.length!==1||output.items[0].type!=='noop')throw new Error('Terminal único noop obrigatório');
+            const decision=JSON.parse(output.items[0].message);
+            if(decision.repository!==env.repository||decision.source_sha!==env.source_sha||decision.action!==env.action)
+              throw new Error('Decisão divergente do evento/commit');
+            if(!['ready','needs-human'].includes(decision.status)||!['low','medium','high','ultra'].includes(decision.tier)||typeof decision.requires_sdd!=='boolean'||!Array.isArray(decision.missing_fields))
+              throw new Error('Contrato de decisão inválido');
+            const fields=env.metadata.resolved_fields||{};
+            const sdd=decision.requires_sdd||['high','ultra'].includes(decision.tier)||['High','Team'].includes(fields.Effort)||['M','L','XL'].includes(fields.Size)||String(fields.Release).toUpperCase()==='MAJOR'||[0,6,7,8,9,10].includes(fields.Estimate);
+            const destination=env.metadata.missing.length||decision.missing_fields.length||decision.status==='needs-human'?'needs-human':sdd?'specify':'direct';
+            const models=JSON.parse(process.env.MODELS),model=models[decision.tier];
+            core.setOutput('destination',destination);core.setOutput('model',model);
+            const limits=JSON.parse(process.env.LIMITS)[decision.tier];
+            core.setOutput('max_turns',limits.max_turns);core.setOutput('timeout',limits.timeout);
+            core.setOutput('context',JSON.stringify({...env,decision:{...decision,requires_sdd:sdd},resolved_model:model}));
+            await core.summary.addHeading('Rota').addCodeBlock(JSON.stringify({destination,model,decision},null,2),'json').write();
+  direct:
+    needs: [prepare, route]
+    if: needs.route.outputs.destination == 'direct'
+    uses: ./.github/workflows/agentic-direct.lock.yml
+    with:
+      model: ${{ needs.route.outputs.model }}
+      context: ${{ needs.route.outputs.context }}
+      source_sha: ${{ needs.prepare.outputs.source_sha }}
+      base_sha: ${{ needs.prepare.outputs.base_sha }}
+      base_branch: ${{ needs.prepare.outputs.base_branch }}
+      max_turns: ${{ fromJSON(needs.route.outputs.max_turns) }}
+      timeout: ${{ fromJSON(needs.route.outputs.timeout) }}
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      GH_AW_GITHUB_MCP_SERVER_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+      GH_AW_GITHUB_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+  specify:
+    needs: [prepare, route]
+    if: needs.route.outputs.destination == 'specify'
+    uses: ./.github/workflows/agentic-specify.lock.yml
+    with:
+      model: ${{ needs.route.outputs.model }}
+      context: ${{ needs.route.outputs.context }}
+      source_sha: ${{ needs.prepare.outputs.base_sha }}
+      base_sha: ${{ needs.prepare.outputs.base_sha }}
+      base_branch: ${{ needs.prepare.outputs.base_branch }}
+      max_turns: ${{ fromJSON(needs.route.outputs.max_turns) }}
+      timeout: ${{ fromJSON(needs.route.outputs.timeout) }}
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      GH_AW_GITHUB_MCP_SERVER_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+      GH_AW_GITHUB_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+  approval_packet:
+    needs: [prepare, route, specify]
+    if: needs.specify.outputs.created_pr_number != ''
+    runs-on: ubuntu-latest
+    outputs:
+      spec_pr: ${{ steps.packet.outputs.spec_pr }}
+      spec_sha: ${{ steps.packet.outputs.spec_sha }}
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        id: packet
+        env:
+          SPEC_PR: ${{ needs.specify.outputs.created_pr_number }}
+          BASE_SHA: ${{ needs.prepare.outputs.base_sha }}
+          BASE_BRANCH: ${{ needs.prepare.outputs.base_branch }}
+          MODEL: ${{ needs.route.outputs.model }}
+        with:
+          github-token: ${{ secrets.PUBLISH_TOKEN }}
+          script: |
+            const pr=(await github.rest.pulls.get({...context.repo,pull_number:Number(process.env.SPEC_PR)})).data;
+            if(pr.state!=='open'||pr.head.repo.full_name!==context.payload.repository.full_name||pr.base.ref!==process.env.BASE_BRANCH||pr.base.sha!==process.env.BASE_SHA)throw new Error('PR de spec divergente');
+            const files=await github.paginate(github.rest.pulls.listFiles,{...context.repo,pull_number:pr.number});
+            if(!files.length||files.some(f=>!f.filename.startsWith('.specs/')||f.status==='removed'))throw new Error('Spec contém arquivos não autorizados');
+            const env=(await github.rest.repos.getEnvironment({...context.repo,environment_name:'agentic-architecture-approval'})).data;
+            if(!env.protection_rules.some(r=>r.type==='required_reviewers'&&r.reviewers?.length))throw new Error('Environment deve ter required reviewers antes de implementar');
+            core.setOutput('spec_pr',pr.number);core.setOutput('spec_sha',pr.head.sha);
+            await core.summary.addHeading('Aprovação necessária').addLink(`Revisar spec #${pr.number} no SHA ${pr.head.sha}`,`${pr.html_url}/files/${pr.head.sha}`).addRaw(`\nBase: ${process.env.BASE_SHA}; modelo: ${process.env.MODEL}. Qualquer mudança exige nova execução e aprovação.\n`).write();
+  implement:
+    needs: [prepare, route, approval_packet]
+    uses: ./.github/workflows/agentic-implement.lock.yml
+    with:
+      model: ${{ needs.route.outputs.model }}
+      context: ${{ needs.route.outputs.context }}
+      source_sha: ${{ needs.approval_packet.outputs.spec_sha }}
+      spec_pr: ${{ fromJSON(needs.approval_packet.outputs.spec_pr) }}
+      base_sha: ${{ needs.prepare.outputs.base_sha }}
+      base_branch: ${{ needs.prepare.outputs.base_branch }}
+      max_turns: ${{ fromJSON(needs.route.outputs.max_turns) }}
+      timeout: ${{ fromJSON(needs.route.outputs.timeout) }}
+    secrets:
+      OPENAI_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      GH_AW_GITHUB_MCP_SERVER_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+      GH_AW_GITHUB_TOKEN: ${{ secrets.PUBLISH_TOKEN }}

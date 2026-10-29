@@ -15,6 +15,12 @@ description: Agentic triage reutilizável com OpenCode
       source_sha:
         type: string
         required: true
+      max_turns:
+        type: number
+        default: 12
+      timeout:
+        type: number
+        default: 6
     secrets:
       OPENAI_API_KEY:
         required: true
@@ -26,6 +32,7 @@ permissions:
   contents: read
   issues: read
   pull-requests: read
+  actions: read
 imports:
 - shared/agentic-runtime.md
 - shared/agentic-low.md
@@ -72,18 +79,46 @@ safe-outputs:
   threat-detection: false
 runs-on: ubuntu-latest
 pre-agent-steps:
+- name: Validar limites do caller
+  env:
+    MAX_TURNS: ${{ inputs.max_turns }}
+    TIMEOUT: ${{ inputs.timeout }}
+  run: '[[ "$MAX_TURNS" =~ ^[0-9]+$ && "$TIMEOUT" =~ ^[0-9]+$ ]]
+
+    (( MAX_TURNS >= 2 && MAX_TURNS <= 40 && TIMEOUT >= 2 && TIMEOUT <= 30 ))'
 - name: Fixar checkout na revisão autorizada
   env:
     SOURCE_SHA: ${{ inputs.source_sha }}
-  run: 'test "${#SOURCE_SHA}" -eq 40
+  run: '[[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
 
     git fetch --no-tags origin "$SOURCE_SHA"
 
     git checkout --detach "$SOURCE_SHA"
 
     test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'
-max-turns: 12
-timeout-minutes: 6
+max-turns: ${{ inputs.max_turns }}
+timeout-minutes: ${{ inputs.timeout }}
+jobs:
+  decision_export:
+    needs:
+    - activation
+    - agent
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    steps:
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+      with:
+        name: ${{ needs.activation.outputs.artifact_prefix }}agent-output-fallback
+        path: ${{ runner.temp }}/route-decision
+    - name: Exportar terminal único da triagem
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: agentic-route-decision
+        path: ${{ runner.temp }}/route-decision/agent_output.json
+        if-no-files-found: error
+        retention-days: 7
+        overwrite: true
 ---
 
 # Triagem unificada

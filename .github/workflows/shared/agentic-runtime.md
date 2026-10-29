@@ -162,6 +162,9 @@ engine:
             { action: "safeoutputs_create_pull_request", resource: "*", effect: "allow" },
             { action: "safeoutputs_push_to_pull_request_branch", resource: "*", effect: "allow" },
           ] : []),
+          ...(process.env.AGENTIC_ROLE === "spec" ? [
+            ...["git status*", "git diff*", "git add*", "git commit*", "git checkout*", "git switch*", "git rev-parse*"].map(resource => ({ action: "shell", resource, effect: "allow" })),
+          ] : []),
           ...(process.env.AGENTIC_ROLE === "code" ? [
             { action: "shell", resource: "*", effect: "allow" },
           ] : []),

@@ -129,3 +129,7 @@ O piloto existente analisa entradas controladas em dois workflows de leitura. Ai
 ## Fronteira SonarQube
 
 Análise de branch/PR é futura integração condicionada à compatibilidade do servidor/plugin e à identidade do commit. Complementa o code review. O fluxo aprovado após merge em develop permanece: falha bloqueia master, mantém épica Done e gera Hotfix On hold na mesma milestone. Nenhuma instalação ou mudança de servidor faz parte desta especificação inicial de triagem.
+
+## Progresso da execução autorizada
+
+T1, T2 e T3 implementadas localmente. As quatro fontes Markdown compilam com strict/validate; coordenador/callers passaram no actionlint. O parecer independente está em validation.md, com veredito PARTIAL/apto para piloto. T4 permanece obrigatória: requisitos funcionais ainda aguardam runs reais. Nenhuma suíte nova ou script TypeScript foi criado; a consulta de metadados foi validada contra a issue7 real do próprio repositório piloto.

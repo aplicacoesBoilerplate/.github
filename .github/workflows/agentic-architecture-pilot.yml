@@ -1,0 +1,42 @@
+name: Agentic architecture pilot
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Número real da issue ou PR do piloto
+        type: number
+        required: true
+  issues:
+    types: [opened, reopened, labeled]
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+    branches: ['release/**']
+  push:
+    branches: ['release/**']
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  actions: read
+jobs:
+  agents:
+    # Eventos automáticos são opt-in; o piloto manual usa os mesmos contratos.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (vars.AGENTIC_ENABLED == 'true' &&
+       (github.event_name != 'issues' || contains(github.event.issue.labels.*.name, 'agentic:run')))
+    uses: ./.github/workflows/agentic-orchestrator.yml
+    with:
+      project_id: ${{ vars.AGENTIC_PROJECT_ID }}
+      issue_number: ${{ inputs.issue_number || 0 }}
+      automation_actor: ${{ vars.AGENTIC_AUTOMATION_ACTOR || 'github-actions[bot]' }}
+      models: >-
+        {"triage":"liquid/lfm-2.5-2.6b:free",
+         "low":"liquid/lfm-2.5-2.6b:free",
+         "medium":"liquid/lfm-2.5-2.6b:free",
+         "high":"liquid/lfm-2.5-2.6b:free",
+         "ultra":"liquid/lfm-2.5-2.6b:free"}
+    secrets:
+      OPENROUTER_API_KEY: ${{ secrets.API_KEY_OPENROUTER }}
+      PROJECTS_TOKEN: ${{ secrets.AGENTIC_PROJECTS_TOKEN }}
+      PUBLISH_TOKEN: ${{ secrets.AGENTIC_PUBLISH_TOKEN }}

@@ -11,8 +11,8 @@ O coordenador usa GitHub Actions nativo para dependências, modelos e autorizaç
 ## Components
 
 - shared/agentic-runtime.md: OpenCode/AWF fixado, chave placeholder, permissões por papel; GitHub MCP somente leitura; sem tokens GitHub no filho nativo.
-- shared/agentic-{low,medium,high,ultra}.md: budgets estáticos DRY. Modelo permanece input do consumidor.
-- agentic-triage.md: consulta contexto/metadados por ferramentas GitHub; retorna decisão JSON em noop_message.
+- shared/agentic-{low,medium,high,ultra}.md: orientações por perfil DRY; turnos e timeout são inputs limitados do consumidor. Modelo permanece input do consumidor.
+- agentic-route.md: consulta contexto/metadados por ferramentas GitHub; retorna decisão JSON no terminal noop.
 - agentic-direct.md: corrige issue, PR ou push; cria PR ou propõe atualização do PR, sem merge.
 - agentic-specify.md: produz somente artefatos .specs em PR de especificação.
 - agentic-implement.md: inicia somente após Environment; recebe SHA exato do PR de especificação.
@@ -37,3 +37,12 @@ O gate deve proteger a entrada do implementador, inclusive chamadas diretas. Con
 ## Validation
 
 Compilação strict/validate e inspeção dos locks; piloto com issue/PR/push, rota direta, spec sem implementação, aprovação e revisão divergente. Sem novos testes de TS ou documentação.
+
+## Ajustes comprovados durante compilação
+
+- O schema não aceita outputs autorais em workflow_call Markdown; o coordenador lê o artifact terminal e usa o output nativo created_pr_number para a spec.
+- O detector custom engine:false ainda gerou uma conclusão dependente de resultado inexistente. O MVP desativa esse detector e usa publication_gate nativo (patch, terminal e identidade), exigido explicitamente antes da escrita. Não simular veredito AI nem exigir credencial Copilot.
+- Comentários HTML são removidos pelo sanitizador. A deduplicação usa marcador textual Agentic delivery no PR; retomada de implementação usa Re-run failed jobs do run original.
+- O implementador lê a spec aprovada fora do checkout de produto e trabalha no base_sha para evitar misturar o PR documental no patch.
+- OpenCode v2 fixado não recebe aliases #rapido/#ultra inventados; o caller seleciona IDs reais do provedor por perfil, inclusive sufixos suportados, e limites de turnos/tempo.
+- Query GraphQL validada contra a issue7 real: campos da organização e item Projects disponíveis. Nenhum modelo ou publicador foi executado nessa consulta.

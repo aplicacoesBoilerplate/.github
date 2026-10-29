@@ -18,6 +18,12 @@ description: Agentic direct reutilizável com OpenCode
       base_sha:
         type: string
         required: true
+      max_turns:
+        type: number
+        default: 20
+      timeout:
+        type: number
+        default: 12
     secrets:
       OPENAI_API_KEY:
         required: true
@@ -73,18 +79,7 @@ safe-outputs:
   report-missing-data: false
   report-missing-tool: false
   report-incomplete: false
-  threat-detection:
-    engine: false
-    continue-on-error: false
-    report-as-issue: false
-    steps:
-    - name: Inspecionar patch antes de publicar
-      run: "python3 - <<'PY'\nfrom pathlib import Path\nimport re\nroot=Path('/tmp/gh-aw/threat-detection')\nfiles=list(root.rglob('*.patch'))\n\
-        for p in files:\n    text=p.read_text(errors='strict')\n    if p.stat().st_size > 524288: raise SystemExit('Patch\
-        \ excede 512 KiB')\n    if re.search(r'^\\+(?!\\+).*(sk-[A-Za-z0-9_-]{20,}|-----BEGIN .*PRIVATE KEY-----|gh[pousr]_[A-Za-z0-9]{20,})',text,re.M):\n\
-        \        raise SystemExit('Possível credencial no patch')\n    for name in re.findall(r'^diff --git a/(.*?) b/',text,re.M):\n\
-        \        if '..' in name.split('/') or name.startswith(('/', '.git/')): raise SystemExit('Caminho de patch inválido')\n\
-        print('Checagem estrutural concluída; não substitui revisão humana ou SonarQube')\nPY"
+  threat-detection: false
   create-pull-request:
     max: 1
     draft: true
@@ -103,21 +98,112 @@ safe-outputs:
     max: 1
     target: triggering
     protected-files: blocked
+  needs:
+  - publication_gate
+  steps:
+  - name: Exigir gate independente antes da escrita
+    env:
+      GATE_RESULT: ${{ needs.publication_gate.result }}
+      AGENT_RESULT: ${{ needs.agent.result }}
+    run: test "$GATE_RESULT" = success && test "$AGENT_RESULT" = success
+  - &id001
+    name: Revalidar identidade antes de publicar
+    uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+    env:
+      AGENTIC_CONTEXT: ${{ inputs.context }}
+      BASE_BRANCH: ${{ inputs.base_branch }}
+      BASE_SHA: ${{ inputs.base_sha }}
+      SOURCE_SHA: ${{ inputs.source_sha }}
+    with:
+      github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || github.token }}
+      script: "const env=JSON.parse(process.env.AGENTIC_CONTEXT);\nif(env.repository!==context.payload.repository.full_name)throw\
+        \ new Error('Repositório divergente');\nconst current=(await github.rest.git.getRef({...context.repo,ref:'heads/'+process.env.BASE_BRANCH})).data;\n\
+        if(current.object.sha!==process.env.BASE_SHA)throw new Error('Base avançou; refazer execução');\nif(env.event==='push'&&env.source_sha!==process.env.BASE_SHA)throw\
+        \ new Error('Push obsoleto; refazer execução atual');\nif(env.action==='review-fix') {\n  const pr=(await\
+        \ github.rest.pulls.get({...context.repo,pull_number:env.number})).data;\n  if(pr.state!=='open'||pr.head.sha!==env.source_sha||pr.head.repo.full_name!==env.repository)throw\
+        \ new Error('PR mudou durante a inferência');\n}\nif(process.env.SPEC_PR) {\n  const pr=(await github.rest.pulls.get({...context.repo,pull_number:Number(process.env.SPEC_PR)})).data;\n\
+        \  if(pr.state!=='open'||pr.head.sha!==process.env.SOURCE_SHA)throw new Error('Spec mudou após aprovação');\n\
+        }"
 runs-on: ubuntu-latest
 pre-agent-steps:
+- name: Validar limites do caller
+  env:
+    MAX_TURNS: ${{ inputs.max_turns }}
+    TIMEOUT: ${{ inputs.timeout }}
+  run: '[[ "$MAX_TURNS" =~ ^[0-9]+$ && "$TIMEOUT" =~ ^[0-9]+$ ]]
+
+    (( MAX_TURNS >= 2 && MAX_TURNS <= 40 && TIMEOUT >= 2 && TIMEOUT <= 30 ))'
 - name: Fixar checkout na revisão autorizada
   env:
     SOURCE_SHA: ${{ inputs.source_sha }}
+    BRANCH_NAME: agentic/${{ github.run_id }}-direct
+    ORIGIN_BRANCH: ${{ fromJSON(inputs.context).head_branch }}
+    ACTION: ${{ fromJSON(inputs.context).action }}
   run: '[[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
 
     git fetch --no-tags origin "$SOURCE_SHA"
 
     git checkout --detach "$SOURCE_SHA"
 
-    test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'
-max-turns: 20
-timeout-minutes: 12
+    test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+
+    if [ "$ACTION" = review-fix ]; then BRANCH_NAME="$ORIGIN_BRANCH"; fi
+
+    git check-ref-format --branch "$BRANCH_NAME"
+
+    git checkout -B "$BRANCH_NAME" "$SOURCE_SHA"
+
+    git config core.hooksPath /dev/null
+
+    git config user.name "agentic-workflows"
+
+    git config user.email "agentic-workflows@users.noreply.github.com"'
+max-turns: ${{ inputs.max_turns }}
+timeout-minutes: ${{ inputs.timeout }}
+jobs:
+  publication_gate:
+    needs:
+    - agent
+    - activation
+    runs-on: ubuntu-latest
+    if: ${{ always() && needs.agent.result != 'skipped' }}
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+    - name: Exigir inferência concluída
+      env:
+        AGENT_JOB_RESULT: ${{ needs.agent.result }}
+      run: test "$AGENT_JOB_RESULT" = success
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+      with:
+        name: ${{ needs.activation.outputs.artifact_prefix }}agent
+        path: ${{ runner.temp }}/publication-gate
+    - name: Inspecionar patch antes de publicar
+      run: "python3 - <<'PY'\nfrom pathlib import Path\nimport re,json,os\nif os.environ['AGENT_JOB_RESULT']!='success':\
+        \ raise SystemExit('Agente/revalidação falhou; não publicar')\nroot=Path(os.environ['SCAN_ROOT'])\noutputs=list(root.rglob('agent_output.json'))\n\
+        if len(outputs)!=1: raise SystemExit('Envelope de saída ausente ou ambíguo')\nitems=json.loads(outputs[0].read_text())['items']\n\
+        if len(items)!=1 or items[0].get('type') not in ['noop','create_pull_request','push_to_pull_request_branch']:\n\
+        \    raise SystemExit('Uma única operação terminal é obrigatória')\nif items[0]['type']=='create_pull_request':\n\
+        \    marker='Agentic delivery: '+json.loads(os.environ['AGENTIC_CONTEXT'])['delivery_id']\n    if marker\
+        \ not in items[0].get('body',''): raise SystemExit('Identidade da entrega ausente no PR')\nfiles=list(root.rglob('*.patch'))\n\
+        if items[0]['type']!='noop' and (not files or not any(p.stat().st_size for p in files)):\n    raise SystemExit('Publicação\
+        \ sem patch inspecionável')\nfor p in files:\n    text=p.read_text(errors='strict')\n    if p.stat().st_size\
+        \ > 524288: raise SystemExit('Patch excede 512 KiB')\n    if re.search(r'^\\+(?!\\+).*(sk-[A-Za-z0-9_-]{20,}|-----BEGIN\
+        \ .*PRIVATE KEY-----|gh[pousr]_[A-Za-z0-9]{20,})',text,re.M):\n        raise SystemExit('Possível credencial\
+        \ no patch')\n    for name in re.findall(r'^diff --git a/(.*?) b/',text,re.M):\n        if '..' in name.split('/')\
+        \ or name.startswith(('/', '.git/')): raise SystemExit('Caminho de patch inválido')\nprint('Checagem estrutural\
+        \ concluída; não substitui revisão humana ou SonarQube')\nPY"
+      env:
+        AGENTIC_CONTEXT: ${{ inputs.context }}
+        AGENT_JOB_RESULT: ${{ needs.agent.result }}
+        SCAN_ROOT: ${{ runner.temp }}/publication-gate
+    - *id001
 ---
+
+Prepare os commits locais com Git antes da ferramenta de PR. Use a branch já preparada pelo workflow. Nunca faça git push, merge ou force-push; a publicação pertence somente ao safe output.
+
+Ao criar PR, inclua no body o marcador exato `Agentic delivery: DELIVERY_ID`, substituindo DELIVERY_ID pelo delivery_id do contexto. Ele permite detectar repetições sem duplicar entregas.
 
 # Correção direta e revisão
 
