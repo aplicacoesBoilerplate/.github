@@ -37,7 +37,7 @@ T1 → T2 → T3
 **Depends on:** T1
 **Requirement:** AOR-01, AOR-02, AOR-03, AOR-04, AOR-05, AOR-07, AOR-10, AOR-11, AOR-15
 **Done when:**
-- [ ] Quatro agentes compilam com terminal, modelos explícitos e gates sem scripts TS.
+- [x] Quatro agentes compilam strict/validate, zero avisos, com terminal, modelos explícitos e gate antes da implementação. Scanner estrutural nativo sem engine Copilot; homologação permanece no piloto.
 **Tests:** none
 **Gate:** Build
 
