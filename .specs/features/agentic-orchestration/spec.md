@@ -1,6 +1,6 @@
 # Triagem unificada com GitHub Agentic Workflows
 
-**Estado:** proposta para revisão. **Issue:** #7. **Profundidade:** complexa, por envolver múltiplos consumidores, credenciais, publicação e aprovação persistente.
+**Estado:** aprovada pelo usuário; execução do MVP autorizada. **Issue:** #7. **Profundidade:** complexa, por envolver múltiplos consumidores, credenciais, publicação e aprovação persistente.
 
 ## Problem Statement
 
@@ -20,7 +20,7 @@ O piloto existente analisa entradas controladas em dois workflows de leitura. Ai
 | --- | --- |
 | Copiar os YAMLs/modelos de exemplo literalmente | O usuário definiu que são referências de intenção |
 | Criar outro executor/roteador TypeScript por padrão | Usar Markdown, imports, ferramentas e safe outputs nativos primeiro |
-| Implementar integralmente code review e correções de push nesta primeira entrega de triagem | Nesta etapa são contratos de entrada/encaminhamento; workers terão entregas próprias |
+| Homologação irrestrita de todas as stacks | O usuário ampliou o MVP para todas as rotas; a validação funcional começa no próprio .github |
 | Instalar plugin SonarQube ou configurar servidor | Compatibilidade e infraestrutura ainda em estudo |
 | Autoaprovação, merge e deploy autônomos | Autonomia autorizada é para analisar/corrigir e propor entregas |
 | Autenticação Codex/auth.json ou credencial central compartilhada | Harness escolhido é OpenCode; autenticação pertence ao consumidor |
@@ -100,23 +100,23 @@ O piloto existente analisa entradas controladas em dois workflows de leitura. Ai
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| AOR-01 | Entrada | Specify | Pending review |
-| AOR-02 | Entrada | Specify | Pending review |
-| AOR-03 | Entrada | Specify | Pending review |
-| AOR-04 | Entrada | Specify | Pending review |
-| AOR-05 | Decisão | Specify | Pending review |
-| AOR-06 | Decisão | Specify | Pending review |
-| AOR-07 | Decisão | Specify | Pending review |
-| AOR-08 | Decisão | Specify | Pending review |
-| AOR-09 | Encaminhamento | Specify | Pending review |
-| AOR-10 | Encaminhamento | Specify | Pending review |
-| AOR-11 | Encaminhamento | Specify | Pending review |
-| AOR-12 | Encaminhamento | Specify | Pending review |
-| AOR-13 | Operação | Specify | Pending review |
-| AOR-14 | Operação | Specify | Pending review |
-| AOR-15 | Operação | Specify | Pending review |
-| AOR-16 | Operação | Specify | Pending review |
-| AOR-17 | Operação | Specify | Pending review |
+| AOR-01 | Entrada | Specify | Approved |
+| AOR-02 | Entrada | Specify | Approved |
+| AOR-03 | Entrada | Specify | Approved |
+| AOR-04 | Entrada | Specify | Approved |
+| AOR-05 | Decisão | Specify | Approved |
+| AOR-06 | Decisão | Specify | Approved |
+| AOR-07 | Decisão | Specify | Approved |
+| AOR-08 | Decisão | Specify | Approved |
+| AOR-09 | Encaminhamento | Specify | Approved |
+| AOR-10 | Encaminhamento | Specify | Approved |
+| AOR-11 | Encaminhamento | Specify | Approved |
+| AOR-12 | Encaminhamento | Specify | Approved |
+| AOR-13 | Operação | Specify | Approved |
+| AOR-14 | Operação | Specify | Approved |
+| AOR-15 | Operação | Specify | Approved |
+| AOR-16 | Operação | Specify | Approved |
+| AOR-17 | Operação | Specify | Approved |
 
 ## Success Criteria
 
