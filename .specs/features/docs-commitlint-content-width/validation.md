@@ -1,3 +1,9 @@
+# Ampliação: PENDING
+
+A ampliação solicitada em 2026-10-28 ainda exige revisão independente e nova validação visual. O navegador Work está desabilitado; não há comprovação visual do CSS atual. Build e equivalência da configuração passaram. O relatório abaixo é histórico e cobre somente a1d76c4; não aprova a ampliação a3e2421.
+
+---
+
 # Validation: docs-commitlint-content-width — PASS
 
 **Date**: 2026-10-28
