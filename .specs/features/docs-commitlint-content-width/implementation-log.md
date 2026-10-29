@@ -1,0 +1,64 @@
+# Evidências da melhoria documental
+
+## D1: configuração Commitlint
+
+Concluída em 2026-10-27, partindo da master 9884bd9. O guia mostra o objeto CJS completo antes do YAML e explica os dois caminhos de criação.
+
+Gate executado com Node 24.19.0 e Commitlint 17.4.4 instalados:
+
+- Extração dos blocos Markdown confirmou a ordem `js`, `yaml`.
+- Objeto CJS avaliado em VM igual ao exportado por `config/commitlint/commitlint.config.cjs`.
+- YAML parseado igual ao `.pre-commit-config.yaml` real, incluindo o caminho de `--config`.
+- `docs: completar configuração local`: exit 0.
+- `invalid: testar regra de tipo`: exit 1, regra `type-enum`.
+- `git diff --check` aprovado. Nenhum teste existente alterado ou novo teste permanente criado.
+
+## D2: largura do conteúdo
+
+Baseline medida no navegador antes da alteração: conteúdo limitado a 688 px em viewports de 1440 e 1920 px; em 960 px, 544,8 px. Inspeção do tema VitePress 1.6.4 confirmou teto de largura, padding duplicado e margem externa da grade de 1440 px.
+
+O CSS usa toda a largura da grade, retira padding duplicado da coluna central e mantém gutter de 24 px em desktop. As regras móveis existentes foram preservadas.
+
+| Viewport | Largura final do conteúdo | Rolagem horizontal da página |
+| ---: | ---: | --- |
+| 390 px | 327,2 px | Não |
+| 768 px | 688 px | Não |
+| 960 px | 624,8 px | Não |
+| 1440 px | 833,6 px | Não |
+| 1920 px | 1313,6 px | Não |
+
+O navegador confirmou `overflow-x: auto` nos dois exemplos e o menu móvel aberto com links acessíveis. Sidebar e índice permanecem visíveis nas duas larguras maiores. Build VitePress aprovado com renderização de todas as páginas. Captura visual em `docs-commitlint-content-width/commitlint-desktop.jpg` na pasta de visualizações do chat.
+
+## Fontes consultadas
+
+Context7 indisponível entre as ferramentas da sessão. Conferidos o código local do VitePress 1.6.4 e as referências oficiais: https://commitlint.js.org/reference/configuration.html e https://vitepress.dev/guide/extending-default-theme.
+
+## Checkpoint remoto em 2026-10-28
+
+- Commits D1 `4abc037` e D2 `a1d76c4` persistidos em `codex/docs-commitlint-content-width`.
+- PR 29 para master: https://github.com/aplicacoesBoilerplate/.github/pull/29.
+- Usuário escolheu `v1.0.1`; milestone 4 criada e vinculada ao PR.
+- CI 40522960312 aprovada no produto `a1d76c4`: 86 testes, 86 aprovados, zero falhas ou skips, tipos e reprodução dos workflows existentes aprovados.
+- Documentação 40522960096: build aprovado; deploy corretamente ignorado por ser PR.
+- Higiene de título e validação de versão também aprovadas. Validação de versão 40785377014 aprovada após vínculo da milestone.
+- Revisão independente PASS: quatro critérios atendidos; duas mutações do snippet detectadas em memória, sem alterar fontes; build independente aprovado. Relatório canônico em `validation.md`, com evidências por critério. `validate_state.py` aprovado sem erros.
+- O checkpoint final altera somente registros TLC. Nenhum merge, tag, release ou deploy executado pelo agente.
+
+## Ampliação documental em 2026-10-28
+
+Última orientação do usuário prevalece: YAML primeiro, CJS depois. Atualizados os exemplos para instalar pre-commit e commit-msg; removidos comandos que escondiam falhas; acrescentados validação manual, diagnóstico PATH/Husky/worktrees/CI e referências de Pages/preview.
+
+CSS: sidebar240px com padding16px, navbar16px e sumário208px com gutter16px. Não há novas medidas visuais: Cua informou que uso do navegador está desabilitado nas configurações Work. Não foi usado outro runtime para contornar a restrição.
+
+Gate: equivalência completa YAML/CJS com arquivos reais aprovada; ordemyaml/js aprovada; VitePress1.6.4 compilou todas as páginas em5.86s; gitdiffcheck aprovado. pre-commit não está instalado neste terminal: os comandos novos foram conferidos nas referências oficiais, mas sua execução integrada local não está comprovada. Revisão independente e nova conferência visual pendentes; o PASS anterior corresponde somente ao produtoa1d76c4.
+
+### Fechamento da revisão possível
+
+- CI 40794097579 e documentação 40794097911 aprovaram o checkpoint ef3d614; nenhum deploy foi executado.
+- Verificador executou checks funcionais e sensor, além de build independente em 5,40 s; a validação visual atual segue indisponível.
+- Achado do verificador: receita Makefile usava espaços. Corrigida para TAB em 8d675fd e conferida extraindo o bloco Markdown com normalização de CRLF; ambos os hooks preservados.
+- O relatório atual distingue validação parcial de PASS histórico. O PR 29 permanece draft, com milestone v1.0.1, até comprovar o layout atual.
+
+### Meta dos consumidores, conferência remota
+
+Java PR37 e Vue PR40 continuam abertos para develop; Go PR16 continua aberto para release/v0.0.1. Nenhum dos três foi integrado. Java e Go ainda não têm GitHub Releases; a última release Vue é anterior ao piloto (agosto). Issue #4 permanece fechada. A meta completa não foi declarada entregue: ciclos reais aguardam merges humanos e a inspeção posterior de PR técnico, tag e Release.
