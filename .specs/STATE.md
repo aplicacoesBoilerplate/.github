@@ -6,13 +6,17 @@ Nenhuma decisão global nova registrada nesta consolidação. O piloto usa a abo
 
 ## Handoff
 
-- **Feature:** `.specs/features/docs-commitlint-content-width/spec.md`.
-- **Phase / Task:** Ampliação documental implementada; build/configuração aprovados, revisão e visual pendentes.
-- **Completed:** guia contém CJS completo antes do YAML, com caminhos coerentes. Layout usa grade disponível, retira padding duplicado e teto de 688 px. Regras móveis e navegação preservadas.
-- **Gates:** Commitlint real positivo/negativo, equivalência CJS/YAML, build VitePress e navegador em cinco larguras aprovados. CI 40522960312: 86/86 testes, zero falhas/skips, tipos e reprodução dos workflows aprovados. Documentação 40522960096 aprovada.
-- **Publication:** produto `a1d76c4` publicado em `codex/docs-commitlint-content-width`; PR 29 para master, milestone `v1.0.1` escolhida explicitamente pelo usuário. Nenhum merge, tag, release ou deploy feito pelo agente.
-- **Next step:** validar o layout ampliado quando o navegador Work estiver disponível, concluir revisão independente e então revisar PR29/v1.0.1. Não integrar com base no PASS histórico.
-- **Blockers:** nenhum técnico; aprovação e merge continuam humanos. Site publicado só muda após integração em master e execução do Pages.
-- **Worktree / branch:** C:/Users/gerso/.codex/worktrees/release-please-pilots-stage1/.github; codex/docs-commitlint-content-width, baseada na master 9884bd9.
-- **Scope:** somente documentação Commitlint e CSS do catálogo; regras, hooks, workflows, dependências e aplicações consumidoras preservados. Issue #4 continua fechada. Evolução agentic e pilotos consumidores permanecem nos seus próprios artefatos e PRs.
-- **Evidence:** docs-commitlint-content-width/implementation-log.md e validation.md; captura commitlint-desktop.jpg na pasta de visualizações do chat.
+- **Feature:** agentic-orchestration; issue7/triagem; execução do MVP completo autorizada.
+- **Branch / workspace:** feature/agentics-workflows-architecture em C:/Users/gerso/.codex/worktrees/agentics-workflows-architecture/.github; base histórica release/v1.0.0; alinhada à master 20a456207bb8c436317107ca1dc85d90d15d6203 (merge PR29), marco de recuperação aprovado pelo usuário.
+- **Phase:** Execute; T1/T2 em commits 98822ae/f749c03; T3 implementada e com gates estáticos aprovados; T4 homologação remota pendente.
+- **User decisions:** prioridade workflows/arquitetura inteira; sem novos scripts TypeScript nem suítes locais; testes funcionais no próprio .github. Harness OpenCode e autenticação/modelos por consumidor.
+- **Completed:** runtime compartilhado, quatro agentes Markdown/locks, coordenador, caller local e exemplo externo. Projects V2 + organization issue fields/dependências reais; catálogo e limites do caller; gate SDD com exact SHA e revisão; publicação com gate nativo e checks de identidade.
+- **Evidence:** quatro compile strict/validate zero avisos; actionlint coordenador/callers aprovado; query real issue7 confirmou quatro organization fields e um Project item. Revisão independente concluída: apto para piloto, aceitação integral PARTIAL; evidências em validation.md. Homologação remota iniciada: três runs reais, sem PASS integral; detalhes em pilot.md. Nenhuma operação de produto publicada.
+- **Next:** T4 iniciada sobre marco PR29/20a4562; PR31 em rascunho, integração limpa codex/agentic-pilot-integration. Branch feature preservada. Para continuar operações: publicar/registrar caller; configurar PROJECTS_TOKEN/PUBLISH_TOKEN dedicados, Project node ID e Environment com required reviewers. OpenRouter confirmou autenticação real. Usuário confirmou ausência das duas secrets; PAT atual sem Secrets/Variables e conta com role write. Instruções de configuração fornecidas.
+- **Known limits:** OpenRouter inicial; IDs reais de modelo/sufixos, sem aliases #rapido inventados; gate estrutural não é veredito AI/Sonar. PR manual é needs-human; correção de PR depende do evento nativo. Recuperação de spec usa Re-run failed jobs no run original.
+- **SonarQube:** not-run; manter fluxo corretivo aprovado após merge develop e bloqueio master. Nenhum plugin instalado.
+- **Preservation:** legados e outros worktrees preservados; implementação publicada na feature e no PR31. Master continua 20a4562; sem merge, tag ou release nesta etapa.
+
+## Entrega documental integrada
+
+PR29 integrado pelo usuário em 20a456207bb8c436317107ca1dc85d90d15d6203. Histórico e evidências preservados em .specs/features/docs-commitlint-content-width/. A tag v1.0.0 não foi alterada; não exigir v1.0.1 para iniciar a homologação autorizada.
