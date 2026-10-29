@@ -115,6 +115,48 @@ jobs:
       with:
         name: ${{ needs.activation.outputs.artifact_prefix }}agent-output-fallback
         path: ${{ runner.temp }}/route-decision
+    - name: Validar decisão e vincular identidade da execução
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+      env:
+        EXPECTED_REPOSITORY: ${{ github.repository }}
+        SOURCE_SHA: ${{ inputs.source_sha }}
+        EXPECTED_CONTEXT: ${{ inputs.context }}
+      with:
+        script: 'const fs=require(''fs''),path=require(''path'');
+
+          const file=path.join(process.env.RUNNER_TEMP,''route-decision/agent_output.json'');
+
+          const output=JSON.parse(fs.readFileSync(file,''utf8''));
+
+          if(output.items?.length!==1||output.items[0].type!==''noop''||output.errors?.length)throw new Error(''Terminal
+          único noop sem erro obrigatório'');
+
+          const decision=JSON.parse(output.items[0].message),expected=JSON.parse(process.env.EXPECTED_CONTEXT);
+
+          if(![''ready'',''needs-human''].includes(decision.status)||![''issue-fix'',''review-fix'',''push-fix''].includes(decision.action)||decision.action!==expected.action||![''low'',''medium'',''high'',''ultra''].includes(decision.tier)||typeof
+          decision.requires_sdd!==''boolean''||!Array.isArray(decision.missing_fields)||decision.missing_fields.some(f=>typeof
+          f!==''string'')||typeof decision.reason!==''string''||!decision.reason.trim())throw new Error(''Contrato
+          de decisão inválido'');
+
+          if(decision.repository&&decision.repository!==process.env.EXPECTED_REPOSITORY)throw new Error(''Repositório
+          divergente'');
+
+          if(decision.source_sha&&decision.source_sha!==process.env.SOURCE_SHA)throw new Error(''SHA divergente'');
+
+          const missing=expected.metadata?.missing||[];
+
+          if(missing.length&&(decision.status!==''needs-human''||!missing.every(f=>decision.missing_fields.includes(f))))throw
+          new Error(''Lacunas confirmadas devem ser preservadas'');
+
+          // Identidade vem da execução confiável, nunca de inferência ou suposição do modelo.
+
+          decision.repository=process.env.EXPECTED_REPOSITORY;decision.source_sha=process.env.SOURCE_SHA;
+
+          decision.brief=decision.brief||decision.reason;
+
+          output.items[0].message=JSON.stringify(decision);
+
+          fs.writeFileSync(file,JSON.stringify(output));'
     - name: Exportar terminal único da triagem
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
       with:
