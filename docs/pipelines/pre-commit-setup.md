@@ -69,7 +69,7 @@ Adicione um comando ao alvo de inicialização no Makefile do repositório:
 
 ```Makefile
 setup:
-  pre-commit install --hook-type pre-commit --hook-type commit-msg
+	pre-commit install --hook-type pre-commit --hook-type commit-msg
 ```
 
 ## Instalação manual e validação
